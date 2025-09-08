@@ -50,3 +50,10 @@ async function signUp() {
     </main>
   )
 }
+
+// ✅ AGREGAR ESTAS LÍNEAS AL FINAL:
+export async function getServerSideProps() {
+  return {
+    props: {}
+  }
+}
