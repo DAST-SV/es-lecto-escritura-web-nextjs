@@ -1,5 +1,7 @@
 import React from "react";
 import Link from "next/link";
+import '@/app/globals.css'; // CSS global
+
 
 interface Juego {
   src: string;

@@ -3,7 +3,7 @@
 
 import React, { useState } from "react";
 import ImageGrid from "@/utils/imagenes/ImageGrid";
-import QuizGame from "../../games/cuestionario/QuizGame"; // Aquí debe estar tu componente del quiz
+import QuizGame from "@/src/games/cuestionario/QuizGame"; // Aquí debe estar tu componente del quiz
 
 const imagenes = [
   { src: "/Imagenes/Secciones_juegos/Quizes/Flautista.jpg", caption: "El flautista", description: "Pon a prueba tu memoria sobre el flautista y sus amigos." },

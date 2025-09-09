@@ -44,3 +44,5 @@ export const InteractiveGame: React.FC<Props> = ({ type, items }) => {
     </div>
   );
 };
+
+export default InteractiveGame;

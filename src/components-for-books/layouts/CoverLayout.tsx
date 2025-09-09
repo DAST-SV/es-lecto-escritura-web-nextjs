@@ -28,3 +28,5 @@ export const CoverLayout: React.FC<Props> = ({ page }) => {
     </div>
   );
 };
+
+export default CoverLayout;

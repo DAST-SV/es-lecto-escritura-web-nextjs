@@ -32,3 +32,5 @@ export const SplitLayout: React.FC<Props> = ({ page }) => {
       </div>
   );
 };
+
+export default SplitLayout;

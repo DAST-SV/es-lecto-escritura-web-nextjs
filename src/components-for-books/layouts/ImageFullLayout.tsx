@@ -19,3 +19,5 @@ export const ImageFullLayout: React.FC<Props> = ({ page }) => {
     </div>
   );
 };
+
+export default ImageFullLayout;

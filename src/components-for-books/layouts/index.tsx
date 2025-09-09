@@ -21,3 +21,4 @@ export const layouts = {
   ImageFullLayout,
   TextCenterLayout
 }as const;
+

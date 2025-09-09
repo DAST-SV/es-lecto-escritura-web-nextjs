@@ -26,3 +26,5 @@ export const SplitTopBottomLayout: React.FC<Props> = ({ page }) => {
     </div>
   );
 };
+
+export default SplitTopBottomLayout;

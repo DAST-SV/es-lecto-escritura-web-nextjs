@@ -37,9 +37,6 @@ const CreateBook: React.FC = () => {
       <ImageGrid
         images={acciones}
         shapeType={3}
-        customSize = {{width : 300 , height : 300}}
-        align="center"
-        columns={2}
         onClick={(img) =>
           window.location.href = `/crear-libro/${img.Json?.toLowerCase().replace(/\s/g, "")}`
         }
@@ -49,9 +46,6 @@ const CreateBook: React.FC = () => {
       <ImageGrid
         images={acciones3}
         shapeType={3}
-        size="mediano"
-        align="center"
-        columns={1}
         onClick={() => window.location.href = "/crear-libro/papelera"}
       />
 
@@ -59,9 +53,6 @@ const CreateBook: React.FC = () => {
       <ImageGrid
         images={guardarIdeas}
         shapeType={3}
-        size="mediano"
-        align="center"
-        columns={2}
         onClick={(img) => console.log(img.caption)}
       />
 

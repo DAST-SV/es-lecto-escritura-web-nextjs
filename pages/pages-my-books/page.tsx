@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import ImageGrid from "@/utils/imagenes/ImageGrid";
-import FlipBook from "../components-for-books/book/FlipBook";
+import FlipBook from "@/src/components-for-books/book/FlipBook";
 import type { Page } from "@/typings/types-page-book/index";
 import Link from "next/link";
-
+import "@/app/globals.css"
 // import Juega from '@/public/Imagenes/Juega aqui.jpg'
 // import banner from '@/public/Imagenes/banner.jpg'
 

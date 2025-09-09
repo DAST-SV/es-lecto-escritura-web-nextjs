@@ -32,3 +32,5 @@ export const TextLeftImageRightLayout: React.FC<Props> = ({ page }) => {
     </div>
   );
 };
+
+export default TextLeftImageRightLayout;

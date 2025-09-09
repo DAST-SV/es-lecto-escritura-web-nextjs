@@ -24,3 +24,5 @@ export const FullPageLayout: React.FC<Props> = ({ page }) => {
     </div>
   );
 };
+
+export default FullPageLayout;

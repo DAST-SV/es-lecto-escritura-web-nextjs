@@ -17,3 +17,6 @@ export const TextCenterLayout: React.FC<Props> = ({ page }) => {
     </div>
   );
 };
+
+
+export default TextCenterLayout;

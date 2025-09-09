@@ -1,6 +1,6 @@
 // src/components/PageRenderer.tsx
 import React from "react";
-import type { Page,LayoutType } from "@/typings/types-page-book/index";
+import type { Page } from "@/typings/types-page-book/index";
 import { layouts } from "../layouts";
 import { backgrounds } from "@/typings/types-page-book/backgrounds";
 import { HtmlFontFamilies } from "@/typings/types-page-book/HtmlFontFamilies";
@@ -72,3 +72,5 @@ const getBackground =
     </div>
   );
 };
+
+ export default  PageRenderer;
