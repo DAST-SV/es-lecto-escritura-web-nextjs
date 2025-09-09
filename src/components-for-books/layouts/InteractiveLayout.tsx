@@ -1,7 +1,7 @@
 // src/components/layouts/InteractiveLayout.tsx
 import React from "react";
-import type { Page } from "@/typings/types-page-book/index";
-import { useAudio } from "@/hooks/hooks-page-book/useAudio";
+import type { Page } from "@/src/typings/types-page-book/index";
+import { useAudio } from "@/src/hooks/hooks-page-book/useAudio";
 import  InteractiveGame  from "@/src/components-for-books/layouts/InteractiveGame";
 
 interface Props {

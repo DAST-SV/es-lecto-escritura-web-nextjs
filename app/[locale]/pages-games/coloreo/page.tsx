@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from "react";
-import ImageGrid from "@/utils/imagenes/ImageGrid";
+import ImageGrid from "@/src/utils/imagenes/ImageGrid";
 import PaintGame from "@/src/games/paint-game/PaintGame";
 
 const imagenes = [

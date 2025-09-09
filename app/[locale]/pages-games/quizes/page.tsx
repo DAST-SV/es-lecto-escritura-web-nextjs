@@ -2,7 +2,7 @@
 
 
 import React, { useState } from "react";
-import ImageGrid from "@/utils/imagenes/ImageGrid";
+import ImageGrid from "@/src/utils/imagenes/ImageGrid";
 import QuizGame from "@/src/games/cuestionario/QuizGame"; // Aquí debe estar tu componente del quiz
 
 const imagenes = [

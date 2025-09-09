@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import ImageGrid, { ImageItem } from "@/utils/imagenes/ImageGrid";
+import ImageGrid, { ImageItem } from "@/src/utils/imagenes/ImageGrid";
 
 const CreateBook: React.FC = () => {
   const acciones: ImageItem[] = [

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from "react";
-import ImageGrid from "@/utils/imagenes/ImageGrid";
+import ImageGrid from "@/src/utils/imagenes/ImageGrid";
 import MazeGame from "@/src/games/laberinto/MazeGame"; // Reemplazamos MiniLaberinto por MazeGame
 
 interface ImagenConDescripcion {
