@@ -663,6 +663,7 @@ export function Book() {
                                     maxWidth={400}
                                     minHeight={600}
                                     maxHeight={600}
+                                    showPageCorners={true}   // <-- aquí
                                 >
                                     {pages.map((page, index) => (
                                         <div key={page.id} className="bg-white">

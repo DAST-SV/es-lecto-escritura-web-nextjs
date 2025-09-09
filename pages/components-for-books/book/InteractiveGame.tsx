@@ -10,7 +10,7 @@ interface Props {
  * Implementación mínima de juegos. Ampliable.
  * Actualmente soporta "clickStars" (incrementar score al click)
  */
-export const InteractiveGame: React.FC<Props> = ({ type, items }) => {
+export default function InteractiveGamePage({ type, items }: Props) {
   const [score, setScore] = useState(0);
 
   if (type === "clickStars") {
