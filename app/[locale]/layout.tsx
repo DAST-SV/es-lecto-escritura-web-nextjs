@@ -5,16 +5,17 @@ import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Metadata } from 'next';
 import "../globals.css";
+
 export async function generateMetadata({
   params
 }: {
-  params: { locale: (typeof routing.locales)[number] };
+  params: Promise<{ locale: (typeof routing.locales)[number] }>;
 }): Promise<Metadata> {
-  const { locale } = params;
+  const { locale } = await params;
   if (!routing.locales.includes(locale)) {
     return {};
   }
-  const t = await getTranslations({ locale, namespace: 'Layout' });
+  const t = await getTranslations({ locale, namespace: 'layout' });
   return {
     title: t('meta.title'),
     description: t('meta.description')
@@ -26,9 +27,9 @@ export default async function RootLayout({
   params
 }: {
   children: React.ReactNode;
-  params: { locale: (typeof routing.locales)[number] };
+  params: Promise<{ locale: (typeof routing.locales)[number] }>;
 }) {
-  const { locale } = params;
+  const { locale } = await params;
 
   if (!routing.locales.includes(locale)) {
     notFound();

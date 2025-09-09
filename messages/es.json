@@ -1,5 +1,130 @@
 {
-  "HomePage": {
-    "title": "¡Hola mundo!"
+  "layout": {
+    "meta": {
+      "title": "EsLectoEscritura",
+      "description": "Nuestra plataforma de lectoescritura está diseñada para acompañar a niños, jóvenes y adultos en el desarrollo integral de habilidades de lectura y escritura, combinando métodos pedagógicos probados con tecnología interactiva de última generación. A través de actividades lúdicas, ejercicios personalizados y seguimiento del progreso, los usuarios pueden mejorar su comprensión lectora, ampliar su vocabulario, perfeccionar la ortografía y desarrollar fluidez al escribir"
+    }
+  },
+  "nav": {
+    "about": {
+      "text": "Acerca de",
+      "href": "/acerca-de",
+      "title": "Conoce más sobre nosotros"
+    },
+    "virtualTour": {
+      "text": "Tour Virtual",
+      "href": "/tour-virtual",
+      "title": "Explora nuestro tour virtual"
+    },
+    "login": {
+      "text": "Iniciar sesión",
+      "href": "/iniciar-sesion",
+      "title": "Acceder a tu cuenta"
+    },
+    "register": {
+      "text": "Registrarse",
+      "href": "/registrarse",
+      "title": "Crear una nueva cuenta"
+    },
+    "back": {
+      "text": "Atrás",
+      "title": "Volver a la página anterior"
+    },
+    "home": {
+      "text": "Inicio",
+      "href": "/",
+      "title": "Ir a la página principal"
+    },
+    "profile": {
+      "text": "Perfil",
+      "href": "/perfil",
+      "title": "Ver mi perfil"
+    },
+    "settings": {
+      "text": "Configuración",
+      "href": "/configuracion",
+      "title": "Ajustar configuración"
+    },
+    "logout": {
+      "text": "Cerrar sesión",
+      "href": "/cerrar-sesion",
+      "title": "Salir de mi cuenta"
+    },
+    "myDiary": {
+      "text": "Mi Diario",
+      "href": "/mi-diario",
+      "title": "Ver tu diario"
+    },
+    "myBooks": {
+      "text": "Mis Libros",
+      "href": "/mis-libros",
+      "title": "Ver tus libros"
+    },
+    "createBook": {
+      "text": "Crear Libro",
+      "href": "/crear-libro",
+      "title": "Iniciar la creación de un nuevo libro"
+    },
+    "explore": {
+      "text": "Explorar",
+      "href": "/explorar",
+      "title": "Descubrir nuevo contenido"
+    },
+    "myReadings": {
+      "text": "Mis Lecturas",
+      "href": "/mis-lecturas",
+      "title": "Seguir tus lecturas"
+    },
+    "activities": {
+      "text": "Actividades",
+      "href": "/actividades",
+      "title": "Ver tus actividades"
+    }
+  },
+  "content": {
+    "cover": {
+      "text": "Portada",
+      "alt": "Imagen de portada"
+    },
+    "description": "Descripción del contenido principal"
+  },
+  "lang": {
+    "selectLanguage": {
+      "text": "Seleccionar idioma",
+      "aria-label": "Cambiar idioma"
+    },
+    "currentLanguage": "Idioma actual"
+  },
+  "welcome": {
+    "title": "Bienvenido",
+    "subtitle": "Nos alegra verte",
+    "description": "Explora nuestra aplicación y disfruta de todas sus funcionalidades"
+  },
+  "buttons": {
+    "save": {
+      "text": "Guardar",
+      "aria-label": "Guardar cambios"
+    },
+    "cancel": {
+      "text": "Cancelar",
+      "aria-label": "Cancelar operación"
+    },
+    "delete": {
+      "text": "Eliminar",
+      "aria-label": "Eliminar elemento"
+    },
+    "edit": {
+      "text": "Editar",
+      "aria-label": "Editar elemento"
+    },
+    "submit": {
+      "text": "Enviar",
+      "aria-label": "Enviar formulario"
+    }
+  },
+  "errors": {
+    "required": "Este campo es obligatorio",
+    "invalidEmail": "Correo electrónico inválido",
+    "minLength": "Debe tener al menos {{count}} caracteres"
   }
 }

@@ -1,5 +1,130 @@
 {
-  "HomePage": {
-    "title": "Hello world!"
+  "layout": {
+    "meta": {
+      "title": "EsLectoEscritura",
+      "description": "Our literacy platform is designed to support children, youth, and adults in the comprehensive development of reading and writing skills by combining proven pedagogical methods with cutting-edge interactive technology. Through playful activities, personalized exercises, and progress tracking, users can improve their reading comprehension, expand their vocabulary, perfect their spelling, and develop fluency in writing."
+    }
+  },
+  "nav": {
+    "about": {
+      "text": "About",
+      "href": "/about",
+      "title": "Learn more about us"
+    },
+    "virtualTour": {
+      "text": "Virtual Tour",
+      "href": "/tour",
+      "title": "Explore our virtual tour"
+    },
+    "login": {
+      "text": "Log In",
+      "href": "/login",
+      "title": "Access your account"
+    },
+    "register": {
+      "text": "Sign Up",
+      "href": "/register",
+      "title": "Create a new account"
+    },
+    "back": {
+      "text": "Back",
+      "title": "Go back to previous page"
+    },
+    "home": {
+      "text": "Home",
+      "href": "/",
+      "title": "Go to homepage"
+    },
+    "profile": {
+      "text": "Profile",
+      "href": "/profile",
+      "title": "View my profile"
+    },
+    "settings": {
+      "text": "Settings",
+      "href": "/settings",
+      "title": "Adjust settings"
+    },
+    "logout": {
+      "text": "Log Out",
+      "href": "/logout",
+      "title": "Sign out of my account"
+    },
+    "myDiary": {
+      "text": "My Diary",
+      "href": "/diario",
+      "title": "View your diary"
+    },
+    "myBooks": {
+      "text": "My Books",
+      "href": "/mis-libros",
+      "title": "See your books"
+    },
+    "createBook": {
+      "text": "Create Book",
+      "href": "/create-book",
+      "title": "Start creating a new book"
+    },
+    "explore": {
+      "text": "Explore",
+      "href": "/explorar",
+      "title": "Discover new content"
+    },
+    "myReadings": {
+      "text": "My Readings",
+      "href": "/mis-lecturas",
+      "title": "Track your readings"
+    },
+    "activities": {
+      "text": "Activities",
+      "href": "/actividades",
+      "title": "See your activities"
+    }
+  },
+  "content": {
+    "cover": {
+      "text": "Cover",
+      "alt": "Cover image"
+    },
+    "description": "Main content description"
+  },
+  "lang": {
+    "selectLanguage": {
+      "text": "Select Language",
+      "aria-label": "Change language"
+    },
+    "currentLanguage": "Current language"
+  },
+  "welcome": {
+    "title": "Welcome",
+    "subtitle": "We're glad to see you",
+    "description": "Explore our application and enjoy all its features"
+  },
+  "buttons": {
+    "save": {
+      "text": "Save",
+      "aria-label": "Save changes"
+    },
+    "cancel": {
+      "text": "Cancel",
+      "aria-label": "Cancel operation"
+    },
+    "delete": {
+      "text": "Delete",
+      "aria-label": "Delete item"
+    },
+    "edit": {
+      "text": "Edit",
+      "aria-label": "Edit item"
+    },
+    "submit": {
+      "text": "Submit",
+      "aria-label": "Submit form"
+    }
+  },
+  "errors": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "minLength": "Must be at least {{count}} characters long"
   }
 }
