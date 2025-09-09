@@ -6,7 +6,7 @@ import ImageGrid, { ImageItem } from "@/utils/imagenes/ImageGrid";
 
 const CreateBook: React.FC = () => {
   const acciones: ImageItem[] = [
-    { src: "/Imagenes/create-libros/creatulibro.png", caption: "Crea tu libro" },
+    { src: "/Imagenes/create-libros/creatulibro.png", caption: "Crea tu libro",Json: "/es/interfaz-create-book" },
     { src: "/Imagenes/create-libros/editatuslibros.png", caption: "Edita tus libros" },
   ];
 
@@ -26,7 +26,7 @@ const CreateBook: React.FC = () => {
       <div className="bg-teal-400 rounded-xl w-full max-w-2xl p-4 flex flex-col items-center text-center space-y-2">
         <h1 className="text-lg sm:text-xl font-bold text-white">Crea tu libro</h1>
         <p className="text-white text-xs sm:text-sm">¡Personaliza y crea tu propia historia!</p>
-        <Link href="/crear-libro/empezar">
+        <Link href="/es/interfaz-create-book">
           <button className="bg-orange-500 text-white px-3 py-1 rounded-lg hover:bg-orange-600 text-xs sm:text-sm transition">
             Empezar
           </button>
@@ -38,7 +38,7 @@ const CreateBook: React.FC = () => {
         images={acciones}
         shapeType={3}
         onClick={(img) =>
-          window.location.href = `/crear-libro/${img.Json?.toLowerCase().replace(/\s/g, "")}`
+          window.location.href = `${img.Json?.toLowerCase().replace(/\s/g, "")}`
         }
       />
 

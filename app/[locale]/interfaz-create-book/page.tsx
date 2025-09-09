@@ -1,12 +1,14 @@
+"use client";
+
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import HTMLFlipBook from "react-pageflip";
-import { layouts } from "../layouts/index";
+import { layouts } from "@/src/components-for-books/layouts";
 import { HtmlFontFamilies } from "@/typings/types-page-book/HtmlFontFamilies";
 import type { LayoutType, backgroundstype, HtmlFontFamiliestype } from "@/typings/types-page-book/index";
 import { backgrounds } from "@/typings/types-page-book/backgrounds";
-import { PageRenderer } from "../book/PageRenderer";
+import { PageRenderer } from "@/src/components-for-books/book/PageRenderer";
 import type { Page } from "@/typings/types-page-book/index";
-import { FlipBook } from "../book/FlipBook"
+import { FlipBook } from "@/src/components-for-books//book/FlipBook"
 // Tipos
 interface page {
     id: string;

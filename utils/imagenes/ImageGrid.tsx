@@ -10,12 +10,20 @@ export interface ImageItem {
 interface ImageGridProps {
   images: ImageItem[];
   shapeType?: number; // 1 = rectangular, 2 = cuadrado, 3 = columna
+  columns?: number; // nueva propiedad: cantidad de columnas (1, 2, 3, 4)
   onClick?: (img: ImageItem) => void;
 }
 
-const ImageGrid: React.FC<ImageGridProps> = ({ images, shapeType = 1, onClick }) => {
-  let gridClass = "grid gap-6 grid-cols-1 sm:grid-cols-2";
-  if (shapeType === 3) gridClass = "grid gap-6 grid-cols-1";
+const ImageGrid: React.FC<ImageGridProps> = ({ images, shapeType = 1, columns = 2, onClick }) => {
+  // Si se pasa columns, usamos grid-cols-{columns}, sino usamos la lógica anterior
+  let gridClass = "grid gap-6";
+  if (columns && columns > 0) {
+    gridClass += ` grid-cols-1 sm:grid-cols-${columns}`;
+  } else if (shapeType === 3) {
+    gridClass += " grid-cols-1";
+  } else {
+    gridClass += " grid-cols-1 sm:grid-cols-2";
+  }
 
   return (
     <div className={gridClass}>
@@ -42,4 +50,3 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, shapeType = 1, onClick })
 };
 
 export default ImageGrid;
-
