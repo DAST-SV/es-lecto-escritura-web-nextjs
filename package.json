@@ -14,7 +14,11 @@
     "@supabase/supabase-js": "^2.57.2",
     "next": "15.5.2",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+     "framer-motion": "^12.23.12",
+    "lucide-react": "^0.542.0",
+    "react-pageflip": "^2.0.3",
+    "rot-js": "^2.2.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

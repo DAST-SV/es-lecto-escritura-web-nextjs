@@ -1,12 +1,12 @@
 // src/components/PageRenderer.tsx
 import React from "react";
-import type { Page,LayoutType } from "@/../typings/types-page-book/index";
+import type { Page,LayoutType } from "@/typings/types-page-book/index";
 import { layouts } from "../layouts";
-import { backgrounds } from "@/../typings/types-page-book/backgrounds";
-import { HtmlFontFamilies } from "@/../typings/types-page-book/HtmlFontFamilies";
-import { borders } from "@/../typings/types-page-book/borders";
+import { backgrounds } from "@/typings/types-page-book/backgrounds";
+import { HtmlFontFamilies } from "@/typings/types-page-book/HtmlFontFamilies";
+import { borders } from "@/typings/types-page-book/borders";
 import { motion } from "framer-motion";
-import { getAnimation } from "@/../utils/animations/animations";
+import { getAnimation } from "@/utils/animations/animations";
 
 interface Props {
   page: Page;

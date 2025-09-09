@@ -1,5 +1,5 @@
 // src/types/index.ts
-import { layouts } from "../../app/pages/components-for-books/book/layouts";
+import { layouts } from "@/pages/components-for-books/layouts";
 import  {backgrounds } from "./backgrounds"; 
 import  { HtmlFontFamilies } from "./HtmlFontFamilies";
 import  {borders} from "./borders"
