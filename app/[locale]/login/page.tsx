@@ -1,7 +1,7 @@
 // Al principio de tu archivo
 'use client';
 
-import React from 'react'
+import React, { useTransition } from 'react'
 import { login, signup } from './actions'
 import { Cloud } from '@/src/components/ui/Cloud'
 import { motion } from 'framer-motion'
@@ -10,6 +10,14 @@ import { Lock, Mail } from 'lucide-react'
 import { Button, Input } from '@/src/components/ui';
 
 export default function LoginPage() {
+    const [isPending, startTransition] = useTransition();
+
+    const handleLogin = (formData: FormData) => {
+        startTransition(async () => {
+            await login(formData);
+        });
+    };
+
     return (
         <div className='relative min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-400 via-blue-300 to-green-300'>
             {/* Elementos decorativos de fondo */}
@@ -31,7 +39,7 @@ export default function LoginPage() {
             {/* Contenido principal del formulario */}
             <div className="relative z-20 w-full max-w-md mx-auto">
                 <div className="bg-white rounded-2xl shadow-2xl p-4 border-3 border-yellow-300">
-                    <div className="text-center mb-4">
+                    <form action={handleLogin} className="text-center mb-4">
                         <h1 className="text-gray-700" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
                             ESLECTOESCRITURA
                         </h1>
@@ -211,15 +219,16 @@ export default function LoginPage() {
                                 whileTap={{ scale: 0.95 }}         // Se reduce ligeramente al hacer click
                             >
                                 <Button
+                                    // formAction={login}
                                     // onClick={onSubmit}               // Handler para envío del formulario
-                                    // loading={loading}                // Muestra spinner si está cargando
+                                    loading={isPending}                // Muestra spinner si está cargando
                                     className="w-full text-lg py-3 mt-5 transition-all duration-300 ease-in-out" // Ancho completo
                                 >
                                     ¡ENTRAR A APRENDER! 📚          {/* Texto motivacional con emoji */}
                                 </Button>
                             </motion.div>
                         </motion.div>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
