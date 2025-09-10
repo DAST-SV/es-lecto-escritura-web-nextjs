@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import ImageGrid from "@/src/utils/imagenes/ImageGrid";
-import FlipBook from "@/src/components-for-books/book/FlipBook";
+import FlipBook from "@/src/components/components-for-books/book/FlipBook";
 import type { Page } from "@/src/typings/types-page-book/index";
 import Link from "next/link";
 import "@/app/globals.css"

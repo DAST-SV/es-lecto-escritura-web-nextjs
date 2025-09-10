@@ -20,9 +20,9 @@ export const i18nConfig = {
   },
 } as const; // `as const` aplicado al objeto garantiza que todas sus propiedades sean readonly.
 
-// Tipo derivado de los valores definidos en `i18nConfig.locales`.
-// Resultado: unión literal de idiomas soportados → "en" | "es".
-export type Locale = (typeof i18nConfig.locales)[number];
+// Exporta este tipo específico para usar en layout
+export type LocalesType = typeof i18nConfig.locales;
+export type Locale = LocalesType[number]; // Esto será 'en' | 'es'
 
 // Función auxiliar (type guard) para validar si un string corresponde a un `Locale` soportado.
 // Si retorna `true`, TypeScript refina automáticamente el tipo de `value` a `Locale`.

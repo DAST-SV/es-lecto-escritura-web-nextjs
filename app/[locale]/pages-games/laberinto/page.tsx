@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import ImageGrid from "@/src/utils/imagenes/ImageGrid";
-import MazeGame from "@/src/games/laberinto/MazeGame"; // Reemplazamos MiniLaberinto por MazeGame
+import MazeGame from "@/src/components/games/laberinto/MazeGame"; // Reemplazamos MiniLaberinto por MazeGame
 
 interface ImagenConDescripcion {
   src: string;

@@ -2,13 +2,13 @@
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import HTMLFlipBook from "react-pageflip";
-import { layouts } from "@/src/components-for-books/layouts";
+import { layouts } from "@/src/components/components-for-books/layouts";
 import { HtmlFontFamilies } from "@/src/typings/types-page-book/HtmlFontFamilies";
 import type { LayoutType, backgroundstype, HtmlFontFamiliestype } from "@/src/typings/types-page-book/index";
 import { backgrounds } from "@/src/typings/types-page-book/backgrounds";
-import { PageRenderer } from "@/src/components-for-books/book/PageRenderer";
+import { PageRenderer } from "@/src/components/components-for-books/book/PageRenderer";
 import type { Page } from "@/src/typings/types-page-book/index";
-import { FlipBook } from "@/src/components-for-books//book/FlipBook"
+import { FlipBook } from "@/src/components/components-for-books/book/FlipBook"
 // Tipos
 interface page {
     id: string;

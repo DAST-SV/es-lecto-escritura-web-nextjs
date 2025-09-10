@@ -17,7 +17,7 @@ export const PageRenderer: React.FC<Props> = ({ page, isActive }) => {
   // Creamos un layoutMap dinámico 
 
   const layoutMap: Record<string, React.FC<{ page: Page }>> = layouts;
-  const Layout = layoutMap[page.layout] || layoutMap.FullPageLayout;
+  const Layout = layoutMap[String(page.layout)] || layoutMap.FullPageLayout;
   const getBorderRadius = page.border ? borders[page.border] : borders.cuadrado;
   const getFont = page.font ? HtmlFontFamilies[page.font] : HtmlFontFamilies.Arial;
 // Determina el valor final del background de la página

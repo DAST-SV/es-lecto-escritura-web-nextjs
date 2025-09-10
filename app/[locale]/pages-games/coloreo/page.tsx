@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import ImageGrid from "@/src/utils/imagenes/ImageGrid";
-import PaintGame from "@/src/games/paint-game/PaintGame";
+import PaintGame from "@/src/components/games/paint-game/PaintGame";
 
 const imagenes = [
   { src: "/Libros/El-Dragon-de-las-Nubes/Coloreable..svg", caption: "El dragon del cielo", description: "Un dragon muy amigable" },

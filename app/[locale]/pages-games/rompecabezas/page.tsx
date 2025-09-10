@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"; 
 import ImageGrid from "@/src/utils/imagenes/ImageGrid";
-import RealJigsawPuzzle from "@/src/games/rompe-cabezas/RealJigsawPuzzle"; // tu componente del puzzle
+import RealJigsawPuzzle from "@/src/components/games/rompe-cabezas/RealJigsawPuzzle"; // tu componente del puzzle
 
 const imagenes = [
   { src: "/Libros/El-Dragon-de-las-Nubes/Rompecabezas.jpg", caption: "El dragon del cielo", description: "Un dragon muy amigable" },
