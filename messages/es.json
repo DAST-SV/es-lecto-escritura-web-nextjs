@@ -126,5 +126,26 @@
     "required": "Este campo es obligatorio",
     "invalidEmail": "Correo electrónico inválido",
     "minLength": "Debe tener al menos {{count}} caracteres"
+  },
+  "auth": {
+    "errors": {
+      "invalid_credentials": "Credenciales inválidas. Verifica tu email y contraseña.",
+      "email_not_confirmed": "Por favor confirma tu email antes de iniciar sesión.",
+      "user_not_found": "No encontramos una cuenta con este email.",
+      "invalid_email": "El formato del email no es válido.",
+      "weak_password": "La contraseña debe tener al menos 6 caracteres.",
+      "email_already_registered": "Ya existe una cuenta con este email.",
+      "too_many_requests": "Demasiados intentos. Inténtalo más tarde.",
+      "generic_error": "Ocurrió un error inesperado. Inténtalo de nuevo."
+    },
+    "form": {
+      "or_use_email": "o usa tu email",
+      "email_placeholder": "Tu correo electrónico",
+      "password_placeholder": "Tu contraseña",
+      "remember_me": "Recordarme",
+      "forgot_password": "¿Olvidaste tu contraseña?",
+      "login_button": "¡ENTRAR A APRENDER! 📚",
+      "connect_with": "Conecta con:"
+    }
   }
 }

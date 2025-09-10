@@ -1,22 +1,21 @@
 // Al principio de tu archivo
 'use client';
 
-import React, { useTransition } from 'react'
+import React, { useActionState } from 'react'
 import { login, signup } from './actions'
+import type { AuthState } from './actions'
 import { Cloud } from '@/src/components/ui/Cloud'
 import { motion } from 'framer-motion'
 import { AppleIcon, FacebookIcon, GoogleIcon, MicrosoftIcon, SocialIcon, SpotifyIcon, TwitterIcon } from '@/src/components/ui/SocialIcon'
 import { Lock, Mail } from 'lucide-react'
 import { Button, Input } from '@/src/components/ui';
+import { useTranslations } from 'next-intl';
 
 export default function LoginPage() {
-    const [isPending, startTransition] = useTransition();
-
-    const handleLogin = (formData: FormData) => {
-        startTransition(async () => {
-            await login(formData);
-        });
-    };
+        const t = useTranslations('auth');
+    // Usar useActionState en lugar de useTransition
+    const initialState: AuthState = {};
+    const [state, formAction, isPending] = useActionState(login, initialState);
 
     return (
         <div className='relative min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-400 via-blue-300 to-green-300'>
@@ -39,17 +38,17 @@ export default function LoginPage() {
             {/* Contenido principal del formulario */}
             <div className="relative z-20 w-full max-w-md mx-auto">
                 <div className="bg-white rounded-2xl shadow-2xl p-4 border-3 border-yellow-300">
-                    <form action={handleLogin} className="text-center mb-4">
+                    <form action={formAction} className="text-center mb-4">
                         <h1 className="text-gray-700" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
                             ESLECTOESCRITURA
                         </h1>
 
                         {/* Display auth error if exists */}
-                        {/* {state.error && (
-              <div className="mb-4 p-2 bg-red-100 border border-red-300 rounded text-red-700 text-sm">
-                {state.error}
-              </div>
-            )} */}
+                        {state.error && (
+                            <div className="mb-4 p-2 bg-red-100 border border-red-300 rounded text-red-700 text-sm">
+                                {state.error}
+                            </div>
+                        )}
 
                         {/* Comentario: Social Login Icons */}
                         {/* Sección de iconos de login social con animación */}
@@ -64,7 +63,7 @@ export default function LoginPage() {
                                 className="text-center text-blue-600 mb-3 font-bold text-xl"
                                 style={{ fontFamily: "Comic Sans MS, cursive" }} // Fuente infantil
                             >
-                                Conecta con:
+                                {t('form.connect_with')}
                             </h1>
                             {/* Contenedor flex para los iconos sociales */}
                             <div className="flex justify-center space-x-4">
@@ -141,7 +140,7 @@ export default function LoginPage() {
                                     className="px-4 bg-white text-orange-500 font-bold" // Fondo blanco, texto naranja
                                     style={{ fontFamily: "Comic Sans MS, cursive" }}   // Fuente infantil
                                 >
-                                    o usa tu email
+                                    {t('form.or_use_email')}
                                 </span>
                             </div>
                         </motion.div>
@@ -158,7 +157,8 @@ export default function LoginPage() {
                             <Input
                                 name="email"                       // Nombre del campo para el formulario
                                 type="email"                       // Tipo email para validación HTML5
-                                placeholder="Tu correo electrónico" // Placeholder descriptivo
+                                defaultValue={state.email || ''}          // Valor inicial del email desde el estado
+                                placeholder={t('form.email_placeholder')} // Placeholder descriptivo
                                 // value={formData.email}             // Valor actual del email desde formData
                                 // error={errors.email}               // Error de validación si existe
                                 icon={<Mail size={18} />}          // Icono de email de Lucide
@@ -170,7 +170,8 @@ export default function LoginPage() {
                             <Input
                                 name="password"                    // Nombre del campo para el formulario
                                 type="password"                    // Tipo password para ocultar texto
-                                placeholder="Tu contraseña"        // Placeholder descriptivo
+                                // defaultValue={state.password || ''}      // Valor inicial de la contraseña desde el estado
+                                placeholder={t('form.password_placeholder')}        // Placeholder descriptivo
                                 // value={formData.password}          // Valor actual de la contraseña
                                 // error={errors.password}            // Error de validación si existe
                                 icon={<Lock size={18} />}          // Icono de candado de Lucide
@@ -197,18 +198,19 @@ export default function LoginPage() {
                                         className="ml-3 text-green-600 font-bold"
                                         style={{ fontFamily: "Comic Sans MS, cursive" }} // Fuente infantil
                                     >
-                                        Recordarme
+                                        {t('form.remember_me')}
                                     </span>
                                 </label>
 
                                 {/* Botón/enlace para "Olvidé mi contraseña" */}
                                 <Button
+                                    type='button'
                                     variant="text"                   // Variante de texto (sin fondo)
                                     size="sm"                        // Tamaño pequeño
                                     // onClick={onForgotPassword}       // Handler para olvidé contraseña
                                     className="text-base transition-all duration-300 ease-in-out hover:text-blue-600"
                                 >
-                                    ¿Olvidaste tu contraseña? 🤔    {/* Texto con emoji */}
+                                    {t('form.forgot_password')} 🤔    {/* Texto con emoji */}
                                 </Button>
                             </div>
 
@@ -224,7 +226,7 @@ export default function LoginPage() {
                                     loading={isPending}                // Muestra spinner si está cargando
                                     className="w-full text-lg py-3 mt-5 transition-all duration-300 ease-in-out" // Ancho completo
                                 >
-                                    ¡ENTRAR A APRENDER! 📚          {/* Texto motivacional con emoji */}
+                                    {t('form.login_button')}          {/* Texto motivacional con emoji */}
                                 </Button>
                             </motion.div>
                         </motion.div>

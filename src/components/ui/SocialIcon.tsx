@@ -26,7 +26,7 @@ export const SocialIcon: React.FC<SocialIconProps> = ({
       ${color}
       ${className}
     `}
-    title={`Conectar con ${provider}`}
+    title={`${provider}`}
     // Solo usar style como fallback si no se pasan clases responsive
     style={!className.includes('w-') ? { width: size, height: size } : {}}
   >
