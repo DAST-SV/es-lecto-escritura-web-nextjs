@@ -17,8 +17,7 @@ export async function middleware(request: NextRequest) {
 // ⚠️ Esto debe ser ESTÁTICO → aquí tienes que repetir los idiomas soportados
 export const config = {
   matcher: [
-    '/',
-    '/(en|es)/:path*', // 👈 aquí actualizas manualmente si agregas "fr" u otro
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api|_next|.*\\..*).*)',
+    '/(es|en)/((?!api|_next|.*\\..*).*)'
   ],
-};
+}

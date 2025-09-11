@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useActionState } from 'react'
-import { login, signup } from './actions'
+import { login, loginWithProvider, signup } from './actions'
 import type { AuthState } from './actions'
 import { Cloud } from '@/src/components/ui/Cloud'
 import { motion } from 'framer-motion'
@@ -12,7 +12,7 @@ import { Button, Input } from '@/src/components/ui';
 import { useTranslations } from 'next-intl';
 
 export default function LoginPage() {
-        const t = useTranslations('auth');
+    const t = useTranslations('auth');
     // Usar useActionState en lugar de useTransition
     const initialState: AuthState = {};
     const [state, formAction, isPending] = useActionState(login, initialState);
@@ -113,7 +113,12 @@ export default function LoginPage() {
                                             size={14}                        // Tamaño del icono
                                             provider={social.provider}       // Proveedor (Google, Facebook, Instagram)
                                             color={social.color}             // Colores específicos del proveedor
-                                            onClick={() => console.log(`Conectar con ${social.provider}`)} // Handler de click con el proveedor
+
+                                            onClick={async () => {
+                                                await loginWithProvider(
+                                                    social.provider.toLowerCase() as 'google' | 'apple' | 'azure' | 'facebook' | 'twitter' | 'spotify'
+                                                )
+                                            }}
                                             icon={social.icon}               // Icono específico del proveedor
                                             className="w-12 h-12 transition-all duration-300 ease-in-out" // Clases adicionales
                                         />

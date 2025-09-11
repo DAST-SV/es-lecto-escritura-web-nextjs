@@ -66,12 +66,6 @@ export const AppleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   </svg>
 );
 
-export const AzureIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg viewBox="0 0 24 24" {...props}>
-    <path fill="currentColor" d="M12 0L1.605 22.5H22.395L12 0z" />
-  </svg>
-);
-
 export const DiscordIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg viewBox="0 0 71 55" {...props}>
     <path fill="currentColor" d="M60.104 0H10.896C4.872 0 0 4.872 0 10.896v33.208C0 50.128 4.872 55 10.896 55h42.208C66.128 55 71 50.128 71 44.104V10.896C71 4.872 66.128 0 60.104 0zM50.08 37.12s-1.664-1.92-3.04-3.52c5.44-1.6 7.52-5.12 7.52-5.12-1.76 1.12-3.44 1.92-4.96 2.56-2.16-2.48-5.36-2-5.36-2-3.76.28-5.36 2.56-5.36 2.56-1.52-.64-3.2-1.44-4.96-2.56 0 0 2.08 3.52 7.52 5.12-1.376 1.6-3.04 3.52-3.04 3.52-10.24-3.28-14.08-10.4-14.08-10.4 0-22.4 10.4-22.4 10.4-22.4h28.16s10.4 0 10.4 22.4c0 0-3.84 7.12-14.08 10.4z" />

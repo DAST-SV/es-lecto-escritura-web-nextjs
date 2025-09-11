@@ -35,6 +35,32 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
   redirect('/')
 }
 
+export async function loginWithProvider(provider: 'google' | 'apple' | 'azure' | 'facebook' | 'twitter' | 'spotify') {
+  const supabase = await createClient()
+
+  // URL donde Supabase redirige después del login
+  const redirectTo = 'https://hxxtkzshnnrwxvvgtgsh.supabase.co/auth/v1/callback';
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: provider === 'azure' ? 'azure' : provider, // Microsoft usa 'azure'
+    options: {
+      redirectTo,
+      queryParams: {
+        // Ejemplo: pedir permisos extra
+        // access_type: 'offline',
+        // prompt: 'consent',
+      },
+    },
+  })
+
+  if (error) {
+    throw new Error(await translateAuthError(error.message))
+  }
+
+  // 🔑 Redirigir al usuario hacia la URL de login del proveedor
+  redirect(data.url)
+}
+
 export async function signup(formData: FormData) {
   const supabase = await createClient()
 
