@@ -9,16 +9,23 @@ import { backgrounds } from "@/src/typings/types-page-book/backgrounds";
 import { PageRenderer } from "@/src/components/components-for-books/book/PageRenderer";
 import type { Page } from "@/src/typings/types-page-book/index";
 import { FlipBook } from "@/src/components/components-for-books/book/FlipBook"
+import { getUserId } from '@/src/utils/supabase/utilsClient'
+import { uploadFile, generateFilePath } from '@/src/utils/supabase/storageService'
+
+// Tipos
 // Tipos
 interface page {
     id: string;
     layout: string;
     title?: string;
     text?: string;
-    image?: string | null;
-    background?: string | null;
+    image?: string | null;         // URL para mostrar en la UI
+    file?: Blob | File | null;     // Archivo real para subir
+    background?: string | null;    // color o URL para mostrar
+    backgroundFile?: Blob | File | null; // Archivo real del background
     font?: string;
 }
+
 
 interface BookData {
     pages: Page[];
@@ -167,12 +174,14 @@ export function Book() {
             if (!file) return;
 
             try {
-                // Limitamos la imagen a 800x800 (puedes ajustar)
-                const dataUrl = await resizeImage(file, 800, 800);
+                const resizedBlob = await resizeImage(file, 800, 800);
+
+                // Si quieres mostrarlo en la UI
+                const previewUrl = URL.createObjectURL(resizedBlob);
 
                 setpages(prev => {
                     const updated = [...prev];
-                    updated[currentpage] = { ...updated[currentpage], image: dataUrl };
+                    updated[currentpage] = { ...updated[currentpage], image: previewUrl, file: resizedBlob };
                     return updated;
                 });
             } catch (error) {
@@ -196,23 +205,42 @@ export function Book() {
             const updated = [...prev];
             updated[currentpage] = {
                 ...updated[currentpage],
-                background: value || null
+                background: value || null,
+                backgroundFile: null // Limpiamos archivo si es color
             };
             return updated;
         });
         setTimeout(() => setBookKey(prev => prev + 1), 50);
     }, [currentpage]);
 
-    const handleBackgroundFile = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                handleBackgroundChange(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    }, [handleBackgroundChange]);
+
+    const handleBackgroundFile = useCallback(
+        async (event: React.ChangeEvent<HTMLInputElement>) => {
+            const file = event.target.files?.[0];
+            if (!file) return;
+
+            try {
+                // Resizing opcional, si quieres limitar tamaño
+                const resizedBlob = await resizeImage(file, 1920, 1080); // Ajusta tamaño según necesites
+                const previewUrl = URL.createObjectURL(resizedBlob);
+
+                setpages(prev => {
+                    const updated = [...prev];
+                    updated[currentpage] = {
+                        ...updated[currentpage],
+                        background: previewUrl,      // URL para mostrar
+                        backgroundFile: resizedBlob  // Blob real para subir
+                    };
+                    return updated;
+                });
+
+            } catch (error) {
+                console.error("Error al procesar la imagen de fondo:", error);
+            }
+        },
+        [currentpage]
+    );
+
 
     // Handler para fuentes
     const handleFontChange = useCallback((font: string) => {
@@ -272,58 +300,99 @@ export function Book() {
     }, [pages.length]);
 
 
-    const createBookJson = useCallback(async () => {
-        const convertedPages: Page[] = pages.map(p => convertPage(p));
-
-        const bookObject: BookData = {
-            pages: convertedPages,
-            title: "Mi libro"
-        };
-
-        // Guardamos las páginas para renderizar FlipBook
-        setFinalBookPages(bookObject.pages);
-
-        // Convertimos a JSON
-        const json = JSON.stringify(bookObject, null, 2);
-
-        try {
-            // 🔹 Petición POST al backend en C#
-            const response = await fetch("https://localhost:44391/api/LibrosGuardado/save", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    fileName: "mi_libro",   // 👈 Nombre con el que quieres guardarlo
-                    jsonContent: json       // 👈 El contenido real del JSON
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error("Error al guardar el libro");
-            }
-
-            const result = await response.json();
-            console.log("✅ Libro guardado en backend:", result);
-        } catch (error) {
-            console.error("❌ Error guardando libro:", error);
+    const getFileExtension = (file: Blob | File) => {
+        if (file instanceof File) {
+            return file.name.split('.').pop() || "bin";
+        } else {
+            // extraemos del type MIME, ej: "image/jpeg" -> "jpeg"
+            const mimeParts = file.type.split('/');
+            return mimeParts[1] || "bin";
         }
+    };
 
-        // 🔹 (Opcional) También descargar el JSON en el cliente
-        const blob = new Blob([json], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "mi_libro.json";
-        link.click();
-        URL.revokeObjectURL(url);
-    }, [pages]);
+const createBookJson = useCallback(async () => {
+    let LibroId: string | null = null;
+    const imagenesSubidas: string[] = [];
+
+    try {
+        const userId = await getUserId();
+        if (!userId) return;
+
+        const firstPageTitle = pages[0]?.title?.replace(/\s+/g, "_") || "pagina";
+
+        // 1️⃣ Crear libro en la DB y obtener LibroId
+        const response = await fetch("/api/libros/createbook", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, title: firstPageTitle })
+        });
+        
+        const data = await response.json();
+        if (!data.libroId) throw new Error(data.error || "Error creando libro");
+        LibroId = data.libroId;
+
+        // 2️⃣ Subir imágenes y convertir páginas
+        const convertedPages: Page[] = await Promise.all(
+            pages.map(async (p: page, idx: number) => {
+                const pageCopy = convertPage(p);
+
+                // Subir archivo principal
+                if (p.file) {
+                    const ext = getFileExtension(p.file);
+                    const filePath = generateFilePath(userId, LibroId!, `pagina_${idx + 1}_file.${ext}`);
+                    pageCopy.image = await uploadFile(p.file, "ImgLibros", filePath);
+                    imagenesSubidas.push(filePath);
+                }
+
+                // Subir background
+                if (p.backgroundFile) {
+                    const ext = getFileExtension(p.backgroundFile);
+                    const bgPath = generateFilePath(userId, LibroId!, `pagina_${idx + 1}_bg.${ext}`);
+                    pageCopy.background = await uploadFile(p.backgroundFile, "ImgLibros", bgPath);
+                    imagenesSubidas.push(bgPath);
+                }
+
+                return pageCopy;
+            })
+        );
+
+        // 3️⃣ Insertar páginas en la DB
+        const resPaginas = await fetch("/api/libros/createpages", { // ✅ SIN /route
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ LibroId, pages: convertedPages })
+        });
+
+        const dataPaginas = await resPaginas.json();
+        if (!dataPaginas.ok) throw new Error(dataPaginas.error || "Error guardando páginas");
+
+        console.log("✅ Libro y páginas creadas correctamente");
+    } catch (error: any) {
+        console.error("❌ Error creando libro:", error.message);
+
+        // 🔹 Rollback: borrar libro y páginas
+        if (LibroId) {
+            try {
+                await fetch(`/api/libros/deletebook`, { // ✅ SIN /route
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ LibroId, imagenes: imagenesSubidas })
+                });
+            } catch (rollbackErr) {
+                console.error("❌ Error haciendo rollback:", rollbackErr);
+            }
+        }
+    }
+}, [pages]);
 
 
 
 
 
-    function resizeImage(file: File, maxWidth: number, maxHeight: number): Promise<string> {
+
+
+
+    function resizeImage(file: File, maxWidth: number, maxHeight: number): Promise<Blob> {
         return new Promise((resolve, reject) => {
             const img = new Image();
             const reader = new FileReader();
@@ -338,7 +407,7 @@ export function Book() {
                 let width = img.width;
                 let height = img.height;
 
-                // Calculamos las proporciones para que la imagen no se distorsione
+                // Mantener proporciones
                 if (width > maxWidth) {
                     height = (maxWidth / width) * height;
                     width = maxWidth;
@@ -355,15 +424,24 @@ export function Book() {
                 if (!ctx) return reject("No se pudo obtener contexto del canvas");
 
                 ctx.drawImage(img, 0, 0, width, height);
-                // Convertimos a Base64 (JPEG con calidad 0.8)
-                const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
-                resolve(dataUrl);
+
+                // Convertir a Blob (JPEG con calidad 0.8)
+                canvas.toBlob(
+                    (blob) => {
+                        if (blob) resolve(blob);
+                        else reject("No se pudo crear el Blob");
+                    },
+                    "image/jpeg",
+                    0.8
+                );
             };
 
             reader.onerror = (err) => reject(err);
             reader.readAsDataURL(file);
         });
     }
+
+
 
     return (
         <>
