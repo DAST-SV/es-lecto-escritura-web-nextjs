@@ -25,7 +25,8 @@ export async function insertarPaginas(libroId: string, pages: Page[]) {
     border: p.border || null,
     numeropagina: idx + 1,
   }));
-
+  
+  console.log("Paginas mapeadas",paginasToInsert)
   const { error } = await supabaseAdmin
     .from("paginaslibro")
     .insert(paginasToInsert);
