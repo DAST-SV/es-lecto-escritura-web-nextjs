@@ -11,10 +11,15 @@ const  supabase = createClient()
  * Retorna null si no hay usuario logueado.
  */
 export async function getUserId(): Promise<string | null> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  console.log("Session:", sessionData); // <-- revisá si aquí ya viene null
   const { data: userData, error: userError } = await supabase.auth.getUser();
+  console.log("User:", userData, "Error:", userError);
+
   if (userError || !userData.user) return null;
   return userData.user.id;
 }
+
 
 /**
  * Obtener el email del usuario actual desde la sesión en el navegador.

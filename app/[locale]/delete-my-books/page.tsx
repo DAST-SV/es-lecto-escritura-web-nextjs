@@ -5,7 +5,7 @@ import ImageGrid from "@/src/utils/imagenes/ImageGrid";
 import FlipBook from "@/src/components/components-for-books/book/FlipBook";
 import type { Page } from "@/src/typings/types-page-book/index";
 import Link from "next/link";
-import {getUserId} from "@/src/utils/supabase/utilsClient";
+import { getUserId } from "@/src/utils/supabase/utilsClient";
 
 interface BookData {
   pages: Page[];
@@ -13,8 +13,8 @@ interface BookData {
 }
 
 interface LibroUI {
-  Json: string;      // Aquí pondremos idlibro
-  src: string;       // image o background de la primera página
+  Json: string;      // idlibro
+  src: string;       // imagen o background de la primera página
   caption: string;   // título del libro
   description?: string; // title de la primera página
 }
@@ -24,44 +24,43 @@ const MyBooks: React.FC = () => {
   const [bookData, setBookData] = useState<BookData | null>(null);
   const [libros, setLibros] = useState<LibroUI[]>([]);
 
+  // 🔹 Cargar libros
+  useEffect(() => {
+    const fetchLibros = async () => {
+      try {
+        const idUsuario = await getUserId();
+        if (!idUsuario) return;
 
-useEffect(() => {
-  const fetchLibros = async () => {
-    try {
-      const idUsuario = await getUserId();
-      if (!idUsuario) return;
+        const resLibros = await fetch(`/api/libros/bookinformation/${idUsuario}`);
+        const dataLibros = await resLibros.json();
+        const librosUsuario = dataLibros?.libros ?? [];
 
-      const resLibros = await fetch(`/api/libros/bookinformation/${idUsuario}`);
-      const dataLibros = await resLibros.json();
-      const librosUsuario = dataLibros?.libros ?? [];
+        const librosUI: LibroUI[] = await Promise.all(
+          librosUsuario.map(async (libro: any) => {
+            const resPages = await fetch(`/api/libros/pagesforbook/${libro.idlibro}`);
+            const dataPages = await resPages.json();
+            const pages: Page[] = dataPages?.pages ?? [];
 
-      const librosUI: LibroUI[] = await Promise.all(
-        librosUsuario.map(async (libro: any) => {
-          const resPages = await fetch(`/api/libros/pagesforbook/${libro.idlibro}`);
-          const dataPages = await resPages.json();
-          const pages: Page[] = dataPages?.pages ?? [];
+            if (!pages.length) return null;
 
-          if (!pages.length) return null;
+            const firstPage = pages[0];
+            return {
+              Json: libro.idlibro,
+              src: firstPage.image ?? firstPage.background ?? "/Imagenes/placeholder.png",
+              caption: libro.titulo,
+              description: firstPage.title ?? "",
+            };
+          })
+        );
 
-          const firstPage = pages[0];
-          return {
-            Json: libro.idlibro,
-            src: firstPage.image ?? firstPage.background ?? "/Imagenes/placeholder.png",
-            caption: libro.titulo,
-            description: firstPage.title ?? "",
-          };
-        })
-      );
+        setLibros(librosUI.filter(Boolean) as LibroUI[]);
+      } catch (error) {
+        console.error("❌ Error cargando libros y páginas:", error);
+      }
+    };
 
-      setLibros(librosUI.filter(Boolean) as LibroUI[]);
-    } catch (error) {
-      console.error("❌ Error cargando libros y páginas:", error);
-    }
-  };
-
-  fetchLibros();
-}, []);
-
+    fetchLibros();
+  }, []);
 
   // 🔹 Cargar libro seleccionado
   useEffect(() => {
@@ -81,9 +80,28 @@ useEffect(() => {
     }
   }, [selectedBook]);
 
+  // 🔹 Eliminar libro
+  const handleDeleteBook = async (idLibro: string) => {
+    if (!confirm("¿Seguro que deseas eliminar este libro?")) return;
+
+    try {
+      const res = await fetch(`/api/libros/deletebook/${idLibro}`, { method: "DELETE" });
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("Libro eliminado correctamente ✅");
+        // Actualizar la lista en el estado
+        setLibros((prev) => prev.filter((libro) => libro.Json !== idLibro));
+      } else {
+        alert(`Error al eliminar libro: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("❌ Error al eliminar libro:", error);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-yellow-100 via-pink-100 to-blue-100">
-
       {!selectedBook && (
         <>
           {/* BANNER */}
@@ -106,25 +124,18 @@ useEffect(() => {
           {/* GALERÍA */}
           <div className="max-w-4xl mx-auto px-4 mb-12">
             <h2 className="text-3xl font-bold mb-6 text-center text-blue-700">Galería de Cuentos</h2>
+
             <ImageGrid
               images={libros}
               shapeType={2}
-              onClick={(book) => setSelectedBook({ json: book.Json ?? "", caption: book.caption })}
+              columns={3}
+              onClick={(book) => setSelectedBook({ json: book.Json!, caption: book.caption })}
+              showButton={true}
+              buttonText="Eliminar"
+              buttonColor="red"
+              buttonPosition="corner"
+              onButtonClick={(book) => handleDeleteBook(book.Json!)}
             />
-          </div>
-
-          {/* BANNER Juegos */}
-          <div className="max-w-4xl mx-auto mb-12">
-            <Link href="../../pages/pages-games">
-              <img
-                src="/Imagenes/Juega aqui.jpg"
-                alt="Banner"
-                className="w-150 h-auto rounded-lg shadow-md hover:scale-110 transition-transform duration-300"
-              />
-            </Link>
-            <p className="text-center mt-2 text-lg text-pink-600 font-medium">
-              ¡Haz clic y juega mientras aprendes! 🎮✨
-            </p>
           </div>
         </>
       )}
@@ -143,6 +154,6 @@ useEffect(() => {
       )}
     </div>
   );
-}
+};
 
 export default MyBooks;

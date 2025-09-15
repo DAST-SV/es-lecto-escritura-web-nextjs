@@ -32,7 +32,7 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
   }
 
   revalidatePath('/', 'layout')
-  redirect('/')
+  redirect('/es/pages-my-books')
 }
 
 export async function loginWithProvider(provider: 'google' | 'apple' | 'azure' | 'facebook' | 'twitter' | 'spotify') {

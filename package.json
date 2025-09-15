@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.8",
     "@radix-ui/react-slot": "^1.2.3",
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
@@ -21,6 +22,7 @@
     "next-intl": "^4.3.6",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-hot-toast": "^2.6.0",
     "react-pageflip": "^2.0.3",
     "rot-js": "^2.2.1",
     "tailwind-merge": "^3.3.1"

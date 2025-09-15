@@ -11,8 +11,8 @@ import type { Page } from "@/src/typings/types-page-book/index";
 import { FlipBook } from "@/src/components/components-for-books/book/FlipBook"
 import { getUserId } from '@/src/utils/supabase/utilsClient'
 import { uploadFile, generateFilePath } from '@/src/utils/supabase/storageService'
+import toast, { Toaster } from "react-hot-toast";
 
-// Tipos
 // Tipos
 interface page {
     id: string;
@@ -25,7 +25,6 @@ interface page {
     backgroundFile?: Blob | File | null; // Archivo real del background
     font?: string;
 }
-
 
 interface BookData {
     pages: Page[];
@@ -56,7 +55,6 @@ function convertPage(oldPage: page): Page {
 
 // ============= COMPONENTE RENDERIZADOR DE PÁGINA =============
 const PageRendererIndex: React.FC<PageRendererIndexProps> = ({ page, pageNumber }) => {
-
     const Pagina = convertPage(page);
     return (
         <div className="w-full h-full relative overflow-hidden">
@@ -73,7 +71,7 @@ const PageRendererIndex: React.FC<PageRendererIndexProps> = ({ page, pageNumber 
                 <PageRenderer page={Pagina} />
             </div>
 
-            {/* CAMBIO 1: Aumenté z-50 y bg-opacity-70 para que el número sea más visible */}
+            {/* Número de página más visible */}
             <div className="absolute bottom-3 right-3 px-2 py-1 rounded text-xs font-bold bg-black bg-opacity-70 text-white z-50">
                 {pageNumber}
             </div>
@@ -113,6 +111,20 @@ export function Book() {
     const [finalBookPages, setFinalBookPages] = useState<Page[] | null>(null);
     const bookRef = useRef<any>(null);
 
+    // Cleanup al desmontar el componente para evitar memory leaks
+    useEffect(() => {
+        return () => {
+            pages.forEach(page => {
+                if (page.image && page.image.startsWith('blob:')) {
+                    URL.revokeObjectURL(page.image);
+                }
+                if (page.background && typeof page.background === 'string' && page.background.startsWith('blob:')) {
+                    URL.revokeObjectURL(page.background);
+                }
+            });
+        };
+    }, []);
+
     // Sincronizar campos de edición con la página actual
     useEffect(() => {
         if (currentpage >= 0 && currentpage < pages.length) {
@@ -137,7 +149,20 @@ export function Book() {
 
     const deletepage = useCallback(() => {
         if (pages.length > 2) {
-            setpages(prev => prev.filter((_, index) => index !== currentpage));
+            setpages(prev => {
+                const pageToDelete = prev[currentpage];
+                
+                // Liberar URLs de blob antes de eliminar la página
+                if (pageToDelete.image && pageToDelete.image.startsWith('blob:')) {
+                    URL.revokeObjectURL(pageToDelete.image);
+                }
+                if (pageToDelete.background && typeof pageToDelete.background === 'string' && pageToDelete.background.startsWith('blob:')) {
+                    URL.revokeObjectURL(pageToDelete.background);
+                }
+                
+                return prev.filter((_, index) => index !== currentpage);
+            });
+            
             if (currentpage > 0) setCurrentpage(currentpage - 1);
             setBookKey(prev => prev + 1);
         }
@@ -167,7 +192,7 @@ export function Book() {
         setBookKey(prev => prev + 1);
     }, [currentpage]);
 
-    // Handler para imágenes
+    // Handler para imágenes - CORREGIDO
     const handleImageChange = useCallback(
         async (event: React.ChangeEvent<HTMLInputElement>) => {
             const file = event.target.files?.[0];
@@ -175,36 +200,67 @@ export function Book() {
 
             try {
                 const resizedBlob = await resizeImage(file, 800, 800);
-
-                // Si quieres mostrarlo en la UI
                 const previewUrl = URL.createObjectURL(resizedBlob);
 
                 setpages(prev => {
                     const updated = [...prev];
-                    updated[currentpage] = { ...updated[currentpage], image: previewUrl, file: resizedBlob };
+                    const currentPage = updated[currentpage];
+                    
+                    // Liberar URL anterior si existe para evitar memory leaks
+                    if (currentPage.image && currentPage.image.startsWith('blob:')) {
+                        URL.revokeObjectURL(currentPage.image);
+                    }
+                    
+                    updated[currentpage] = { 
+                        ...currentPage, 
+                        image: previewUrl, 
+                        file: resizedBlob 
+                    };
                     return updated;
                 });
             } catch (error) {
                 console.error("Error al procesar la imagen:", error);
+                toast.error("Error al procesar la imagen");
             }
         },
         [currentpage]
     );
 
+    // Función removeImage CORREGIDA
     const removeImage = useCallback(() => {
         setpages(prev => {
             const updated = [...prev];
-            updated[currentpage] = { ...updated[currentpage], image: null };
+            const currentPage = updated[currentpage];
+            
+            // Liberar memoria del blob URL si existe
+            if (currentPage.image && currentPage.image.startsWith('blob:')) {
+                URL.revokeObjectURL(currentPage.image);
+            }
+            
+            // Limpiar tanto la URL como el archivo
+            updated[currentpage] = { 
+                ...currentPage, 
+                image: null,
+                file: null 
+            };
+            
             return updated;
         });
     }, [currentpage]);
 
-    // Handlers para fondos
+    // Handlers para fondos - CORREGIDOS
     const handleBackgroundChange = useCallback((value: string) => {
         setpages(prev => {
             const updated = [...prev];
+            const currentPage = updated[currentpage];
+            
+            // Liberar URL anterior si existe
+            if (currentPage.background && typeof currentPage.background === 'string' && currentPage.background.startsWith('blob:')) {
+                URL.revokeObjectURL(currentPage.background);
+            }
+            
             updated[currentpage] = {
-                ...updated[currentpage],
+                ...currentPage,
                 background: value || null,
                 backgroundFile: null // Limpiamos archivo si es color
             };
@@ -213,21 +269,26 @@ export function Book() {
         setTimeout(() => setBookKey(prev => prev + 1), 50);
     }, [currentpage]);
 
-
     const handleBackgroundFile = useCallback(
         async (event: React.ChangeEvent<HTMLInputElement>) => {
             const file = event.target.files?.[0];
             if (!file) return;
 
             try {
-                // Resizing opcional, si quieres limitar tamaño
-                const resizedBlob = await resizeImage(file, 1920, 1080); // Ajusta tamaño según necesites
+                const resizedBlob = await resizeImage(file, 1920, 1080);
                 const previewUrl = URL.createObjectURL(resizedBlob);
 
                 setpages(prev => {
                     const updated = [...prev];
+                    const currentPage = updated[currentpage];
+                    
+                    // Liberar URL anterior si existe
+                    if (currentPage.background && typeof currentPage.background === 'string' && currentPage.background.startsWith('blob:')) {
+                        URL.revokeObjectURL(currentPage.background);
+                    }
+                    
                     updated[currentpage] = {
-                        ...updated[currentpage],
+                        ...currentPage,
                         background: previewUrl,      // URL para mostrar
                         backgroundFile: resizedBlob  // Blob real para subir
                     };
@@ -236,11 +297,34 @@ export function Book() {
 
             } catch (error) {
                 console.error("Error al procesar la imagen de fondo:", error);
+                toast.error("Error al procesar la imagen de fondo");
             }
         },
         [currentpage]
     );
 
+    // Función para quitar fondo - NUEVA
+    const removeBackground = useCallback(() => {
+        setpages(prev => {
+            const updated = [...prev];
+            const currentPage = updated[currentpage];
+            
+            // Liberar memoria del blob URL si existe
+            if (currentPage.background && typeof currentPage.background === 'string' && currentPage.background.startsWith('blob:')) {
+                URL.revokeObjectURL(currentPage.background);
+            }
+            
+            // Limpiar tanto la URL como el archivo
+            updated[currentpage] = { 
+                ...currentPage, 
+                background: null,
+                backgroundFile: null 
+            };
+            
+            return updated;
+        });
+        setTimeout(() => setBookKey(prev => prev + 1), 50);
+    }, [currentpage]);
 
     // Handler para fuentes
     const handleFontChange = useCallback((font: string) => {
@@ -251,23 +335,12 @@ export function Book() {
         });
     }, [currentpage]);
 
-    // CAMBIO 2: Mejoré la navegación con try-catch y mejor validación
+    // Navegación mejorada
     const goTopage = useCallback((pageIndex: number) => {
         if (!isFlipping && bookRef.current && pageIndex >= 0 && pageIndex < pages.length) {
             setIsFlipping(true);
-            const inputFileImg = document.getElementById("background_fileimg") as HTMLInputElement;
-            const inputFileBackground = document.getElementById("background_filebackground") as HTMLInputElement;
             try {
                 bookRef.current.pageFlip().flip(pageIndex);
-                if (inputFileImg) {
-                    const newInput = inputFileImg.cloneNode(true) as HTMLInputElement; // clona el nodo
-                    inputFileImg.parentNode?.replaceChild(newInput, inputFileImg); // reemplaza el viejo
-                }
-
-                if (inputFileBackground) {
-                    const newInput = inputFileBackground.cloneNode(true) as HTMLInputElement;
-                    inputFileBackground.parentNode?.replaceChild(newInput, inputFileBackground);
-                }
                 setCurrentpage(pageIndex);
             } catch (error) {
                 console.error("Error al cambiar de página:", error);
@@ -289,7 +362,7 @@ export function Book() {
         }
     }, [currentpage, isFlipping, goTopage]);
 
-    // CAMBIO 3: Agregué validación en onFlip para evitar índices fuera de rango
+    // Handler onFlip con validación
     const onFlip = useCallback((e: unknown) => {
         const ev = e as { data: number };
         // Validar que el índice está dentro del rango válido
@@ -298,7 +371,6 @@ export function Book() {
             setEditingField(null);
         }
     }, [pages.length]);
-
 
     const getFileExtension = (file: Blob | File) => {
         if (file instanceof File) {
@@ -310,87 +382,83 @@ export function Book() {
         }
     };
 
-const createBookJson = useCallback(async () => {
-    let LibroId: string | null = null;
-    const imagenesSubidas: string[] = [];
+    const createBookJson = useCallback(async () => {
+        let LibroId: string | null = null;
+        const imagenesSubidas: string[] = [];
 
-    try {
-        const userId = await getUserId();
-        if (!userId) return;
+        try {
+            const userId = await getUserId();
+            if (!userId) return;
 
-        const firstPageTitle = pages[0]?.title?.replace(/\s+/g, "_") || "pagina";
+            const firstPageTitle = pages[0]?.title?.replace(/\s+/g, "_") || "pagina";
 
-        // 1️⃣ Crear libro en la DB y obtener LibroId
-        const response = await fetch("/api/libros/createbook", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId, title: firstPageTitle })
-        });
-        
-        const data = await response.json();
-        if (!data.libroId) throw new Error(data.error || "Error creando libro");
-        LibroId = data.libroId;
+            // 1️⃣ Crear libro en la DB y obtener LibroId
+            const response = await fetch("/api/libros/createbook", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, title: firstPageTitle })
+            });
 
-        // 2️⃣ Subir imágenes y convertir páginas
-        const convertedPages: Page[] = await Promise.all(
-            pages.map(async (p: page, idx: number) => {
-                const pageCopy = convertPage(p);
+            const data = await response.json();
+            if (!data.libroId) throw new Error(data.error || "Error creando libro");
+            LibroId = data.libroId;
 
-                // Subir archivo principal
-                if (p.file) {
-                    const ext = getFileExtension(p.file);
-                    const filePath = generateFilePath(userId, LibroId!, `pagina_${idx + 1}_file.${ext}`);
-                    pageCopy.image = await uploadFile(p.file, "ImgLibros", filePath);
-                    imagenesSubidas.push(filePath);
+            // 2️⃣ Subir imágenes y convertir páginas
+            const convertedPages: Page[] = await Promise.all(
+                pages.map(async (p: page, idx: number) => {
+                    const pageCopy = convertPage(p);
+
+                    // Subir archivo principal
+                    if (p.file) {
+                        const ext = getFileExtension(p.file);
+                        const filePath = generateFilePath(userId, LibroId!, `pagina_${idx + 1}_file.${ext}`);
+                        pageCopy.image = await uploadFile(p.file, "ImgLibros", filePath);
+                        imagenesSubidas.push(filePath);
+                    }
+
+                    // Subir background
+                    if (p.backgroundFile) {
+                        const ext = getFileExtension(p.backgroundFile);
+                        const bgPath = generateFilePath(userId, LibroId!, `pagina_${idx + 1}_bg.${ext}`);
+                        pageCopy.background = await uploadFile(p.backgroundFile, "ImgLibros", bgPath);
+                        imagenesSubidas.push(bgPath);
+                    }
+
+                    return pageCopy;
+                })
+            );
+
+            // 3️⃣ Insertar páginas en la DB
+            const resPaginas = await fetch("/api/libros/createpages", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ LibroId, pages: convertedPages })
+            });
+
+            const dataPaginas = await resPaginas.json();
+            if (!dataPaginas.ok) throw new Error(dataPaginas.error || "Error guardando páginas");
+
+            console.log("✅ Libro y páginas creadas correctamente");
+            toast.success("📚 Libro guardado correctamente");
+
+        } catch (error: any) {
+            console.error("❌ Error creando libro:", error.message);
+            toast.error("❌ Error al guardar el libro");
+
+            // 🔹 Rollback: borrar libro y páginas
+            if (LibroId) {
+                try {
+                    await fetch(`/api/libros/deletebook`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ LibroId, imagenes: imagenesSubidas })
+                    });
+                } catch (rollbackErr) {
+                    console.error("❌ Error haciendo rollback:", rollbackErr);
                 }
-
-                // Subir background
-                if (p.backgroundFile) {
-                    const ext = getFileExtension(p.backgroundFile);
-                    const bgPath = generateFilePath(userId, LibroId!, `pagina_${idx + 1}_bg.${ext}`);
-                    pageCopy.background = await uploadFile(p.backgroundFile, "ImgLibros", bgPath);
-                    imagenesSubidas.push(bgPath);
-                }
-
-                return pageCopy;
-            })
-        );
-
-        // 3️⃣ Insertar páginas en la DB
-        const resPaginas = await fetch("/api/libros/createpages", { // ✅ SIN /route
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ LibroId, pages: convertedPages })
-        });
-
-        const dataPaginas = await resPaginas.json();
-        if (!dataPaginas.ok) throw new Error(dataPaginas.error || "Error guardando páginas");
-
-        console.log("✅ Libro y páginas creadas correctamente");
-    } catch (error: any) {
-        console.error("❌ Error creando libro:", error.message);
-
-        // 🔹 Rollback: borrar libro y páginas
-        if (LibroId) {
-            try {
-                await fetch(`/api/libros/deletebook`, { // ✅ SIN /route
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ LibroId, imagenes: imagenesSubidas })
-                });
-            } catch (rollbackErr) {
-                console.error("❌ Error haciendo rollback:", rollbackErr);
             }
         }
-    }
-}, [pages]);
-
-
-
-
-
-
-
+    }, [pages]);
 
     function resizeImage(file: File, maxWidth: number, maxHeight: number): Promise<Blob> {
         return new Promise((resolve, reject) => {
@@ -441,11 +509,10 @@ const createBookJson = useCallback(async () => {
         });
     }
 
-
-
     return (
         <>
             <div className="flex flex-col lg:flex-row gap-6 p-6 min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+                <Toaster position="top-right" />
 
                 {finalBookPages?.length ? (
                     <div className="mx-auto my-6 w-full h-full">
@@ -471,7 +538,7 @@ const createBookJson = useCallback(async () => {
                                 <select
                                     value={pages[currentpage]?.layout}
                                     onChange={(e) => handleLayoutChange(e.target.value)}
-                                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full p-2 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                                 >
                                     {Object.keys(layouts).map(layoutName => (
                                         <option key={layoutName} value={layoutName}>
@@ -588,7 +655,7 @@ const createBookJson = useCallback(async () => {
                                 </label>
 
                                 <input
-                                    key={currentpage + "-img"} // forzamos un nuevo input al cambiar de página
+                                    key={currentpage + "-img"}
                                     type="file"
                                     accept="image/*"
                                     onChange={handleImageChange}
@@ -610,20 +677,21 @@ const createBookJson = useCallback(async () => {
                                 <label className="block text-sm font-bold text-gray-700 mb-3">
                                     🎨 Fondo de página {currentpage + 1}:
                                 </label>
-
                                 <select
                                     value={pages[currentpage]?.background || ""}
                                     onChange={(e) => handleBackgroundChange(e.target.value)}
-                                    className="w-full mb-3 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                    className="w-full mb-3 p-2 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                                 >
                                     <option value="">Sin fondo (blanco)</option>
-                                    {Object.keys(backgrounds).filter(k => k !== 'blanco').map(key => (
-                                        <option key={key} value={key}>{key}</option>
-                                    ))}
+                                    {Object.keys(backgrounds)
+                                        .filter(k => k !== 'blanco')
+                                        .map(key => (
+                                            <option key={key} value={key}>{key}</option>
+                                        ))}
                                 </select>
 
                                 <input
-                                    key={currentpage + "-background"} // forzamos un nuevo input
+                                    key={currentpage + "-background"}
                                     type="file"
                                     accept="image/*"
                                     onChange={handleBackgroundFile}
@@ -632,7 +700,7 @@ const createBookJson = useCallback(async () => {
 
                                 {pages[currentpage]?.background && (
                                     <button
-                                        onClick={() => handleBackgroundChange("")}
+                                        onClick={removeBackground}
                                         className="w-full p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium"
                                     >
                                         🗑 Quitar Fondo
@@ -649,7 +717,7 @@ const createBookJson = useCallback(async () => {
                                 <select
                                     value={pages[currentpage]?.font || "Arial"}
                                     onChange={(e) => handleFontChange(e.target.value)}
-                                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                                    className="w-full p-2 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                                 >
                                     {Object.keys(HtmlFontFamilies).map(fontName => (
                                         <option key={fontName} value={fontName}>{fontName}</option>
@@ -669,7 +737,7 @@ const createBookJson = useCallback(async () => {
                                 <select
                                     value={currentpage}
                                     onChange={(e) => goTopage(parseInt(e.target.value))}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    className="w-full p-3 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                     disabled={isFlipping}
                                 >
                                     {pages.map((_, index) => (
@@ -743,7 +811,7 @@ const createBookJson = useCallback(async () => {
                                     maxWidth={400}
                                     minHeight={600}
                                     maxHeight={600}
-                                    showPageCorners={true}   // <-- aquí
+                                    showPageCorners={true}
                                 >
                                     {pages.map((page, index) => (
                                         <div key={page.id} className="bg-white">
