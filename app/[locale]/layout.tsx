@@ -6,6 +6,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Metadata } from 'next';
 import { ReactNode } from 'react';
 import "../globals.css";
+import NavBar from '@/src/components/nav/NavBar';
 
 // Usa los tipos exactos que Next.js espera
 interface LayoutProps {
@@ -23,7 +24,7 @@ export async function generateMetadata({
   params
 }: LayoutProps): Promise<Metadata> {
   const { locale } = await params;
-  
+
   // Validación de locale usando la función de tu config
   if (!routing.locales.includes(locale as any)) {
     return {
@@ -31,9 +32,9 @@ export async function generateMetadata({
       description: 'The requested page could not be found.'
     };
   }
-  
+
   const t = await getTranslations({ locale, namespace: 'layout' });
-  
+
   return {
     title: t('meta.title'),
     description: t('meta.description')
@@ -59,10 +60,10 @@ export default async function RootLayout({
   setRequestLocale(validLocale);
 
   return (
-    <html lang={validLocale}>
+    <html lang={validLocale} className="bg-gray-100">
       <body>
         <NextIntlClientProvider>
-          {children}
+            {children}
         </NextIntlClientProvider>
       </body>
     </html>

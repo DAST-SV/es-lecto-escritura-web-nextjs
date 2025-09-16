@@ -16,8 +16,5 @@ export async function middleware(request: NextRequest) {
 
 // ⚠️ Esto debe ser ESTÁTICO → aquí tienes que repetir los idiomas soportados
 export const config = {
-  matcher: [
-    '/((?!api|_next|.*\\..*).*)',
-    '/(es|en)/((?!api|_next|.*\\..*).*)'
-  ],
+  matcher: ['/((?!api|_next|.*\\..*).*)']
 }
