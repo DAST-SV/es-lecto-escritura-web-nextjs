@@ -10,6 +10,9 @@ export type HtmlFontFamiliestype = keyof typeof HtmlFontFamilies;
 export type backgroundstype = keyof typeof backgrounds;
 
 
+////
+//Este tipo se usa para la construccion del json para visualizar el libro
+////
 // Tipo de cada página individual
 export interface Page {
   layout: LayoutType;
@@ -23,6 +26,21 @@ export interface Page {
   background?:backgroundstype  | string; 
   font?: HtmlFontFamiliestype;       
   border?: borderstype;
+}
+
+////
+//Este tipo se usa para la creacion y editado de los libros
+////
+export interface page {
+    id: string;
+    layout: string;
+    title?: string;
+    text?: string;
+    image?: string | null;         // URL para mostrar en la UI
+    file?: Blob | File | null;     // Archivo real para subir
+    background?: string | null;    // color o URL para mostrar
+    backgroundFile?: Blob | File | null; // Archivo real del background
+    font?: string;
 }
 
 // Tipo del libro completo

@@ -1,15 +1,14 @@
-import { NextResponse } from "next/server";
-import { getBooksByUserId } from "@/src/DAL/Libros/bookinformation"; // Ajusta tu import
+import { NextRequest, NextResponse } from "next/server";
+import { getBooksByUserId } from "@/src/DAL/Libros/bookinformation";
 
-interface Params {
-  idUsuario: string;
-}
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ idUsuario: string }> }
+) {
+  console.log("🔹 GET /api/libros/usuario/[idUsuario] llamado");
 
-export async function GET(request: Request, { params }: { params: Params }) {
-  console.log("🔹 GET /api/libros/usuario/[idUsuario] llamado");  
-  console.log("Params recibidos:", params);
-
-  const { idUsuario } = params;
+  const { idUsuario } = await context.params; // 👈 importante: await aquí
+  console.log("Params recibidos:", { idUsuario });
 
   if (!idUsuario) {
     console.warn("⚠️ idUsuario no recibido");

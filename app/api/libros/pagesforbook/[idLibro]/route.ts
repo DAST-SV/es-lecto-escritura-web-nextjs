@@ -1,15 +1,15 @@
-import { NextResponse } from "next/server";
+// src/app/api/libros/pages/[idLibro]/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import { getPagesByBookId } from "@/src/DAL/Libros/conversorbook"; // ajusta tu import real
 
-interface Params {
-  idLibro: string;
-}
-
-export async function GET(request: Request, { params }: { params: Params }) {
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ idLibro: string }> }
+) {
   console.log("🔹 GET /api/libros/pages/[idLibro] llamado");
-  console.log("Params recibidos:", params);
 
-  const { idLibro } = params;
+  const { idLibro } = await context.params; // 👈 await porque params es Promise
+  console.log("Params recibidos:", { idLibro });
 
   if (!idLibro) {
     console.warn("⚠️ idLibro no recibido");
@@ -24,7 +24,10 @@ export async function GET(request: Request, { params }: { params: Params }) {
 
     return NextResponse.json({ pages });
   } catch (error) {
-    console.error("❌ Error en API GET /libros/[idLibro]/pages:", error);
-    return NextResponse.json({ error: "Error al obtener páginas" }, { status: 500 });
+    console.error("❌ Error en API GET /libros/pages/[idLibro]:", error);
+    return NextResponse.json(
+      { error: "Error al obtener páginas" },
+      { status: 500 }
+    );
   }
 }

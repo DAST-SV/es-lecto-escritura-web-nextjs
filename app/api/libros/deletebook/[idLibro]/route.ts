@@ -1,34 +1,32 @@
 // src/app/api/libros/[idLibro]/route.ts
-import { NextResponse } from 'next/server';
-import { deleteBook } from '@/src/DAL/Libros/deletebook';
-import { createClient } from "@/src/utils/supabase/server" // tu wrapper con cookies
-
-
-interface Params {
-  idLibro: string;
-}
+import { NextRequest, NextResponse } from "next/server";
+import { deleteBook } from "@/src/DAL/Libros/deletebook";
+import { createClient } from "@/src/utils/supabase/server"; // tu wrapper con cookies
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: Params }
+  request: NextRequest,
+  context: { params: Promise<{ idLibro: string }> }
 ) {
-  const supabase =  await createClient();
+  const supabase = await createClient();
+
   try {
-    const { idLibro } = params;
+    const { idLibro } = await context.params; // 👈 await porque params es Promise
 
     if (!idLibro) {
       return NextResponse.json(
-        { error: 'idLibro es requerido' },
+        { error: "idLibro es requerido" },
         { status: 400 }
       );
     }
 
     // Obtener el usuario autenticado
-   
-    const { data: { user }, error } = await supabase.auth.getUser()
-    if ( !user) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
       return NextResponse.json(
-        { error: 'Usuario no autenticado' },
+        { error: "Usuario no autenticado" },
         { status: 401 }
       );
     }
@@ -37,11 +35,10 @@ export async function DELETE(
     const result = await deleteBook(user.id, idLibro);
 
     return NextResponse.json(result, { status: 200 });
-
   } catch (error) {
-    console.error('❌ Error en API DELETE /libros/:idLibro:', error);
+    console.error("❌ Error en API DELETE /libros/[idLibro]:", error);
     return NextResponse.json(
-      { error: 'No se pudo eliminar el libro' },
+      { error: "No se pudo eliminar el libro" },
       { status: 500 }
     );
   }
