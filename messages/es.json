@@ -16,15 +16,17 @@
       "href": "/tour-virtual",
       "title": "Explora nuestro tour virtual"
     },
-    "login": {
-      "text": "Iniciar sesión",
-      "href": "/iniciar-sesion",
-      "title": "Acceder a tu cuenta"
-    },
-    "register": {
-      "text": "Registrarse",
-      "href": "/registrarse",
-      "title": "Crear una nueva cuenta"
+    "auth": {
+      "login": {
+        "text": "Iniciar sesión",
+        "href": "/auth/ingresar",
+        "title": "Acceder a tu cuenta"
+      },
+      "register": {
+        "text": "Registrarse",
+        "href": "/auth/registro",
+        "title": "Crear una nueva cuenta"
+      }
     },
     "back": {
       "text": "Atrás",

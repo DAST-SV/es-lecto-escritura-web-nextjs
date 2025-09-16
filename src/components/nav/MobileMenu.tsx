@@ -1,49 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { createBrowserClient } from '@supabase/ssr';
-import type { User } from '@supabase/supabase-js';
-import NavigationItems from './NavigationItems';
-import LanguageSelector from './LanguageSelector';
-import UserMenu from './UserMenu';
-import { createClient } from '@/src/utils/supabase/client';
+import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import NavigationItems from "./NavigationItems";
+import LanguageSelector from "./LanguageSelector";
+import UserMenu from "./UserMenu";
 
-interface MobileMenuProps {
-  isOpen: boolean;
-  navItems: string[];
-  userAvatar?: string;
-}
-
-const MobileMenu: React.FC<MobileMenuProps> = ({ 
-  isOpen, 
-  navItems, 
-  userAvatar 
+const MobileMenu: React.FC<MobileMenuProps> = ({
+  isOpen,
+  navItems,
+  userAvatar,
+  isAuthenticated,
+  onLogout,
 }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  
-  const supabase = createClient();
-
-  useEffect(() => {
-    // Obtener usuario inicial
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      setLoading(false);
-    };
-
-    getUser();
-
-    // Escuchar cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -54,11 +23,29 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
           className="md:hidden mt-3 bg-white/60 backdrop-blur-lg rounded-lg shadow-lg overflow-hidden"
         >
           <div className="flex flex-col space-y-2 px-4 py-3">
-            <NavigationItems items={navItems} isMobile={true} />
+            {navItems.map((item) =>
+              item.href === "#" ? (
+                <button
+                  key={item.label}
+                  onClick={onLogout}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  {item.label}
+                </button>
+              ) : (
+                <NavigationItems key={item.label} items={[item]} isMobile={true} />
+              )
+            )}
 
-            <div className={`flex items-center ${user && !loading ? 'justify-between' : 'justify-start'} mt-2`}>
+            <div
+              className={`flex items-center ${
+                isAuthenticated ? "justify-between" : "justify-start"
+              } mt-2`}
+            >
               <LanguageSelector />
-              {!loading && user && <UserMenu userAvatar={userAvatar} isMobile={true} />}
+              {isAuthenticated && userAvatar && (
+                <UserMenu userAvatar={userAvatar} isMobile={true} />
+              )}
             </div>
           </div>
         </motion.div>

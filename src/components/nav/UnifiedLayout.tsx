@@ -3,13 +3,6 @@
 import React from "react";
 import NavBar from "./NavBar";
 
-interface UnifiedLayoutProps {
-  children: React.ReactNode;
-  backgroundComponent?: React.ReactNode;
-  className?: string;
-  mainClassName?: string;
-  showNavbar?: boolean;
-}
 
 export const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
   children,

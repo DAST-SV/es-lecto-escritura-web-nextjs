@@ -16,15 +16,17 @@
       "href": "/tour",
       "title": "Explore our virtual tour"
     },
-    "login": {
-      "text": "Log In",
-      "href": "/login",
-      "title": "Access your account"
-    },
-    "register": {
-      "text": "Sign Up",
-      "href": "/register",
-      "title": "Create a new account"
+    "auth": {
+      "login": {
+        "text": "Log In",
+        "href": "/login",
+        "title": "Access your account"
+      },
+      "register": {
+        "text": "Sign Up",
+        "href": "/register",
+        "title": "Create a new account"
+      }
     },
     "back": {
       "text": "Back",

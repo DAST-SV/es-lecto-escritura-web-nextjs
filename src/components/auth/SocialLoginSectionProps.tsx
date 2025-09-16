@@ -16,31 +16,31 @@ const SocialLoginSection: React.FC<SocialLoginSectionProps> = ({ connectWithText
       color: "bg-red-500 hover:bg-red-600",
       icon: <GoogleIcon />,
     },
-    {
-      provider: "Apple",
-      color: "bg-black hover:bg-gray-900",
-      icon: <AppleIcon />,
-    },
-    {
-      provider: "Microsoft",
-      color: "bg-white border border-gray-300 hover:bg-gray-100",
-      icon: <MicrosoftIcon />,
-    },
-    {
-      provider: "Facebook",
-      color: "bg-blue-600 hover:bg-blue-700",
-      icon: <FacebookIcon />,
-    },
-    {
-      provider: "Twitter",
-      color: "bg-sky-400 hover:bg-sky-500",
-      icon: <TwitterIcon />,
-    },
-    {
-      provider: "Spotify",
-      color: "bg-green-500 hover:bg-green-600",
-      icon: <SpotifyIcon />,
-    },
+    // {
+    //   provider: "Apple",
+    //   color: "bg-black hover:bg-gray-900",
+    //   icon: <AppleIcon />,
+    // },
+    // {
+    //   provider: "Microsoft",
+    //   color: "bg-white border border-gray-300 hover:bg-gray-100",
+    //   icon: <MicrosoftIcon />,
+    // },
+    // {
+    //   provider: "Facebook",
+    //   color: "bg-blue-600 hover:bg-blue-700",
+    //   icon: <FacebookIcon />,
+    // },
+    // {
+    //   provider: "Twitter",
+    //   color: "bg-sky-400 hover:bg-sky-500",
+    //   icon: <TwitterIcon />,
+    // },
+    // {
+    //   provider: "Spotify",
+    //   color: "bg-green-500 hover:bg-green-600",
+    //   icon: <SpotifyIcon />,
+    // },
   ];
 
   return (

@@ -3,11 +3,6 @@
 import React from 'react';
 import { Menu, X } from 'lucide-react';
 
-interface MobileToggleButtonProps {
-  isOpen: boolean;
-  onToggle: () => void;
-}
-
 const MobileToggleButton: React.FC<MobileToggleButtonProps> = ({ 
   isOpen, 
   onToggle 

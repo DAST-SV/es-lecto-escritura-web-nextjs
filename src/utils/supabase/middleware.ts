@@ -8,8 +8,12 @@ import { routing } from '@/src/i18n/routing';
  * Se pueden listar exactas o prefijos.
  */
 const PUBLIC_ROUTES: string[] = [
-  '/error'
+  '/error',
+  '/',      // raíz sin locale
+  '/es',    // raíz con locale español
+  '/en'     // raíz con locale inglés
 ];
+
 
 export async function updateSession(
   request: NextRequest,

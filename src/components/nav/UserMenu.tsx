@@ -8,11 +8,6 @@ import { useRouter } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
 import { createClient } from '@/src/utils/supabase/client';
 
-interface UserMenuProps {
-  userAvatar?: string;
-  isMobile?: boolean;
-}
-
 const UserMenu: React.FC<UserMenuProps> = ({ 
   userAvatar = "https://csspicker.dev/api/image/?q=professional+avatar&image_type=photo",
   isMobile = false 
