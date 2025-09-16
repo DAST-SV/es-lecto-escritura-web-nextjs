@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 
 import { createClient } from '@/src/utils/supabase/server'
+import UnifiedLayout from '@/src/components/nav/UnifiedLayout'
 
 export default async function PrivatePage() {
   const supabase = await createClient()
@@ -11,5 +12,5 @@ export default async function PrivatePage() {
     redirect('/auth/login')
   }
 
-  return <p>Hello {data.user.email}</p>
+  return <UnifiedLayout>Hello {data.user.email}</UnifiedLayout>
 }

@@ -1,5 +1,7 @@
 'use client'
 
+import UnifiedLayout from "@/src/components/nav/UnifiedLayout"
+
 export default function ErrorPage() {
-  return <p>Sorry, something went wrong</p>
+  return <UnifiedLayout>Sorry, something went wrong</UnifiedLayout>
 }

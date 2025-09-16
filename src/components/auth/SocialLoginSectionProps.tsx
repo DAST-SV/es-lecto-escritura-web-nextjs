@@ -71,7 +71,8 @@ const SocialLoginSection: React.FC<SocialLoginSectionProps> = ({ connectWithText
               color={social.color}
               onClick={async () => {
                 await loginWithProvider(
-                  social.provider.toLowerCase() as 'google' | 'apple' | 'azure' | 'facebook' | 'twitter' | 'spotify'
+                  social.provider.toLowerCase() as 'google' | 'apple' | 'azure' | 'facebook' | 'twitter' | 'spotify',
+                  window.location.origin
                 )
               }}
               icon={social.icon}

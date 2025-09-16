@@ -6,6 +6,7 @@ import { Book } from "@/src/components/components-for-books/book/create-edit-boo
 import type { Page,page } from "@/src/typings/types-page-book/index";
 import Link from "next/link";
 import {getUserId} from "@/src/utils/supabase/utilsClient";
+import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
 
 interface BookData {
   pages: page[];
@@ -102,7 +103,7 @@ const MyBooks: React.FC = () => {
   }, [selectedBook]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-yellow-100 via-pink-100 to-blue-100">
+    <UnifiedLayout className="flex flex-col min-h-screen bg-gradient-to-b from-yellow-100 via-pink-100 to-blue-100">
 
       {!selectedBook && (
         <>
@@ -164,7 +165,7 @@ const MyBooks: React.FC = () => {
           </button>
         </div>
       )}
-    </div>
+    </UnifiedLayout>
   );
 }
 

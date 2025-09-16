@@ -37,21 +37,11 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
 }
 
 export async function loginWithProvider(
-  provider: "google" | "apple" | "azure" | "facebook" | "twitter" | "spotify"
+  provider: "google" | "apple" | "azure" | "facebook" | "twitter" | "spotify",
+  baseUrl: string
 ) {
   const supabase = await createClient()
-
-  // 1️⃣ Host dinámico (localhost:3000 en dev, dominio real en prod)
-  const headersList = await headers()
-const host = headersList.get("host")
-const protocol = process.env.NODE_ENV === "development" ? "http" : "https"
-const baseUrl = `${protocol}://${host}`
-
-
-  // 2️⃣ Idioma actual desde next-intl
   const locale = await getLocale()
-
-  // 3️⃣ Ruta final
   const redirectTo = `${baseUrl}/${locale}/pages-my-books`
 
   const { data, error } = await supabase.auth.signInWithOAuth({

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import ImageGrid from "@/src/utils/imagenes/ImageGrid";
 import MazeGame from "@/src/components/games/laberinto/MazeGame"; // Reemplazamos MiniLaberinto por MazeGame
+import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
 
 interface ImagenConDescripcion {
   src: string;
@@ -26,7 +27,7 @@ const Laberinto: React.FC = () => {
   const [juegoActivo, setJuegoActivo] = useState<string | null>(null);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-green-100 via-yellow-100 to-pink-100">
+    <UnifiedLayout className="flex flex-col min-h-screen bg-gradient-to-b from-green-100 via-yellow-100 to-pink-100">
       {/* Banner */}
       <div className="w-300 mx-auto mb-6">
         <img 
@@ -64,7 +65,7 @@ const Laberinto: React.FC = () => {
         </h3>
         <ImageGrid images={imagenes2} shapeType={2} onClick={(img) => setJuegoActivo(img.caption)} />
       </div>
-    </div>
+    </UnifiedLayout>
   );
 };
 

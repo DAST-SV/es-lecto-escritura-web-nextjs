@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
 
 
 interface Juego {
@@ -38,7 +39,7 @@ const juegos: Juego[] = [
 
 const SeccionJuegos: React.FC = () => {
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-green-100 via-yellow-100 to-pink-100">
+    <UnifiedLayout className="flex flex-col min-h-screen bg-gradient-to-b from-green-100 via-yellow-100 to-pink-100">
 
       {/* Banner principal */}
       <div className="w-full mb-6">
@@ -73,7 +74,7 @@ const SeccionJuegos: React.FC = () => {
           </Link>
         ))}
       </div>
-    </div>
+    </UnifiedLayout>
   );
 };
 

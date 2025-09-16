@@ -13,6 +13,7 @@ import { getUserId } from '@/src/utils/supabase/utilsClient'
 import { uploadFile, generateFilePath } from '@/src/utils/supabase/storageService'
 import { updateBookFromPages } from '@/src/DAL/Libros/updateBookFromPages '
 import toast, { Toaster } from "react-hot-toast";
+import UnifiedLayout from "../../nav/UnifiedLayout";
 
 interface PageRendererIndexProps {
     page: page;
@@ -543,7 +544,7 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
     }
 
     return (
-        <>
+        <UnifiedLayout>
             <div className="flex flex-col lg:flex-row gap-6 p-6 min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
                 <Toaster position="top-right" />
 
@@ -885,7 +886,7 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
                     </>
                 )}
             </div>
-        </>
+        </UnifiedLayout>
     );
 }
 export default Book;

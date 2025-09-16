@@ -6,6 +6,7 @@ import FlipBook from "@/src/components/components-for-books/book/FlipBook";
 import type { Page } from "@/src/typings/types-page-book/index";
 import Link from "next/link";
 import {getUserId} from "@/src/utils/supabase/utilsClient";
+import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
 
 interface BookData {
   pages: Page[];
@@ -82,7 +83,7 @@ useEffect(() => {
   }, [selectedBook]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-yellow-100 via-pink-100 to-blue-100">
+    <UnifiedLayout className="flex flex-col min-h-screen bg-gradient-to-b from-yellow-100 via-pink-100 to-blue-100">
 
       {!selectedBook && (
         <>
@@ -141,7 +142,7 @@ useEffect(() => {
           </button>
         </div>
       )}
-    </div>
+    </UnifiedLayout>
   );
 }
 

@@ -3,6 +3,7 @@
 import React, { useState } from "react"; 
 import ImageGrid from "@/src/utils/imagenes/ImageGrid";
 import RealJigsawPuzzle from "@/src/components/games/rompe-cabezas/RealJigsawPuzzle"; // tu componente del puzzle
+import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
 
 const imagenes = [
   { src: "/Libros/El-Dragon-de-las-Nubes/Rompecabezas.jpg", caption: "El dragon del cielo", description: "Un dragon muy amigable" },
@@ -28,7 +29,7 @@ const RompeCabezas: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-yellow-100 via-pink-100 to-purple-100">
+    <UnifiedLayout className="flex flex-col min-h-screen bg-gradient-to-b from-yellow-100 via-pink-100 to-purple-100">
 
       {!selectedImage && (
         <>
@@ -72,7 +73,7 @@ const RompeCabezas: React.FC = () => {
           </button>
         </div>
       )}
-    </div>
+    </UnifiedLayout>
   );
 };
 

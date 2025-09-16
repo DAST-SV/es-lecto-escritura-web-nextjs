@@ -4,6 +4,7 @@
 import React, { useState } from "react";
 import ImageGrid from "@/src/utils/imagenes/ImageGrid";
 import QuizGame from "@/src/components/games/cuestionario/QuizGame"; // Aquí debe estar tu componente del quiz
+import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
 
 const imagenes = [
   { src: "/Imagenes/Secciones_juegos/Quizes/Flautista.jpg", caption: "El flautista", description: "Pon a prueba tu memoria sobre el flautista y sus amigos." },
@@ -20,7 +21,7 @@ const Quizes: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-purple-100 via-pink-100 to-yellow-100">
+    <UnifiedLayout className="flex flex-col min-h-screen bg-gradient-to-b from-purple-100 via-pink-100 to-yellow-100">
 
       {!selectedImage && (
         <>
@@ -73,7 +74,7 @@ const Quizes: React.FC = () => {
         </div>
       )}
 
-    </div>
+    </UnifiedLayout>
   );
 };
 

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import ImageGrid from "@/src/utils/imagenes/ImageGrid";
 import PaintGame from "@/src/components/games/paint-game/PaintGame";
+import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
 
 const imagenes = [
   { src: "/Libros/El-Dragon-de-las-Nubes/Coloreable..svg", caption: "El dragon del cielo", description: "Un dragon muy amigable" },
@@ -20,7 +21,7 @@ const Colorea: React.FC = () => {
   const [selectedImages, setSelectedImages] = useState<[string | null, string | null]>([null, null]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-yellow-100 via-pink-100 to-blue-100">
+    <UnifiedLayout className="flex flex-col min-h-screen bg-gradient-to-b from-yellow-100 via-pink-100 to-blue-100">
 
       {!selectedImages[0] && !selectedImages[1] &&(
         <>
@@ -73,7 +74,7 @@ const Colorea: React.FC = () => {
         </div>
       )}
 
-    </div>
+    </UnifiedLayout>
   );
 };
 

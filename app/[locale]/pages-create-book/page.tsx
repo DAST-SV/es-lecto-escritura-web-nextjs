@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import ImageGrid, { ImageItem } from "@/src/utils/imagenes/ImageGrid";
+import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
 
 const CreateBook: React.FC = () => {
   const acciones: ImageItem[] = [
@@ -21,7 +22,7 @@ const CreateBook: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-yellow-100 via-pink-100 to-blue-100 px-4 py-8 flex flex-col items-center space-y-6">
+    <UnifiedLayout className="min-h-screen bg-gradient-to-b from-yellow-100 via-pink-100 to-blue-100 px-4 py-8 flex flex-col items-center space-y-6">
 
 
      <div className="max-w-4xl mx-auto px-4 mb-12">
@@ -65,7 +66,7 @@ const CreateBook: React.FC = () => {
           </button>
         </Link>
       </div>
-    </div>
+    </UnifiedLayout>
   );
 };
 
