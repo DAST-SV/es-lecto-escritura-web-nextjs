@@ -418,12 +418,18 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
 
             // 🔹 Si no hay IdLibro, crear libro nuevo
             if (!LibroId) {
-                const firstPageTitle = pages[0]?.title?.replace(/\s+/g, "_") || "pagina";
+                const firstPage = pages[0];
+                const firstPageTitle = firstPage?.title?.replace(/\s+/g, "_") || "pagina";
+                const firstPageBackground = firstPage?.background ?? null;
 
                 const response = await fetch("/api/libros/createbook", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ userId, title: firstPageTitle }),
+                    body: JSON.stringify({
+                        userId,
+                        title: firstPageTitle,
+                        background: firstPageBackground, // 👈 enviamos background
+                    }),
                 });
 
                 const data = await response.json();
@@ -435,7 +441,7 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
             const convertedPages: Page[] = await Promise.all(
                 pages.map(async (p: page, idx: number) => {
                     const pageCopy = convertPage(p);
-
+                    console.log("entre")
                     if (p.file) {
                         const ext = getFileExtension(p.file);
                         const filePath = generateFilePath(userId, LibroId!, `pagina_${idx + 1}_file.${ext}`);
@@ -455,11 +461,15 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
             );
 
             // 🔹 Guardar páginas en la DB
-            if (LibroId) {
+            if (IdLibro) {
                 // Actualizar libro existente
-                const updateResult = await updateBookFromPages(LibroId, convertedPages);
-                console.log("✅ Libro actualizado:", updateResult.message);
-                toast.success("📚 Libro actualizado correctamente");
+              let  response =  await fetch("/api/libros/updatebook", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ idLibro: IdLibro, pages: convertedPages  }),
+                });
+               if(response.ok)  toast.success("📚 Libro actualizado correctamente");
+              
             } else {
                 // Crear páginas de libro nuevo
                 const resPaginas = await fetch("/api/libros/createpages", {
@@ -474,7 +484,6 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
                 console.log("✅ Libro y páginas creadas correctamente");
                 toast.success("📚 Libro guardado correctamente");
             }
-
         } catch (error: any) {
             console.error("❌ Error guardando libro:", error.message);
             toast.error("❌ Error al guardar el libro");
@@ -493,6 +502,7 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
             }
         }
     }, [pages]);
+
 
     function resizeImage(file: File, maxWidth: number, maxHeight: number): Promise<Blob> {
         return new Promise((resolve, reject) => {
@@ -760,7 +770,7 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
                             </div>
 
                             <button
-                               onClick={() => saveBookJson(IdLibro)}
+                                onClick={() => saveBookJson(IdLibro)}
                                 className="w-full p-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 font-medium transition-all mt-2"
                             >
                                 📖 Crear Libro

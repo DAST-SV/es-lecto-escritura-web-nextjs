@@ -8,7 +8,7 @@ import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
 const CreateBook: React.FC = () => {
   const acciones: ImageItem[] = [
     { src: "/Imagenes/create-libros/creatulibro.png", caption: "Crea tu libro",Json: "/es/interfaz-create-book" },
-    { src: "/Imagenes/create-libros/editatuslibros.png", caption: "Edita tus libros" },
+    { src: "/Imagenes/create-libros/editatuslibros.png", caption: "Edita tus libros", Json: "/es/edits-my-books"},
     { src: "/Imagenes/create-libros/papelera.png", caption: "Papelera", Json: "/es/delete-my-books"},
   ];
 

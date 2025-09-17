@@ -1,6 +1,5 @@
 import { supabaseAdmin } from '@/src/utils/supabase/admin';
 import type { Page } from '@/src/typings/types-page-book/index';
-import type { paginaslibro } from '@/src/utils/tables/paginaslibro';
 
 /**
  * Actualiza un libro y sus páginas.
@@ -16,7 +15,7 @@ export const updateBookFromPages = async (idLibro: string, pages: Page[]) => {
   const supabase = supabaseAdmin
 
   const firstPage = pages[0];
-  const portada = firstPage.image ?? firstPage.background ?? null;
+  const portada = firstPage.background ?? firstPage.image ?? null;
   const titulo = firstPage.title ?? 'Sin título';
 
   try {
@@ -38,22 +37,22 @@ export const updateBookFromPages = async (idLibro: string, pages: Page[]) => {
       const numeropagina = i + 1; // Índice + 1 para que empiece en 1
 
       const { data, error } = await supabase
-  .from('paginaslibro')
-  .upsert({
-    idlibro: idLibro,
-    numeropagina: numeropagina,
-    layout: page.layout,
-    animation: page.animation ?? null,
-    title: page.title ?? null,
-    text: page.text ?? null,
-    image: page.image ?? null,
-    audio: page.audio ?? null,
-    interactivegame: page.interactiveGame ?? null,
-    items: page.items ?? [],
-    background: page.background ?? null,
-    font: page.font ?? null,
-    border: page.border ?? null
-  }, { onConflict: 'idlibro,numeropagina' }) // 👈 String con comas
+        .from('paginaslibro')
+        .upsert({
+          idlibro: idLibro,
+          numeropagina: numeropagina,
+          layout: page.layout,
+          animation: page.animation ?? null,
+          title: page.title ?? null,
+          text: page.text ?? null,
+          image: page.image ?? null,
+          audio: page.audio ?? null,
+          interactivegame: page.interactiveGame ?? null,
+          items: page.items ?? [],
+          background: page.background ?? null,
+          font: page.font ?? null,
+          border: page.border ?? null
+        }, { onConflict: 'idlibro,numeropagina' }) // 👈 String con comas
 
 
     }

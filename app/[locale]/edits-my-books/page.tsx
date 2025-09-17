@@ -38,42 +38,38 @@ const MyBooks: React.FC = () => {
   const [bookData, setBookData] = useState<BookData | null>(null);
   const [libros, setLibros] = useState<LibroUI[]>([]);
 
-  useEffect(() => {
-    const fetchLibros = async () => {
-      try {
-        const idUsuario = await getUserId();
-        if (!idUsuario) return;
+useEffect(() => {
+  const fetchLibros = async () => {
+    try {
+      const idUsuario = await getUserId();
+      if (!idUsuario) return;
 
-        const resLibros = await fetch(`/api/libros/bookinformation/${idUsuario}`);
-        const dataLibros = await resLibros.json();
-        const librosUsuario = dataLibros?.libros ?? [];
+      // 🔹 Un solo fetch (ya trae toda la info de libros y páginas)
+      const resLibros =await fetch(`/api/libros/bookinformation/${idUsuario}`);
+      const dataLibros = await resLibros.json();
 
-        const librosUI: LibroUI[] = await Promise.all(
-          librosUsuario.map(async (libro: any) => {
-            const resPages = await fetch(`/api/libros/pagesforbook/${libro.idlibro}`);
-            const dataPages = await resPages.json();
-            const pages: Page[] = dataPages?.pages ?? [];
+      const librosUsuario = dataLibros?.libros ?? [];
 
-            if (!pages.length) return null;
+      const librosUI: LibroUI[] = librosUsuario.map((libro: any) => {
 
-            const firstPage = pages[0];
-            return {
-              Json: libro.idlibro,
-              src: firstPage.image ?? firstPage.background ?? "/Imagenes/placeholder.png",
-              caption: libro.titulo,
-              description: firstPage.title ?? "",
-            };
-          })
-        );
 
-        setLibros(librosUI.filter(Boolean) as LibroUI[]);
-      } catch (error) {
-        console.error("❌ Error cargando libros y páginas:", error);
-      }
-    };
+        
+        return {
+          Json: libro.idlibro,
+          src: libro.portada  ?? libro.background ?? "/Imagenes/placeholder.png",
+          caption: libro.titulo,
+          description: libro.title ?? "",
+        };
+      });
 
-    fetchLibros();
-  }, []);
+      setLibros(librosUI.filter(Boolean) as LibroUI[]);
+    } catch (error) {
+      console.error("❌ Error cargando libros y páginas:", error);
+    }
+  };
+
+  fetchLibros();
+}, []);
 
   // 🔹 Cargar libro seleccionado
   useEffect(() => {
@@ -92,6 +88,7 @@ const MyBooks: React.FC = () => {
             pages: transformedPages,
             title: selectedBook.caption 
           });
+             console.log(transformedPages)
         } catch (error) {
           console.error("Error al cargar el libro:", error);
         }
@@ -130,7 +127,7 @@ const MyBooks: React.FC = () => {
             <ImageGrid
               images={libros}
               shapeType={2}
-              onClick={(book) => setSelectedBook({ json: book.Json ?? "", caption: book.caption })}
+              onClick={(book) => setSelectedBook( { json: book.Json ?? "", caption: book.caption })}
             />
           </div>
 

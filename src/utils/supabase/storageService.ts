@@ -3,7 +3,7 @@ import { createClient } from '@/src/utils/supabase/client'
 /**
  * Crear instancia de Supabase
  */
-const supabase = await createClient();
+const supabase =  createClient();
 
 /**
  * Subir un archivo a Supabase Storage y obtener la URL pública
@@ -14,6 +14,11 @@ export const uploadFile = async (
   path: string,
   upsert: boolean = true
 ): Promise<string> => {
+  if (upsert) {
+    // 🔹 Intentar eliminar antes de subir
+    await supabase.storage.from(bucket).remove([path]);
+  }
+
   const { data, error } = await supabase.storage
     .from(bucket)
     .upload(path, file, { upsert });
