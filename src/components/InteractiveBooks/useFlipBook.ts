@@ -64,62 +64,64 @@ export const useFlipBook = ({
   }, [totalPages, onPageChange]);
 
   const nextPage = useCallback(() => {
-    if (isMobile) {
-      // En móvil, manejar el cambio de página directamente
-      if (currentPage < totalPages - 1) {
-        const newPage = currentPage + 1;
-        setCurrentPage(newPage);
-      }
-    } else {
-      // En desktop, usar el método del FlipBook
-      try {
-        if (bookRef.current?.pageFlip) {
-          bookRef.current.pageFlip().flipNext();
+    try {
+      if (bookRef.current?.nextPage) {
+        // Usar el método específico del FlipBook que maneja móvil/desktop
+        bookRef.current.nextPage();
+      } else if (bookRef.current?.pageFlip) {
+        // Fallback para el método original
+        bookRef.current.pageFlip().flipNext();
+      } else if (isMobile) {
+        // Fallback directo para móvil
+        if (currentPage < totalPages - 1) {
+          const newPage = currentPage + 1;
+          setCurrentPage(newPage);
         }
-      } catch (error) {
-        console.warn('Could not flip to next page:', error);
       }
+    } catch (error) {
+      console.warn('Could not flip to next page:', error);
     }
-  }, [isMobile, currentPage, totalPages, setCurrentPage]);
+  }, [bookRef, currentPage, totalPages, setCurrentPage, isMobile]);
 
   const prevPage = useCallback(() => {
-    if (isMobile) {
-      // En móvil, manejar el cambio de página directamente
-      if (currentPage > 0) {
-        const newPage = currentPage - 1;
-        setCurrentPage(newPage);
-      }
-    } else {
-      // En desktop, usar el método del FlipBook
-      try {
-        if (bookRef.current?.pageFlip) {
-          bookRef.current.pageFlip().flipPrev();
+    try {
+      if (bookRef.current?.prevPage) {
+        // Usar el método específico del FlipBook que maneja móvil/desktop
+        bookRef.current.prevPage();
+      } else if (bookRef.current?.pageFlip) {
+        // Fallback para el método original
+        bookRef.current.pageFlip().flipPrev();
+      } else if (isMobile) {
+        // Fallback directo para móvil
+        if (currentPage > 0) {
+          const newPage = currentPage - 1;
+          setCurrentPage(newPage);
         }
-      } catch (error) {
-        console.warn('Could not flip to previous page:', error);
       }
+    } catch (error) {
+      console.warn('Could not flip to previous page:', error);
     }
-  }, [isMobile, currentPage, setCurrentPage]);
+  }, [bookRef, currentPage, setCurrentPage, isMobile]);
 
   const goToPage = useCallback((pageIndex: number) => {
     const safePage = Math.max(0, Math.min(pageIndex, totalPages - 1));
     
-    if (isMobile) {
-      // En móvil, cambiar directamente
-      setCurrentPage(safePage);
-    } else {
-      // En desktop, usar el método del FlipBook
-      try {
-        if (bookRef.current?.pageFlip) {
-          bookRef.current.pageFlip().flip(safePage);
-        }
-      } catch (error) {
-        console.warn('Could not go to page:', error);
-        // Fallback: cambiar directamente
+    try {
+      if (bookRef.current?.goToPage) {
+        // Usar el método específico del FlipBook que maneja móvil/desktop
+        bookRef.current.goToPage(safePage);
+      } else if (bookRef.current?.pageFlip) {
+        // Fallback para el método original
+        bookRef.current.pageFlip().flip(safePage);
+      } else {
+        // Fallback directo
         setCurrentPage(safePage);
       }
+    } catch (error) {
+      console.warn('Could not go to page:', error);
+      setCurrentPage(safePage);
     }
-  }, [totalPages, isMobile, setCurrentPage]);
+  }, [totalPages, setCurrentPage, bookRef]);
 
   const goToFirstPage = useCallback(() => {
     goToPage(0);
