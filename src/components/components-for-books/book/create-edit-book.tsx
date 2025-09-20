@@ -4,11 +4,11 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import HTMLFlipBook from "react-pageflip";
 import { layouts } from "@/src/components/components-for-books/layouts";
 import { HtmlFontFamilies } from "@/src/typings/types-page-book/HtmlFontFamilies";
-import type { LayoutType, backgroundstype, HtmlFontFamiliestype } from "@/src/typings/types-page-book/index";
+import type { LayoutType, backgroundstype, HtmlFontFamiliestype, textColorstype } from "@/src/typings/types-page-book/index";
 import { backgrounds } from "@/src/typings/types-page-book/backgrounds";
+import { textColors } from "@/src/typings/types-page-book//textColors ";
 import { PageRenderer } from "@/src/components/components-for-books/book/PageRenderer";
 import type { Page, page } from "@/src/typings/types-page-book/index";
-import { FlipBook } from "@/src/components/components-for-books/book/FlipBook"
 import { getUserId } from '@/src/utils/supabase/utilsClient'
 import { uploadFile, generateFilePath, removeFolder } from '@/src/utils/supabase/storageService'
 import toast, { Toaster } from "react-hot-toast";
@@ -35,6 +35,7 @@ function convertPage(oldPage: page): Page {
         image: oldPage.image ?? undefined,
         background: oldPage.background as backgroundstype,
         font: oldPage.font as HtmlFontFamiliestype,
+        textColor: oldPage.textColor || undefined, // ← Agregar esta línea
         animation: undefined,
         audio: undefined,
         interactiveGame: undefined,
@@ -42,12 +43,11 @@ function convertPage(oldPage: page): Page {
         border: undefined
     };
 }
-
 // ============= COMPONENTE RENDERIZADOR DE PÁGINA =============
 const PageRendererIndex: React.FC<PageRendererIndexProps> = ({ page, pageNumber }) => {
     const Pagina = convertPage(page);
     return (
-        <div className="w-full h-full relative overflow-hidden text-gray-900">
+        <div className="w-full h-full relative overflow-hidden">
             {/* Overlay para mejorar legibilidad si hay imagen de fondo */}
             {page.background && page.background !== "blanco" && (
                 <div
@@ -56,34 +56,18 @@ const PageRendererIndex: React.FC<PageRendererIndexProps> = ({ page, pageNumber 
                 />
             )}
 
-            {/* Contenido del layout con texto negro forzado */}
-            <div className="relative z-10 h-full" style={{ color: '#111827' }}>
+            {/* Contenido del layout sin colores forzados */}
+            <div className="relative z-10 h-full">
                 <PageRenderer page={Pagina} />
             </div>
 
-            {/* Número de página más visible */}
+            {/* Número de página */}
             <div className="absolute bottom-3 right-3 px-2 py-1 rounded text-xs font-bold bg-black bg-opacity-70 text-white z-50">
                 {pageNumber}
             </div>
         </div>
     );
 };
-
-// 1. Agregar función para obtener archivo desde URL
-const fetchFileFromUrl = async (url: string): Promise<Blob | null> => {
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            console.error(`Error fetching file from URL: ${response.statusText}`);
-            return null;
-        }
-        return await response.blob();
-    } catch (error) {
-        console.error("Error fetching file from URL:", error);
-        return null;
-    }
-};
-
 // ============= COMPONENTE PRINCIPAL DEL LIBRO =============
 export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
 
@@ -138,10 +122,9 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
     const [editingField, setEditingField] = useState<'title' | 'text' | null>(null);
     const [editingTitle, setEditingTitle] = useState("");
     const [editingText, setEditingText] = useState("");
-    const [finalBookPages, setFinalBookPages] = useState<Page[] | null>(null);
     const bookRef = useRef<any>(null);
     const [selectedCategoria, setSelectedCategoria] = useState<number | null>(null);
-    const [selectedGenero, setSelectedGenero] = useState<number | null>(null);
+    const [selectedGenero, setSelectedGenero] = useState<number | null>(null)
     const [descripcion, setDescripcion] = useState<string>("");
 
     // useEffect para actualizar páginas si cambian las props
@@ -345,6 +328,14 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
         },
         [currentpage]
     );
+
+    const handleTextColorChange = useCallback((color: string) => {
+        setpages(prev => {
+            const updated = [...prev];
+            updated[currentpage] = { ...updated[currentpage], textColor: color as textColorstype };
+            return updated;
+        });
+    }, [currentpage]);
 
     // Función para quitar fondo - NUEVA
     const removeBackground = useCallback(() => {
@@ -647,386 +638,409 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
             <div className="flex flex-col lg:flex-row gap-6 p-6 min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
                 <Toaster position="bottom-center" />
 
-                {finalBookPages?.length ? (
-                    <div className="mx-auto my-6 w-full h-full">
-                        <div className="mt-8 flex justify-center">
-                            <FlipBook pages={finalBookPages} width={400} height={600} />
+
+                <>
+                    {/* Panel de Control */}
+                    <div className="lg:w-96 bg-white rounded-xl shadow-xl p-6 border border-gray-100 h-fit max-h-screen overflow-y-auto">
+                        <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center">
+                            <span className="mr-2">📚</span> Editor de Libro
+                        </h2>
+
+                        {/* Selector de Layout */}
+                        <div className="mb-6 p-4 bg-indigo-50 rounded-lg">
+                            <label className="block text-sm font-bold text-gray-700 mb-3">
+                                🎨 Layout de página {currentpage + 1}:
+                            </label>
+                            <select
+                                value={pages[currentpage]?.layout}
+                                onChange={(e) => handleLayoutChange(e.target.value)}
+                                className="w-full p-2 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                            >
+                                {Object.keys(layouts).map(layoutName => (
+                                    <option key={layoutName} value={layoutName}>
+                                        {layoutName.replace(/Layout$/, '').replace(/([A-Z])/g, ' $1').trim()}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
-                    </div>
-                ) : null}
 
-                {!finalBookPages && (
-                    <>
-                        {/* Panel de Control */}
-                        <div className="lg:w-96 bg-white rounded-xl shadow-xl p-6 border border-gray-100 h-fit max-h-screen overflow-y-auto">
-                            <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center">
-                                <span className="mr-2">📚</span> Editor de Libro
-                            </h2>
+                        {/* Editor de título */}
+                        <div className="mb-6 p-4 bg-yellow-50 rounded-lg">
+                            <label className="block text-sm font-bold text-gray-700 mb-3">
+                                📝 Título de página {currentpage + 1}:
+                            </label>
 
-                            {/* Selector de Layout */}
-                            <div className="mb-6 p-4 bg-indigo-50 rounded-lg">
-                                <label className="block text-sm font-bold text-gray-700 mb-3">
-                                    🎨 Layout de página {currentpage + 1}:
-                                </label>
-                                <select
-                                    value={pages[currentpage]?.layout}
-                                    onChange={(e) => handleLayoutChange(e.target.value)}
-                                    className="w-full p-2 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                                >
-                                    {Object.keys(layouts).map(layoutName => (
-                                        <option key={layoutName} value={layoutName}>
-                                            {layoutName.replace(/Layout$/, '').replace(/([A-Z])/g, ' $1').trim()}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Editor de título */}
-                            <div className="mb-6 p-4 bg-yellow-50 rounded-lg">
-                                <label className="block text-sm font-bold text-gray-700 mb-3">
-                                    📝 Título de página {currentpage + 1}:
-                                </label>
-
-                                {editingField === 'title' ? (
-                                    <>
-                                        <input
-                                            type="text"
-                                            value={editingTitle}
-                                            onChange={(e) => setEditingTitle(e.target.value)}
-                                            className="w-full p-3 border-2 border-yellow-300 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-900" placeholder="Escribe el título aquí..."
-                                        />
-                                        <div className="flex gap-2 mt-3">
-                                            <button
-                                                onClick={() => saveField('title')}
-                                                className="flex-1 p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
-                                            >
-                                                ✅ Guardar
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    setEditingTitle(pages[currentpage].title || "");
-                                                    setEditingField(null);
-                                                }}
-                                                className="flex-1 p-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 font-medium"
-                                            >
-                                                ❌ Cancelar
-                                            </button>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div>
-                                        <div className="p-3 bg-white rounded-lg border border-gray-200 mb-3">
-                                            <p className="text-sm text-gray-700">
-                                                {pages[currentpage].title || "Sin título"}
-                                            </p>
-                                        </div>
+                            {editingField === 'title' ? (
+                                <>
+                                    <input
+                                        type="text"
+                                        value={editingTitle}
+                                        onChange={(e) => setEditingTitle(e.target.value)}
+                                        className="w-full p-3 border-2 border-yellow-300 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-900" placeholder="Escribe el título aquí..."
+                                    />
+                                    <div className="flex gap-2 mt-3">
                                         <button
-                                            onClick={() => setEditingField('title')}
-                                            className="w-full p-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-medium"
+                                            onClick={() => saveField('title')}
+                                            className="flex-1 p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
                                         >
-                                            ✏ Editar Título
+                                            ✅ Guardar
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setEditingTitle(pages[currentpage].title || "");
+                                                setEditingField(null);
+                                            }}
+                                            className="flex-1 p-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 font-medium"
+                                        >
+                                            ❌ Cancelar
                                         </button>
                                     </div>
-                                )}
-                            </div>
+                                </>
+                            ) : (
+                                <div>
+                                    <div className="p-3 bg-white rounded-lg border border-gray-200 mb-3">
+                                        <p className="text-sm text-gray-700">
+                                            {pages[currentpage].title || "Sin título"}
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => setEditingField('title')}
+                                        className="w-full p-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-medium"
+                                    >
+                                        ✏ Editar Título
+                                    </button>
+                                </div>
+                            )}
+                        </div>
 
-                            {/* Editor de texto */}
-                            <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-                                <label className="block text-sm font-bold text-gray-700 mb-3">
-                                    ✏ Texto de página {currentpage + 1}:
-                                </label>
+                        {/* Editor de texto */}
+                        <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                            <label className="block text-sm font-bold text-gray-700 mb-3">
+                                ✏ Texto de página {currentpage + 1}:
+                            </label>
 
-                                {editingField === 'text' ? (
-                                    <>
-                                        <textarea
-                                            value={editingText}
-                                            onChange={(e) => setEditingText(e.target.value)}
-                                            className="w-full p-3 border-2 border-blue-300 rounded-lg resize-none focus:outline-none focus:border-blue-500 text-gray-900" rows={6}
-                                            placeholder="Escribe tu texto aquí..."
-                                        />
-                                        <div className="flex gap-2 mt-3">
-                                            <button
-                                                onClick={() => saveField('text')}
-                                                className="flex-1 p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
-                                            >
-                                                ✅ Guardar
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    setEditingText(pages[currentpage].text || "");
-                                                    setEditingField(null);
-                                                }}
-                                                className="flex-1 p-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 font-medium"
-                                            >
-                                                ❌ Cancelar
-                                            </button>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div>
-                                        <div className="p-3 bg-white rounded-lg border border-gray-200 mb-3 max-h-24 overflow-auto">
-                                            <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                                                {pages[currentpage].text || "Sin texto"}
-                                            </p>
-                                        </div>
+                            {editingField === 'text' ? (
+                                <>
+                                    <textarea
+                                        value={editingText}
+                                        onChange={(e) => setEditingText(e.target.value)}
+                                        className="w-full p-3 border-2 border-blue-300 rounded-lg resize-none focus:outline-none focus:border-blue-500 text-gray-900" rows={6}
+                                        placeholder="Escribe tu texto aquí..."
+                                    />
+                                    <div className="flex gap-2 mt-3">
                                         <button
-                                            onClick={() => setEditingField('text')}
-                                            className="w-full p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                                            onClick={() => saveField('text')}
+                                            className="flex-1 p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
                                         >
-                                            📝 Editar Texto
+                                            ✅ Guardar
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setEditingText(pages[currentpage].text || "");
+                                                setEditingField(null);
+                                            }}
+                                            className="flex-1 p-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 font-medium"
+                                        >
+                                            ❌ Cancelar
                                         </button>
                                     </div>
-                                )}
-                            </div>
-
-                            {/* Control de imagen */}
-                            <div className="mb-6 p-4 bg-green-50 rounded-lg">
-                                <label className="block text-sm font-bold text-gray-700 mb-3">
-                                    🖼 Imagen de página {currentpage + 1}:
-                                </label>
-
-                                <input
-                                    key={currentpage + "-img"}
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImageChange}
-                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-100 file:text-green-700 hover:file:bg-green-200 cursor-pointer mb-3"
-                                />
-
-                                {pages[currentpage]?.image && (
+                                </>
+                            ) : (
+                                <div>
+                                    <div className="p-3 bg-white rounded-lg border border-gray-200 mb-3 max-h-24 overflow-auto">
+                                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                                            {pages[currentpage].text || "Sin texto"}
+                                        </p>
+                                    </div>
                                     <button
-                                        onClick={removeImage}
-                                        className="w-full p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium"
+                                        onClick={() => setEditingField('text')}
+                                        className="w-full p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
                                     >
-                                        🗑 Quitar Imagen
+                                        📝 Editar Texto
                                     </button>
-                                )}
-                            </div>
+                                </div>
+                            )}
+                        </div>
 
-                            {/* Control de fondo */}
-                            <div className="mb-6 p-4 bg-purple-50 rounded-lg">
-                                <label className="block text-sm font-bold text-gray-700 mb-3">
-                                    🎨 Fondo de página {currentpage + 1}:
-                                </label>
-                                <select
-                                    value={pages[currentpage]?.background || ""}
-                                    onChange={(e) => handleBackgroundChange(e.target.value)}
-                                    className="w-full mb-3 p-2 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        {/* Control de imagen */}
+                        <div className="mb-6 p-4 bg-green-50 rounded-lg">
+                            <label className="block text-sm font-bold text-gray-700 mb-3">
+                                🖼 Imagen de página {currentpage + 1}:
+                            </label>
+
+                            <input
+                                key={currentpage + "-img"}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-100 file:text-green-700 hover:file:bg-green-200 cursor-pointer mb-3"
+                            />
+
+                            {pages[currentpage]?.image && (
+                                <button
+                                    onClick={removeImage}
+                                    className="w-full p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium"
                                 >
-                                    <option value="">Sin fondo (blanco)</option>
-                                    {Object.keys(backgrounds)
-                                        .filter(k => k !== 'blanco')
-                                        .map(key => (
-                                            <option key={key} value={key}>{key}</option>
-                                        ))}
-                                </select>
+                                    🗑 Quitar Imagen
+                                </button>
+                            )}
+                        </div>
 
-                                <input
-                                    key={currentpage + "-background"}
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleBackgroundFile}
-                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 cursor-pointer mb-3"
-                                />
-
-                                {pages[currentpage]?.background && (
-                                    <button
-                                        onClick={removeBackground}
-                                        className="w-full p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium"
-                                    >
-                                        🗑 Quitar Fondo
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* Control de fuente */}
-                            <div className="mb-6 p-4 bg-orange-50 rounded-lg">
-                                <label className="block text-sm font-bold text-gray-700 mb-3">
-                                    🔤 Fuente de página {currentpage + 1}:
-                                </label>
-
-                                <select
-                                    value={pages[currentpage]?.font || "Arial"}
-                                    onChange={(e) => handleFontChange(e.target.value)}
-                                    className="w-full p-2 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                                >
-                                    {Object.keys(HtmlFontFamilies).map(fontName => (
-                                        <option key={fontName} value={fontName}>{fontName}</option>
+                        {/* Control de fondo */}
+                        <div className="mb-6 p-4 bg-purple-50 rounded-lg">
+                            <label className="block text-sm font-bold text-gray-700 mb-3">
+                                🎨 Fondo de página {currentpage + 1}:
+                            </label>
+                            <select
+                                value={pages[currentpage]?.background || ""}
+                                onChange={(e) => handleBackgroundChange(e.target.value)}
+                                className="w-full mb-3 p-2 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                            >
+                                <option value="">Sin fondo (blanco)</option>
+                                {Object.keys(backgrounds)
+                                    .filter(k => k !== 'blanco')
+                                    .map(key => (
+                                        <option key={key} value={key}>{key}</option>
                                     ))}
-                                </select>
-                            </div>
+                            </select>
 
-                            {/* Campo de descripción */}
-                            <div className="mb-6 p-4 bg-pink-50 rounded-lg">
-                                <label className="block text-sm font-bold text-gray-700 mb-3">
-                                    📝 Descripción del libro:
-                                </label>
-                                <textarea
-                                    value={descripcion}
-                                    onChange={(e) => setDescripcion(e.target.value)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 resize-none text-gray-900" rows={4}
-                                    placeholder="Describe brevemente de qué trata tu libro..."
-                                />
-                            </div>
+                            <input
+                                key={currentpage + "-background"}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleBackgroundFile}
+                                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 cursor-pointer mb-3"
+                            />
 
-                            {/* Selector de categoría */}
-                            <div className="mb-6 p-4 bg-teal-50 rounded-lg">
-                                <label className="block text-sm font-bold text-gray-700 mb-3">
-                                    📚 Categoría:
-                                </label>
-                                <SelectFromTableAsync<{ id_categoria: number; nombre: string }>
-                                    table="categorias"
-                                    valueField="id_categoria"
-                                    labelField="nombre"
-                                    filterField="nombre"
-                                    value={selectedCategoria}
-                                    placeholder="Selecciona una Categoría"
-                                    onChange={(value) => setSelectedCategoria(value as number)}
-                                />
-                            </div>
+                            {pages[currentpage]?.background && (
+                                <button
+                                    onClick={removeBackground}
+                                    className="w-full p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium"
+                                >
+                                    🗑 Quitar Fondo
+                                </button>
+                            )}
+                        </div>
 
-                            {/* Selector de género */}
-                            <div className="mb-6 p-4 bg-cyan-50 rounded-lg">
-                                <label className="block text-sm font-bold text-gray-700 mb-3">
-                                    🎭 Género:
-                                </label>
-                                <SelectFromTableAsync<{ id_genero: number; nombre: string }>
-                                    table="generos"
-                                    valueField="id_genero"
-                                    labelField="nombre"
-                                    filterField="nombre"
-                                    value={selectedGenero}
-                                    placeholder="Selecciona un Género"
-                                    onChange={(value) => setSelectedGenero(value as number)}
-                                />
+                        {/* Control de fuente */}
+                        <div className="mb-6 p-4 bg-orange-50 rounded-lg">
+                            <label className="block text-sm font-bold text-gray-700 mb-3">
+                                🔤 Fuente de página {currentpage + 1}:
+                            </label>
+
+                            <select
+                                value={pages[currentpage]?.font || "Arial"}
+                                onChange={(e) => handleFontChange(e.target.value)}
+                                className="w-full p-2 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                            >
+                                {Object.keys(HtmlFontFamilies).map(fontName => (
+                                    <option key={fontName} value={fontName}>{fontName}</option>
+                                ))}
+                            </select>
+                        </div>
+
+
+
+
+                        {/* Control de color de texto */}
+                        <div className="mb-6 p-4 bg-indigo-50 rounded-lg">
+                            <label className="block text-sm font-bold text-gray-700 mb-3">
+                                🎨 Color de texto página {currentpage + 1}:
+                            </label>
+                            <select
+                                value={pages[currentpage]?.textColor || "negro"}
+                                onChange={(e) => handleTextColorChange(e.target.value)}
+                                className="w-full p-2 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                            >
+                                {Object.keys(textColors).map(colorName => (
+                                    <option key={colorName} value={colorName}>
+                                        {colorName.charAt(0).toUpperCase() + colorName.slice(1)}
+                                    </option>
+                                ))}
+                            </select>
+
+                            {/* Preview del color seleccionado */}
+                            <div className="mt-3 p-2 rounded border" style={{
+                                backgroundColor: '#f9f9f9',
+                                color: pages[currentpage]?.textColor && pages[currentpage].textColor in textColors
+                                    ? textColors[pages[currentpage].textColor as keyof typeof textColors]
+                                    : textColors.negro
+                            }}>
+                                Vista previa del color de texto
+                            </div>
+                        </div>
+
+
+                        {/* Campo de descripción */}
+                        <div className="mb-6 p-4 bg-pink-50 rounded-lg">
+                            <label className="block text-sm font-bold text-gray-700 mb-3">
+                                📝 Descripción del libro:
+                            </label>
+                            <textarea
+                                value={descripcion}
+                                onChange={(e) => setDescripcion(e.target.value)}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 resize-none text-gray-900" rows={4}
+                                placeholder="Describe brevemente de qué trata tu libro..."
+                            />
+                        </div>
+
+                        {/* Selector de categoría */}
+                        <div className="mb-6 p-4 bg-teal-50 rounded-lg">
+                            <label className="block text-sm font-bold text-gray-700 mb-3">
+                                📚 Categoría:
+                            </label>
+                            <SelectFromTableAsync<{ id_categoria: number; nombre: string }>
+                                table="categorias"
+                                valueField="id_categoria"
+                                labelField="nombre"
+                                filterField="nombre"
+                                value={selectedCategoria}
+                                placeholder="Selecciona una Categoría"
+                                onChange={(value) => setSelectedCategoria(value as number)}
+                            />
+                        </div>
+
+                        {/* Selector de género */}
+                        <div className="mb-6 p-4 bg-cyan-50 rounded-lg">
+                            <label className="block text-sm font-bold text-gray-700 mb-3">
+                                🎭 Género:
+                            </label>
+                            <SelectFromTableAsync<{ id_genero: number; nombre: string }>
+                                table="generos"
+                                valueField="id_genero"
+                                labelField="nombre"
+                                filterField="nombre"
+                                value={selectedGenero}
+                                placeholder="Selecciona un Género"
+                                onChange={(value) => setSelectedGenero(value as number)}
+                            />
+                        </div>
+
+                        <button
+                            onClick={() => saveBookJson(IdLibro)}
+                            className="w-full p-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 font-medium transition-all mt-2"
+                        >
+                            📖 Guardar Libro
+                        </button>
+
+                        {/* Navegación y control de páginas */}
+                        <div className="space-y-3 pt-4">
+                            <select
+                                value={currentpage}
+                                onChange={(e) => goTopage(parseInt(e.target.value))}
+                                className="w-full p-3 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                disabled={isFlipping}
+                            >
+                                {pages.map((_, index) => (
+                                    <option key={index} value={index}>
+                                        Página {index + 1}
+                                    </option>
+                                ))}
+                            </select>
+
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={prevpage}
+                                    disabled={currentpage === 0 || isFlipping}
+                                    className="flex-1 p-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg hover:from-indigo-600 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed font-medium transition-all"
+                                >
+                                    ⬅ Anterior
+                                </button>
+                                <button
+                                    onClick={nextpage}
+                                    disabled={currentpage === pages.length - 1 || isFlipping}
+                                    className="flex-1 p-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg hover:from-indigo-600 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed font-medium transition-all"
+                                >
+                                    Siguiente ➡
+                                </button>
                             </div>
 
                             <button
-                                onClick={() => saveBookJson(IdLibro)}
-                                className="w-full p-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 font-medium transition-all mt-2"
+                                onClick={addpage}
+                                className="w-full p-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 font-medium transition-all"
                             >
-                                📖 Guardar Libro
+                                ➕ Agregar Página Nueva
                             </button>
 
-                            {/* Navegación y control de páginas */}
-                            <div className="space-y-3 pt-4">
-                                <select
-                                    value={currentpage}
-                                    onChange={(e) => goTopage(parseInt(e.target.value))}
-                                    className="w-full p-3 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                    disabled={isFlipping}
-                                >
-                                    {pages.map((_, index) => (
-                                        <option key={index} value={index}>
-                                            Página {index + 1}
-                                        </option>
-                                    ))}
-                                </select>
-
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={prevpage}
-                                        disabled={currentpage === 0 || isFlipping}
-                                        className="flex-1 p-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg hover:from-indigo-600 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed font-medium transition-all"
-                                    >
-                                        ⬅ Anterior
-                                    </button>
-                                    <button
-                                        onClick={nextpage}
-                                        disabled={currentpage === pages.length - 1 || isFlipping}
-                                        className="flex-1 p-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg hover:from-indigo-600 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed font-medium transition-all"
-                                    >
-                                        Siguiente ➡
-                                    </button>
-                                </div>
-
+                            {pages.length > 2 && (
                                 <button
-                                    onClick={addpage}
-                                    className="w-full p-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 font-medium transition-all"
+                                    onClick={deletepage}
+                                    className="w-full p-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 font-medium transition-all"
                                 >
-                                    ➕ Agregar Página Nueva
+                                    🗑 Eliminar Página Actual
                                 </button>
-
-                                {pages.length > 2 && (
-                                    <button
-                                        onClick={deletepage}
-                                        className="w-full p-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 font-medium transition-all"
-                                    >
-                                        🗑 Eliminar Página Actual
-                                    </button>
-                                )}
-                            </div>
+                            )}
                         </div>
+                    </div>
 
-                        {/* Libro */}
-                        <div className="flex-1 flex flex-col items-center justify-center">
-                            <div className="bg-white rounded-xl shadow-2xl p-4">
-                                <HTMLFlipBook
-                                    key={bookKey}
-                                    width={400}
-                                    height={600}
-                                    className="shadow-2xl"
-                                    style={{ borderRadius: '12px' }}
-                                    ref={bookRef}
-                                    onFlip={onFlip}
-                                    drawShadow={true}
-                                    flippingTime={1000}
-                                    usePortrait={false}
-                                    startPage={Math.min(currentpage)}
-                                    startZIndex={0}
-                                    autoSize={false}
-                                    maxShadowOpacity={0.5}
-                                    showCover={true}
-                                    mobileScrollSupport={false}
-                                    clickEventForward={false}
-                                    useMouseEvents={true}
-                                    swipeDistance={30}
-                                    disableFlipByClick={false}
-                                    size="stretch"
-                                    minWidth={400}
-                                    maxWidth={400}
-                                    minHeight={600}
-                                    maxHeight={600}
-                                    showPageCorners={true}
-                                >
-                                    {pages.map((page, index) => (
-                                        <div key={page.id} className="bg-white" style={{ color: '#111827' }}>
-                                            <PageRendererIndex page={page} pageNumber={index + 1} />
-                                        </div>
-                                    ))}
-                                </HTMLFlipBook>
-                            </div>
-
-                            {/* Indicadores de página */}
-                            <div className="mt-6 flex gap-2">
-                                {pages.map((_, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => goTopage(index)}
-                                        disabled={isFlipping}
-                                        className={`h-3 rounded-full transition-all ${currentpage === index
-                                            ? "bg-indigo-600 w-8"
-                                            : "bg-gray-300 hover:bg-gray-400 w-3"
-                                            }`}
-                                        title={`Ir a página ${index + 1}`}
-                                    />
+                    {/* Libro */}
+                    <div className="flex-1 flex flex-col items-center justify-center">
+                        <div className="bg-white rounded-xl shadow-2xl p-4">
+                            <HTMLFlipBook
+                                key={bookKey}
+                                width={400}
+                                height={600}
+                                className="shadow-2xl"
+                                style={{ borderRadius: '12px' }}
+                                ref={bookRef}
+                                onFlip={onFlip}
+                                drawShadow={true}
+                                flippingTime={1000}
+                                usePortrait={false}
+                                startPage={Math.min(currentpage)}
+                                startZIndex={0}
+                                autoSize={false}
+                                maxShadowOpacity={0.5}
+                                showCover={true}
+                                mobileScrollSupport={false}
+                                clickEventForward={false}
+                                useMouseEvents={true}
+                                swipeDistance={30}
+                                disableFlipByClick={false}
+                                size="stretch"
+                                minWidth={400}
+                                maxWidth={400}
+                                minHeight={600}
+                                maxHeight={600}
+                                showPageCorners={true}
+                            >
+                                {pages.map((page, index) => (
+                                    <div key={page.id} className="bg-white">
+                                        <PageRendererIndex page={page} pageNumber={index + 1} />
+                                    </div>
                                 ))}
-                            </div>
-
-                            {/* Instrucciones */}
-                            <div className="mt-4 text-center text-sm text-gray-600 bg-white rounded-lg p-4 shadow max-w-md">
-                                <p className="font-semibold mb-2">💡 Instrucciones:</p>
-                                <ul className="text-left space-y-1">
-                                    <li>• Selecciona diferentes layouts para cada página</li>
-                                    <li>• Edita título y texto por separado</li>
-                                    <li>• Agrega imágenes y fondos personalizados</li>
-                                    <li>• Cambia la fuente de cada página</li>
-                                    <li>• Navega con los botones o haciendo clic en las páginas</li>
-                                </ul>
-                            </div>
+                            </HTMLFlipBook>
                         </div>
-                    </>
-                )}
+
+                        {/* Indicadores de página */}
+                        <div className="mt-6 flex gap-2">
+                            {pages.map((_, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => goTopage(index)}
+                                    disabled={isFlipping}
+                                    className={`h-3 rounded-full transition-all ${currentpage === index
+                                        ? "bg-indigo-600 w-8"
+                                        : "bg-gray-300 hover:bg-gray-400 w-3"
+                                        }`}
+                                    title={`Ir a página ${index + 1}`}
+                                />
+                            ))}
+                        </div>
+
+                        {/* Instrucciones */}
+                        <div className="mt-4 text-center text-sm text-gray-600 bg-white rounded-lg p-4 shadow max-w-md">
+                            <p className="font-semibold mb-2">💡 Instrucciones:</p>
+                            <ul className="text-left space-y-1">
+                                <li>• Selecciona diferentes layouts para cada página</li>
+                                <li>• Edita título y texto por separado</li>
+                                <li>• Agrega imágenes y fondos personalizados</li>
+                                <li>• Cambia la fuente de cada página</li>
+                                <li>• Navega con los botones o haciendo clic en las páginas</li>
+                            </ul>
+                        </div>
+                    </div>
+                </>
             </div>
         </UnifiedLayout>
     );

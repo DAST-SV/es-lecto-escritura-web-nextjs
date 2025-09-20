@@ -5,6 +5,7 @@ import { layouts } from "../layouts";
 import { backgrounds } from "@/src/typings/types-page-book/backgrounds";
 import { HtmlFontFamilies } from "@/src/typings/types-page-book/HtmlFontFamilies";
 import { borders } from "@/src/typings/types-page-book/borders";
+import { textColors } from "@/src/typings/types-page-book/textColors ";
 import { motion } from "framer-motion";
 import { getAnimation } from "@/src/utils/animations/animations";
 
@@ -14,25 +15,23 @@ interface Props {
 }
 
 export const PageRenderer: React.FC<Props> = ({ page, isActive }) => {
-  // Creamos un layoutMap dinámico 
-
-  const layoutMap: Record<string, React.FC<{ page: Page }>> = layouts;
+  const layoutMap: Record<string, React.FC<{ page: Page; textColor?: string }>> = layouts;
   const Layout = layoutMap[String(page.layout)] || layoutMap.FullPageLayout;
+
   const getBorderRadius = page.border ? borders[page.border] : borders.cuadrado;
   const getFont = page.font ? HtmlFontFamilies[page.font] : HtmlFontFamilies.Arial;
-// Determina el valor final del background de la página
 
-// Determina el background a usar
-const getBackground =
-  page.background && page.background in backgrounds
-    ? backgrounds[page.background as keyof typeof backgrounds] // color predefinido
-    : typeof page.background === "string"
-    ? `url(${page.background}) center/cover no-repeat` // si es URL, se convierte en background
-    : backgrounds.blanco; // default
+  const getBackground =
+    page.background && page.background in backgrounds
+      ? backgrounds[page.background as keyof typeof backgrounds]
+      : typeof page.background === "string"
+        ? `url(${page.background}) center/cover no-repeat`
+        : backgrounds.blanco;
 
-
-
-
+  // Cambiar esta línea para obtener el color correctamente:
+  const pageTextColor = page.textColor && page.textColor in textColors
+    ? textColors[page.textColor as keyof typeof textColors]
+    : textColors.negro;
   const animation = page.animation ? getAnimation(page.animation) : null;
 
   const content = (
@@ -41,6 +40,7 @@ const getBackground =
         background: getBackground,
         fontFamily: getFont,
         borderRadius: getBorderRadius,
+        color: pageTextColor, // ← Agregar esta línea
         overflow: "hidden",
         width: "100%",
         height: "100%",
@@ -50,7 +50,6 @@ const getBackground =
     </div>
   );
 
-  // ✅ Solo aplicamos motion si hay animación definida
   if (animation) {
     return (
       <motion.div
@@ -59,13 +58,11 @@ const getBackground =
         animate={isActive ? "visible" : "hidden"}
         variants={animation}
       >
-
         {content}
       </motion.div>
     );
   }
 
-  // ✅ Si no hay animación, devolvemos un div normal
   return (
     <div className="w-full h-full flex items-center justify-center box-border">
       {content}
@@ -73,4 +70,4 @@ const getBackground =
   );
 };
 
- export default  PageRenderer;
+export default PageRenderer;
