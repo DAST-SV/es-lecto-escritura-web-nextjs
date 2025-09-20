@@ -11,9 +11,9 @@ import type { Page, page } from "@/src/typings/types-page-book/index";
 import { FlipBook } from "@/src/components/components-for-books/book/FlipBook"
 import { getUserId } from '@/src/utils/supabase/utilsClient'
 import { uploadFile, generateFilePath, removeFolder } from '@/src/utils/supabase/storageService'
-import { updateBookFromPages } from '@/src/DAL/Libros/updateBookFromPages '
 import toast, { Toaster } from "react-hot-toast";
 import UnifiedLayout from "../../nav/UnifiedLayout";
+import SelectFromTableAsync from "@/src/utils/components/SelectFromTableAsync"
 
 interface PageRendererIndexProps {
     page: page;
@@ -47,7 +47,7 @@ function convertPage(oldPage: page): Page {
 const PageRendererIndex: React.FC<PageRendererIndexProps> = ({ page, pageNumber }) => {
     const Pagina = convertPage(page);
     return (
-        <div className="w-full h-full relative overflow-hidden">
+        <div className="w-full h-full relative overflow-hidden text-gray-900">
             {/* Overlay para mejorar legibilidad si hay imagen de fondo */}
             {page.background && page.background !== "blanco" && (
                 <div
@@ -56,8 +56,8 @@ const PageRendererIndex: React.FC<PageRendererIndexProps> = ({ page, pageNumber 
                 />
             )}
 
-            {/* Contenido del layout */}
-            <div className="relative z-10 h-full">
+            {/* Contenido del layout con texto negro forzado */}
+            <div className="relative z-10 h-full" style={{ color: '#111827' }}>
                 <PageRenderer page={Pagina} />
             </div>
 
@@ -71,6 +71,7 @@ const PageRendererIndex: React.FC<PageRendererIndexProps> = ({ page, pageNumber 
 
 // ============= COMPONENTE PRINCIPAL DEL LIBRO =============
 export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
+
     // Función para crear páginas por defecto
     const createDefaultPages = (): page[] => [
         {
@@ -124,6 +125,9 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
     const [editingText, setEditingText] = useState("");
     const [finalBookPages, setFinalBookPages] = useState<Page[] | null>(null);
     const bookRef = useRef<any>(null);
+    const [selectedCategoria, setSelectedCategoria] = useState<number | null>(null);
+    const [selectedGenero, setSelectedGenero] = useState<number | null>(null);
+    const [descripcion, setDescripcion] = useState<string>("");
 
     // useEffect para actualizar páginas si cambian las props
     useEffect(() => {
@@ -416,6 +420,20 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
 
             if (!pages || pages.length === 0) throw new Error("No hay páginas para guardar");
 
+            // Validar campos requeridos
+            if (!selectedCategoria) {
+                toast.error("Por favor selecciona una categoría");
+                return;
+            }
+            if (!selectedGenero) {
+                toast.error("Por favor selecciona un género");
+                return;
+            }
+            if (!descripcion.trim()) {
+                toast.error("Por favor ingresa una descripción");
+                return;
+            }
+
             // 🔹 Si no hay IdLibro, crear libro nuevo CON DATOS TEMPORALES
             if (!LibroId) {
                 const firstPage = pages[0];
@@ -428,6 +446,9 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
                         userId,
                         title: firstPageTitle,
                         background: null, // 👈 Temporal, se actualizará después
+                        categoria: selectedCategoria,
+                        genero: selectedGenero,
+                        descripcion: descripcion.trim()
                     }),
                 });
 
@@ -471,7 +492,13 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
                 let response = await fetch("/api/libros/updatebook/", {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ idLibro: IdLibro, pages: convertedPages }),
+                    body: JSON.stringify({
+                        idLibro: IdLibro,
+                        pages: convertedPages,
+                        categoria: selectedCategoria,
+                        genero: selectedGenero,
+                        descripcion: descripcion.trim()
+                    }),
                 });
                 if (response.ok) toast.success("📚 Libro actualizado correctamente");
             } else {
@@ -480,7 +507,10 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
                 const response = await fetch("/api/libros/updatebook/", {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ idLibro: LibroId, pages: convertedPages }),
+                    body: JSON.stringify({
+                        idLibro: LibroId,
+                        pages: convertedPages,
+                    }),
                 });
 
                 if (!response.ok) {
@@ -508,7 +538,7 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
                 }
             }
         }
-    }, [pages]);
+    }, [pages, selectedCategoria, selectedGenero, descripcion]);
 
 
     function resizeImage(file: File, maxWidth: number, maxHeight: number): Promise<Blob> {
@@ -611,8 +641,7 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
                                             type="text"
                                             value={editingTitle}
                                             onChange={(e) => setEditingTitle(e.target.value)}
-                                            className="w-full p-3 border-2 border-yellow-300 rounded-lg focus:outline-none focus:border-yellow-500"
-                                            placeholder="Escribe el título aquí..."
+                                            className="w-full p-3 border-2 border-yellow-300 rounded-lg focus:outline-none focus:border-yellow-500 text-gray-900" placeholder="Escribe el título aquí..."
                                         />
                                         <div className="flex gap-2 mt-3">
                                             <button
@@ -660,8 +689,7 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
                                         <textarea
                                             value={editingText}
                                             onChange={(e) => setEditingText(e.target.value)}
-                                            className="w-full p-3 border-2 border-blue-300 rounded-lg resize-none focus:outline-none focus:border-blue-500"
-                                            rows={6}
+                                            className="w-full p-3 border-2 border-blue-300 rounded-lg resize-none focus:outline-none focus:border-blue-500 text-gray-900" rows={6}
                                             placeholder="Escribe tu texto aquí..."
                                         />
                                         <div className="flex gap-2 mt-3">
@@ -776,6 +804,51 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
                                 </select>
                             </div>
 
+                            {/* Campo de descripción */}
+                            <div className="mb-6 p-4 bg-pink-50 rounded-lg">
+                                <label className="block text-sm font-bold text-gray-700 mb-3">
+                                    📝 Descripción del libro:
+                                </label>
+                                <textarea
+                                    value={descripcion}
+                                    onChange={(e) => setDescripcion(e.target.value)}
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 resize-none text-gray-900" rows={4}
+                                    placeholder="Describe brevemente de qué trata tu libro..."
+                                />
+                            </div>
+
+                            {/* Selector de categoría */}
+                            <div className="mb-6 p-4 bg-teal-50 rounded-lg">
+                                <label className="block text-sm font-bold text-gray-700 mb-3">
+                                    📚 Categoría:
+                                </label>
+                                <SelectFromTableAsync<{ id_categoria: number; nombre: string }>
+                                    table="categorias"
+                                    valueField="id_categoria"
+                                    labelField="nombre"
+                                    filterField="nombre"
+                                    value={selectedCategoria}
+                                    placeholder="Selecciona una Categoría"
+                                    onChange={(value) => setSelectedCategoria(value as number)}
+                                />
+                            </div>
+
+                            {/* Selector de género */}
+                            <div className="mb-6 p-4 bg-cyan-50 rounded-lg">
+                                <label className="block text-sm font-bold text-gray-700 mb-3">
+                                    🎭 Género:
+                                </label>
+                                <SelectFromTableAsync<{ id_genero: number; nombre: string }>
+                                    table="generos"
+                                    valueField="id_genero"
+                                    labelField="nombre"
+                                    filterField="nombre"
+                                    value={selectedGenero}
+                                    placeholder="Selecciona un Género"
+                                    onChange={(value) => setSelectedGenero(value as number)}
+                                />
+                            </div>
+
                             <button
                                 onClick={() => saveBookJson(IdLibro)}
                                 className="w-full p-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 font-medium transition-all mt-2"
@@ -865,7 +938,7 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
                                     showPageCorners={true}
                                 >
                                     {pages.map((page, index) => (
-                                        <div key={page.id} className="bg-white">
+                                        <div key={page.id} className="bg-white" style={{ color: '#111827' }}>
                                             <PageRendererIndex page={page} pageNumber={index + 1} />
                                         </div>
                                     ))}

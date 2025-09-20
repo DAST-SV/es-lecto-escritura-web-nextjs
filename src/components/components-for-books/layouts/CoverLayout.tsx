@@ -21,7 +21,7 @@ export const CoverLayout: React.FC<Props> = ({ page }) => {
       )}
 
       {/* Texto superpuesto */}
-      <div className="relative z-10 text-center text-white px-4">
+      <div className="relative z-10 text-center text-black px-4">
         <h1 className="text-4xl font-bold">{page.title}</h1>
         {page.text && <p className="text-lg mt-2">{page.text}</p>}
       </div>

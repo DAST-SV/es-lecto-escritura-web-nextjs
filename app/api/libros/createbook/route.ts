@@ -5,10 +5,13 @@ import { crearLibroCompleto } from "@/src/DAL/Libros/librosDAL"; // tu DAL
 export async function POST(req: Request) {
   try {
     // 🔹 Parsear JSON del request
-    const { userId, title, background } = (await req.json()) as {
+    const { userId, title, background,categoria,genero,descripcion } = (await req.json()) as {
       userId: string;
       title: string;
       background?: string | null; // opcional
+      categoria? : number;
+      genero? : number;
+      descripcion? : string;
     };
 
     if (!userId || !title) {
@@ -19,7 +22,7 @@ export async function POST(req: Request) {
     }
 
     // 🔹 Llamar a la DAL para crear libro (con background)
-    const libroId = await crearLibroCompleto(userId, title, background ?? null);
+    const libroId = await crearLibroCompleto(userId, title, background ?? null,categoria,genero,descripcion);
 
     return NextResponse.json({ ok: true, libroId });
   } catch (error: any) {
