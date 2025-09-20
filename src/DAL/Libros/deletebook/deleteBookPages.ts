@@ -9,9 +9,9 @@ export const deleteBookPages = async (idLibro: string) => {
   const supabase = await createClient();
 
   const { error } = await supabase
-    .from('paginaslibro')
+    .from('paginas_libro')
     .delete()
-    .eq('idlibro', idLibro);
+    .eq('id_libro', idLibro);
 
   if (error) {
     console.error('❌ Error eliminando páginas del libro:', error);

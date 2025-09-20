@@ -1,0 +1,36 @@
+@keyframes cloud {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(100vw); }
+}
+
+@keyframes cloudSlow {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(120vw); }
+}
+
+@keyframes star {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+@keyframes balloon {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-150vh); }
+}
+
+@keyframes balloonSlow {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-200vh); }
+}
+
+@keyframes confetti {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(150vh) rotate(360deg); opacity: 0; }
+}
+
+.animate-cloud { animation: cloud 60s linear infinite; }
+.animate-cloud-slow { animation: cloudSlow 90s linear infinite; }
+.animate-star { animation: star 2s ease-in-out infinite; }
+.animate-balloon { animation: balloon 15s linear infinite; }
+.animate-balloon-slow { animation: balloonSlow 25s linear infinite; }
+.animate-confetti { animation: confetti linear infinite; }

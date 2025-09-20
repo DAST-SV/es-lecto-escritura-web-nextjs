@@ -10,9 +10,9 @@ export const deleteBookRecord = async (idUsuario: string, idLibro: string) => {
   const supabase = await createClient();
 
   const { error } = await supabase
-    .from('librosusuario')
+    .from('libros')
     .delete()
-    .match({ idlibro: idLibro, idusuario: idUsuario });
+    .match({ id_libro: idLibro, id_usuario: idUsuario });
 
   if (error) {
     console.error('❌ Error eliminando registro del libro:', error);

@@ -43,6 +43,14 @@ export interface page {
     font?: string;
 }
 
+export interface LibroUI {
+  Json: string;
+  src: string;
+  caption: string;
+  description?: string;
+}
+
+
 // Tipo del libro completo
 export interface Story {
   pages: Page[];           // Array de páginas

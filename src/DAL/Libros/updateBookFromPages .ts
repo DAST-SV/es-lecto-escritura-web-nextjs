@@ -23,9 +23,9 @@ export const updateBookFromPages = async (idLibro: string, pages: Page[]) => {
     // 1️⃣ Actualizar título y portada del libro
     // ------------------------------
     const { error: libroError } = await supabase
-      .from('librosusuario')
+      .from('libros')
       .update({ titulo, portada })
-      .eq('idlibro', idLibro);
+      .eq('id_libro', idLibro);
 
     if (libroError) throw libroError;
 
@@ -37,22 +37,22 @@ export const updateBookFromPages = async (idLibro: string, pages: Page[]) => {
       const numeropagina = i + 1; // Índice + 1 para que empiece en 1
 
       const { data, error } = await supabase
-        .from('paginaslibro')
+        .from('paginas_libro')
         .upsert({
-          idlibro: idLibro,
-          numeropagina: numeropagina,
+          id_libro: idLibro,
+          numero_pagina: numeropagina,
           layout: page.layout,
           animation: page.animation ?? null,
           title: page.title ?? null,
           text: page.text ?? null,
           image: page.image ?? null,
           audio: page.audio ?? null,
-          interactivegame: page.interactiveGame ?? null,
+          interactive_game: page.interactiveGame ?? null,
           items: page.items ?? [],
           background: page.background ?? null,
           font: page.font ?? null,
           border: page.border ?? null
-        }, { onConflict: 'idlibro,numeropagina' }) // 👈 String con comas
+        }, { onConflict: 'id_libro,numero_pagina' }) // 👈 String con comas
 
 
     }

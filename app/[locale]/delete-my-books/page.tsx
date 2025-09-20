@@ -4,9 +4,8 @@ import React, { useState, useEffect } from "react";
 import ImageGrid from "@/src/utils/imagenes/ImageGrid";
 import FlipBook from "@/src/components/components-for-books/book/FlipBook";
 import type { Page } from "@/src/typings/types-page-book/index";
-import Link from "next/link";
-import { getUserId } from "@/src/utils/supabase/utilsClient";
 import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
+import { getUserId } from "@/src/utils/supabase/utilsClient";
 
 interface BookData {
   pages: Page[];
@@ -14,10 +13,10 @@ interface BookData {
 }
 
 interface LibroUI {
-  Json: string;      // idlibro
-  src: string;       // imagen o background de la primera página
-  caption: string;   // título del libro
-  description?: string; // title de la primera página
+  Json: string;
+  src: string;
+  caption: string;
+  description?: string;
 }
 
 const MyBooks: React.FC = () => {
@@ -36,23 +35,12 @@ const MyBooks: React.FC = () => {
         const dataLibros = await resLibros.json();
         const librosUsuario = dataLibros?.libros ?? [];
 
-        const librosUI: LibroUI[] = await Promise.all(
-          librosUsuario.map(async (libro: any) => {
-            const resPages = await fetch(`/api/libros/pagesforbook/${libro.idlibro}`);
-            const dataPages = await resPages.json();
-            const pages: Page[] = dataPages?.pages ?? [];
-
-            if (!pages.length) return null;
-
-            const firstPage = pages[0];
-            return {
-              Json: libro.idlibro,
-              src: firstPage.image ?? firstPage.background ?? "/Imagenes/placeholder.png",
-              caption: libro.titulo,
-              description: firstPage.title ?? "",
-            };
-          })
-        );
+        const librosUI: LibroUI[] = librosUsuario.map((libro: any) => ({
+          Json: libro.id_libro,
+          src: libro.portada ?? libro.background ?? "/Imagenes/placeholder.png",
+          caption: libro.titulo,
+          description: libro.descripcion ?? "",
+        }));
 
         setLibros(librosUI.filter(Boolean) as LibroUI[]);
       } catch (error) {
@@ -62,6 +50,7 @@ const MyBooks: React.FC = () => {
 
     fetchLibros();
   }, []);
+
 
   // 🔹 Cargar libro seleccionado
   useEffect(() => {
@@ -83,7 +72,7 @@ const MyBooks: React.FC = () => {
 
   // 🔹 Eliminar libro
   const handleDeleteBook = async (idLibro: string) => {
-    if (!confirm("¿Seguro que deseas eliminar este libro?")) return;
+    if (!confirm("🚨 ¿Estás seguro que quieres borrar este cuento mágico?")) return;
 
     try {
       const res = await fetch(`/api/libros/deletebook/${idLibro}`, { method: "DELETE" });
@@ -91,7 +80,6 @@ const MyBooks: React.FC = () => {
 
       if (res.ok) {
         alert("Libro eliminado correctamente ✅");
-        // Actualizar la lista en el estado
         setLibros((prev) => prev.filter((libro) => libro.Json !== idLibro));
       } else {
         alert(`Error al eliminar libro: ${data.error}`);
@@ -102,7 +90,7 @@ const MyBooks: React.FC = () => {
   };
 
   return (
-    <UnifiedLayout className="flex flex-col min-h-screen bg-gradient-to-b from-yellow-100 via-pink-100 to-blue-100">
+    <UnifiedLayout className="flex flex-col min-h-screen bg-gradient-to-b from-sky-200 via-blue-100 to-yellow-100">
       {!selectedBook && (
         <>
           {/* BANNER */}
@@ -110,21 +98,21 @@ const MyBooks: React.FC = () => {
             <img
               src="/Imagenes/Banner.jpg"
               alt="Banner"
-              className="w-full max-h-85 h-auto shadow-lg rounded-b-xl"
+              className="w-full max-h-72 h-auto shadow-lg rounded-b-2xl"
             />
           </div>
 
-          {/* Título */}
-          <h2 className="text-5xl text-center font-extrabold my-6 text-purple-700 drop-shadow-lg">
-            ¡Bienvenidos a Mis Lecturas!
+          {/* Título principal */}
+          <h2 className="text-4xl text-center font-extrabold my-6 text-blue-800 drop-shadow-md">
+            🧸 Mis Libros Guardados
           </h2>
-          <p className="text-center text-lg text-pink-600 mb-8">
-            Explora cuentos mágicos, aprende y diviértete. 📚✨
+          <p className="text-center text-lg text-sky-600 mb-8">
+            Explora, lee y si quieres... ¡borra lo que ya no necesites! 🚀
           </p>
 
           {/* GALERÍA */}
-          <div className="max-w-4xl mx-auto px-4 mb-12">
-            <h2 className="text-3xl font-bold mb-6 text-center text-blue-700">Galería de Cuentos</h2>
+          <div className="max-w-5xl mx-auto px-4 mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-center text-sky-700">Tu Galería de Cuentos</h2>
 
             <ImageGrid
               images={libros}
@@ -132,7 +120,7 @@ const MyBooks: React.FC = () => {
               columns={3}
               onClick={(book) => setSelectedBook({ json: book.Json!, caption: book.caption })}
               showButton={true}
-              buttonText="Eliminar"
+              buttonText="🗑"
               buttonColor="red"
               buttonPosition="corner"
               onButtonClick={(book) => handleDeleteBook(book.Json!)}
@@ -147,9 +135,9 @@ const MyBooks: React.FC = () => {
           <FlipBook pages={bookData.pages} />
           <button
             onClick={() => setSelectedBook(null)}
-            className="mt-4 p-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+            className="mt-4 px-6 py-3 bg-sky-500 text-white font-bold rounded-xl shadow-md hover:bg-sky-600 hover:scale-105 transition-all duration-300"
           >
-            Volver a la galería
+            ⬅ Volver a la galería
           </button>
         </div>
       )}

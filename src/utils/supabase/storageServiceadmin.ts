@@ -1,9 +1,9 @@
-import { createClient } from '@/src/utils/supabase/client'
+import { supabaseAdmin } from '@/src/utils/supabase/admin'
 
 /**
  * Crear instancia de Supabase
  */
-const supabase =  createClient();
+const supabase =  supabaseAdmin;
 
 /**
  * Subir un archivo a Supabase Storage y obtener la URL pública

@@ -11,10 +11,10 @@ export async function getBooksByUserId(idUsuario: string): Promise<LibroUsuario[
   const supabase = await createClient();
 
   const { data, error } = await supabase
-    .from("librosusuario")
+    .from("libros")
     .select("*")
-    .eq("idusuario", idUsuario)
-    .order("fechacreacion", { ascending: true });
+    .eq("id_usuario", idUsuario)
+    .order("fecha_creacion", { ascending: true });
 
   if (error) {
     console.error("❌ Error obteniendo libros del usuario:", error);

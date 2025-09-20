@@ -7,19 +7,19 @@ export async function crearLibroCompleto(
 ) {
   // 1️⃣ Insertar libro y obtener IdLibro
   const { data: libro, error: libroError } = await supabaseAdmin
-    .from("librosusuario")
+    .from("libros")
     .insert([
       {
-        idusuario: userId,
+        id_usuario: userId,
         titulo: title,
-        background: background ?? null, // 👈 guardamos si viene, sino null
+        portada: background ?? null, // 👈 guardamos si viene, sino null
       },
     ])
-    .select("idlibro")
+    .select("id_libro")
     .single();
 
   if (libroError) throw libroError;
-  const libroId = libro.idlibro;
+  const libroId = libro.id_libro;
 
   return libroId;
 }

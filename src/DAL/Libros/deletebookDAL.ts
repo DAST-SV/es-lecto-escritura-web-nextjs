@@ -8,10 +8,10 @@ import { supabaseAdmin } from "@/src/utils/supabase/admin";
  */
 export async function borrarLibroCompleto(LibroId: string, imagenes: string[] = []) {
   // 1️⃣ Borrar páginas (opcional, por cascada si FK tiene ON DELETE CASCADE)
-  await supabaseAdmin.from("PaginasLibro").delete().eq("IdLibro", LibroId);
+  await supabaseAdmin.from("paginas_libro").delete().eq("id_libro", LibroId);
 
   // 2️⃣ Borrar libro
-  await supabaseAdmin.from("LibrosUsuario").delete().eq("IdLibro", LibroId);
+  await supabaseAdmin.from("libros").delete().eq("id_libro", LibroId);
 
   // 3️⃣ Borrar imágenes del bucket
   if (imagenes.length > 0) {

@@ -10,7 +10,7 @@ import { PageRenderer } from "@/src/components/components-for-books/book/PageRen
 import type { Page, page } from "@/src/typings/types-page-book/index";
 import { FlipBook } from "@/src/components/components-for-books/book/FlipBook"
 import { getUserId } from '@/src/utils/supabase/utilsClient'
-import { uploadFile, generateFilePath } from '@/src/utils/supabase/storageService'
+import { uploadFile, generateFilePath, removeFolder } from '@/src/utils/supabase/storageService'
 import { updateBookFromPages } from '@/src/DAL/Libros/updateBookFromPages '
 import toast, { Toaster } from "react-hot-toast";
 import UnifiedLayout from "../../nav/UnifiedLayout";
@@ -416,11 +416,10 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
 
             if (!pages || pages.length === 0) throw new Error("No hay páginas para guardar");
 
-            // 🔹 Si no hay IdLibro, crear libro nuevo
+            // 🔹 Si no hay IdLibro, crear libro nuevo CON DATOS TEMPORALES
             if (!LibroId) {
                 const firstPage = pages[0];
                 const firstPageTitle = firstPage?.title?.replace(/\s+/g, "_") || "pagina";
-                const firstPageBackground = firstPage?.background ?? null;
 
                 const response = await fetch("/api/libros/createbook", {
                     method: "POST",
@@ -428,7 +427,7 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
                     body: JSON.stringify({
                         userId,
                         title: firstPageTitle,
-                        background: firstPageBackground, // 👈 enviamos background
+                        background: null, // 👈 Temporal, se actualizará después
                     }),
                 });
 
@@ -437,11 +436,17 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
                 LibroId = data.libroId;
             }
 
+            if (IdLibro) {
+                let removes = await removeFolder("ImgLibros", `${userId}/${LibroId}`);
+                console.log(removes.removed);
+            }
+
             // 🔹 Subir imágenes y convertir páginas
             const convertedPages: Page[] = await Promise.all(
                 pages.map(async (p: page, idx: number) => {
                     const pageCopy = convertPage(p);
-                    console.log("entre")
+                    console.log("entre");
+
                     if (p.file) {
                         const ext = getFileExtension(p.file);
                         const filePath = generateFilePath(userId, LibroId!, `pagina_${idx + 1}_file.${ext}`);
@@ -460,26 +465,28 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
                 })
             );
 
-            // 🔹 Guardar páginas en la DB
+            // 🔹 Guardar/Actualizar libro CON DATOS REALES
             if (IdLibro) {
-                // Actualizar libro existente
-              let  response =  await fetch("/api/libros/updatebook", {
+                // Actualizar libro existente  
+                let response = await fetch("/api/libros/updatebook/", {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ idLibro: IdLibro, pages: convertedPages  }),
+                    body: JSON.stringify({ idLibro: IdLibro, pages: convertedPages }),
                 });
-               if(response.ok)  toast.success("📚 Libro actualizado correctamente");
-              
+                if (response.ok) toast.success("📚 Libro actualizado correctamente");
             } else {
-                // Crear páginas de libro nuevo
-                const resPaginas = await fetch("/api/libros/createpages", {
-                    method: "POST",
+                // 🚀 NUEVO: Usar updateBookFromPages para libro nuevo también
+                // Esto actualizará tanto las páginas como el título/portada del libro
+                const response = await fetch("/api/libros/updatebook/", {
+                    method: "PATCH",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ LibroId, pages: convertedPages }),
+                    body: JSON.stringify({ idLibro: LibroId, pages: convertedPages }),
                 });
 
-                const dataPaginas = await resPaginas.json();
-                if (!dataPaginas.ok) throw new Error(dataPaginas.error || "Error guardando páginas");
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || "Error guardando páginas");
+                }
 
                 console.log("✅ Libro y páginas creadas correctamente");
                 toast.success("📚 Libro guardado correctamente");

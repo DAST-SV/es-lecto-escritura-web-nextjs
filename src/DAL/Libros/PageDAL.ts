@@ -11,24 +11,24 @@ import { Page } from "@/src/typings/types-page-book";
 export async function insertarPaginas(libroId: string, pages: Page[]) {
     
   const paginasToInsert = pages.map((p, idx) => ({
-    idlibro: libroId,
+    id_libro: libroId,
     layout: p.layout || "default",
     animation: p.animation || null,
     title: p.title || null,
     text: p.text || null,
     image: p.image || null,
     audio: p.audio || null,
-    interactivegame: p.interactiveGame || null,
+    interactive_game: p.interactiveGame || null,
     items: p.items || [],
     background: p.background || null,
     font: p.font || null,
     border: p.border || null,
-    numeropagina: idx + 1,
+    numero_pagina: idx + 1,
   }));
   
   console.log("Paginas mapeadas",paginasToInsert)
   const { error } = await supabaseAdmin
-    .from("paginaslibro")
+    .from("paginas_libro")
     .insert(paginasToInsert);
 
   if (error) throw error;
