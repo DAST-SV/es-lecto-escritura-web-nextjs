@@ -89,6 +89,7 @@ export const updateBookFromPages = async (
           interactive_game: page.interactiveGame ?? null,
           items: page.items ?? [],
           background: page.background ?? null,
+          text_color : page.textColor ?? null,
           font: page.font ?? null,
           border: page.border ?? null
         }, { onConflict: 'id_libro,numero_pagina' }) // 👈 String con comas

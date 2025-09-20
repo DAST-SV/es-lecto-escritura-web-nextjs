@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import ImageGrid from "@/src/utils/imagenes/ImageGrid";
-import { Book } from "@/src/components/components-for-books/book/create-edit-book";
+import { Book } from "@/src/components/components-for-books/book/create-edits-books/components/Book";
 import type { page } from "@/src/typings/types-page-book/index";
 import Link from "next/link";
 import { getUserId } from "@/src/utils/supabase/utilsClient";
@@ -26,6 +26,7 @@ const transformPageData = (page: any, index: number): page => ({
   title: page.title || "Mi Libro Interactivo",
   text: page.text || "Una historia maravillosa comienza aquí...",
   image: page.image || null,
+  textColor: page.textColor || null,
   background: page.background || 'Gradiente Azul',
   font: page.font || 'Georgia'
 });

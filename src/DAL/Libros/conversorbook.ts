@@ -14,6 +14,7 @@ function mapDbRecordToPage(record: any): Page {
     audio: record.audio ?? undefined,
     interactiveGame: record.interactive_game ?? undefined,
     items: [],
+    textColor : record.text_color ?? undefined,
     background: record.background ?? undefined,
     font: record.font ?? undefined,
     border: record.border ?? undefined,
