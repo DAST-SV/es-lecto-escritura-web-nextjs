@@ -69,6 +69,21 @@ const PageRendererIndex: React.FC<PageRendererIndexProps> = ({ page, pageNumber 
     );
 };
 
+// 1. Agregar función para obtener archivo desde URL
+const fetchFileFromUrl = async (url: string): Promise<Blob | null> => {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            console.error(`Error fetching file from URL: ${response.statusText}`);
+            return null;
+        }
+        return await response.blob();
+    } catch (error) {
+        console.error("Error fetching file from URL:", error);
+        return null;
+    }
+};
+
 // ============= COMPONENTE PRINCIPAL DEL LIBRO =============
 export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
 
@@ -457,17 +472,53 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
                 LibroId = data.libroId;
             }
 
+            // 1. Agregar la función fetchFileFromUrl
+            const fetchFileFromUrl = async (url: string): Promise<Blob | null> => {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        console.error(`Error fetching file from URL: ${response.statusText}`);
+                        return null;
+                    }
+                    return await response.blob();
+                } catch (error) {
+                    console.error("Error fetching file from URL:", error);
+                    return null;
+                }
+            };
+
+            // 🔹 FASE 1: Obtener blobs desde URLs existentes (antes de eliminar carpeta)
+            // 🔹 FASE 1: Obtener blobs desde URLs existentes (antes de eliminar carpeta)
+            if (IdLibro) {
+                await Promise.all(
+                    pages.map(async (p: page, idx: number) => {
+                        const httpUrlRegex = /^https?:\/\/.+/i;
+
+                        // Obtener blob de imagen si solo hay URL
+                        if (!p.file && p.image && typeof p.image === 'string' && httpUrlRegex.test(p.image)) {
+                            p.file = await fetchFileFromUrl(p.image);
+                        }
+
+                        // Obtener blob de fondo si solo hay URL
+                        if (!p.backgroundFile && p.background && typeof p.background === 'string' &&
+                            httpUrlRegex.test(p.background) && !backgrounds[p.background as backgroundstype]) {
+                            p.backgroundFile = await fetchFileFromUrl(p.background);
+                        }
+                    })
+                );
+            }
+
             if (IdLibro) {
                 let removes = await removeFolder("ImgLibros", `${userId}/${LibroId}`);
                 console.log(removes.removed);
             }
 
-            // 🔹 Subir imágenes y convertir páginas
+            // 🔹 FASE 3: Subir archivos y convertir páginas
             const convertedPages: Page[] = await Promise.all(
                 pages.map(async (p: page, idx: number) => {
                     const pageCopy = convertPage(p);
-                    console.log("entre");
 
+                    // Manejar imagen principal
                     if (p.file) {
                         const ext = getFileExtension(p.file);
                         const filePath = generateFilePath(userId, LibroId!, `pagina_${idx + 1}_file.${ext}`);
@@ -475,6 +526,7 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
                         imagenesSubidas.push(filePath);
                     }
 
+                    // Manejar imagen de fondo
                     if (p.backgroundFile) {
                         const ext = getFileExtension(p.backgroundFile);
                         const bgPath = generateFilePath(userId, LibroId!, `pagina_${idx + 1}_bg.${ext}`);
@@ -593,7 +645,7 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
     return (
         <UnifiedLayout>
             <div className="flex flex-col lg:flex-row gap-6 p-6 min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-                <Toaster position="top-right" />
+                <Toaster position="bottom-center" />
 
                 {finalBookPages?.length ? (
                     <div className="mx-auto my-6 w-full h-full">
@@ -853,7 +905,7 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
                                 onClick={() => saveBookJson(IdLibro)}
                                 className="w-full p-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 font-medium transition-all mt-2"
                             >
-                                📖 Crear Libro
+                                📖 Guardar Libro
                             </button>
 
                             {/* Navegación y control de páginas */}

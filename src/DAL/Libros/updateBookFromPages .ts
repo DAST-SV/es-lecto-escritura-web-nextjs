@@ -8,7 +8,15 @@ import type { Page } from '@/src/typings/types-page-book/index';
  * @param idLibro ID del libro a actualizar
  * @param pages Array de páginas a guardar (debe contener datos de cada página)
  */
-export const updateBookFromPages = async (idLibro: string, pages: Page[]) => {
+export const updateBookFromPages = async (
+  idLibro: string,
+  pages: Page[],
+  categoria?: number,
+  genero?: number,
+  descripcion?: string
+
+
+) => {
   if (!idLibro) throw new Error('idLibro es requerido');
   if (!pages || pages.length === 0) throw new Error('pages no puede estar vacío');
 
@@ -24,10 +32,41 @@ export const updateBookFromPages = async (idLibro: string, pages: Page[]) => {
     // ------------------------------
     const { error: libroError } = await supabase
       .from('libros')
-      .update({ titulo, portada })
+      .update({ titulo, portada,descripcion})
       .eq('id_libro', idLibro);
 
     if (libroError) throw libroError;
+
+
+      // 2️⃣ Insertar categoría si existe
+  if (categoria) {
+    const { error: categoriaError } = await supabase
+      .from("libro_categorias")
+      .update(
+        {
+          id_categoria: categoria,
+        },
+      )
+      .eq('id_libro', idLibro);
+
+
+    if (categoriaError) throw categoriaError; // Arroja si falla
+  }
+
+  // 3️⃣ Insertar género si existe
+  if (genero) {
+    const { error: generoError } = await supabase
+      .from("libro_generos")
+      .update(
+        {
+          id_genero: genero,
+        },
+      )
+      .eq('id_libro', idLibro);
+
+
+    if (generoError) throw generoError; // Arroja si falla
+  }
 
     // ------------------------------
     // 2️⃣ Reemplazar páginas según numeropagina
