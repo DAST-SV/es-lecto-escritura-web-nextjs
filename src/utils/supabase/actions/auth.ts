@@ -14,6 +14,7 @@ export interface AuthState {
 }
 
 export async function login(prevState: AuthState, formData: FormData): Promise<AuthState> {
+  const locale = await getLocale()
   const supabase = await createClient()
 
   const data = {
@@ -33,7 +34,7 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
   }
 
   revalidatePath('/', 'layout')
-  redirect('/es/pages-my-books')
+  redirect(`/${locale}/pages-my-books`)
 }
 
 export async function loginWithProvider(

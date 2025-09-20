@@ -149,5 +149,107 @@
       "login_button": "¡ENTRAR A APRENDER! 📚",
       "connect_with": "Conecta con:"
     }
+  },
+  "cta": {
+    "title": "¿Listo para transformar la lectura?",
+    "description": "Únete a miles de educadores que ya están mejorando la comprensión lectora de sus estudiantes.",
+    "button": "Comenzar Ahora"
+  },
+  "features": {
+    "title": "QUE NOS DIFERENCIA DE LOS DEMÁS",
+    "subtitle": "Porque EslectoEscritura es diferente que otras plataformas educativas",
+    "tabs": [
+      {
+        "id": "personalized",
+        "label": "Atención Personalizada",
+        "title": "Atención Personalizada",
+        "content": "Entendemos que cada estudiante es único. Ofrecemos soluciones educativas personalizadas que se adaptan a las necesidades individuales de aprendizaje de cada alumno."
+      },
+      {
+        "id": "simplified",
+        "label": "Proceso Simplificado",
+        "title": "Proceso Simplificado",
+        "content": "Nuestro proceso de aprendizaje es sencillo y efectivo, diseñado para minimizar la complejidad y maximizar el tiempo de comprensión lectora."
+      },
+      {
+        "id": "flexibility",
+        "label": "Flexibilidad y Transparencia",
+        "title": "Flexibilidad y Transparencia",
+        "content": "Ofrecemos horarios flexibles y nos esforzamos por mantener una comunicación clara y transparente con padres y educadores sobre el progreso de cada estudiante."
+      }
+    ],
+    "button": "Conoce Más",
+    "stats": [
+      {
+        "number": "1000+",
+        "label": "Estudiantes Activos"
+      },
+      {
+        "number": "95%",
+        "label": "Mejora en Comprensión"
+      },
+      {
+        "number": "50+",
+        "label": "Instituciones Aliadas"
+      }
+    ]
+  },
+  "hero": {
+    "slides": [
+      {
+        "title": "ESLectoescritura",
+        "icon": "🌟",
+        "description": "Aprender a leer y escribir nunca fue tan divertido. Explora cuentos, fábulas, poemas y más, mientras juegas, avanzas de nivel y ganas recompensas por tu esfuerzo. ¡Una plataforma hecha para estudiantes, familias y docentes que creen en el poder de la lectura!",
+        "button": "Comenzar Aventura"
+      },
+      {
+        "title": "Cuentos",
+        "icon": "📖",
+        "description": "Sumérgete en un mundo de aventuras, magia y personajes inolvidables. Los cuentos te invitan a imaginar, soñar y aprender mientras disfrutas cada página.",
+        "button": "Explorar Cuentos"
+      },
+      {
+        "title": "Fábulas",
+        "icon": "🦊",
+        "description": "Historias breves con grandes enseñanzas. Las fábulas, a través de animales y situaciones divertidas, transmiten valores que nunca olvidarás.",
+        "button": "Descubrir Fábulas"
+      },
+      {
+        "title": "Poemas",
+        "icon": "✒️",
+        "description": "Deja que las palabras cobren vida en versos llenos de ritmo, emoción y belleza. La poesía te invita a sentir y soñar.",
+        "button": "Leer Poemas"
+      },
+      {
+        "title": "Leyendas",
+        "icon": "🏞️",
+        "description": "Descubre los relatos que forman parte de nuestra historia y cultura. Las leyendas guardan misterios, tradiciones y aprendizajes únicos.",
+        "button": "Conocer Leyendas"
+      },
+      {
+        "title": "Adivinanzas",
+        "icon": "❓",
+        "description": "Pon a prueba tu ingenio con divertidos acertijos que desafiarán tu mente y harán volar tu imaginación.",
+        "button": "Resolver Adivinanzas"
+      },
+      {
+        "title": "Historietas",
+        "icon": "💬",
+        "description": "Historias ilustradas llenas de color y diversión. Aprende y ríe mientras acompañas a personajes únicos en sus aventuras.",
+        "button": "Ver Historietas"
+      },
+      {
+        "title": "Trabalenguas",
+        "icon": "👅",
+        "description": "Reta tu pronunciación y diviértete jugando con palabras. ¡Entre más rápido lo intentes, más divertido será!",
+        "button": "Practicar Trabalenguas"
+      },
+      {
+        "title": "Refranes",
+        "icon": "🗣️",
+        "description": "Pequeñas frases con grandes verdades. Los refranes encierran la sabiduría de generaciones en pocas palabras.",
+        "button": "Aprender Refranes"
+      }
+    ]
   }
 }

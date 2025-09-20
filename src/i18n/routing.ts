@@ -33,6 +33,14 @@ export const routing = defineRouting({
     '/auth/register': {
       en: '/auth/register',   // Versión en inglés
       es: '/auth/registro'    // Versión en español
+    },
+    '/pages-my-books': {
+      en: '/my-books',
+      es: '/mis-libros'
+    },
+    '/pages-create-book':{
+      en: '/create-book',
+      es: '/crear-libro'
     }
   }
 });

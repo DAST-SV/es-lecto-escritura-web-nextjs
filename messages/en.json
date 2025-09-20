@@ -149,5 +149,107 @@
     "required": "This field is required",
     "invalidEmail": "Invalid email address",
     "minLength": "Must be at least {{count}} characters long"
+  },
+  "cta": {
+    "title": "Ready to transform reading?",
+    "description": "Join thousands of educators who are already improving their students' reading comprehension.",
+    "button": "Get Started Now"
+  },
+  "features": {
+    "title": "WHAT MAKES US DIFFERENT FROM OTHERS",
+    "subtitle": "Why EsReadWrite is different from other educational platforms",
+    "tabs": [
+      {
+        "id": "personalized",
+        "label": "Personalized Attention",
+        "title": "Personalized Attention",
+        "content": "We understand that each student is unique. We offer personalized educational solutions that adapt to the individual learning needs of each student."
+      },
+      {
+        "id": "simplified",
+        "label": "Simplified Process",
+        "title": "Simplified Process",
+        "content": "Our learning process is simple and effective, designed to minimize complexity and maximize reading comprehension time."
+      },
+      {
+        "id": "flexibility",
+        "label": "Flexibility and Transparency",
+        "title": "Flexibility and Transparency",
+        "content": "We offer flexible schedules and strive to maintain clear and transparent communication with parents and educators about each student's progress."
+      }
+    ],
+    "button": "Learn More",
+    "stats": [
+      {
+        "number": "1000+",
+        "label": "Active Students"
+      },
+      {
+        "number": "95%",
+        "label": "Improved Comprehension"
+      },
+      {
+        "number": "50+",
+        "label": "Partner Institutions"
+      }
+    ]
+  },
+  "hero": {
+    "slides": [
+      {
+        "title": "ESReadWrite",
+        "icon": "🌟",
+        "description": "Learning to read and write has never been so fun. Explore stories, fables, poems and more, while you play, level up and earn rewards for your effort. A platform made for students, families and teachers who believe in the power of reading!",
+        "button": "Start Adventure"
+      },
+      {
+        "title": "Stories",
+        "icon": "📖",
+        "description": "Immerse yourself in a world of adventures, magic and unforgettable characters. Stories invite you to imagine, dream and learn while enjoying every page.",
+        "button": "Explore Stories"
+      },
+      {
+        "title": "Fables",
+        "icon": "🦊",
+        "description": "Short stories with great teachings. Fables, through animals and fun situations, transmit values that you will never forget.",
+        "button": "Discover Fables"
+      },
+      {
+        "title": "Poems",
+        "icon": "✒️",
+        "description": "Let words come to life in verses full of rhythm, emotion and beauty. Poetry invites you to feel and dream.",
+        "button": "Read Poems"
+      },
+      {
+        "title": "Legends",
+        "icon": "🏞️",
+        "description": "Discover the stories that are part of our history and culture. Legends hold mysteries, traditions and unique learnings.",
+        "button": "Know Legends"
+      },
+      {
+        "title": "Riddles",
+        "icon": "❓",
+        "description": "Test your wit with fun puzzles that will challenge your mind and make your imagination soar.",
+        "button": "Solve Riddles"
+      },
+      {
+        "title": "Comics",
+        "icon": "💬",
+        "description": "Illustrated stories full of color and fun. Learn and laugh while accompanying unique characters on their adventures.",
+        "button": "View Comics"
+      },
+      {
+        "title": "Tongue Twisters",
+        "icon": "👅",
+        "description": "Challenge your pronunciation and have fun playing with words. The faster you try, the more fun it will be!",
+        "button": "Practice Tongue Twisters"
+      },
+      {
+        "title": "Sayings",
+        "icon": "🗣️",
+        "description": "Small phrases with great truths. Sayings contain the wisdom of generations in few words.",
+        "button": "Learn Sayings"
+      }
+    ]
   }
 }

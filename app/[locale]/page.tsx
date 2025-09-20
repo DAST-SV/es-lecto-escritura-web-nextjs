@@ -1,8 +1,18 @@
+"use client";
+import React from 'react';
+import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
 import HeroCarousel from '@/src/components/sections/public/HeroCarousel';
-import {getTranslations} from 'next-intl/server';
- 
-export default async function HomePage() {
-  // const t = await getTranslations('welcome');
-  // return <h1>{t('title')}...</h1>;
-  return <HeroCarousel />
-}
+import FeaturesSection from '@/src/components/sections/public/FeaturesSection';
+import CTASection from '@/src/components/sections/public/CTASection';
+
+const HomePage: React.FC = () => {
+  return (
+    <UnifiedLayout className="bg-gradient-to-r bg-[#39cffd]" mainClassName="pt-0">
+      <HeroCarousel />
+      <FeaturesSection />
+      <CTASection />
+    </UnifiedLayout>
+  );
+};
+
+export default HomePage;

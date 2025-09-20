@@ -84,13 +84,18 @@ const NavBar: React.FC<NavBarProps> = ({ brandName, userAvatar }) => {
             title: t("myBooks.title")
         },
         {
+            label: t("createBook.text"),
+            href: `/${locale}${t("createBook.href")}`,
+            title: t("createBook.title")
+        },
+        {
             label: t("profile.text"),
             href: `/${locale}${t("profile.href")}`,
             title: t("profile.title")
         }
     ];
 
-    const defaultNavItems = user ? [...publicItems, ...privateItems] : publicItems;
+    const defaultNavItems = user ? privateItems : publicItems;
 
     // Logout handler
     const handleLogout = async () => {
