@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import * as ROT from "rot-js";
-import KidsShootQuestion from "./KidsShootQuestion";
+import KidsShootQuestion from '@/src/components/games/laberinto/KidsShootQuestion'
 
 export interface PreguntaObj {
   Pregunta: string;
@@ -24,7 +24,7 @@ interface IdentificadorCuento {
   alternativeFloorImage?: string;
 }
 
-const MazeGame: React.FC<IdentificadorCuento> = ({ 
+const MazeGame: React.FC<IdentificadorCuento> = ({
   Id,
   height,
   width,
@@ -40,7 +40,7 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
   const animationFrameRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
   const [isMobile, setIsMobile] = useState(false);
-  
+
   // 📱 Detectar si es móvil
   useEffect(() => {
     const checkMobile = () => {
@@ -50,25 +50,25 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-  
+
   const setupHighDPICanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    
+
     const devicePixelRatio = window.devicePixelRatio || 1;
-    
-    // Ajustar tamaño según dispositivo
-    const displayWidth = isMobile ? Math.min(window.innerWidth - 40, 350) : (width || 900);
-    const displayHeight = isMobile ? Math.min(window.innerHeight - 200, 500) : (height || 650);
-    
+
+    // Ajustar tamaño según dispositivo - REDUCIDO para desktop
+    const displayWidth = isMobile ? Math.min(window.innerWidth - 40, 350) : (width || 600); // Reducido de 900 a 600
+    const displayHeight = isMobile ? Math.min(window.innerHeight - 200, 500) : (height || 450); // Reducido de 650 a 450
+
     canvas.width = displayWidth * devicePixelRatio;
     canvas.height = displayHeight * devicePixelRatio;
     canvas.style.width = displayWidth + 'px';
     canvas.style.height = displayHeight + 'px';
-    
+
     ctx.scale(devicePixelRatio, devicePixelRatio);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
@@ -93,7 +93,7 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
     targetY: 1.5,
     isMoving: false,
     moveSpeed: 0.25,
-    cellSize: isMobile ? 25 : 35,
+    cellSize: isMobile ? 25 : 30, // Reducido ligeramente para desktop
     cameraX: 0,
     cameraY: 0
   });
@@ -101,14 +101,15 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
   // 🗺️ Estado del sistema de exploración
   const [explorationState, setExplorationState] = useState({
     showingPath: true,
-    pathToGoal: [] as {x: number, y: number}[],
-    goalPosition: {x: 0, y: 0},
+    pathToGoal: [] as { x: number, y: number }[],
+    goalPosition: { x: 0, y: 0 },
     exploredCells: new Set<string>(),
     discoveredCells: new Set<string>(),
     visionRadius: isMobile ? 2 : 2.5,
     pathAnimationProgress: 0,
     pathCameraIndex: 0,
-    gamePhase: 'showing-path' as 'showing-path' | 'exploring' | 'completed'
+    gamePhase: 'showing-path' as 'showing-path' | 'exploring' | 'completed',
+    mazeGenerated: false // NUEVO: Para controlar cuando el mapa está listo
   });
 
   // 🎮 Control de teclas
@@ -134,280 +135,294 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
         reject(new Error('No image source provided'));
         return;
       }
-      
+
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      
+
       img.onload = () => {
         console.log(`Imagen cargada: ${src}`);
         resolve(img);
       };
-      
+
       img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
       img.src = src;
     });
   };
 
   // 🗺️ Encontrar camino
-  const findPathToGoal = useCallback((startX: number, startY: number, goalX: number, goalY: number): {x: number, y: number}[] => {
+  const findPathToGoal = useCallback((startX: number, startY: number, goalX: number, goalY: number): { x: number, y: number }[] => {
     if (!map.length) return [];
-    
+
     const visited = new Set<string>();
-    const queue: {x: number, y: number, path: {x: number, y: number}[]}[] = [
-      {x: startX, y: startY, path: [{x: startX, y: startY}]}
+    const queue: { x: number, y: number, path: { x: number, y: number }[] }[] = [
+      { x: startX, y: startY, path: [{ x: startX, y: startY }] }
     ];
-    
+
     while (queue.length > 0) {
       const current = queue.shift()!;
       const key = `${current.x},${current.y}`;
-      
+
       if (visited.has(key)) continue;
       visited.add(key);
-      
+
       if (current.x === goalX && current.y === goalY) {
         return current.path;
       }
-      
+
       const directions = [[0, -1], [0, 1], [-1, 0], [1, 0]];
-      
+
       for (const [dx, dy] of directions) {
         const newX = current.x + dx;
         const newY = current.y + dy;
         const newKey = `${newX},${newY}`;
-        
-        if (newX >= 0 && newX < map[0].length && 
-            newY >= 0 && newY < map.length &&
-            map[newY][newX] !== 1 && 
-            !visited.has(newKey)) {
-          
+
+        if (newX >= 0 && newX < map[0].length &&
+          newY >= 0 && newY < map.length &&
+          map[newY][newX] !== 1 &&
+          !visited.has(newKey)) {
+
           queue.push({
-            x: newX, 
-            y: newY, 
-            path: [...current.path, {x: newX, y: newY}]
+            x: newX,
+            y: newY,
+            path: [...current.path, { x: newX, y: newY }]
           });
         }
       }
     }
-    
+
     return [];
   }, [map]);
 
   // 🎯 Encontrar posición para la meta
-  const findGoalPosition = useCallback((): {x: number, y: number} => {
-    if (!map.length) return {x: 1, y: 1};
-    
-    const possibleGoals: {x: number, y: number}[] = [];
+  const findGoalPosition = useCallback((): { x: number, y: number } => {
+    if (!map.length) return { x: 1, y: 1 };
+
+    const possibleGoals: { x: number, y: number }[] = [];
     const playerGridX = Math.floor(gameState.playerX);
     const playerGridY = Math.floor(gameState.playerY);
-    
+
     for (let y = 0; y < map.length; y++) {
       for (let x = 0; x < map[0].length; x++) {
         if (map[y][x] === 0) {
           const distance = Math.abs(x - playerGridX) + Math.abs(y - playerGridY);
           if (distance > 8) {
-            possibleGoals.push({x, y});
+            possibleGoals.push({ x, y });
           }
         }
       }
     }
-    
-    return possibleGoals[Math.floor(Math.random() * possibleGoals.length)] || {x: 1, y: 1};
+
+    return possibleGoals[Math.floor(Math.random() * possibleGoals.length)] || { x: 1, y: 1 };
   }, [map, gameState.playerX, gameState.playerY]);
 
   // 🔍 Verificar si una celda debe ser visible
   const isCellVisible = useCallback((x: number, y: number): boolean => {
     if (explorationState.gamePhase === 'showing-path') return true;
-    
+
     const cellKey = `${x},${y}`;
     return explorationState.discoveredCells.has(cellKey);
   }, [explorationState.gamePhase, explorationState.discoveredCells]);
 
-  // 🎨 Función de dibujo optimizada
-  const draw = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
-    const { playerX, playerY, cellSize, cameraX, cameraY } = gameState;
-    
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    gradient.addColorStop(0, '#87CEEB');
-    gradient.addColorStop(1, '#98FB98');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+ // 🎨 Función de dibujo optimizada y centrada
+const draw = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
+  const { playerX, playerY, cellSize, cameraX, cameraY } = gameState;
 
-    if (!map.length) return;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const startX = Math.max(0, Math.floor((cameraX - canvas.width/2) / cellSize) );
-    const endX = Math.min(map[0].length, Math.ceil((cameraX + canvas.width/2) / cellSize));
-    const startY = Math.max(0, Math.floor((cameraY - canvas.height/2) / cellSize));
-    const endY = Math.min(map.length, Math.ceil((cameraY + canvas.height/2) / cellSize));
+  // dimensiones lógicas (corregidas con DPR)
+  const logicalWidth = canvas.width / (window.devicePixelRatio || 1);
+  const logicalHeight = canvas.height / (window.devicePixelRatio || 1);
 
-    if (explorationState.gamePhase === 'exploring') {
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
+  // Fondo degradado
+  const gradient = ctx.createLinearGradient(0, 0, logicalWidth, logicalHeight);
+  gradient.addColorStop(0, '#87CEEB');
+  gradient.addColorStop(1, '#98FB98');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, logicalWidth, logicalHeight);
 
-    for (let y = startY; y < endY; y++) {
-      for (let x = startX; x < endX; x++) {
-        const screenX = Math.round(x * cellSize - cameraX + canvas.width / 2);
-        const screenY = Math.round(y * cellSize - cameraY + canvas.height / 2);
-        const roundedCellSize = Math.round(cellSize);
-        
-        const cell = map[y][x];
-        const cellVisible = isCellVisible(x, y);
-        
-        if (!cellVisible && explorationState.gamePhase === 'exploring') continue;
-        
-        if (cell === 0) {
-          if (floorImage && floorImage.complete && floorImage.naturalWidth > 0) {
-            ctx.drawImage(floorImage, screenX, screenY, roundedCellSize, roundedCellSize);
-            if ((x + y) % 3 === 0 && floorAlternativeImage && floorAlternativeImage.complete) {
-              ctx.drawImage(floorAlternativeImage, screenX, screenY, roundedCellSize, roundedCellSize);
-            }
-          } else {
-            ctx.fillStyle = '#90EE90';
-            ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
+  if (!map.length) return;
+
+  // calcular rango de celdas visibles
+  const startX = Math.max(0, Math.floor((cameraX - logicalWidth / 2) / cellSize));
+  const endX = Math.min(map[0].length, Math.ceil((cameraX + logicalWidth / 2) / cellSize));
+  const startY = Math.max(0, Math.floor((cameraY - logicalHeight / 2) / cellSize));
+  const endY = Math.min(map.length, Math.ceil((cameraY + logicalHeight / 2) / cellSize));
+
+  if (explorationState.gamePhase === 'exploring') {
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, logicalWidth, logicalHeight);
+  }
+
+  // ====================
+  // MAPA
+  // ====================
+  for (let y = startY; y < endY; y++) {
+    for (let x = startX; x < endX; x++) {
+      const screenX = Math.round(x * cellSize - cameraX + logicalWidth / 2);
+      const screenY = Math.round(y * cellSize - cameraY + logicalHeight / 2);
+      const roundedCellSize = Math.round(cellSize);
+
+      const cell = map[y][x];
+      const cellVisible = isCellVisible(x, y);
+
+      if (!cellVisible && explorationState.gamePhase === 'exploring') continue;
+
+      if (cell === 0) {
+        if (floorImage?.complete && floorImage.naturalWidth > 0) {
+          ctx.drawImage(floorImage, screenX, screenY, roundedCellSize, roundedCellSize);
+          if ((x + y) % 3 === 0 && floorAlternativeImage?.complete) {
+            ctx.drawImage(floorAlternativeImage, screenX, screenY, roundedCellSize, roundedCellSize);
           }
-          
-        } else if (cell === 1) {
-          if (wallImage && wallImage.complete && wallImage.naturalWidth > 0) {
-            ctx.drawImage(wallImage, screenX, screenY, roundedCellSize, roundedCellSize);
-            if ((x + y) % 3 === 0 && alternativeWall && alternativeWall.complete) {
-              ctx.drawImage(alternativeWall, screenX, screenY, roundedCellSize, roundedCellSize);
-            }
-          } else {
-            ctx.fillStyle = '#8B4513';
-            ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
+        } else {
+          ctx.fillStyle = '#90EE90';
+          ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
+        }
+
+      } else if (cell === 1) {
+        if (wallImage?.complete && wallImage.naturalWidth > 0) {
+          ctx.drawImage(wallImage, screenX, screenY, roundedCellSize, roundedCellSize);
+          if ((x + y) % 3 === 0 && alternativeWall?.complete) {
+            ctx.drawImage(alternativeWall, screenX, screenY, roundedCellSize, roundedCellSize);
           }
-          
-        } else if (cell === 2) {
-          if (floorImage && floorImage.complete) {
-            ctx.drawImage(floorImage, screenX, screenY, roundedCellSize, roundedCellSize);
-          } else {
-            ctx.fillStyle = '#90EE90';
-            ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
-          }
-          
-          if (giftImage && giftImage.complete && giftImage.naturalWidth > 0) {
-            const giftSize = Math.round(cellSize - 8);
-            const giftOffset = Math.round(4);
-            ctx.drawImage(giftImage, screenX + giftOffset, screenY + giftOffset, giftSize, giftSize);
-          } else {
-            ctx.fillStyle = '#FFD700';
-            ctx.fillRect(screenX + 5, screenY + 5, roundedCellSize - 10, roundedCellSize - 10);
-          }
-          
-        } else if (cell === 3) {
-          if (floorImage && floorImage.complete) {
-            ctx.drawImage(floorImage, screenX, screenY, roundedCellSize, roundedCellSize);
-          } else {
-            ctx.fillStyle = '#90EE90';
-            ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
-          }
-          
-          const time = Date.now() * 0.003;
-          const pulse = Math.sin(time) * 0.1 + 0.9;
-          ctx.fillStyle = `rgba(255, 215, 0, ${0.3 * pulse})`;
-          ctx.beginPath();
-          ctx.arc(screenX + cellSize/2, screenY + cellSize/2, cellSize/2 * pulse, 0, Math.PI * 2);
-          ctx.fill();
-          
-          if (castleImage && castleImage.complete && castleImage.naturalWidth > 0) {
-            const castleSize = Math.round(cellSize - 4);
-            const castleOffset = Math.round(2);
-            ctx.drawImage(castleImage, screenX + castleOffset, screenY + castleOffset, castleSize, castleSize);
-          } else {
-            ctx.fillStyle = '#9400D3';
-            ctx.fillRect(screenX + 2, screenY + 2, roundedCellSize - 4, roundedCellSize - 4);
-          }
+        } else {
+          ctx.fillStyle = '#8B4513';
+          ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
+        }
+
+      } else if (cell === 2) {
+        if (floorImage?.complete) {
+          ctx.drawImage(floorImage, screenX, screenY, roundedCellSize, roundedCellSize);
+        } else {
+          ctx.fillStyle = '#90EE90';
+          ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
+        }
+
+        if (giftImage?.complete && giftImage.naturalWidth > 0) {
+          const giftSize = Math.round(cellSize - 8);
+          const giftOffset = Math.round(4);
+          ctx.drawImage(giftImage, screenX + giftOffset, screenY + giftOffset, giftSize, giftSize);
+        } else {
+          ctx.fillStyle = '#FFD700';
+          ctx.fillRect(screenX + 5, screenY + 5, roundedCellSize - 10, roundedCellSize - 10);
+        }
+
+      } else if (cell === 3) {
+        if (floorImage?.complete) {
+          ctx.drawImage(floorImage, screenX, screenY, roundedCellSize, roundedCellSize);
+        } else {
+          ctx.fillStyle = '#90EE90';
+          ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
+        }
+
+        const time = Date.now() * 0.003;
+        const pulse = Math.sin(time) * 0.1 + 0.9;
+        ctx.fillStyle = `rgba(255, 215, 0, ${0.3 * pulse})`;
+        ctx.beginPath();
+        ctx.arc(screenX + cellSize / 2, screenY + cellSize / 2, cellSize / 2 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (castleImage?.complete && castleImage.naturalWidth > 0) {
+          const castleSize = Math.round(cellSize - 4);
+          const castleOffset = Math.round(2);
+          ctx.drawImage(castleImage, screenX + castleOffset, screenY + castleOffset, castleSize, castleSize);
+        } else {
+          ctx.fillStyle = '#9400D3';
+          ctx.fillRect(screenX + 2, screenY + 2, roundedCellSize - 4, roundedCellSize - 4);
         }
       }
     }
+  }
 
-    // Camino durante demostración
-    if (explorationState.gamePhase === 'showing-path' && explorationState.pathToGoal.length > 0) {
-      const pathProgress = Math.min(explorationState.pathAnimationProgress, explorationState.pathToGoal.length);
-      
-      ctx.strokeStyle = '#FFD700';
-      ctx.lineWidth = isMobile ? 4 : 6;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.setLineDash([12, 6]);
-      ctx.lineDashOffset = -Date.now() * 0.005;
-      
-      ctx.beginPath();
-      
-      for (let i = 0; i < Math.floor(pathProgress) - 1 && i < explorationState.pathToGoal.length - 1; i++) {
-        const current = explorationState.pathToGoal[i];
-        const next = explorationState.pathToGoal[i + 1];
-        
-        const currentScreenX = current.x * cellSize - cameraX + canvas.width / 2 + cellSize/2;
-        const currentScreenY = current.y * cellSize - cameraY + canvas.height / 2 + cellSize/2;
-        const nextScreenX = next.x * cellSize - cameraX + canvas.width / 2 + cellSize/2;
-        const nextScreenY = next.y * cellSize - cameraY + canvas.height / 2 + cellSize/2;
-        
-        if (i === 0) ctx.moveTo(currentScreenX, currentScreenY);
-        ctx.lineTo(nextScreenX, nextScreenY);
-      }
-      
-      ctx.stroke();
-      ctx.setLineDash([]);
+  // ====================
+  // CAMINO
+  // ====================
+  if (explorationState.gamePhase === 'showing-path' && explorationState.pathToGoal.length > 0) {
+    const pathProgress = Math.min(explorationState.pathAnimationProgress, explorationState.pathToGoal.length);
+
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth = isMobile ? 4 : 6;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.setLineDash([12, 6]);
+    ctx.lineDashOffset = -Date.now() * 0.005;
+
+    ctx.beginPath();
+
+    for (let i = 0; i < Math.floor(pathProgress) - 1 && i < explorationState.pathToGoal.length - 1; i++) {
+      const current = explorationState.pathToGoal[i];
+      const next = explorationState.pathToGoal[i + 1];
+
+      const currentScreenX = current.x * cellSize - cameraX + logicalWidth / 2 + cellSize / 2;
+      const currentScreenY = current.y * cellSize - cameraY + logicalHeight / 2 + cellSize / 2;
+      const nextScreenX = next.x * cellSize - cameraX + logicalWidth / 2 + cellSize / 2;
+      const nextScreenY = next.y * cellSize - cameraY + logicalHeight / 2 + cellSize / 2;
+
+      if (i === 0) ctx.moveTo(currentScreenX, currentScreenY);
+      ctx.lineTo(nextScreenX, nextScreenY);
     }
 
-    // Dibujar jugador
-    const screenPlayerX = Math.round(playerX * cellSize - cameraX + canvas.width / 2);
-    const screenPlayerY = Math.round(playerY * cellSize - cameraY + canvas.height / 2);
-    
-    if (playerImage && playerImage.complete && playerImage.naturalWidth > 0) {
-      const size = Math.round(cellSize - 6);
-      ctx.save();
-      
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-      ctx.shadowBlur = 4;
-      ctx.shadowOffsetX = 2;
-      ctx.shadowOffsetY = 2;
-      
-      ctx.drawImage(
-        playerImage,
-        Math.round(screenPlayerX - size/2),
-        Math.round(screenPlayerY - size/2),
-        size,
-        size
-      );
-      
-      ctx.restore();
-    } else {
-      ctx.fillStyle = '#FF69B4';
-      ctx.beginPath();
-      ctx.arc(screenPlayerX, screenPlayerY, cellSize/3, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }, [gameState, explorationState, map, isCellVisible, playerImage, floorImage, wallImage, giftImage, castleImage, alternativeWall, floorAlternativeImage, isMobile]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // ====================
+  // JUGADOR
+  // ====================
+  const screenPlayerX = Math.round(playerX * cellSize - cameraX + logicalWidth / 2);
+  const screenPlayerY = Math.round(playerY * cellSize - cameraY + logicalHeight / 2);
+
+  if (playerImage?.complete && playerImage.naturalWidth > 0) {
+    const size = Math.round(cellSize - 6);
+    ctx.save();
+
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+
+    ctx.drawImage(
+      playerImage,
+      Math.round(screenPlayerX - size / 2),
+      Math.round(screenPlayerY - size / 2),
+      size,
+      size
+    );
+
+    ctx.restore();
+  } else {
+    ctx.fillStyle = '#FF69B4';
+    ctx.beginPath();
+    ctx.arc(screenPlayerX, screenPlayerY, cellSize / 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}, [gameState, explorationState, map, isCellVisible, playerImage, floorImage, wallImage, giftImage, castleImage, alternativeWall, floorAlternativeImage, isMobile]);
+
 
   // 🎮 Lógica de movimiento
   const handleMovementInput = useCallback(() => {
     if (activePregunta || gameState.isMoving || explorationState.gamePhase !== 'exploring') return;
-    
+
     const keys = keysPressed.current;
     let deltaX = 0;
     let deltaY = 0;
-    
+
     if (keys.up) deltaY = -1;
     if (keys.down) deltaY = 1;
     if (keys.left) deltaX = -1;
     if (keys.right) deltaX = 1;
-    
+
     if (deltaX === 0 && deltaY === 0) return;
-    
+
     const currentGridX = Math.floor(gameState.playerX);
     const currentGridY = Math.floor(gameState.playerY);
     const newX = currentGridX + deltaX;
     const newY = currentGridY + deltaY;
-    
+
     if (newY < 0 || newY >= map.length || newX < 0 || newX >= map[0].length) return;
     if (map[newY][newX] === 1) return;
-    
+
     setGameState(prev => ({
       ...prev,
       targetX: newX + 0.5,
@@ -446,10 +461,10 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
       const deltaX = touchControls.currentX - touchControls.startX;
       const deltaY = touchControls.currentY - touchControls.startY;
       const threshold = 30;
-      
+
       let moveX = 0;
       let moveY = 0;
-      
+
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
         if (deltaX > threshold) moveX = 1;
         else if (deltaX < -threshold) moveX = -1;
@@ -457,13 +472,13 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
         if (deltaY > threshold) moveY = 1;
         else if (deltaY < -threshold) moveY = -1;
       }
-      
+
       if (moveX !== 0 || moveY !== 0) {
         const currentGridX = Math.floor(gameState.playerX);
         const currentGridY = Math.floor(gameState.playerY);
         const newX = currentGridX + moveX;
         const newY = currentGridY + moveY;
-        
+
         if (newY >= 0 && newY < map.length && newX >= 0 && newX < map[0].length && map[newY][newX] !== 1) {
           setGameState(prev => ({
             ...prev,
@@ -474,7 +489,7 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
         }
       }
     }
-    
+
     setTouchControls({
       startX: 0,
       startY: 0,
@@ -487,21 +502,21 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
   // 🎮 Update game
   const updateGame = useCallback((deltaTime: number) => {
     if (!map.length) return;
-    
+
     const playerGridX = Math.floor(gameState.playerX);
     const playerGridY = Math.floor(gameState.playerY);
-    
+
     if (map[playerGridY] && map[playerGridY][playerGridX] === 3 &&
-        explorationState.gamePhase === 'exploring') {
+      explorationState.gamePhase === 'exploring') {
       setExplorationState(prev => ({ ...prev, gamePhase: 'completed' }));
       return;
     }
-    
+
     if (gameState.isMoving) {
       const dx = gameState.targetX - gameState.playerX;
       const dy = gameState.targetY - gameState.playerY;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      
+
       if (distance < 0.05) {
         setGameState(prev => ({
           ...prev,
@@ -509,7 +524,7 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
           playerY: prev.targetY,
           isMoving: false
         }));
-        
+
         const gridX = Math.floor(gameState.targetX);
         const gridY = Math.floor(gameState.targetY);
         if (map[gridY] && map[gridY][gridX] === 2) {
@@ -526,11 +541,11 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
     } else {
       handleMovementInput();
     }
-    
+
     if (explorationState.gamePhase === 'exploring') {
       const newDiscovered = new Set(explorationState.discoveredCells);
       const visionRadius = explorationState.visionRadius;
-      
+
       for (let dy = -Math.ceil(visionRadius); dy <= Math.ceil(visionRadius); dy++) {
         for (let dx = -Math.ceil(visionRadius); dx <= Math.ceil(visionRadius); dx++) {
           const x = Math.floor(gameState.playerX) + dx;
@@ -543,33 +558,33 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
           }
         }
       }
-      
+
       if (newDiscovered.size !== explorationState.discoveredCells.size) {
-        setExplorationState(prev => ({ 
-          ...prev, 
+        setExplorationState(prev => ({
+          ...prev,
           discoveredCells: newDiscovered,
           exploredCells: newDiscovered
         }));
       }
     }
-    
+
     if (explorationState.gamePhase === 'showing-path' && explorationState.pathToGoal.length > 1) {
       const currentPathIndex = Math.min(
-        Math.floor(explorationState.pathAnimationProgress), 
+        Math.floor(explorationState.pathAnimationProgress),
         explorationState.pathToGoal.length - 1
       );
-      
+
       if (currentPathIndex >= 0 && currentPathIndex < explorationState.pathToGoal.length - 1) {
         const current = explorationState.pathToGoal[currentPathIndex];
         const next = explorationState.pathToGoal[currentPathIndex + 1];
         const progress = explorationState.pathAnimationProgress - currentPathIndex;
-        
+
         const interpolatedX = current.x + (next.x - current.x) * progress;
         const interpolatedY = current.y + (next.y - current.y) * progress;
-        
+
         const targetCameraX = (interpolatedX + 0.5) * gameState.cellSize;
         const targetCameraY = (interpolatedY + 0.5) * gameState.cellSize;
-        
+
         setGameState(prev => ({
           ...prev,
           cameraX: targetCameraX,
@@ -579,14 +594,14 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
     } else if (explorationState.gamePhase === 'exploring') {
       const targetCameraX = gameState.playerX * gameState.cellSize;
       const targetCameraY = gameState.playerY * gameState.cellSize;
-      
+
       setGameState(prev => ({
         ...prev,
         cameraX: prev.cameraX + (targetCameraX - prev.cameraX) * 0.1,
         cameraY: prev.cameraY + (targetCameraY - prev.cameraY) * 0.1
       }));
     }
-    
+
     if (explorationState.gamePhase === 'showing-path') {
       setExplorationState(prev => {
         const newProgress = prev.pathAnimationProgress + 0.08;
@@ -607,18 +622,18 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
   const gameLoop = useCallback((currentTime: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const deltaTime = currentTime - lastTimeRef.current;
     lastTimeRef.current = currentTime;
-    
+
     if (deltaTime < 100) {
       updateGame(deltaTime);
       draw(ctx, canvas);
     }
-    
+
     animationFrameRef.current = requestAnimationFrame(gameLoop);
   }, [updateGame, draw]);
 
@@ -626,7 +641,7 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const keys = keysPressed.current;
-      
+
       switch (e.key.toLowerCase()) {
         case "arrowup":
         case "w":
@@ -653,7 +668,7 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
 
     const handleKeyUp = (e: KeyboardEvent) => {
       const keys = keysPressed.current;
-      
+
       switch (e.key.toLowerCase()) {
         case "arrowup":
         case "w":
@@ -676,7 +691,7 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
 
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
-    
+
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
@@ -688,7 +703,7 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
     setupHighDPICanvas();
     setGameState(prev => ({
       ...prev,
-      cellSize: isMobile ? 25 : 35
+      cellSize: isMobile ? 25 : 30 // Ajustado
     }));
     setExplorationState(prev => ({
       ...prev,
@@ -696,13 +711,16 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
     }));
   }, [setupHighDPICanvas, isMobile]);
 
-  // 🏗️ Inicialización
+  // 🏗️ Inicialización - CORREGIDA para evitar regenerar el mapa
   useEffect(() => {
+    // Solo generar una vez cuando cambie el ID o cuando sea la primera vez
+    if (explorationState.mazeGenerated) return;
+
     const mockPreguntas: PreguntaObj[] = [
       {
         Pregunta: "¿Cuál es tu color favorito?",
         Respuesta1: "Azul como el cielo",
-        Respuesta2: "Verde como la hierba", 
+        Respuesta2: "Verde como la hierba",
         Respuesta3: "Rosa como las flores",
         Correcta: "Verde como la hierba",
       },
@@ -710,47 +728,62 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
         Pregunta: "¿Qué animal te gusta más?",
         Respuesta1: "Gato",
         Respuesta2: "Perro",
-        Respuesta3: "Unicornio", 
+        Respuesta3: "Unicornio",
         Correcta: "Unicornio",
       }
     ];
-    
+
     setPreguntas(mockPreguntas);
 
-    // Generar laberinto
-    const width = isMobile ? 20 : 30;
-    const height = isMobile ? 25 : 40;
-    const maze = new ROT.Map.DividedMaze(width, height);
+    // Generar laberinto - MISMA LÓGICA para móvil y desktop
+    const mazeWidth = isMobile ? 20 : 25; // Menos diferencia entre móvil y desktop
+    const mazeHeight = isMobile ? 25 : 30; // Menos diferencia entre móvil y desktop
+    
+    console.log(`Generando laberinto: ${mazeWidth}x${mazeHeight} (isMobile: ${isMobile})`);
+    
+    const maze = new ROT.Map.DividedMaze(mazeWidth, mazeHeight);
 
     const newMap: number[][] = [];
     maze.create((x, y, wall) => {
       if (!newMap[y]) newMap[y] = [];
       newMap[y][x] = wall ? 1 : (Math.random() < 0.08 ? 2 : 0);
     });
-    
+
     setMap(newMap);
 
-    // Encontrar posición inicial
+    // Encontrar posición inicial válida
     let startX = 1.5, startY = 1.5;
-    for (let y = 0; y < newMap.length; y++) {
-      for (let x = 0; x < newMap[0].length; x++) {
+    outerLoop: for (let y = 1; y < newMap.length - 1; y++) {
+      for (let x = 1; x < newMap[0].length - 1; x++) {
         if (newMap[y][x] === 0) {
           startX = x + 0.5;
           startY = y + 0.5;
-          break;
+          break outerLoop;
         }
       }
     }
+
+    console.log(`Posición inicial del jugador: (${startX}, ${startY})`);
 
     setGameState(prev => ({
       ...prev,
       playerX: startX,
       playerY: startY,
       targetX: startX,
-      targetY: startY
+      targetY: startY,
+      cameraX: startX * prev.cellSize,
+      cameraY: startY * prev.cellSize
     }));
-    
-  }, [Id, isMobile]);
+
+    setExplorationState(prev => ({
+      ...prev,
+      mazeGenerated: true,
+      gamePhase: 'showing-path',
+      pathAnimationProgress: 0,
+      discoveredCells: new Set([`${Math.floor(startX)},${Math.floor(startY)}`])
+    }));
+
+  }, [Id, isMobile, explorationState.mazeGenerated]); // CLAVE: Solo regenerar si cambia isMobile o ID
 
   // Cargar imágenes con las props
   useEffect(() => {
@@ -760,7 +793,7 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
         .then(setPlayerImage)
         .catch(() => console.log('Player image not found, using fallback'));
     }
-    
+
     // Cargar imagen del suelo
     if (floorImageProp) {
       loadOptimizedImage(floorImageProp)
@@ -781,21 +814,21 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
         .then(setAlternativeWall)
         .catch(() => console.log('Alternative wall image not found, using fallback'));
     }
-    
+
     // Cargar imagen de pared
     if (wallImageProp) {
       loadOptimizedImage(wallImageProp)
         .then(setWallImage)
         .catch(() => console.log('Wall image not found, using fallback'));
     }
-    
+
     // Cargar imagen de cofre
     if (chestImage) {
       loadOptimizedImage(chestImage)
         .then(setGiftImage)
         .catch(() => console.log('Gift image not found, using fallback'));
     }
-    
+
     // Cargar imagen de meta
     if (goalImage) {
       loadOptimizedImage(goalImage)
@@ -804,60 +837,62 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
     }
   }, [avatarImage, floorImageProp, wallImageProp, chestImage, goalImage, alternativeWallImage, alternativeFloorImage]);
 
-  // Configurar meta cuando el mapa esté listo
+  // CORREGIDO: Configurar meta cuando el mapa esté listo y las posiciones estén establecidas
   useEffect(() => {
-    if (map.length > 0 && gameState.playerX > 0 && explorationState.goalPosition.x === 0) {
-      const goalPos = findGoalPosition();
+    if (map.length > 0 && 
+        gameState.playerX > 1 && 
+        explorationState.goalPosition.x === 0 && 
+        explorationState.mazeGenerated) {
       
+      console.log('Configurando meta y camino...');
+      
+      const goalPos = findGoalPosition();
+      console.log(`Posición de meta encontrada: (${goalPos.x}, ${goalPos.y})`);
+
+      // Crear copia del mapa y colocar la meta
       const newMap = map.map(row => [...row]);
       newMap[goalPos.y][goalPos.x] = 3;
       setMap(newMap);
+
+      // Encontrar camino desde la posición actual del jugador
+      const playerGridX = Math.floor(gameState.playerX);
+      const playerGridY = Math.floor(gameState.playerY);
       
-      const path = findPathToGoal(
-        Math.floor(gameState.playerX), 
-        Math.floor(gameState.playerY), 
-        goalPos.x, 
-        goalPos.y
-      );
+      console.log(`Calculando camino desde (${playerGridX}, ${playerGridY}) hasta (${goalPos.x}, ${goalPos.y})`);
       
+      const path = findPathToGoal(playerGridX, playerGridY, goalPos.x, goalPos.y);
+      
+      console.log(`Camino encontrado con ${path.length} pasos:`, path.slice(0, 5), '...');
+
       setExplorationState(prev => ({
         ...prev,
         goalPosition: goalPos,
         pathToGoal: path,
         pathAnimationProgress: 0,
-        discoveredCells: new Set([
-          `${Math.floor(gameState.playerX)},${Math.floor(gameState.playerY)}`
-        ])
-      }));
-
-      setGameState(prev => ({
-        ...prev,
-        cameraX: prev.playerX * prev.cellSize,
-        cameraY: prev.playerY * prev.cellSize
+        gamePhase: 'showing-path'
       }));
     }
-  }, [map.length, gameState.playerX, gameState.playerY, explorationState.goalPosition.x, findGoalPosition, findPathToGoal]);
+  }, [map.length, gameState.playerX, gameState.playerY, explorationState.goalPosition.x, explorationState.mazeGenerated, findGoalPosition, findPathToGoal]);
 
   // Game loop
   useEffect(() => {
-    if (map.length > 0) {
+    if (map.length > 0 && explorationState.mazeGenerated) {
       lastTimeRef.current = performance.now();
       animationFrameRef.current = requestAnimationFrame(gameLoop);
-      
+
       return () => {
         if (animationFrameRef.current) {
           cancelAnimationFrame(animationFrameRef.current);
         }
       };
     }
-  }, [map, gameLoop]);
+  }, [map.length, explorationState.mazeGenerated, gameLoop]);
 
   return (
-    <div style={{ 
-
-      display: 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center', 
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
       padding: isMobile ? '10px' : '20px',
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       minHeight: '100vh'
@@ -886,22 +921,23 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
           imageRendering: 'auto',
           touchAction: 'none',
           maxWidth: '100%',
-          maxHeight: '100%'
+          maxHeight: isMobile ? '70vh' : '60vh' // LIMITADO para permitir scroll
         }}
       />
-      
+
       {/* Solo mostrar instrucciones en desktop */}
       {!isMobile && (
-        <div style={{ 
-          marginTop: '20px', 
-          color: 'white', 
+        <div style={{
+          marginTop: '20px',
+          color: 'white',
           textAlign: 'center',
           fontFamily: 'Comic Sans MS, cursive',
-          fontSize: '1.2rem'
+          fontSize: '1.2rem',
+          maxWidth: '800px'
         }}>
-          <div style={{ 
-            background: 'rgba(255, 255, 255, 0.2)', 
-            padding: '15px', 
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.2)',
+            padding: '15px',
             borderRadius: '15px',
             marginBottom: '10px'
           }}>
@@ -914,19 +950,43 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
 
       {/* Indicador de controles móviles */}
       {isMobile && (
-        <div style={{ 
-          marginTop: '10px', 
-          color: 'white', 
+        <div style={{
+          marginTop: '10px',
+          color: 'white',
           textAlign: 'center',
           fontFamily: 'Comic Sans MS, cursive',
           fontSize: '1rem',
-          background: 'rgba(255, 255, 255, 0.2)', 
-          padding: '10px', 
+          background: 'rgba(255, 255, 255, 0.2)',
+          padding: '10px',
           borderRadius: '10px',
         }}>
           <p style={{ margin: '0' }}>👆 Desliza para moverte</p>
         </div>
       )}
+
+      {/* Información adicional que ahora será visible */}
+      <div style={{
+        marginTop: '20px',
+        color: 'white',
+        textAlign: 'center',
+        fontFamily: 'Comic Sans MS, cursive',
+        fontSize: isMobile ? '0.9rem' : '1rem',
+        background: 'rgba(255, 255, 255, 0.1)',
+        padding: '15px',
+        borderRadius: '10px',
+        maxWidth: '600px'
+      }}>
+        <h3 style={{ margin: '0 0 10px 0' }}>✨ Información del Juego ✨</h3>
+        <p style={{ margin: '5px 0' }}>
+          🔍 Al principio verás el camino hacia el castillo mágico
+        </p>
+        <p style={{ margin: '5px 0' }}>
+          🌟 Luego podrás explorar libremente el laberinto
+        </p>
+        <p style={{ margin: '5px 0' }}>
+          🎯 Recuerda la ubicación del castillo para llegar hasta él
+        </p>
+      </div>
 
       {/* Mensaje de victoria */}
       {explorationState.gamePhase === 'completed' && (
@@ -944,14 +1004,14 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
           zIndex: 1000,
           animation: 'pulse 1s ease-in-out infinite'
         }}>
-          <h2 style={{ 
-            fontSize: isMobile ? '1.8rem' : '3rem', 
+          <h2 style={{
+            fontSize: isMobile ? '1.8rem' : '3rem',
             margin: '0 0 10px 0',
             fontFamily: 'Comic Sans MS, cursive'
           }}>
             🎉 ¡GANASTE! 🎉
           </h2>
-          <p style={{ 
+          <p style={{
             fontSize: isMobile ? '1rem' : '1.5rem',
             fontFamily: 'Comic Sans MS, cursive'
           }}>
@@ -971,6 +1031,11 @@ const MazeGame: React.FC<IdentificadorCuento> = ({
         @keyframes pulse {
           0%, 100% { transform: translate(-50%, -50%) scale(1); }
           50% { transform: translate(-50%, -50%) scale(1.05); }
+        }
+        
+        /* Asegurar que el contenedor permita scroll */
+        body {
+          overflow-y: auto !important;
         }
       `}</style>
     </div>
