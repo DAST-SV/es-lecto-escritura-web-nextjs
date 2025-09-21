@@ -1,78 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-
-// Mock de ROT.js mejorado
-const ROT = {
-  Map: {
-    DividedMaze: class {
-      constructor(private width: number, private height: number) {}
-      
-      create(callback: (x: number, y: number, wall: number) => void): void {
-        // Inicializar todo como paredes
-        const maze: number[][] = [];
-        for (let y = 0; y < this.height; y++) {
-          maze[y] = [];
-          for (let x = 0; x < this.width; x++) {
-            maze[y][x] = 1; // Todo son paredes inicialmente
-          }
-        }
-        
-        // Crear caminos usando algoritmo simple
-        const stack: {x: number, y: number}[] = [];
-        const visited = new Set<string>();
-        
-        // Empezar desde (1,1)
-        let currentX = 1;
-        let currentY = 1;
-        maze[currentY][currentX] = 0; // Marcar como camino
-        visited.add(`${currentX},${currentY}`);
-        stack.push({x: currentX, y: currentY});
-        
-        const directions = [[0, -2], [0, 2], [-2, 0], [2, 0]];
-        
-        while (stack.length > 0) {
-          const neighbors = [];
-          
-          for (const [dx, dy] of directions) {
-            const newX = currentX + dx;
-            const newY = currentY + dy;
-            
-            if (newX > 0 && newX < this.width - 1 && 
-                newY > 0 && newY < this.height - 1 && 
-                !visited.has(`${newX},${newY}`)) {
-              neighbors.push({x: newX, y: newY, wallX: currentX + dx/2, wallY: currentY + dy/2});
-            }
-          }
-          
-          if (neighbors.length > 0) {
-            const chosen = neighbors[Math.floor(Math.random() * neighbors.length)];
-            maze[chosen.y][chosen.x] = 0; // Nuevo camino
-            maze[chosen.wallY][chosen.wallX] = 0; // Romper pared
-            visited.add(`${chosen.x},${chosen.y}`);
-            stack.push({x: chosen.x, y: chosen.y});
-            currentX = chosen.x;
-            currentY = chosen.y;
-          } else {
-            const backtrack = stack.pop();
-            if (backtrack) {
-              currentX = backtrack.x;
-              currentY = backtrack.y;
-            }
-          }
-        }
-        
-        // Asegurar que hay un camino desde la entrada
-        maze[1][1] = 0;
-        
-        // Llamar al callback para cada celda
-        for (let y = 0; y < this.height; y++) {
-          for (let x = 0; x < this.width; x++) {
-            callback(x, y, maze[y][x]);
-          }
-        }
-      }
-    }
-  }
-};
+import ROT from "rot-js";
 
 // Mock del componente KidsShootQuestion
 const KidsShootQuestion: React.FC<{ 
@@ -438,46 +365,69 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
   }, [explorationState.gamePhase, explorationState.discoveredCells]);
 
   // 🎨 Función de dibujo con sistema de cámara híbrido para ambas fases
+// 🎨 Función de dibujo con sistema de cámara híbrido para ambas fases
   const draw = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement): void => {
-    const { playerX, playerY, cellSize, cameraX, cameraY } = gameState;
+    const { playerX, playerY, cellSize } = gameState;
     
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Usar el tamaño real del canvas sin escalar
+    const actualWidth = canvas.width / (window.devicePixelRatio || 1);
+    const actualHeight = canvas.height / (window.devicePixelRatio || 1);
+    
+    ctx.clearRect(0, 0, actualWidth, actualHeight);
     
     // Fondo gradient
-    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    const gradient = ctx.createLinearGradient(0, 0, actualWidth, actualHeight);
     gradient.addColorStop(0, '#87CEEB');
     gradient.addColorStop(1, '#98FB98');
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, actualWidth, actualHeight);
 
     if (!map.length) return;
 
-    const canvasCenterX = canvas.width / 2;
-    const canvasCenterY = canvas.height / 2;
+    const canvasCenterX = actualWidth / 2;
+    const canvasCenterY = actualHeight / 2;
     
-    // SISTEMA DE CÁMARA HÍBRIDO
-    let offsetX, offsetY;
+    // SISTEMA DE CÁMARA SIMPLIFICADO
+    let cameraX, cameraY;
     
-    if (explorationState.gamePhase === 'showing-path') {
-      // Durante demostración: usar sistema de cámara tradicional para seguir el recorrido
-      offsetX = canvasCenterX - cameraX;
-      offsetY = canvasCenterY - cameraY;
+    if (explorationState.gamePhase === 'showing-path' && explorationState.pathToGoal.length > 0) {
+      // Durante demostración: seguir el camino animado
+      const pathIndex = Math.min(
+        Math.floor(explorationState.pathAnimationProgress),
+        explorationState.pathToGoal.length - 1
+      );
+      
+      if (pathIndex < explorationState.pathToGoal.length - 1) {
+        const current = explorationState.pathToGoal[pathIndex];
+        const next = explorationState.pathToGoal[pathIndex + 1];
+        const progress = explorationState.pathAnimationProgress - pathIndex;
+        
+        cameraX = current.x + (next.x - current.x) * progress + 0.5;
+        cameraY = current.y + (next.y - current.y) * progress + 0.5;
+      } else {
+        const lastPoint = explorationState.pathToGoal[pathIndex];
+        cameraX = lastPoint.x + 0.5;
+        cameraY = lastPoint.y + 0.5;
+      }
     } else {
-      // Durante exploración: centrar siempre en el jugador
-      const playerScreenX = playerX * cellSize;
-      const playerScreenY = playerY * cellSize;
-      offsetX = canvasCenterX - playerScreenX;
-      offsetY = canvasCenterY - playerScreenY;
+      // Durante exploración: centrar en el jugador
+      cameraX = playerX;
+      cameraY = playerY;
     }
     
+    // Calcular offset para centrar la cámara
+    const offsetX = canvasCenterX - (cameraX * cellSize);
+    const offsetY = canvasCenterY - (cameraY * cellSize);
+    
     // Rango de celdas visible
-    const visibleRange = screenInfo.isMobile ? 10 : 15;
-    const startX = Math.max(0, Math.floor(playerX - visibleRange));
-    const endX = Math.min(map[0].length, Math.ceil(playerX + visibleRange));
-    const startY = Math.max(0, Math.floor(playerY - visibleRange));
-    const endY = Math.min(map.length, Math.ceil(playerY + visibleRange));
+    const visibleRange = screenInfo.isMobile ? 8 : 15;
+    const startX = Math.max(0, Math.floor(cameraX - visibleRange));
+    const endX = Math.min(map[0].length, Math.ceil(cameraX + visibleRange));
+    const startY = Math.max(0, Math.floor(cameraY - visibleRange));
+    const endY = Math.min(map.length, Math.ceil(cameraY + visibleRange));
 
     // Fondo negro para áreas no exploradas solo durante exploración
     if (explorationState.gamePhase === 'exploring') {
