@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import ROT from "rot-js";
+import * as ROT from "rot-js";
 
 // Mock del componente KidsShootQuestion
 const KidsShootQuestion: React.FC<{ 
