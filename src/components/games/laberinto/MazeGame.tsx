@@ -1,79 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import * as ROT from "rot-js";
-
-// Mock del componente KidsShootQuestion
-const KidsShootQuestion: React.FC<{ 
-  pregunta: PreguntaObj; 
-  onClose: () => void 
-}> = ({ pregunta, onClose }) => (
-  <div style={{
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-    padding: '20px',
-    boxSizing: 'border-box'
-  }}>
-    <div style={{
-      backgroundColor: 'white',
-      padding: '30px',
-      borderRadius: '20px',
-      textAlign: 'center',
-      maxWidth: '90%',
-      maxHeight: '90%',
-      overflow: 'auto',
-      fontSize: window.innerWidth < 768 ? '1rem' : '1.2rem'
-    }}>
-      <h2 style={{ color: '#333', marginBottom: '20px' }}>{pregunta.Pregunta}</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        {[pregunta.Respuesta1, pregunta.Respuesta2, pregunta.Respuesta3].map((respuesta: string, index: number) => (
-          <button
-            key={index}
-            onClick={() => {
-              if (respuesta === pregunta.Correcta) {
-                alert('¡Correcto! 🎉');
-              } else {
-                alert('¡Inténtalo de nuevo! 💪');
-              }
-              onClose();
-            }}
-            style={{
-              padding: '15px 20px',
-              fontSize: window.innerWidth < 768 ? '1rem' : '1.1rem',
-              backgroundColor: '#4CAF50',
-              color: 'white',
-              border: 'none',
-              borderRadius: '10px',
-              cursor: 'pointer'
-            }}
-          >
-            {respuesta}
-          </button>
-        ))}
-      </div>
-      <button
-        onClick={onClose}
-        style={{
-          marginTop: '20px',
-          padding: '10px 20px',
-          backgroundColor: '#f44336',
-          color: 'white',
-          border: 'none',
-          borderRadius: '10px',
-          cursor: 'pointer'
-        }}
-      >
-        Cerrar
-      </button>
-    </div>
-  </div>
-);
+import KidsShootQuestion from "./KidsShootQuestion";
 
 export interface PreguntaObj {
   Pregunta: string;
@@ -87,218 +14,147 @@ interface IdentificadorCuento {
   Id: number;
   height?: number;
   width?: number;
+  // Nuevas props para personalización de imágenes
+  avatarImage?: string;
+  floorImage?: string;
+  wallImage?: string;
+  chestImage?: string;
+  goalImage?: string;
+  alternativeWallImage?: string;
+  alternativeFloorImage?: string;
 }
 
-interface ScreenInfo {
-  width: number;
-  height: number;
-  isMobile: boolean;
-  isPortrait: boolean;
-}
-
-interface GameState {
-  playerX: number;
-  playerY: number;
-  targetX: number;
-  targetY: number;
-  isMoving: boolean;
-  moveSpeed: number;
-  cellSize: number;
-  cameraX: number;
-  cameraY: number;
-}
-
-interface ExplorationState {
-  showingPath: boolean;
-  pathToGoal: {x: number, y: number}[];
-  goalPosition: {x: number, y: number};
-  exploredCells: Set<string>;
-  discoveredCells: Set<string>;
-  visionRadius: number;
-  pathAnimationProgress: number;
-  pathCameraIndex: number;
-  gamePhase: 'showing-path' | 'exploring' | 'completed';
-}
-
-interface KeysPressed {
-  up: boolean;
-  down: boolean;
-  left: boolean;
-  right: boolean;
-}
-
-interface TouchStart {
-  x: number;
-  y: number;
-}
-
-interface CanvasSize {
-  width: number;
-  height: number;
-  cellSize: number;
-}
-
-const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
+const MazeGame: React.FC<IdentificadorCuento> = ({ 
+  Id,
+  height,
+  width,
+  avatarImage = '/Imagenes/Kirbypx.webp',
+  floorImage: floorImageProp = '/Imagenes/Suelo.webp',
+  wallImage: wallImageProp = '/Imagenes/Pared.webp',
+  chestImage = '/Imagenes/Cofre.webp',
+  goalImage = '/Imagenes/Portal.webp',
+  alternativeWallImage = '',
+  alternativeFloorImage = ''
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
-  const touchStartRef = useRef<TouchStart>({ x: 0, y: 0 });
+  const [isMobile, setIsMobile] = useState(false);
   
-  // 📱 Detección ultra simple de móviles
-  const [screenInfo, setScreenInfo] = useState<ScreenInfo>(() => {
-    const detectMobile = (): boolean => {
-      if (typeof window === 'undefined') return false;
-      
-      // Detección muy simple
-      return window.innerWidth <= 768 && 'ontouchstart' in window;
+  // 📱 Detectar si es móvil
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768 || 'ontouchstart' in window);
     };
-    
-    return {
-      width: typeof window !== 'undefined' ? window.innerWidth : 900,
-      height: typeof window !== 'undefined' ? window.innerHeight : 650,
-      isMobile: detectMobile(),
-      isPortrait: typeof window !== 'undefined' ? window.innerHeight > window.innerWidth : false
-    };
-  });
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
-  // 🎮 Configuración del canvas con mejor centrado
-  const getCanvasSize = useCallback((): CanvasSize => {
-    const { width, height, isMobile, isPortrait } = screenInfo;
-    
-    if (isMobile) {
-      const padding = 20;
-      const controlsSpace = 200;
-      const headerSpace = 80;
-      
-      const maxWidth = width - (padding * 2);
-      const maxHeight = height - controlsSpace - headerSpace;
-      
-      // Calcular tamaño óptimo manteniendo proporción
-      const optimalSize = Math.min(maxWidth, maxHeight);
-      const finalWidth = Math.min(optimalSize, 400);
-      const finalHeight = Math.min(optimalSize, 400);
-      
-      return {
-        width: finalWidth,
-        height: finalHeight,
-        cellSize: Math.max(15, Math.min(finalWidth / 20, finalHeight / 20))
-      };
-    } else {
-      // En escritorio, tamaño fijo centrado
-      return {
-        width: Math.min(800, width - 100),
-        height: Math.min(600, height - 250),
-        cellSize: 25
-      };
-    }
-  }, [screenInfo]);
-
-  const setupResponsiveCanvas = useCallback((): void => {
+  const setupHighDPICanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
-    const { width, height } = getCanvasSize();
     const devicePixelRatio = window.devicePixelRatio || 1;
     
-    canvas.width = width * devicePixelRatio;
-    canvas.height = height * devicePixelRatio;
-    canvas.style.width = width + 'px';
-    canvas.style.height = height + 'px';
+    // Ajustar tamaño según dispositivo
+    const displayWidth = isMobile ? Math.min(window.innerWidth - 40, 350) : (width || 900);
+    const displayHeight = isMobile ? Math.min(window.innerHeight - 200, 500) : (height || 650);
+    
+    canvas.width = displayWidth * devicePixelRatio;
+    canvas.height = displayHeight * devicePixelRatio;
+    canvas.style.width = displayWidth + 'px';
+    canvas.style.height = displayHeight + 'px';
     
     ctx.scale(devicePixelRatio, devicePixelRatio);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
-    
-  }, [getCanvasSize]);
+  }, [isMobile, width, height]);
 
   const [map, setMap] = useState<number[][]>([]);
   const [preguntas, setPreguntas] = useState<PreguntaObj[]>([]);
   const [activePregunta, setActivePregunta] = useState<PreguntaObj | null>(null);
+  const [playerImage, setPlayerImage] = useState<HTMLImageElement | null>(null);
+  const [floorImage, setFloorImage] = useState<HTMLImageElement | null>(null);
+  const [wallImage, setWallImage] = useState<HTMLImageElement | null>(null);
+  const [giftImage, setGiftImage] = useState<HTMLImageElement | null>(null);
+  const [castleImage, setCastleImage] = useState<HTMLImageElement | null>(null);
+  const [alternativeWall, setAlternativeWall] = useState<HTMLImageElement | null>(null);
+  const [floorAlternativeImage, setAlternativeFloorImage] = useState<HTMLImageElement | null>(null);
 
-  // 🎮 Estado del juego
-  const [gameState, setGameState] = useState<GameState>({
+  // 🎮 Estado del juego optimizado
+  const [gameState, setGameState] = useState({
     playerX: 1.5,
     playerY: 1.5,
     targetX: 1.5,
     targetY: 1.5,
     isMoving: false,
     moveSpeed: 0.25,
-    cellSize: 20,
+    cellSize: isMobile ? 25 : 35,
     cameraX: 0,
     cameraY: 0
   });
 
   // 🗺️ Estado del sistema de exploración
-  const [explorationState, setExplorationState] = useState<ExplorationState>({
+  const [explorationState, setExplorationState] = useState({
     showingPath: true,
-    pathToGoal: [],
-    goalPosition: { x: 0, y: 0 },
+    pathToGoal: [] as {x: number, y: number}[],
+    goalPosition: {x: 0, y: 0},
     exploredCells: new Set<string>(),
     discoveredCells: new Set<string>(),
-    visionRadius: 2.5,
+    visionRadius: isMobile ? 2 : 2.5,
     pathAnimationProgress: 0,
     pathCameraIndex: 0,
-    gamePhase: 'showing-path'
+    gamePhase: 'showing-path' as 'showing-path' | 'exploring' | 'completed'
   });
 
-  // 🎮 Control de teclas y touch
-  const keysPressed = useRef<KeysPressed>({
+  // 🎮 Control de teclas
+  const keysPressed = useRef({
     up: false,
     down: false,
     left: false,
     right: false
   });
 
-  // 📱 Actualizar información de pantalla con detección ultra simple
-  useEffect(() => {
-    const updateScreenInfo = (): void => {
-      const detectMobile = (): boolean => {
-        return window.innerWidth <= 768 && 'ontouchstart' in window;
-      };
-      
-      const newScreenInfo: ScreenInfo = {
-        width: window.innerWidth,
-        height: window.innerHeight,
-        isMobile: detectMobile(),
-        isPortrait: window.innerHeight > window.innerWidth
-      };
-      
-      console.log('Mobile detection:', newScreenInfo.isMobile, 'Width:', newScreenInfo.width);
-      setScreenInfo(newScreenInfo);
-      
-      setGameState(prev => ({
-        ...prev,
-        moveSpeed: newScreenInfo.isMobile ? 0.3 : 0.25
-      }));
-      
-      setExplorationState(prev => ({
-        ...prev,
-        visionRadius: newScreenInfo.isMobile ? 2 : 2.5
-      }));
-    };
+  // 📱 Controles táctiles para móvil
+  const [touchControls, setTouchControls] = useState({
+    startX: 0,
+    startY: 0,
+    currentX: 0,
+    currentY: 0,
+    isTouching: false
+  });
 
-    updateScreenInfo();
-    window.addEventListener('resize', updateScreenInfo);
-    window.addEventListener('orientationchange', () => {
-      setTimeout(updateScreenInfo, 100);
+  const loadOptimizedImage = (src: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      if (!src) {
+        reject(new Error('No image source provided'));
+        return;
+      }
+      
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      img.onload = () => {
+        console.log(`Imagen cargada: ${src}`);
+        resolve(img);
+      };
+      
+      img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+      img.src = src;
     });
-    
-    return () => {
-      window.removeEventListener('resize', updateScreenInfo);
-      window.removeEventListener('orientationchange', updateScreenInfo);
-    };
-  }, []);
+  };
 
-  // 🎮 Funciones del juego
+  // 🗺️ Encontrar camino
   const findPathToGoal = useCallback((startX: number, startY: number, goalX: number, goalY: number): {x: number, y: number}[] => {
     if (!map.length) return [];
     
     const visited = new Set<string>();
     const queue: {x: number, y: number, path: {x: number, y: number}[]}[] = [
-      { x: startX, y: startY, path: [{ x: startX, y: startY }] }
+      {x: startX, y: startY, path: [{x: startX, y: startY}]}
     ];
     
     while (queue.length > 0) {
@@ -312,7 +168,7 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
         return current.path;
       }
       
-      const directions: [number, number][] = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+      const directions = [[0, -1], [0, 1], [-1, 0], [1, 0]];
       
       for (const [dx, dy] of directions) {
         const newX = current.x + dx;
@@ -327,7 +183,7 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
           queue.push({
             x: newX, 
             y: newY, 
-            path: [...current.path, { x: newX, y: newY }]
+            path: [...current.path, {x: newX, y: newY}]
           });
         }
       }
@@ -336,8 +192,9 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
     return [];
   }, [map]);
 
+  // 🎯 Encontrar posición para la meta
   const findGoalPosition = useCallback((): {x: number, y: number} => {
-    if (!map.length) return { x: 1, y: 1 };
+    if (!map.length) return {x: 1, y: 1};
     
     const possibleGoals: {x: number, y: number}[] = [];
     const playerGridX = Math.floor(gameState.playerX);
@@ -347,16 +204,17 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
       for (let x = 0; x < map[0].length; x++) {
         if (map[y][x] === 0) {
           const distance = Math.abs(x - playerGridX) + Math.abs(y - playerGridY);
-          if (distance > (screenInfo.isMobile ? 6 : 8)) {
-            possibleGoals.push({ x, y });
+          if (distance > 8) {
+            possibleGoals.push({x, y});
           }
         }
       }
     }
     
-    return possibleGoals[Math.floor(Math.random() * possibleGoals.length)] || { x: 1, y: 1 };
-  }, [map, gameState.playerX, gameState.playerY, screenInfo.isMobile]);
+    return possibleGoals[Math.floor(Math.random() * possibleGoals.length)] || {x: 1, y: 1};
+  }, [map, gameState.playerX, gameState.playerY]);
 
+  // 🔍 Verificar si una celda debe ser visible
   const isCellVisible = useCallback((x: number, y: number): boolean => {
     if (explorationState.gamePhase === 'showing-path') return true;
     
@@ -364,82 +222,36 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
     return explorationState.discoveredCells.has(cellKey);
   }, [explorationState.gamePhase, explorationState.discoveredCells]);
 
-  // 🎨 Función de dibujo con sistema de cámara híbrido para ambas fases
-// 🎨 Función de dibujo con sistema de cámara híbrido para ambas fases
-  const draw = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement): void => {
-    const { playerX, playerY, cellSize } = gameState;
+  // 🎨 Función de dibujo optimizada
+  const draw = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
+    const { playerX, playerY, cellSize, cameraX, cameraY } = gameState;
     
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Usar el tamaño real del canvas sin escalar
-    const actualWidth = canvas.width / (window.devicePixelRatio || 1);
-    const actualHeight = canvas.height / (window.devicePixelRatio || 1);
-    
-    ctx.clearRect(0, 0, actualWidth, actualHeight);
-    
-    // Fondo gradient
-    const gradient = ctx.createLinearGradient(0, 0, actualWidth, actualHeight);
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
     gradient.addColorStop(0, '#87CEEB');
     gradient.addColorStop(1, '#98FB98');
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, actualWidth, actualHeight);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     if (!map.length) return;
 
-    const canvasCenterX = actualWidth / 2;
-    const canvasCenterY = actualHeight / 2;
-    
-    // SISTEMA DE CÁMARA SIMPLIFICADO
-    let cameraX, cameraY;
-    
-    if (explorationState.gamePhase === 'showing-path' && explorationState.pathToGoal.length > 0) {
-      // Durante demostración: seguir el camino animado
-      const pathIndex = Math.min(
-        Math.floor(explorationState.pathAnimationProgress),
-        explorationState.pathToGoal.length - 1
-      );
-      
-      if (pathIndex < explorationState.pathToGoal.length - 1) {
-        const current = explorationState.pathToGoal[pathIndex];
-        const next = explorationState.pathToGoal[pathIndex + 1];
-        const progress = explorationState.pathAnimationProgress - pathIndex;
-        
-        cameraX = current.x + (next.x - current.x) * progress + 0.5;
-        cameraY = current.y + (next.y - current.y) * progress + 0.5;
-      } else {
-        const lastPoint = explorationState.pathToGoal[pathIndex];
-        cameraX = lastPoint.x + 0.5;
-        cameraY = lastPoint.y + 0.5;
-      }
-    } else {
-      // Durante exploración: centrar en el jugador
-      cameraX = playerX;
-      cameraY = playerY;
-    }
-    
-    // Calcular offset para centrar la cámara
-    const offsetX = canvasCenterX - (cameraX * cellSize);
-    const offsetY = canvasCenterY - (cameraY * cellSize);
-    
-    // Rango de celdas visible
-    const visibleRange = screenInfo.isMobile ? 8 : 15;
-    const startX = Math.max(0, Math.floor(cameraX - visibleRange));
-    const endX = Math.min(map[0].length, Math.ceil(cameraX + visibleRange));
-    const startY = Math.max(0, Math.floor(cameraY - visibleRange));
-    const endY = Math.min(map.length, Math.ceil(cameraY + visibleRange));
+    const startX = Math.max(0, Math.floor((cameraX - canvas.width/2) / cellSize) );
+    const endX = Math.min(map[0].length, Math.ceil((cameraX + canvas.width/2) / cellSize));
+    const startY = Math.max(0, Math.floor((cameraY - canvas.height/2) / cellSize));
+    const endY = Math.min(map.length, Math.ceil((cameraY + canvas.height/2) / cellSize));
 
-    // Fondo negro para áreas no exploradas solo durante exploración
     if (explorationState.gamePhase === 'exploring') {
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    // Dibujar celdas
     for (let y = startY; y < endY; y++) {
       for (let x = startX; x < endX; x++) {
-        const screenX = Math.round(x * cellSize + offsetX);
-        const screenY = Math.round(y * cellSize + offsetY);
+        const screenX = Math.round(x * cellSize - cameraX + canvas.width / 2);
+        const screenY = Math.round(y * cellSize - cameraY + canvas.height / 2);
         const roundedCellSize = Math.round(cellSize);
         
         const cell = map[y][x];
@@ -448,44 +260,67 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
         if (!cellVisible && explorationState.gamePhase === 'exploring') continue;
         
         if (cell === 0) {
-          ctx.fillStyle = '#90EE90';
-          ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
-          ctx.strokeStyle = '#7FDD7F';
-          ctx.lineWidth = 1;
-          ctx.strokeRect(screenX, screenY, roundedCellSize, roundedCellSize);
+          if (floorImage && floorImage.complete && floorImage.naturalWidth > 0) {
+            ctx.drawImage(floorImage, screenX, screenY, roundedCellSize, roundedCellSize);
+            if ((x + y) % 3 === 0 && floorAlternativeImage && floorAlternativeImage.complete) {
+              ctx.drawImage(floorAlternativeImage, screenX, screenY, roundedCellSize, roundedCellSize);
+            }
+          } else {
+            ctx.fillStyle = '#90EE90';
+            ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
+          }
+          
         } else if (cell === 1) {
-          ctx.fillStyle = '#8B4513';
-          ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
-          ctx.fillStyle = '#654321';
-          ctx.fillRect(screenX + 2, screenY + 2, roundedCellSize - 2, roundedCellSize - 2);
+          if (wallImage && wallImage.complete && wallImage.naturalWidth > 0) {
+            ctx.drawImage(wallImage, screenX, screenY, roundedCellSize, roundedCellSize);
+            if ((x + y) % 3 === 0 && alternativeWall && alternativeWall.complete) {
+              ctx.drawImage(alternativeWall, screenX, screenY, roundedCellSize, roundedCellSize);
+            }
+          } else {
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
+          }
+          
         } else if (cell === 2) {
-          ctx.fillStyle = '#90EE90';
-          ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
+          if (floorImage && floorImage.complete) {
+            ctx.drawImage(floorImage, screenX, screenY, roundedCellSize, roundedCellSize);
+          } else {
+            ctx.fillStyle = '#90EE90';
+            ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
+          }
           
-          ctx.fillStyle = '#FFD700';
-          const giftSize = Math.round(cellSize * 0.7);
-          const giftOffset = Math.round((cellSize - giftSize) / 2);
-          ctx.fillRect(screenX + giftOffset, screenY + giftOffset, giftSize, giftSize);
+          if (giftImage && giftImage.complete && giftImage.naturalWidth > 0) {
+            const giftSize = Math.round(cellSize - 8);
+            const giftOffset = Math.round(4);
+            ctx.drawImage(giftImage, screenX + giftOffset, screenY + giftOffset, giftSize, giftSize);
+          } else {
+            ctx.fillStyle = '#FFD700';
+            ctx.fillRect(screenX + 5, screenY + 5, roundedCellSize - 10, roundedCellSize - 10);
+          }
           
-          ctx.fillStyle = '#FFFF99';
-          const innerSize = Math.round(giftSize * 0.6);
-          const innerOffset = Math.round((cellSize - innerSize) / 2);
-          ctx.fillRect(screenX + innerOffset, screenY + innerOffset, innerSize, innerSize);
         } else if (cell === 3) {
-          ctx.fillStyle = '#90EE90';
-          ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
+          if (floorImage && floorImage.complete) {
+            ctx.drawImage(floorImage, screenX, screenY, roundedCellSize, roundedCellSize);
+          } else {
+            ctx.fillStyle = '#90EE90';
+            ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
+          }
           
           const time = Date.now() * 0.003;
-          const pulse = Math.sin(time) * 0.2 + 0.8;
-          ctx.fillStyle = `rgba(255, 215, 0, ${0.5 * pulse})`;
+          const pulse = Math.sin(time) * 0.1 + 0.9;
+          ctx.fillStyle = `rgba(255, 215, 0, ${0.3 * pulse})`;
           ctx.beginPath();
-          ctx.arc(screenX + cellSize/2, screenY + cellSize/2, cellSize * 0.8 * pulse, 0, Math.PI * 2);
+          ctx.arc(screenX + cellSize/2, screenY + cellSize/2, cellSize/2 * pulse, 0, Math.PI * 2);
           ctx.fill();
           
-          ctx.fillStyle = '#8A2BE2';
-          const castleSize = Math.round(cellSize * 0.8);
-          const castleOffset = Math.round((cellSize - castleSize) / 2);
-          ctx.fillRect(screenX + castleOffset, screenY + castleOffset, castleSize, castleSize);
+          if (castleImage && castleImage.complete && castleImage.naturalWidth > 0) {
+            const castleSize = Math.round(cellSize - 4);
+            const castleOffset = Math.round(2);
+            ctx.drawImage(castleImage, screenX + castleOffset, screenY + castleOffset, castleSize, castleSize);
+          } else {
+            ctx.fillStyle = '#9400D3';
+            ctx.fillRect(screenX + 2, screenY + 2, roundedCellSize - 4, roundedCellSize - 4);
+          }
         }
       }
     }
@@ -495,7 +330,7 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
       const pathProgress = Math.min(explorationState.pathAnimationProgress, explorationState.pathToGoal.length);
       
       ctx.strokeStyle = '#FFD700';
-      ctx.lineWidth = screenInfo.isMobile ? 8 : 10;
+      ctx.lineWidth = isMobile ? 4 : 6;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.setLineDash([12, 6]);
@@ -507,10 +342,10 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
         const current = explorationState.pathToGoal[i];
         const next = explorationState.pathToGoal[i + 1];
         
-        const currentScreenX = current.x * cellSize + offsetX + cellSize/2;
-        const currentScreenY = current.y * cellSize + offsetY + cellSize/2;
-        const nextScreenX = next.x * cellSize + offsetX + cellSize/2;
-        const nextScreenY = next.y * cellSize + offsetY + cellSize/2;
+        const currentScreenX = current.x * cellSize - cameraX + canvas.width / 2 + cellSize/2;
+        const currentScreenY = current.y * cellSize - cameraY + canvas.height / 2 + cellSize/2;
+        const nextScreenX = next.x * cellSize - cameraX + canvas.width / 2 + cellSize/2;
+        const nextScreenY = next.y * cellSize - cameraY + canvas.height / 2 + cellSize/2;
         
         if (i === 0) ctx.moveTo(currentScreenX, currentScreenY);
         ctx.lineTo(nextScreenX, nextScreenY);
@@ -520,49 +355,38 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
       ctx.setLineDash([]);
     }
 
-    // Dibujar jugador según la fase
-    let playerScreenX, playerScreenY;
+    // Dibujar jugador
+    const screenPlayerX = Math.round(playerX * cellSize - cameraX + canvas.width / 2);
+    const screenPlayerY = Math.round(playerY * cellSize - cameraY + canvas.height / 2);
     
-    if (explorationState.gamePhase === 'showing-path') {
-      // Durante demostración: posición relativa a la cámara
-      playerScreenX = Math.round(playerX * cellSize + offsetX);
-      playerScreenY = Math.round(playerY * cellSize + offsetY);
+    if (playerImage && playerImage.complete && playerImage.naturalWidth > 0) {
+      const size = Math.round(cellSize - 6);
+      ctx.save();
+      
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+      
+      ctx.drawImage(
+        playerImage,
+        Math.round(screenPlayerX - size/2),
+        Math.round(screenPlayerY - size/2),
+        size,
+        size
+      );
+      
+      ctx.restore();
     } else {
-      // Durante exploración: siempre centrado
-      playerScreenX = canvasCenterX;
-      playerScreenY = canvasCenterY;
+      ctx.fillStyle = '#FF69B4';
+      ctx.beginPath();
+      ctx.arc(screenPlayerX, screenPlayerY, cellSize/3, 0, Math.PI * 2);
+      ctx.fill();
     }
-    
-    // Sombra del jugador
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath();
-    ctx.arc(playerScreenX + 2, playerScreenY + 2, cellSize * 0.4, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Jugador
-    ctx.fillStyle = '#FF69B4';
-    ctx.font = `${cellSize}px Arial`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('👧', playerScreenX, playerScreenY);
+  }, [gameState, explorationState, map, isCellVisible, playerImage, floorImage, wallImage, giftImage, castleImage, alternativeWall, floorAlternativeImage, isMobile]);
 
-    // Debug info
-    if (screenInfo.isMobile) {
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      ctx.fillRect(5, 5, 200, 100);
-      ctx.fillStyle = 'black';
-      ctx.font = '12px Arial';
-      ctx.fillText(`Mobile: ${screenInfo.isMobile}`, 10, 20);
-      ctx.fillText(`Phase: ${explorationState.gamePhase}`, 10, 35);
-      ctx.fillText(`Player: ${playerX.toFixed(1)}, ${playerY.toFixed(1)}`, 10, 50);
-      ctx.fillText(`Camera: ${cameraX.toFixed(0)}, ${cameraY.toFixed(0)}`, 10, 65);
-      ctx.fillText(`Screen: ${playerScreenX}, ${playerScreenY}`, 10, 80);
-      ctx.fillText(`Width: ${canvas.width}x${canvas.height}`, 10, 95);
-    }
-  }, [gameState, explorationState, map, isCellVisible, screenInfo.isMobile]);
-
-  // 🎮 Manejo de movimiento
-  const handleMovementInput = useCallback((): void => {
+  // 🎮 Lógica de movimiento
+  const handleMovementInput = useCallback(() => {
     if (activePregunta || gameState.isMoving || explorationState.gamePhase !== 'exploring') return;
     
     const keys = keysPressed.current;
@@ -592,8 +416,76 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
     }));
   }, [activePregunta, gameState.isMoving, gameState.playerX, gameState.playerY, map, explorationState.gamePhase]);
 
+  // 📱 Manejo de controles táctiles
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length > 0) {
+      const touch = e.touches[0];
+      setTouchControls({
+        startX: touch.clientX,
+        startY: touch.clientY,
+        currentX: touch.clientX,
+        currentY: touch.clientY,
+        isTouching: true
+      });
+    }
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length > 0 && touchControls.isTouching) {
+      const touch = e.touches[0];
+      setTouchControls(prev => ({
+        ...prev,
+        currentX: touch.clientX,
+        currentY: touch.clientY
+      }));
+    }
+  }, [touchControls.isTouching]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (touchControls.isTouching && !activePregunta && !gameState.isMoving && explorationState.gamePhase === 'exploring') {
+      const deltaX = touchControls.currentX - touchControls.startX;
+      const deltaY = touchControls.currentY - touchControls.startY;
+      const threshold = 30;
+      
+      let moveX = 0;
+      let moveY = 0;
+      
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        if (deltaX > threshold) moveX = 1;
+        else if (deltaX < -threshold) moveX = -1;
+      } else {
+        if (deltaY > threshold) moveY = 1;
+        else if (deltaY < -threshold) moveY = -1;
+      }
+      
+      if (moveX !== 0 || moveY !== 0) {
+        const currentGridX = Math.floor(gameState.playerX);
+        const currentGridY = Math.floor(gameState.playerY);
+        const newX = currentGridX + moveX;
+        const newY = currentGridY + moveY;
+        
+        if (newY >= 0 && newY < map.length && newX >= 0 && newX < map[0].length && map[newY][newX] !== 1) {
+          setGameState(prev => ({
+            ...prev,
+            targetX: newX + 0.5,
+            targetY: newY + 0.5,
+            isMoving: true
+          }));
+        }
+      }
+    }
+    
+    setTouchControls({
+      startX: 0,
+      startY: 0,
+      currentX: 0,
+      currentY: 0,
+      isTouching: false
+    });
+  }, [touchControls, activePregunta, gameState, explorationState.gamePhase, map]);
+
   // 🎮 Update game
-  const updateGame = useCallback((deltaTime: number): void => {
+  const updateGame = useCallback((deltaTime: number) => {
     if (!map.length) return;
     
     const playerGridX = Math.floor(gameState.playerX);
@@ -635,16 +527,17 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
       handleMovementInput();
     }
     
-    // Actualizar exploración
     if (explorationState.gamePhase === 'exploring') {
       const newDiscovered = new Set(explorationState.discoveredCells);
-      for (let dy = -Math.ceil(explorationState.visionRadius); dy <= Math.ceil(explorationState.visionRadius); dy++) {
-        for (let dx = -Math.ceil(explorationState.visionRadius); dx <= Math.ceil(explorationState.visionRadius); dx++) {
+      const visionRadius = explorationState.visionRadius;
+      
+      for (let dy = -Math.ceil(visionRadius); dy <= Math.ceil(visionRadius); dy++) {
+        for (let dx = -Math.ceil(visionRadius); dx <= Math.ceil(visionRadius); dx++) {
           const x = Math.floor(gameState.playerX) + dx;
           const y = Math.floor(gameState.playerY) + dy;
           if (x >= 0 && x < map[0].length && y >= 0 && y < map.length) {
             const distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance <= explorationState.visionRadius) {
+            if (distance <= visionRadius) {
               newDiscovered.add(`${x},${y}`);
             }
           }
@@ -660,7 +553,6 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
       }
     }
     
-    // Sistema de cámara mejorado
     if (explorationState.gamePhase === 'showing-path' && explorationState.pathToGoal.length > 1) {
       const currentPathIndex = Math.min(
         Math.floor(explorationState.pathAnimationProgress), 
@@ -685,40 +577,34 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
         }));
       }
     } else if (explorationState.gamePhase === 'exploring') {
-      // Cámara suave siguiendo al jugador - centrado mejorado
       const targetCameraX = gameState.playerX * gameState.cellSize;
       const targetCameraY = gameState.playerY * gameState.cellSize;
       
-      // Velocidad de seguimiento más suave
-      const lerpSpeed = screenInfo.isMobile ? 0.15 : 0.08;
-      
       setGameState(prev => ({
         ...prev,
-        cameraX: prev.cameraX + (targetCameraX - prev.cameraX) * lerpSpeed,
-        cameraY: prev.cameraY + (targetCameraY - prev.cameraY) * lerpSpeed
+        cameraX: prev.cameraX + (targetCameraX - prev.cameraX) * 0.1,
+        cameraY: prev.cameraY + (targetCameraY - prev.cameraY) * 0.1
       }));
     }
     
-    // Animación del camino
     if (explorationState.gamePhase === 'showing-path') {
       setExplorationState(prev => {
-        const newProgress = prev.pathAnimationProgress + (screenInfo.isMobile ? 0.08 : 0.06);
-        if (newProgress >= prev.pathToGoal.length + (screenInfo.isMobile ? 15 : 25)) {
+        const newProgress = prev.pathAnimationProgress + 0.08;
+        if (newProgress >= prev.pathToGoal.length + 30) {
           return { ...prev, gamePhase: 'exploring', pathAnimationProgress: newProgress };
         }
         return { ...prev, pathAnimationProgress: newProgress };
       });
     }
-  }, [map, gameState, explorationState, handleMovementInput, screenInfo.isMobile]);
+  }, [map, gameState, explorationState, handleMovementInput]);
 
-  const shootQuestion = useCallback((): void => {
+  const shootQuestion = useCallback(() => {
     if (preguntas.length === 0) return;
     const randomIndex = Math.floor(Math.random() * preguntas.length);
     setActivePregunta(preguntas[randomIndex]);
   }, [preguntas]);
 
-  // 🎮 Game loop
-  const gameLoop = useCallback((currentTime: number): void => {
+  const gameLoop = useCallback((currentTime: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -736,53 +622,9 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
     animationFrameRef.current = requestAnimationFrame(gameLoop);
   }, [updateGame, draw]);
 
-  // 📱 Touch handlers mejorados
-  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLCanvasElement>): void => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
-  }, []);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLCanvasElement>): void => {
-    e.preventDefault();
-  }, []);
-
-  const handleTouchEnd = useCallback((e: React.TouchEvent<HTMLCanvasElement>): void => {
-    e.preventDefault();
-    if (!touchStartRef.current) return;
-    
-    const touch = e.changedTouches[0];
-    const deltaX = touch.clientX - touchStartRef.current.x;
-    const deltaY = touch.clientY - touchStartRef.current.y;
-    
-    const minSwipeDistance = 40; // Distancia mínima aumentada
-    
-    if (Math.abs(deltaX) > Math.abs(deltaY)) {
-      if (Math.abs(deltaX) > minSwipeDistance) {
-        if (deltaX > 0) {
-          keysPressed.current.right = true;
-          setTimeout(() => keysPressed.current.right = false, 150);
-        } else {
-          keysPressed.current.left = true;
-          setTimeout(() => keysPressed.current.left = false, 150);
-        }
-      }
-    } else {
-      if (Math.abs(deltaY) > minSwipeDistance) {
-        if (deltaY > 0) {
-          keysPressed.current.down = true;
-          setTimeout(() => keysPressed.current.down = false, 150);
-        } else {
-          keysPressed.current.up = true;
-          setTimeout(() => keysPressed.current.up = false, 150);
-        }
-      }
-    }
-  }, []);
-
-  // ⌨️ Keyboard handlers
+  // ⌨️ Event listeners para teclado
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent): void => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       const keys = keysPressed.current;
       
       switch (e.key.toLowerCase()) {
@@ -809,7 +651,7 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
       }
     };
 
-    const handleKeyUp = (e: KeyboardEvent): void => {
+    const handleKeyUp = (e: KeyboardEvent) => {
       const keys = keysPressed.current;
       
       switch (e.key.toLowerCase()) {
@@ -841,11 +683,20 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
     };
   }, []);
 
+  // Actualizar canvas cuando cambie el tamaño
   useEffect(() => {
-    setupResponsiveCanvas();
-  }, [setupResponsiveCanvas, screenInfo]);
+    setupHighDPICanvas();
+    setGameState(prev => ({
+      ...prev,
+      cellSize: isMobile ? 25 : 35
+    }));
+    setExplorationState(prev => ({
+      ...prev,
+      visionRadius: isMobile ? 2 : 2.5
+    }));
+  }, [setupHighDPICanvas, isMobile]);
 
-  // Inicialización del juego
+  // 🏗️ Inicialización
   useEffect(() => {
     const mockPreguntas: PreguntaObj[] = [
       {
@@ -866,21 +717,20 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
     
     setPreguntas(mockPreguntas);
 
-    // Generar laberinto adaptado al dispositivo
-    const width = screenInfo.isMobile ? 17 : 25;
-    const height = screenInfo.isMobile ? 22 : 30;
-    
+    // Generar laberinto
+    const width = isMobile ? 20 : 30;
+    const height = isMobile ? 25 : 40;
     const maze = new ROT.Map.DividedMaze(width, height);
 
     const newMap: number[][] = [];
-    maze.create((x: number, y: number, wall: number) => {
+    maze.create((x, y, wall) => {
       if (!newMap[y]) newMap[y] = [];
-      newMap[y][x] = wall ? 1 : (Math.random() < 0.04 ? 2 : 0);
+      newMap[y][x] = wall ? 1 : (Math.random() < 0.08 ? 2 : 0);
     });
     
     setMap(newMap);
 
-    // Encontrar posición inicial válida
+    // Encontrar posición inicial
     let startX = 1.5, startY = 1.5;
     for (let y = 0; y < newMap.length; y++) {
       for (let x = 0; x < newMap[0].length; x++) {
@@ -892,20 +742,67 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
       }
     }
 
-    const canvasSize = getCanvasSize();
     setGameState(prev => ({
       ...prev,
       playerX: startX,
       playerY: startY,
       targetX: startX,
-      targetY: startY,
-      cellSize: canvasSize.cellSize,
-      moveSpeed: screenInfo.isMobile ? 0.3 : 0.25,
-      cameraX: startX * canvasSize.cellSize,
-      cameraY: startY * canvasSize.cellSize
+      targetY: startY
     }));
     
-  }, [Id, screenInfo.isMobile, getCanvasSize]);
+  }, [Id, isMobile]);
+
+  // Cargar imágenes con las props
+  useEffect(() => {
+    // Cargar imagen del jugador
+    if (avatarImage) {
+      loadOptimizedImage(avatarImage)
+        .then(setPlayerImage)
+        .catch(() => console.log('Player image not found, using fallback'));
+    }
+    
+    // Cargar imagen del suelo
+    if (floorImageProp) {
+      loadOptimizedImage(floorImageProp)
+        .then(setFloorImage)
+        .catch(() => console.log('Floor image not found, using fallback'));
+    }
+
+    // Cargar imagen del suelo alternativo
+    if (alternativeFloorImage) {
+      loadOptimizedImage(alternativeFloorImage)
+        .then(setAlternativeFloorImage)
+        .catch(() => console.log('Alternative floor image not found, using fallback'));
+    }
+
+    // Cargar pared alternativa
+    if (alternativeWallImage) {
+      loadOptimizedImage(alternativeWallImage)
+        .then(setAlternativeWall)
+        .catch(() => console.log('Alternative wall image not found, using fallback'));
+    }
+    
+    // Cargar imagen de pared
+    if (wallImageProp) {
+      loadOptimizedImage(wallImageProp)
+        .then(setWallImage)
+        .catch(() => console.log('Wall image not found, using fallback'));
+    }
+    
+    // Cargar imagen de cofre
+    if (chestImage) {
+      loadOptimizedImage(chestImage)
+        .then(setGiftImage)
+        .catch(() => console.log('Gift image not found, using fallback'));
+    }
+    
+    // Cargar imagen de meta
+    if (goalImage) {
+      loadOptimizedImage(goalImage)
+        .then(setCastleImage)
+        .catch(() => console.log('Castle image not found, using fallback'));
+    }
+  }, [avatarImage, floorImageProp, wallImageProp, chestImage, goalImage, alternativeWallImage, alternativeFloorImage]);
 
   // Configurar meta cuando el mapa esté listo
   useEffect(() => {
@@ -932,10 +829,16 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
           `${Math.floor(gameState.playerX)},${Math.floor(gameState.playerY)}`
         ])
       }));
+
+      setGameState(prev => ({
+        ...prev,
+        cameraX: prev.playerX * prev.cellSize,
+        cameraY: prev.playerY * prev.cellSize
+      }));
     }
   }, [map.length, gameState.playerX, gameState.playerY, explorationState.goalPosition.x, findGoalPosition, findPathToGoal]);
 
-  // Game loop principal
+  // Game loop
   useEffect(() => {
     if (map.length > 0) {
       lastTimeRef.current = performance.now();
@@ -949,242 +852,113 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
     }
   }, [map, gameLoop]);
 
-  // 🎮 Controles táctiles con detección ultra simple
-  const TouchControls: React.FC = () => {
-    console.log('TouchControls render - isMobile:', screenInfo.isMobile, 'phase:', explorationState.gamePhase);
-    
-    // Mostrar SIEMPRE en pantallas pequeñas con touch (para testing)
-    const shouldShow = screenInfo.isMobile;
-    
-    if (!shouldShow) {
-      return (
-        <div style={{
-          position: 'fixed',
-          top: '50px',
-          left: '10px',
-          background: 'red',
-          color: 'white',
-          padding: '5px',
-          borderRadius: '5px',
-          fontSize: '12px',
-          zIndex: 1000
-        }}>
-          No mobile: {screenInfo.width}px
-        </div>
-      );
-    }
-
-    const buttonStyle: React.CSSProperties = {
-      width: '60px',
-      height: '60px',
-      borderRadius: '50%',
-      backgroundColor: 'rgba(76, 175, 80, 0.9)',
-      border: '2px solid #ffffff',
-      fontSize: '22px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      cursor: 'pointer',
-      userSelect: 'none',
-      touchAction: 'manipulation',
-      boxShadow: '0 6px 12px rgba(0,0,0,0.4)',
-      transition: 'all 0.1s ease',
-      position: 'relative',
-      zIndex: 1002,
-      color: 'white',
-      fontWeight: 'bold'
-    };
-
-    const handleTouchButton = (direction: keyof KeysPressed): void => {
-      keysPressed.current[direction] = true;
-      setTimeout(() => {
-        keysPressed.current[direction] = false;
-      }, 180);
-    };
-
-    const handleButtonEvent = (direction: keyof KeysPressed) => (e: any): void => {
-      e.preventDefault();
-      e.stopPropagation();
-      handleTouchButton(direction);
-      
-      // Efecto visual
-      const target = e.currentTarget;
-      target.style.transform = 'scale(0.9)';
-      target.style.backgroundColor = 'rgba(255, 193, 7, 0.9)';
-      setTimeout(() => {
-        target.style.transform = 'scale(1)';
-        target.style.backgroundColor = 'rgba(76, 175, 80, 0.9)';
-      }, 120);
-    };
-
-    return (
-      <div style={{
-        position: 'fixed',
-        bottom: '20px',
-        right: '20px',
-        background: 'rgba(0,0,0,0.7)',
-        borderRadius: '20px',
-        padding: '15px',
-        zIndex: 1001
-      }}>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '10px'
-        }}>
-          <button 
-            style={buttonStyle}
-            onTouchStart={handleButtonEvent('up')}
-            onMouseDown={handleButtonEvent('up')}
-          >
-            ⬆
-          </button>
-          
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <button 
-              style={buttonStyle}
-              onTouchStart={handleButtonEvent('left')}
-              onMouseDown={handleButtonEvent('left')}
-            >
-              ⬅
-            </button>
-            
-            <div style={{ 
-              width: '60px', 
-              height: '60px',
-              borderRadius: '50%',
-              border: '2px dashed rgba(255,255,255,0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '20px'
-            }}>
-              👧
-            </div>
-            
-            <button 
-              style={buttonStyle}
-              onTouchStart={handleButtonEvent('right')}
-              onMouseDown={handleButtonEvent('right')}
-            >
-              ➡
-            </button>
-          </div>
-          
-          <button 
-            style={buttonStyle}
-            onTouchStart={handleButtonEvent('down')}
-            onMouseDown={handleButtonEvent('down')}
-          >
-            ⬇
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  const canvasSize = getCanvasSize();
-
   return (
     <div style={{ 
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100vw',
-      height: '100vh',
+
       display: 'flex', 
       flexDirection: 'column', 
       alignItems: 'center', 
-      justifyContent: 'center',
+      padding: isMobile ? '10px' : '20px',
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      boxSizing: 'border-box',
-      overflow: 'hidden',
-      zIndex: 50
+      minHeight: '100vh'
     }}>
-      {/* Título más pequeño para pantalla completa */}
       <h1 style={{
         color: 'white',
-        fontSize: screenInfo.isMobile ? '1.5rem' : '2rem',
-        textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
-        margin: screenInfo.isMobile ? '10px 0' : '15px 0',
+        fontSize: isMobile ? '1.5rem' : '2.5rem',
+        textShadow: '3px 3px 6px rgba(0,0,0,0.3)',
+        margin: isMobile ? '5px 0 10px 0' : '10px 0 20px 0',
         fontFamily: 'Comic Sans MS, cursive',
-        textAlign: 'center',
-        position: screenInfo.isMobile ? 'absolute' : 'relative',
-        top: screenInfo.isMobile ? '10px' : 'auto',
-        left: screenInfo.isMobile ? '50%' : 'auto',
-        transform: screenInfo.isMobile ? 'translateX(-50%)' : 'none',
-        zIndex: 100
+        textAlign: 'center'
       }}>
         🌟 ¡Aventura Mágica! 🌟
       </h1>
 
       <canvas
         ref={canvasRef}
-        width={canvasSize.width}
-        height={canvasSize.height}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         style={{
-          border: screenInfo.isMobile ? '2px solid #fff' : '3px solid #fff',
-          borderRadius: '10px',
-          boxShadow: '0 8px 20px rgba(0, 0, 0, 0.4)',
+          border: '5px solid #fff',
+          borderRadius: isMobile ? '10px' : '20px',
+          boxShadow: '0 15px 35px rgba(0, 0, 0, 0.3)',
           background: '#87CEEB',
           imageRendering: 'auto',
           touchAction: 'none',
           maxWidth: '100%',
-          maxHeight: '100%',
-          display: 'block'
+          maxHeight: '100%'
         }}
       />
       
-      {/* Controles táctiles para móviles */}
-      <TouchControls />
-      
-      {/* Instrucciones más compactas */}
-      <div style={{ 
-        position: screenInfo.isMobile ? 'absolute' : 'relative',
-        bottom: screenInfo.isMobile ? '10px' : 'auto',
-        marginTop: screenInfo.isMobile ? '0' : '10px',
-        color: 'white', 
-        textAlign: 'center',
-        fontFamily: 'Comic Sans MS, cursive',
-        fontSize: screenInfo.isMobile ? '0.7rem' : '0.9rem',
-        maxWidth: screenInfo.isMobile ? '80%' : '90%',
-        lineHeight: '1.2',
-        zIndex: 100
-      }}>
-        {!screenInfo.isMobile && (
+      {/* Solo mostrar instrucciones en desktop */}
+      {!isMobile && (
+        <div style={{ 
+          marginTop: '20px', 
+          color: 'white', 
+          textAlign: 'center',
+          fontFamily: 'Comic Sans MS, cursive',
+          fontSize: '1.2rem'
+        }}>
           <div style={{ 
-            background: 'rgba(255, 255, 255, 0.15)', 
-            padding: '8px 12px', 
-            borderRadius: '8px',
-            marginBottom: '5px'
+            background: 'rgba(255, 255, 255, 0.2)', 
+            padding: '15px', 
+            borderRadius: '15px',
+            marginBottom: '10px'
           }}>
-            🎮 Flechas o WASD • 🎁 Regalos = Preguntas • 🏰 Encuentra el castillo
+            <p style={{ margin: '5px 0' }}>🎮 Usa las flechas ⬅️➡️⬆️⬇️ o WASD para moverte</p>
+            <p style={{ margin: '5px 0' }}>🎁 Recoge los regalos mágicos para responder preguntas</p>
+            <p style={{ margin: '5px 0' }}>🏰 ¡Encuentra el castillo mágico para ganar!</p>
           </div>
-        )}
-        
-        {explorationState.gamePhase === 'completed' && (
-          <div style={{
-            background: 'rgba(255, 215, 0, 0.9)',
-            color: '#333',
-            padding: '10px 15px',
-            borderRadius: '8px',
-            fontSize: screenInfo.isMobile ? '0.9rem' : '1.1rem',
-            fontWeight: 'bold',
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 200
+        </div>
+      )}
+
+      {/* Indicador de controles móviles */}
+      {isMobile && (
+        <div style={{ 
+          marginTop: '10px', 
+          color: 'white', 
+          textAlign: 'center',
+          fontFamily: 'Comic Sans MS, cursive',
+          fontSize: '1rem',
+          background: 'rgba(255, 255, 255, 0.2)', 
+          padding: '10px', 
+          borderRadius: '10px',
+        }}>
+          <p style={{ margin: '0' }}>👆 Desliza para moverte</p>
+        </div>
+      )}
+
+      {/* Mensaje de victoria */}
+      {explorationState.gamePhase === 'completed' && (
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+          color: 'white',
+          padding: isMobile ? '20px' : '40px',
+          borderRadius: '20px',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+          textAlign: 'center',
+          zIndex: 1000,
+          animation: 'pulse 1s ease-in-out infinite'
+        }}>
+          <h2 style={{ 
+            fontSize: isMobile ? '1.8rem' : '3rem', 
+            margin: '0 0 10px 0',
+            fontFamily: 'Comic Sans MS, cursive'
           }}>
-            🎉 ¡FELICIDADES! 🎉<br/>
-            ¡Aventura completada!
-          </div>
-        )}
-      </div>
+            🎉 ¡GANASTE! 🎉
+          </h2>
+          <p style={{ 
+            fontSize: isMobile ? '1rem' : '1.5rem',
+            fontFamily: 'Comic Sans MS, cursive'
+          }}>
+            ¡Has completado la aventura mágica!
+          </p>
+        </div>
+      )}
 
       {activePregunta && (
         <KidsShootQuestion
@@ -1192,8 +966,15 @@ const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
           onClose={() => setActivePregunta(null)}
         />
       )}
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { transform: translate(-50%, -50%) scale(1); }
+          50% { transform: translate(-50%, -50%) scale(1.05); }
+        }
+      `}</style>
     </div>
   );
 };
 
-export default MazeGameCanvas;
+export default MazeGame;
