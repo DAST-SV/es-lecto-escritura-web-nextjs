@@ -24,9 +24,16 @@ interface BookProps {
   initialPages?: page[];
   title?: string;
   IdLibro?: string;
+  // Agregar metadatos iniciales
+  initialMetadata?: {
+    selectedCategoria?: number | null;
+    selectedGenero?: number | null;
+    descripcion?: string;
+    portada?: File | string | null; // Puede ser File o URL string
+  };
 }
 
-export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
+export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProps = {}) {
   // Referencias
   const bookRef = useRef<any>(null);
 
@@ -34,10 +41,13 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
   const [selectedCategoria, setSelectedCategoria] = useState<number | null>(null);
   const [selectedGenero, setSelectedGenero] = useState<number | null>(null);
   const [descripcion, setDescripcion] = useState<string>("");
+  const [portada, setPortada] = useState<File | null>(
+    initialMetadata?.portada instanceof File ? initialMetadata.portada : null
+  );
 
   // Hooks personalizados
   const bookState = useBookState({ initialPages, title });
-  
+
   const bookEditor = useBookEditor({
     pages: bookState.pages,
     currentPage: bookState.currentPage,
@@ -60,66 +70,78 @@ export function Book({ initialPages, title, IdLibro }: BookProps = {}) {
     bookRef
   });
 
-  // Handler para guardar el libro
+  // En tu componente Book.tsx, cambia esta línea:
   const handleSave = useCallback(async () => {
+    console.log('📸 Portada actual:', portada ? portada.name : 'null');
+
     const metadata: BookMetadata = {
       selectedCategoria,
       selectedGenero,
-      descripcion
+      descripcion,
+      portada
     };
 
     try {
       await saveBookJson(bookState.pages, metadata, IdLibro);
+      console.log('✅ Guardado exitoso');
     } catch (error) {
-      // El error ya se maneja en el servicio
-      console.error("Error en handleSave:", error);
+      console.error("❌ Error en handleSave:", error);
     }
-  }, [bookState.pages, selectedCategoria, selectedGenero, descripcion, IdLibro]);
+  }, [bookState.pages, selectedCategoria, selectedGenero, descripcion, portada, IdLibro]);
 
   // Handler para cambio de fondo con actualización de libro
   const handleBackgroundChangeWithRerender = useCallback((value: string) => {
     bookState.handleBackgroundChange(value);
   }, [bookState.handleBackgroundChange]);
 
-return (
-  <UnifiedLayout>
-    <div className="flex flex-col lg:flex-row gap-6 p-6 min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      <Toaster position="bottom-center" />
-      
-      {/* Panel de Control */}
-      <BookControlPanel
-        pages={bookState.pages}
-        currentPage={bookState.currentPage}
-        editingState={bookEditor}
-        imageHandler={imageHandler}
-        navigation={navigation}
-        selectedCategoria={selectedCategoria}
-        selectedGenero={selectedGenero}
-        descripcion={descripcion}
-        onCategoriaChange={setSelectedCategoria}
-        onGeneroChange={setSelectedGenero}
-        onDescripcionChange={setDescripcion}
-        onLayoutChange={bookState.handleLayoutChange}
-        onFontChange={bookState.handleFontChange}
-        onBackgroundChange={handleBackgroundChangeWithRerender}
-        onTextColorChange={bookState.handleTextColorChange}
-        onSave={handleSave}
-        onAddPage={bookState.addPage}
-        onDeletePage={bookState.deletePage}
-      />
+  return (
+    <UnifiedLayout>
+      <div className="flex flex-col lg:flex-row gap-6 p-4 lg:p-6 min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
 
-      {/* Vista del libro */}
-      <BookViewer
-        pages={bookState.pages}
-        currentPage={bookState.currentPage}
-        isFlipping={bookState.isFlipping}
-        bookKey={bookState.bookKey}
-        bookRef={bookRef}
-        onFlip={navigation.onFlip}
-        onPageClick={navigation.goToPage}
-      />
-    </div>
-  </UnifiedLayout>
-);
+        <Toaster position="bottom-center" />
+
+        {/* Panel de Control */}
+        <div className="w-full lg:w-96 max-w-md bg-white rounded-xl shadow-xl border border-gray-100 p-4 lg:p-6 h-fit max-h-screen overflow-y-auto">
+          <BookControlPanel
+            pages={bookState.pages}
+            currentPage={bookState.currentPage}
+            editingState={bookEditor}
+            imageHandler={imageHandler}
+            navigation={navigation}
+            selectedCategoria={selectedCategoria}
+            portada={portada}
+            selectedGenero={selectedGenero}
+            descripcion={descripcion}
+            onCategoriaChange={setSelectedCategoria}
+            onPortadaChange={setPortada}
+            onGeneroChange={setSelectedGenero}
+            onDescripcionChange={setDescripcion}
+            onLayoutChange={bookState.handleLayoutChange}
+            onFontChange={bookState.handleFontChange}
+            onBackgroundChange={handleBackgroundChangeWithRerender}
+            onTextColorChange={bookState.handleTextColorChange}
+            onSave={handleSave}
+            onAddPage={bookState.addPage}
+            onDeletePage={bookState.deletePage}
+          />
+        </div>
+
+        {/* Vista del libro */}
+        <div className="w-full flex-1">
+          <BookViewer
+            pages={bookState.pages}
+            currentPage={bookState.currentPage}
+            isFlipping={bookState.isFlipping}
+            bookKey={bookState.bookKey}
+            bookRef={bookRef}
+            onFlip={navigation.onFlip}
+            onPageClick={navigation.goToPage}
+          />
+        </div>
+
+      </div>
+
+    </UnifiedLayout>
+  );
 };
 

@@ -50,21 +50,9 @@ const CreateBook: React.FC = () => {
         />
       </div>
 
-      {/* Guarda tus ideas */}
-      <div className="max-w-4xl mx-auto px-4 mb-6">
-        <h2 className="text-center text-lg sm:text-xl font-bold text-sky-800 mb-4">
-          ¡Guarda todo lo que imaginas!
-        </h2>
-        <ImageGrid
-          images={guardarIdeas}
-          shapeType={3}
-          onClick={(img) => console.log(img.caption)}
-        />
-      </div>
-
       {/* Botón de regreso */}
       <div className="w-full max-w-xl flex justify-center mt-6">
-        <Link href="/menu-lectoescritura">
+        <Link href="/pages-my-books">
           <button className="bg-sky-500 text-white px-6 py-3 rounded-2xl text-sm sm:text-base font-bold shadow-md hover:bg-sky-600 hover:scale-105 transition-all duration-300">
             ⬅ Regresar al menú de Lectoescritura
           </button>

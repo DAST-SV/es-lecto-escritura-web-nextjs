@@ -3,10 +3,10 @@ import { supabaseAdmin } from "@/src/utils/supabase/admin";
 export async function crearLibroCompleto(
   userId: string,
   title: string,
-  background?: string | null,
   categoria?: number,
   genero?: number,
-  descripcion? : string
+  descripcion? : string,
+  portada? : string
 ) {
   // 1️⃣ Insertar libro y obtener IdLibro
   const { data: libro, error: libroError } = await supabaseAdmin
@@ -16,7 +16,7 @@ export async function crearLibroCompleto(
         id_usuario: userId,
         id_tipo: 2,
         titulo: title,
-        portada: background ?? null,
+        portada: portada ?? null,
         descripcion : descripcion ?? null
       },
     ])

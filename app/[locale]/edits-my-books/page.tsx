@@ -139,20 +139,7 @@ const MyBooks: React.FC = () => {
               onButtonClick={(book) => setSelectedBook({ json: book.Json ?? "", caption: book.caption })}
             />
           </div>
-
-          {/* Banner juegos */}
-          <div className="max-w-4xl mx-auto mb-12">
-            <Link href="../../pages/pages-games">
-              <img
-                src="/Imagenes/Juega aqui.jpg"
-                alt="Banner"
-                className="w-full h-auto rounded-lg shadow-md hover:scale-110 transition-transform duration-300"
-              />
-            </Link>
-            <p className="text-center mt-2 text-lg text-pink-600 font-medium">
-              ¡Haz clic y juega mientras editas tus libros! 🎮✨
-            </p>
-          </div>
+          
         </>
       )}
 

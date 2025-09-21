@@ -1,6 +1,107 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import * as ROT from "rot-js";
-import KidsShootQuestion from "./KidsShootQuestion";
+// Mock de ROT.js para el ejemplo
+// const ROT = {
+//   Map: {
+//     DividedMaze: class {
+//       constructor(private width: number, private height: number) {}
+      
+//       create(callback: (x: number, y: number, wall: number) => void): void {
+//         // Generar un laberinto simple
+//         for (let y = 0; y < this.height; y++) {
+//           for (let x = 0; x < this.width; x++) {
+//             let wall = 0;
+            
+//             // Bordes siempre son paredes
+//             if (x === 0 || y === 0 || x === this.width - 1 || y === this.height - 1) {
+//               wall = 1;
+//             }
+//             // Crear un patrón de laberinto simple
+//             else if ((x % 2 === 0 && y % 2 === 0) || (x % 4 === 0 || y % 4 === 0)) {
+//               wall = Math.random() < 0.3 ? 1 : 0;
+//             }
+            
+//             callback(x, y, wall);
+//           }
+//         }
+//       }
+//     }
+//   }
+// };
+
+// Mock del componente KidsShootQuestion
+const KidsShootQuestion: React.FC<{ 
+  pregunta: PreguntaObj; 
+  onClose: () => void 
+}> = ({ pregunta, onClose }) => (
+  <div style={{
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+    padding: '20px',
+    boxSizing: 'border-box'
+  }}>
+    <div style={{
+      backgroundColor: 'white',
+      padding: '30px',
+      borderRadius: '20px',
+      textAlign: 'center',
+      maxWidth: '90%',
+      maxHeight: '90%',
+      overflow: 'auto',
+      fontSize: window.innerWidth < 768 ? '1rem' : '1.2rem'
+    }}>
+      <h2 style={{ color: '#333', marginBottom: '20px' }}>{pregunta.Pregunta}</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        {[pregunta.Respuesta1, pregunta.Respuesta2, pregunta.Respuesta3].map((respuesta: string, index: number) => (
+          <button
+            key={index}
+            onClick={() => {
+              if (respuesta === pregunta.Correcta) {
+                alert('¡Correcto! 🎉');
+              } else {
+                alert('¡Inténtalo de nuevo! 💪');
+              }
+              onClose();
+            }}
+            style={{
+              padding: '15px 20px',
+              fontSize: window.innerWidth < 768 ? '1rem' : '1.1rem',
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              cursor: 'pointer'
+            }}
+          >
+            {respuesta}
+          </button>
+        ))}
+      </div>
+      <button
+        onClick={onClose}
+        style={{
+          marginTop: '20px',
+          padding: '10px 20px',
+          backgroundColor: '#f44336',
+          color: 'white',
+          border: 'none',
+          borderRadius: '10px',
+          cursor: 'pointer'
+        }}
+      >
+        Cerrar
+      </button>
+    </div>
+  </div>
+);
 
 export interface PreguntaObj {
   Pregunta: string;
@@ -12,118 +113,212 @@ export interface PreguntaObj {
 
 interface IdentificadorCuento {
   Id: number;
-  height? : number;
-  width?: number
+  height?: number;
+  width?: number;
+}
+
+interface ScreenInfo {
+  width: number;
+  height: number;
+  isMobile: boolean;
+  isPortrait: boolean;
+}
+
+interface GameState {
+  playerX: number;
+  playerY: number;
+  targetX: number;
+  targetY: number;
+  isMoving: boolean;
+  moveSpeed: number;
+  cellSize: number;
+  cameraX: number;
+  cameraY: number;
+}
+
+interface ExplorationState {
+  showingPath: boolean;
+  pathToGoal: {x: number, y: number}[];
+  goalPosition: {x: number, y: number};
+  exploredCells: Set<string>;
+  discoveredCells: Set<string>;
+  visionRadius: number;
+  pathAnimationProgress: number;
+  pathCameraIndex: number;
+  gamePhase: 'showing-path' | 'exploring' | 'completed';
+}
+
+interface KeysPressed {
+  up: boolean;
+  down: boolean;
+  left: boolean;
+  right: boolean;
+}
+
+interface TouchStart {
+  x: number;
+  y: number;
+}
+
+interface CanvasSize {
+  width: number;
+  height: number;
+  cellSize: number;
 }
 
 const MazeGameCanvas: React.FC<IdentificadorCuento> = ({ Id }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
+  const touchStartRef = useRef<TouchStart>({ x: 0, y: 0 });
   
-  const setupHighDPICanvas = useCallback(() => {
+  // 📱 Estado responsivo
+  const [screenInfo, setScreenInfo] = useState<ScreenInfo>({
+    width: typeof window !== 'undefined' ? window.innerWidth : 900,
+    height: typeof window !== 'undefined' ? window.innerHeight : 650,
+    isMobile: typeof window !== 'undefined' ? window.innerWidth < 768 : false,
+    isPortrait: typeof window !== 'undefined' ? window.innerHeight > window.innerWidth : false
+  });
+  
+  // 🎮 Configuración del canvas adaptativa
+  const getCanvasSize = useCallback((): CanvasSize => {
+    const { width, height, isMobile, isPortrait } = screenInfo;
+    
+    if (isMobile) {
+      // En móviles, usar casi toda la pantalla pero dejar espacio para controles
+      const padding = 40;
+      const controlsSpace = isPortrait ? 200 : 120;
+      
+      const maxWidth = width - padding;
+      const maxHeight = height - controlsSpace;
+      
+      const finalWidth = Math.min(maxWidth, 400);
+      const finalHeight = Math.min(maxHeight, 500);
+      
+      return {
+        width: finalWidth,
+        height: finalHeight,
+        cellSize: Math.max(8, Math.min(finalWidth / 25, finalHeight / 30))
+      };
+    } else {
+      // En escritorio, tamaño original
+      return {
+        width: Math.min(900, width - 40),
+        height: Math.min(650, height - 200),
+        cellSize: 20
+      };
+    }
+  }, [screenInfo]);
+
+  const setupResponsiveCanvas = useCallback((): void => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
-    // Obtener el pixel ratio del dispositivo
+    const { width, height } = getCanvasSize();
     const devicePixelRatio = window.devicePixelRatio || 1;
     
-    // Tamaños de visualización
-    const displayWidth = 900;
-    const displayHeight = 650;
+    // Configurar resolución interna
+    canvas.width = width * devicePixelRatio;
+    canvas.height = height * devicePixelRatio;
     
-    // Configurar la resolución interna del canvas
-    canvas.width = displayWidth * devicePixelRatio;
-    canvas.height = displayHeight * devicePixelRatio;
+    // Configurar tamaño visual
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
     
-    // Configurar el tamaño CSS (visual)
-    canvas.style.width = displayWidth + 'px';
-    canvas.style.height = displayHeight + 'px';
-    
-    // Escalar el contexto para compensar el pixel ratio
+    // Escalar contexto
     ctx.scale(devicePixelRatio, devicePixelRatio);
-    
-    // Configuración de renderizado optimizado
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
     
-    console.log(`Canvas configurado con pixel ratio: ${devicePixelRatio}`);
-  }, []);
+  }, [getCanvasSize]);
 
   const [map, setMap] = useState<number[][]>([]);
   const [preguntas, setPreguntas] = useState<PreguntaObj[]>([]);
   const [activePregunta, setActivePregunta] = useState<PreguntaObj | null>(null);
-  const [playerImage, setPlayerImage] = useState<HTMLImageElement | null>(null);
-  const [floorImage, setFloorImage] = useState<HTMLImageElement | null>(null);
-  const [wallImage, setWallImage] = useState<HTMLImageElement | null>(null);
-  const [giftImage, setGiftImage] = useState<HTMLImageElement | null>(null);
-  const [castleImage, setCastleImage] = useState<HTMLImageElement | null>(null);
-  const [alternativeWall, setAlternativeWall] = useState<HTMLImageElement | null>(null);
-  const [floorAlternativeImage, setAlternativeFloorImage] = useState<HTMLImageElement | null>(null);
 
-  // 🎮 Estado del juego optimizado - VELOCIDAD AUMENTADA
-  const [gameState, setGameState] = useState({
+  // 🎮 Estado del juego optimizado para móvil
+  const [gameState, setGameState] = useState<GameState>({
     playerX: 1.5,
     playerY: 1.5,
     targetX: 1.5,
     targetY: 1.5,
     isMoving: false,
-    moveSpeed: 0.25, // ⚡ AUMENTADO de 0.12 a 0.25
-    cellSize: 35,
+    moveSpeed: 0.25,
+    cellSize: 20,
     cameraX: 0,
     cameraY: 0
   });
 
   // 🗺️ Estado del sistema de exploración
-  const [explorationState, setExplorationState] = useState({
+  const [explorationState, setExplorationState] = useState<ExplorationState>({
     showingPath: true,
-    pathToGoal: [] as {x: number, y: number}[],
-    goalPosition: {x: 0, y: 0},
+    pathToGoal: [],
+    goalPosition: { x: 0, y: 0 },
     exploredCells: new Set<string>(),
     discoveredCells: new Set<string>(),
     visionRadius: 2.5,
     pathAnimationProgress: 0,
     pathCameraIndex: 0,
-    gamePhase: 'showing-path' as 'showing-path' | 'exploring' | 'completed'
+    gamePhase: 'showing-path'
   });
 
-  // 🎮 Control de teclas optimizado con useRef
-  const keysPressed = useRef({
+  // 🎮 Control de teclas y touch
+  const keysPressed = useRef<KeysPressed>({
     up: false,
     down: false,
     left: false,
     right: false
   });
 
-
-const loadOptimizedImage = (src: string): Promise<HTMLImageElement> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    
-    // ✨ Configuraciones importantes para calidad
-    img.crossOrigin = 'anonymous'; // Si cargas desde otro dominio
-    
-    img.onload = () => {
-      // Verificar que la imagen tenga buen tamaño
-      console.log(`Imagen cargada: ${src}, Tamaño: ${img.naturalWidth}x${img.naturalHeight}`);
-      resolve(img);
+  // 📱 Detectar cambios de pantalla
+  useEffect(() => {
+    const updateScreenInfo = (): void => {
+      const newScreenInfo: ScreenInfo = {
+        width: window.innerWidth,
+        height: window.innerHeight,
+        isMobile: window.innerWidth < 768,
+        isPortrait: window.innerHeight > window.innerWidth
+      };
+      
+      setScreenInfo(newScreenInfo);
+      
+      // Actualizar velocidad y configuración según dispositivo
+      setGameState(prev => ({
+        ...prev,
+        moveSpeed: newScreenInfo.isMobile ? 0.3 : 0.25
+      }));
+      
+      setExplorationState(prev => ({
+        ...prev,
+        visionRadius: newScreenInfo.isMobile ? 2 : 2.5
+      }));
     };
-    
-    img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
-    img.src = src;
-  });
-};
 
-  // 🗺️ Encontrar camino - optimizado
+    // Llamar inmediatamente para configurar el estado inicial
+    updateScreenInfo();
+
+    window.addEventListener('resize', updateScreenInfo);
+    window.addEventListener('orientationchange', () => {
+      // Delay para orientationchange
+      setTimeout(updateScreenInfo, 100);
+    });
+    
+    return () => {
+      window.removeEventListener('resize', updateScreenInfo);
+      window.removeEventListener('orientationchange', updateScreenInfo);
+    };
+  }, []);
+
+  // 🎮 Funciones del juego
   const findPathToGoal = useCallback((startX: number, startY: number, goalX: number, goalY: number): {x: number, y: number}[] => {
     if (!map.length) return [];
     
     const visited = new Set<string>();
     const queue: {x: number, y: number, path: {x: number, y: number}[]}[] = [
-      {x: startX, y: startY, path: [{x: startX, y: startY}]}
+      { x: startX, y: startY, path: [{ x: startX, y: startY }] }
     ];
     
     while (queue.length > 0) {
@@ -137,8 +332,7 @@ const loadOptimizedImage = (src: string): Promise<HTMLImageElement> => {
         return current.path;
       }
       
-      // Solo 4 direcciones para optimizar
-      const directions = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+      const directions: [number, number][] = [[0, -1], [0, 1], [-1, 0], [1, 0]];
       
       for (const [dx, dy] of directions) {
         const newX = current.x + dx;
@@ -153,7 +347,7 @@ const loadOptimizedImage = (src: string): Promise<HTMLImageElement> => {
           queue.push({
             x: newX, 
             y: newY, 
-            path: [...current.path, {x: newX, y: newY}]
+            path: [...current.path, { x: newX, y: newY }]
           });
         }
       }
@@ -162,9 +356,8 @@ const loadOptimizedImage = (src: string): Promise<HTMLImageElement> => {
     return [];
   }, [map]);
 
-  // 🎯 Encontrar posición para la meta - optimizado
   const findGoalPosition = useCallback((): {x: number, y: number} => {
-    if (!map.length) return {x: 1, y: 1};
+    if (!map.length) return { x: 1, y: 1 };
     
     const possibleGoals: {x: number, y: number}[] = [];
     const playerGridX = Math.floor(gameState.playerX);
@@ -174,254 +367,149 @@ const loadOptimizedImage = (src: string): Promise<HTMLImageElement> => {
       for (let x = 0; x < map[0].length; x++) {
         if (map[y][x] === 0) {
           const distance = Math.abs(x - playerGridX) + Math.abs(y - playerGridY);
-          if (distance > 8) {
-            possibleGoals.push({x, y});
+          if (distance > (screenInfo.isMobile ? 6 : 8)) {
+            possibleGoals.push({ x, y });
           }
         }
       }
     }
     
-    return possibleGoals[Math.floor(Math.random() * possibleGoals.length)] || {x: 1, y: 1};
-  }, [map, gameState.playerX, gameState.playerY]);
+    return possibleGoals[Math.floor(Math.random() * possibleGoals.length)] || { x: 1, y: 1 };
+  }, [map, gameState.playerX, gameState.playerY, screenInfo.isMobile]);
 
-  // 🔍 Verificar si una celda debe ser visible
   const isCellVisible = useCallback((x: number, y: number): boolean => {
     if (explorationState.gamePhase === 'showing-path') return true;
     
-    // En fase de exploración, solo mostrar celdas descubiertas
     const cellKey = `${x},${y}`;
     return explorationState.discoveredCells.has(cellKey);
   }, [explorationState.gamePhase, explorationState.discoveredCells]);
 
-// 🎨 Función de dibujo optimizada - CON SOPORTE PARA IMÁGENES DE TODOS LOS ELEMENTOS
-const draw = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
-  const { playerX, playerY, cellSize, cameraX, cameraY } = gameState;
-  
-  // ✨ Configurar renderizado de alta calidad al inicio de cada frame
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-  
-  // Limpiar canvas
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-  // 🌈 Fondo simple
-  const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-  gradient.addColorStop(0, '#87CEEB');
-  gradient.addColorStop(1, '#98FB98');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  if (!map.length) return;
-
-  // 🏗️ Dibujar laberinto optimizado con posiciones redondeadas
-  const startX = Math.max(0, Math.floor((cameraX - canvas.width/2) / cellSize) - 1);
-  const endX = Math.min(map[0].length, Math.ceil((cameraX + canvas.width/2) / cellSize) + 1);
-  const startY = Math.max(0, Math.floor((cameraY - canvas.height/2) / cellSize) - 1);
-  const endY = Math.min(map.length, Math.ceil((cameraY + canvas.height/2) / cellSize) + 1);
-
-  // Durante exploración, dibujar fondo negro para áreas no descubiertas
-  if (explorationState.gamePhase === 'exploring') {
-    ctx.fillStyle = '#000000';
+  // 🎨 Función de dibujo adaptada para móvil
+  const draw = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement): void => {
+    const { playerX, playerY, cellSize, cameraX, cameraY } = gameState;
+    
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    
+    // Limpiar canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Fondo
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, '#87CEEB');
+    gradient.addColorStop(1, '#98FB98');
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
 
-  for (let y = startY; y < endY; y++) {
-    for (let x = startX; x < endX; x++) {
-      // ✨ REDONDEAR posiciones para evitar blur de sub-píxeles
-      const screenX = Math.round(x * cellSize - cameraX + canvas.width / 2);
-      const screenY = Math.round(y * cellSize - cameraY + canvas.height / 2);
-      const roundedCellSize = Math.round(cellSize);
-      
-      const cell = map[y][x];
-      const cellVisible = isCellVisible(x, y);
-      
-      if (!cellVisible && explorationState.gamePhase === 'exploring') continue;
-      
-      if (cell === 0) {
-        // 🌸 Suelo optimizado
-        if (floorImage && floorImage.complete && floorImage.naturalWidth > 0) {
-          ctx.drawImage(floorImage, screenX, screenY, roundedCellSize, roundedCellSize);
-          if ((x + y) % 3 === 0 && floorAlternativeImage) {
-            ctx.drawImage(floorAlternativeImage, screenX, screenY, roundedCellSize, roundedCellSize);
-          }
-        } else {
-          // Fallback
+    if (!map.length) return;
+
+    // Dibujar laberinto
+    const visibleCells = screenInfo.isMobile ? 2 : 3;
+    const startX = Math.max(0, Math.floor((cameraX - canvas.width/2) / cellSize) - visibleCells);
+    const endX = Math.min(map[0].length, Math.ceil((cameraX + canvas.width/2) / cellSize) + visibleCells);
+    const startY = Math.max(0, Math.floor((cameraY - canvas.height/2) / cellSize) - visibleCells);
+    const endY = Math.min(map.length, Math.ceil((cameraY + canvas.height/2) / cellSize) + visibleCells);
+
+    // Durante exploración, fondo negro para áreas no descubiertas
+    if (explorationState.gamePhase === 'exploring') {
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    for (let y = startY; y < endY; y++) {
+      for (let x = startX; x < endX; x++) {
+        const screenX = Math.round(x * cellSize - cameraX + canvas.width / 2);
+        const screenY = Math.round(y * cellSize - cameraY + canvas.height / 2);
+        const roundedCellSize = Math.round(cellSize);
+        
+        const cell = map[y][x];
+        const cellVisible = isCellVisible(x, y);
+        
+        if (!cellVisible && explorationState.gamePhase === 'exploring') continue;
+        
+        if (cell === 0) {
+          // Suelo
           ctx.fillStyle = '#90EE90';
           ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
-        }
-        
-      } else if (cell === 1) {
-        // 🌳 Paredes optimizadas
-        if (wallImage && wallImage.complete && wallImage.naturalWidth > 0) {
-          ctx.drawImage(wallImage, screenX, screenY, roundedCellSize, roundedCellSize);
-          if ((x + y) % 3 === 0 && alternativeWall) {
-            ctx.drawImage(alternativeWall, screenX, screenY, roundedCellSize, roundedCellSize);
-          }
-        } else {
-          // Fallback
+        } else if (cell === 1) {
+          // Paredes
           ctx.fillStyle = '#8B4513';
           ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
-        }
-        
-      } else if (cell === 2) {
-        // 🎁 Regalos optimizados
-        if (floorImage && floorImage.complete) {
-          ctx.drawImage(floorImage, screenX, screenY, roundedCellSize, roundedCellSize);
-        } else {
+        } else if (cell === 2) {
+          // Regalos
           ctx.fillStyle = '#90EE90';
           ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
-        }
-        
-        if (giftImage && giftImage.complete && giftImage.naturalWidth > 0) {
-          const giftSize = Math.round(cellSize - 8);
-          const giftOffset = Math.round(4);
-          ctx.drawImage(giftImage, screenX + giftOffset, screenY + giftOffset, giftSize, giftSize);
-        }
-        
-      } else if (cell === 3) {
-        // 🏰 Castillo optimizado
-        if (floorImage && floorImage.complete) {
-          ctx.drawImage(floorImage, screenX, screenY, roundedCellSize, roundedCellSize);
-        } else {
+          
+          ctx.fillStyle = '#FFD700';
+          const giftSize = Math.round(cellSize - 4);
+          const giftOffset = Math.round(2);
+          ctx.fillRect(screenX + giftOffset, screenY + giftOffset, giftSize, giftSize);
+        } else if (cell === 3) {
+          // Castillo
           ctx.fillStyle = '#90EE90';
           ctx.fillRect(screenX, screenY, roundedCellSize, roundedCellSize);
-        }
-        
-        // Aura del castillo
-        const time = Date.now() * 0.003;
-        const pulse = Math.sin(time) * 0.1 + 0.9;
-        ctx.fillStyle = `rgba(255, 215, 0, ${0.3 * pulse})`;
-        ctx.beginPath();
-        ctx.arc(screenX + cellSize/2, screenY + cellSize/2, cellSize/2 * pulse, 0, Math.PI * 2);
-        ctx.fill();
-        
-        if (castleImage && castleImage.complete && castleImage.naturalWidth > 0) {
+          
+          // Aura del castillo
+          const time = Date.now() * 0.003;
+          const pulse = Math.sin(time) * 0.1 + 0.9;
+          ctx.fillStyle = `rgba(255, 215, 0, ${0.3 * pulse})`;
+          ctx.beginPath();
+          ctx.arc(screenX + cellSize/2, screenY + cellSize/2, cellSize/2 * pulse, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Castillo
+          ctx.fillStyle = '#8A2BE2';
           const castleSize = Math.round(cellSize - 4);
           const castleOffset = Math.round(2);
-          ctx.drawImage(castleImage, screenX + castleOffset, screenY + castleOffset, castleSize, castleSize);
+          ctx.fillRect(screenX + castleOffset, screenY + castleOffset, castleSize, castleSize);
         }
       }
     }
-  }
 
-  // 🗺️ Camino durante demostración - ANIMACIÓN MÁS SUAVE
-  if (explorationState.gamePhase === 'showing-path' && explorationState.pathToGoal.length > 0) {
-    const pathProgress = Math.min(explorationState.pathAnimationProgress, explorationState.pathToGoal.length);
-    
-    ctx.strokeStyle = '#FFD700';
-    ctx.lineWidth = 6;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.setLineDash([12, 6]);
-    ctx.lineDashOffset = -Date.now() * 0.005;
-    
-    ctx.beginPath();
-    
-    // ✨ INTERPOLACIÓN SUAVE entre puntos del camino
-    for (let i = 0; i < Math.floor(pathProgress) - 1 && i < explorationState.pathToGoal.length - 1; i++) {
-      const current = explorationState.pathToGoal[i];
-      const next = explorationState.pathToGoal[i + 1];
+    // Camino durante demostración
+    if (explorationState.gamePhase === 'showing-path' && explorationState.pathToGoal.length > 0) {
+      const pathProgress = Math.min(explorationState.pathAnimationProgress, explorationState.pathToGoal.length);
       
-      const currentScreenX = current.x * cellSize - cameraX + canvas.width / 2 + cellSize/2;
-      const currentScreenY = current.y * cellSize - cameraY + canvas.height / 2 + cellSize/2;
-      const nextScreenX = next.x * cellSize - cameraX + canvas.width / 2 + cellSize/2;
-      const nextScreenY = next.y * cellSize - cameraY + canvas.height / 2 + cellSize/2;
+      ctx.strokeStyle = '#FFD700';
+      ctx.lineWidth = screenInfo.isMobile ? 4 : 6;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.setLineDash([8, 4]);
+      ctx.lineDashOffset = -Date.now() * 0.005;
       
-      if (i === 0) ctx.moveTo(currentScreenX, currentScreenY);
-      ctx.lineTo(nextScreenX, nextScreenY);
-    }
-    
-    // ✨ Punto animado para mostrar progreso
-    if (Math.floor(pathProgress) < explorationState.pathToGoal.length) {
-      const currentIndex = Math.floor(pathProgress);
-      const progress = pathProgress - currentIndex;
+      ctx.beginPath();
       
-      if (currentIndex < explorationState.pathToGoal.length - 1) {
-        const current = explorationState.pathToGoal[currentIndex];
-        const next = explorationState.pathToGoal[currentIndex + 1];
+      for (let i = 0; i < Math.floor(pathProgress) - 1 && i < explorationState.pathToGoal.length - 1; i++) {
+        const current = explorationState.pathToGoal[i];
+        const next = explorationState.pathToGoal[i + 1];
         
         const currentScreenX = current.x * cellSize - cameraX + canvas.width / 2 + cellSize/2;
         const currentScreenY = current.y * cellSize - cameraY + canvas.height / 2 + cellSize/2;
         const nextScreenX = next.x * cellSize - cameraX + canvas.width / 2 + cellSize/2;
         const nextScreenY = next.y * cellSize - cameraY + canvas.height / 2 + cellSize/2;
         
-        const interpolatedX = currentScreenX + (nextScreenX - currentScreenX) * progress;
-        const interpolatedY = currentScreenY + (nextScreenY - currentScreenY) * progress;
-        
-        ctx.lineTo(interpolatedX, interpolatedY);
+        if (i === 0) ctx.moveTo(currentScreenX, currentScreenY);
+        ctx.lineTo(nextScreenX, nextScreenY);
       }
-    }
-    
-    ctx.stroke();
-    ctx.setLineDash([]);
-    
-    // ✨ Punto brillante que se mueve por el camino
-    if (Math.floor(pathProgress) < explorationState.pathToGoal.length) {
-      const currentIndex = Math.floor(pathProgress);
-      const progress = pathProgress - currentIndex;
       
-      if (currentIndex < explorationState.pathToGoal.length - 1) {
-        const current = explorationState.pathToGoal[currentIndex];
-        const next = explorationState.pathToGoal[currentIndex + 1];
-        
-        const currentScreenX = current.x * cellSize - cameraX + canvas.width / 2 + cellSize/2;
-        const currentScreenY = current.y * cellSize - cameraY + canvas.height / 2 + cellSize/2;
-        const nextScreenX = next.x * cellSize - cameraX + canvas.width / 2 + cellSize/2;
-        const nextScreenY = next.y * cellSize - cameraY + canvas.height / 2 + cellSize/2;
-        
-        const interpolatedX = currentScreenX + (nextScreenX - currentScreenX) * progress;
-        const interpolatedY = currentScreenY + (nextScreenY - currentScreenY) * progress;
-        
-        // Punto brillante animado
-        const glowTime = Date.now() * 0.01;
-        const glowSize = 8 + Math.sin(glowTime) * 3;
-        
-        ctx.fillStyle = `rgba(255, 255, 255, 0.9)`;
-        ctx.beginPath();
-        ctx.arc(interpolatedX, interpolatedY, glowSize, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.fillStyle = '#FFD700';
-        ctx.beginPath();
-        ctx.arc(interpolatedX, interpolatedY, glowSize * 0.6, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      ctx.stroke();
+      ctx.setLineDash([]);
     }
-  }
 
-  const screenPlayerX = Math.round(playerX * cellSize - cameraX + canvas.width / 2);
-  const screenPlayerY = Math.round(playerY * cellSize - cameraY + canvas.height / 2);
-  
-  if (playerImage && playerImage.complete && playerImage.naturalWidth > 0) {
-    const size = Math.round(cellSize - 6);
-    ctx.save();
+    // Jugador
+    const screenPlayerX = Math.round(playerX * cellSize - cameraX + canvas.width / 2);
+    const screenPlayerY = Math.round(playerY * cellSize - cameraY + canvas.height / 2);
     
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-    ctx.shadowBlur = 4;
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 2;
-    
-    ctx.drawImage(
-      playerImage,
-      Math.round(screenPlayerX - size/2),
-      Math.round(screenPlayerY - size/2),
-      size,
-      size
-    );
-    
-    ctx.restore();
-  } else {
-    // Fallback
+    // Jugador con emoji
     ctx.fillStyle = '#FF69B4';
     ctx.font = `${cellSize * 0.8}px Arial`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('👧', screenPlayerX, screenPlayerY);
-  }
-}, [gameState, explorationState, map, isCellVisible, playerImage, floorImage, wallImage, giftImage, castleImage]);
+  }, [gameState, explorationState, map, isCellVisible, screenInfo.isMobile]);
 
-  // 🎮 Lógica de movimiento optimizada
-  const handleMovementInput = useCallback(() => {
+  // 🎮 Manejo de movimiento
+  const handleMovementInput = useCallback((): void => {
     if (activePregunta || gameState.isMoving || explorationState.gamePhase !== 'exploring') return;
     
     const keys = keysPressed.current;
@@ -432,12 +520,6 @@ const draw = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEleme
     if (keys.down) deltaY = 1;
     if (keys.left) deltaX = -1;
     if (keys.right) deltaX = 1;
-    
-    // Permitir diagonal
-    if (keys.up && keys.left) { deltaX = -1; deltaY = -1; }
-    if (keys.up && keys.right) { deltaX = 1; deltaY = -1; }
-    if (keys.down && keys.left) { deltaX = -1; deltaY = 1; }
-    if (keys.down && keys.right) { deltaX = 1; deltaY = 1; }
     
     if (deltaX === 0 && deltaY === 0) return;
     
@@ -459,11 +541,11 @@ const draw = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEleme
     }));
   }, [activePregunta, gameState.isMoving, gameState.playerX, gameState.playerY, map, explorationState.gamePhase]);
 
-  // 🎮 Update game optimizado
-  const updateGame = useCallback((deltaTime: number) => {
+  // 🎮 Update game
+  const updateGame = useCallback((deltaTime: number): void => {
     if (!map.length) return;
     
-    // Verificar victoria - ahora con tipo 3
+    // Verificar victoria
     const playerGridX = Math.floor(gameState.playerX);
     const playerGridY = Math.floor(gameState.playerY);
     
@@ -505,7 +587,7 @@ const draw = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEleme
       handleMovementInput();
     }
     
-    // Actualizar exploración - pintar conforme descubres
+    // Actualizar exploración
     if (explorationState.gamePhase === 'exploring') {
       const newDiscovered = new Set(explorationState.discoveredCells);
       for (let dy = -Math.ceil(explorationState.visionRadius); dy <= Math.ceil(explorationState.visionRadius); dy++) {
@@ -530,7 +612,7 @@ const draw = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEleme
       }
     }
     
-    // Cámara que sigue el recorrido durante demostración - MÁS SUAVE
+    // Cámara
     if (explorationState.gamePhase === 'showing-path' && explorationState.pathToGoal.length > 1) {
       const currentPathIndex = Math.min(
         Math.floor(explorationState.pathAnimationProgress), 
@@ -542,7 +624,6 @@ const draw = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEleme
         const next = explorationState.pathToGoal[currentPathIndex + 1];
         const progress = explorationState.pathAnimationProgress - currentPathIndex;
         
-        // ✨ Interpolación suave entre puntos del camino para la cámara
         const interpolatedX = current.x + (next.x - current.x) * progress;
         const interpolatedY = current.y + (next.y - current.y) * progress;
         
@@ -556,7 +637,6 @@ const draw = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEleme
         }));
       }
     } else if (explorationState.gamePhase === 'exploring') {
-      // Cámara suave siguiendo al jugador durante exploración
       const targetCameraX = gameState.playerX * gameState.cellSize;
       const targetCameraY = gameState.playerY * gameState.cellSize;
       
@@ -567,27 +647,26 @@ const draw = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEleme
       }));
     }
     
-    // Animación del camino - MÁS SUAVE
+    // Animación del camino
     if (explorationState.gamePhase === 'showing-path') {
       setExplorationState(prev => {
-        const newProgress = prev.pathAnimationProgress + 0.08; // ✨ REDUCIDO de 0.15 a 0.08 para más suavidad
-        if (newProgress >= prev.pathToGoal.length + 30) {
+        const newProgress = prev.pathAnimationProgress + (screenInfo.isMobile ? 0.1 : 0.08);
+        if (newProgress >= prev.pathToGoal.length + (screenInfo.isMobile ? 20 : 30)) {
           return { ...prev, gamePhase: 'exploring', pathAnimationProgress: newProgress };
         }
         return { ...prev, pathAnimationProgress: newProgress };
       });
     }
-  }, [map, gameState, explorationState, handleMovementInput]);
+  }, [map, gameState, explorationState, handleMovementInput, screenInfo.isMobile]);
 
-  // 🎯 Función para mostrar pregunta
-  const shootQuestion = useCallback(() => {
+  const shootQuestion = useCallback((): void => {
     if (preguntas.length === 0) return;
     const randomIndex = Math.floor(Math.random() * preguntas.length);
     setActivePregunta(preguntas[randomIndex]);
   }, [preguntas]);
 
-  // 🎮 Game loop optimizado
-  const gameLoop = useCallback((currentTime: number) => {
+  // 🎮 Game loop
+  const gameLoop = useCallback((currentTime: number): void => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -605,9 +684,53 @@ const draw = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEleme
     animationFrameRef.current = requestAnimationFrame(gameLoop);
   }, [updateGame, draw]);
 
-  // ⌨️ Event listeners optimizados
+  // 📱 Touch handlers
+  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLCanvasElement>): void => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLCanvasElement>): void => {
+    e.preventDefault();
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent<HTMLCanvasElement>): void => {
+    e.preventDefault();
+    if (!touchStartRef.current) return;
+    
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = touch.clientY - touchStartRef.current.y;
+    
+    const minSwipeDistance = 30;
+    
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      if (Math.abs(deltaX) > minSwipeDistance) {
+        if (deltaX > 0) {
+          keysPressed.current.right = true;
+          setTimeout(() => keysPressed.current.right = false, 100);
+        } else {
+          keysPressed.current.left = true;
+          setTimeout(() => keysPressed.current.left = false, 100);
+        }
+      }
+    } else {
+      if (Math.abs(deltaY) > minSwipeDistance) {
+        if (deltaY > 0) {
+          keysPressed.current.down = true;
+          setTimeout(() => keysPressed.current.down = false, 100);
+        } else {
+          keysPressed.current.up = true;
+          setTimeout(() => keysPressed.current.up = false, 100);
+        }
+      }
+    }
+  }, []);
+
+  // ⌨️ Keyboard handlers
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
       const keys = keysPressed.current;
       
       switch (e.key.toLowerCase()) {
@@ -634,7 +757,7 @@ const draw = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEleme
       }
     };
 
-    const handleKeyUp = (e: KeyboardEvent) => {
+    const handleKeyUp = (e: KeyboardEvent): void => {
       const keys = keysPressed.current;
       
       switch (e.key.toLowerCase()) {
@@ -666,14 +789,12 @@ const draw = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasEleme
     };
   }, []);
 
-useEffect(() => {
-  setupHighDPICanvas();
-}, [setupHighDPICanvas]);
-
-
-  // 🏗️ Inicialización
   useEffect(() => {
+    setupResponsiveCanvas();
+  }, [setupResponsiveCanvas, screenInfo]);
 
+  // Inicialización
+  useEffect(() => {
     const mockPreguntas: PreguntaObj[] = [
       {
         Pregunta: "¿Cuál es tu color favorito?",
@@ -693,13 +814,13 @@ useEffect(() => {
     
     setPreguntas(mockPreguntas);
 
-    // Generar laberinto
-    const width = 30;
-    const height = 40;
+    // Generar laberinto (más pequeño en móvil)
+    const width = screenInfo.isMobile ? 20 : 30;
+    const height = screenInfo.isMobile ? 25 : 40;
     const maze = new ROT.Map.DividedMaze(width, height);
 
     const newMap: number[][] = [];
-    maze.create((x, y, wall) => {
+    maze.create((x: number, y: number, wall: number) => {
       if (!newMap[y]) newMap[y] = [];
       newMap[y][x] = wall ? 1 : (Math.random() < 0.08 ? 2 : 0);
     });
@@ -718,58 +839,25 @@ useEffect(() => {
       }
     }
 
+    const canvasSize = getCanvasSize();
     setGameState(prev => ({
       ...prev,
       playerX: startX,
       playerY: startY,
       targetX: startX,
-      targetY: startY
+      targetY: startY,
+      cellSize: canvasSize.cellSize,
+      moveSpeed: screenInfo.isMobile ? 0.3 : 0.25
     }));
     
-  }, [Id]);
+  }, [Id, screenInfo.isMobile, getCanvasSize]);
 
-  useEffect(() => {
-  // Cargar imagen del jugador
-  loadOptimizedImage('/Imagenes/Kirbypx.webp')
-    .then(setPlayerImage)
-    .catch(() => console.log('Player image not found, using fallback'));
-    
-  // Cargar imagen del suelo
-  loadOptimizedImage('/Imagenes/Suelo.webp')
-    .then(setFloorImage)
-    .catch(() => console.log('Floor image not found, using fallback'));
-
-  // Cargar imagen del suelo
-  loadOptimizedImage('')
-    .then(setAlternativeFloorImage)
-    .catch(() => console.log('Floor image not found, using fallback'));
-
-  // Cargar imagen del suelo
-  loadOptimizedImage('')
-    .then(setAlternativeWall)
-    .catch(() => console.log('Floor image not found, using fallback'));
-    
-  // Cargar imagen de pared
-  loadOptimizedImage('/Imagenes/Pared.webp')
-    .then(setWallImage)
-    .catch(() => console.log('Wall image not found, using fallback'));
-    
-  // Cargar imagen de regalo
-  loadOptimizedImage('/Imagenes/Cofre.webp')
-    .then(setGiftImage)
-    .catch(() => console.log('Gift image not found, using fallback'));
-    
-  // Cargar imagen de castillo
-  loadOptimizedImage('/Imagenes/Portal.webp')
-    .then(setCastleImage)
-    .catch(() => console.log('Castle image not found, using fallback'));
-}, []);
   // Configurar meta cuando el mapa esté listo
   useEffect(() => {
     if (map.length > 0 && gameState.playerX > 0 && explorationState.goalPosition.x === 0) {
       const goalPos = findGoalPosition();
       
-      // Establecer el castillo como tipo 3 en una copia del mapa (SOLO UNA VEZ)
+      // Establecer el castillo como tipo 3 en una copia del mapa
       const newMap = map.map(row => [...row]);
       newMap[goalPos.y][goalPos.x] = 3;
       setMap(newMap);
@@ -786,7 +874,6 @@ useEffect(() => {
         goalPosition: goalPos,
         pathToGoal: path,
         pathAnimationProgress: 0,
-        // Inicializar las celdas descubiertas con el área inicial del jugador
         discoveredCells: new Set([
           `${Math.floor(gameState.playerX)},${Math.floor(gameState.playerY)}`
         ])
@@ -815,55 +902,180 @@ useEffect(() => {
     }
   }, [map, gameLoop]);
 
+  // 🎮 Componente de controles táctiles para móvil
+  const TouchControls: React.FC = () => {
+    if (!screenInfo.isMobile) return null;
+
+    const buttonStyle: React.CSSProperties = {
+      width: '50px',
+      height: '50px',
+      borderRadius: '50%',
+      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      border: '3px solid #4CAF50',
+      fontSize: '20px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      cursor: 'pointer',
+      userSelect: 'none',
+      touchAction: 'manipulation',
+      boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+      transition: 'all 0.1s ease'
+    };
+
+    const handleTouchButton = (direction: keyof KeysPressed): void => {
+      keysPressed.current[direction] = true;
+      setTimeout(() => keysPressed.current[direction] = false, 150);
+    };
+
+    const handleTouchButtonStart = (direction: keyof KeysPressed) => (e: React.TouchEvent<HTMLButtonElement> | React.MouseEvent<HTMLButtonElement>): void => {
+      e.preventDefault();
+      handleTouchButton(direction);
+      // Efecto visual
+      const target = e.currentTarget;
+      target.style.transform = 'scale(0.95)';
+      target.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+      setTimeout(() => {
+        target.style.transform = 'scale(1)';
+        target.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+      }, 100);
+    };
+
+    return (
+      <div style={{
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        display: 'grid',
+        gridTemplate: '"up" "left right" "down"',
+        gap: '8px',
+        gridTemplateColumns: '50px 50px 50px',
+        gridTemplateRows: '50px 50px 50px',
+        zIndex: 1000
+      }}>
+        <button 
+          style={{...buttonStyle, gridArea: 'up', gridColumn: '2'}}
+          onTouchStart={handleTouchButtonStart('up')}
+          onMouseDown={handleTouchButtonStart('up')}
+        >
+          ⬆️
+        </button>
+        <button 
+          style={{...buttonStyle, gridArea: 'left', gridColumn: '1', gridRow: '2'}}
+          onTouchStart={handleTouchButtonStart('left')}
+          onMouseDown={handleTouchButtonStart('left')}
+        >
+          ⬅️
+        </button>
+        <button 
+          style={{...buttonStyle, gridArea: 'right', gridColumn: '3', gridRow: '2'}}
+          onTouchStart={handleTouchButtonStart('right')}
+          onMouseDown={handleTouchButtonStart('right')}
+        >
+          ➡️
+        </button>
+        <button 
+          style={{...buttonStyle, gridArea: 'down', gridColumn: '2', gridRow: '3'}}
+          onTouchStart={handleTouchButtonStart('down')}
+          onMouseDown={handleTouchButtonStart('down')}
+        >
+          ⬇️
+        </button>
+      </div>
+    );
+  };
+
+  const canvasSize = getCanvasSize();
+
   return (
     <div style={{ 
       display: 'flex', 
       flexDirection: 'column', 
       alignItems: 'center', 
-      padding: '20px',
+      justifyContent: 'flex-start',
+      padding: screenInfo.isMobile ? '10px' : '20px',
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      minHeight: '100vh'
+      minHeight: '100vh',
+      width: '100vw',
+      boxSizing: 'border-box',
+      overflow: 'hidden'
     }}>
       <h1 style={{
         color: 'white',
-        fontSize: '2.5rem',
+        fontSize: screenInfo.isMobile ? '1.2rem' : '2.5rem',
         textShadow: '3px 3px 6px rgba(0,0,0,0.3)',
-        margin: '10px 0 20px 0',
-        fontFamily: 'Comic Sans MS, cursive'
+        margin: screenInfo.isMobile ? '5px 0 10px 0' : '10px 0 20px 0',
+        fontFamily: 'Comic Sans MS, cursive',
+        textAlign: 'center'
       }}>
         🌟 ¡Aventura Mágica! 🌟
       </h1>
 
-<canvas
-  ref={canvasRef}
-  width={900}
-  height={650}
-  style={{
-    border: '5px solid #fff',
-    borderRadius: '20px',
-    boxShadow: '0 15px 35px rgba(0, 0, 0, 0.3)',
-    background: '#87CEEB',
-    imageRendering: 'auto' // ✨ Esta es la línea clave para imágenes nítidas
-  }}
-/>
+      <canvas
+        ref={canvasRef}
+        width={canvasSize.width}
+        height={canvasSize.height}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          border: screenInfo.isMobile ? '3px solid #fff' : '5px solid #fff',
+          borderRadius: screenInfo.isMobile ? '15px' : '20px',
+          boxShadow: '0 15px 35px rgba(0, 0, 0, 0.3)',
+          background: '#87CEEB',
+          imageRendering: 'auto',
+          touchAction: 'none',
+          maxWidth: '100%',
+          maxHeight: '100%'
+        }}
+      />
+      
+      {/* Controles táctiles para móvil */}
+      <TouchControls />
       
       <div style={{ 
-        marginTop: '20px', 
+        marginTop: screenInfo.isMobile ? '10px' : '20px', 
         color: 'white', 
         textAlign: 'center',
         fontFamily: 'Comic Sans MS, cursive',
-        fontSize: '1.2rem'
+        fontSize: screenInfo.isMobile ? '0.8rem' : '1.2rem',
+        maxWidth: '90%',
+        lineHeight: '1.3'
       }}>
         <div style={{ 
           background: 'rgba(255, 255, 255, 0.2)', 
-          padding: '15px', 
+          padding: screenInfo.isMobile ? '8px' : '15px', 
           borderRadius: '15px',
           marginBottom: '10px'
         }}>
-          <p style={{ margin: '5px 0' }}>🎮 Usa las flechas ⬅️➡️⬆️⬇️ o WASD para moverte</p>
-          <p style={{ margin: '5px 0' }}>🎁 Recoge los regalos mágicos para responder preguntas</p>
-          <p style={{ margin: '5px 0' }}>🏰 ¡Encuentra el castillo mágico para ganar!</p>
+          {screenInfo.isMobile ? (
+            <>
+              <p style={{ margin: '3px 0' }}>📱 Desliza o usa los botones para moverte</p>
+              <p style={{ margin: '3px 0' }}>🎁 Recoge regalos para preguntas</p>
+              <p style={{ margin: '3px 0' }}>🏰 ¡Encuentra el castillo!</p>
+            </>
+          ) : (
+            <>
+              <p style={{ margin: '5px 0' }}>🎮 Usa las flechas ⬅️➡️⬆️⬇️ o WASD para moverte</p>
+              <p style={{ margin: '5px 0' }}>🎁 Recoge los regalos mágicos para responder preguntas</p>
+              <p style={{ margin: '5px 0' }}>🏰 ¡Encuentra el castillo mágico para ganar!</p>
+            </>
+          )}
         </div>
+        
+        {explorationState.gamePhase === 'completed' && (
+          <div style={{
+            background: 'rgba(255, 215, 0, 0.9)',
+            color: '#333',
+            padding: screenInfo.isMobile ? '15px' : '20px',
+            borderRadius: '15px',
+            fontSize: screenInfo.isMobile ? '1rem' : '1.5rem',
+            fontWeight: 'bold'
+          }}>
+            🎉 ¡FELICIDADES! 🎉<br/>
+            ¡Has completado la aventura!
+          </div>
+        )}
       </div>
 
       {activePregunta && (

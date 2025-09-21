@@ -94,10 +94,10 @@ const getFileExtension = (file: Blob | File): string => {
   }
 };
 
-export const useImageHandler = ({ 
-  pages, 
-  currentPage, 
-  setPages 
+export const useImageHandler = ({
+  pages,
+  currentPage,
+  setPages
 }: UseImageHandlerProps): UseImageHandlerReturn => {
 
   // Handler para cambio de imagen principal
@@ -171,9 +171,9 @@ export const useImageHandler = ({
           const currentPageData = updated[currentPage];
 
           // Liberar URL anterior si existe
-          if (currentPageData.background && 
-              typeof currentPageData.background === 'string' && 
-              currentPageData.background.startsWith('blob:')) {
+          if (currentPageData.background &&
+            typeof currentPageData.background === 'string' &&
+            currentPageData.background.startsWith('blob:')) {
             URL.revokeObjectURL(currentPageData.background);
           }
 
@@ -200,9 +200,9 @@ export const useImageHandler = ({
       const currentPageData = updated[currentPage];
 
       // Liberar memoria del blob URL si existe
-      if (currentPageData.background && 
-          typeof currentPageData.background === 'string' && 
-          currentPageData.background.startsWith('blob:')) {
+      if (currentPageData.background &&
+        typeof currentPageData.background === 'string' &&
+        currentPageData.background.startsWith('blob:')) {
         URL.revokeObjectURL(currentPageData.background);
       }
 
@@ -217,13 +217,14 @@ export const useImageHandler = ({
     });
   }, [currentPage, setPages]);
 
-  return {
-    handleImageChange,
-    removeImage,
-    handleBackgroundFile,
-    removeBackground,
-    resizeImage,
-    fetchFileFromUrl,
-    getFileExtension
-  };
+
+return {
+  handleImageChange,
+  removeImage,
+  handleBackgroundFile,
+  removeBackground,
+  resizeImage,
+  fetchFileFromUrl,
+  getFileExtension
+};
 };

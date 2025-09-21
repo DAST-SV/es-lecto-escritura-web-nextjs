@@ -12,6 +12,7 @@ export interface BookMetadata {
   selectedCategoria: number | null;
   selectedGenero: number | null;
   descripcion: string;
+  portada: File | null | string;
 }
 
 /**
@@ -44,6 +45,9 @@ function validateBookMetadata(metadata: BookMetadata): string | null {
   if (!metadata.selectedGenero) {
     return "Por favor selecciona un género";
   }
+  if (!metadata.portada) {
+    return "Por favor selecciona una Portada";
+  }
   if (!metadata.descripcion.trim()) {
     return "Por favor ingresa una descripción";
   }
@@ -54,8 +58,8 @@ function validateBookMetadata(metadata: BookMetadata): string | null {
  * Crea un nuevo libro en la base de datos
  */
 async function createNewBook(
-  userId: string, 
-  firstPageTitle: string, 
+  userId: string,
+  firstPageTitle: string,
   metadata: BookMetadata
 ): Promise<string> {
   const response = await fetch("/api/libros/createbook", {
@@ -64,7 +68,7 @@ async function createNewBook(
     body: JSON.stringify({
       userId,
       title: firstPageTitle,
-      background: null, // Temporal, se actualizará después
+      portada: typeof metadata.portada !== "string" ? null : metadata.portada,
       categoria: metadata.selectedCategoria,
       genero: metadata.selectedGenero,
       descripcion: metadata.descripcion.trim()
@@ -75,7 +79,7 @@ async function createNewBook(
   if (!data.libroId) {
     throw new Error(data.error || "Error creando libro");
   }
-  
+
   return data.libroId;
 }
 
@@ -93,11 +97,11 @@ async function fetchExistingBlobs(pages: page[]): Promise<void> {
       }
 
       // Obtener blob de fondo si solo hay URL
-      if (!p.backgroundFile && 
-          p.background && 
-          typeof p.background === 'string' &&
-          httpUrlRegex.test(p.background) && 
-          !backgrounds[p.background as backgroundstype]) {
+      if (!p.backgroundFile &&
+        p.background &&
+        typeof p.background === 'string' &&
+        httpUrlRegex.test(p.background) &&
+        !backgrounds[p.background as backgroundstype]) {
         p.backgroundFile = await fetchFileFromUrl(p.background);
       }
     })
@@ -108,12 +112,12 @@ async function fetchExistingBlobs(pages: page[]): Promise<void> {
  * Sube archivos de las páginas al storage y actualiza las páginas
  */
 async function uploadPagesFiles(
-  pages: page[], 
-  userId: string, 
+  pages: page[],
+  userId: string,
   libroId: string
 ): Promise<{ convertedPages: Page[], uploadedImages: string[] }> {
   const uploadedImages: string[] = [];
-  
+
   const convertedPages: Page[] = await Promise.all(
     pages.map(async (p: page, idx: number) => {
       const pageCopy = convertPage(p);
@@ -142,6 +146,21 @@ async function uploadPagesFiles(
 }
 
 /**
+ * Sube la portada al storage y retorna la URL
+ */
+async function uploadPortada(
+  portadaFile: File,
+  userId: string,
+  libroId: string
+): Promise<string> {
+  const ext = getFileExtension(portadaFile);
+  const filePath = generateFilePath(userId, libroId, `portada.${ext}`);
+  const uploadedUrl = await uploadFile(portadaFile, "ImgLibros", filePath);
+  return uploadedUrl;
+}
+
+
+/**
  * Actualiza un libro existente
  */
 async function updateExistingBook(
@@ -157,7 +176,8 @@ async function updateExistingBook(
       pages: convertedPages,
       categoria: metadata.selectedCategoria,
       genero: metadata.selectedGenero,
-      descripcion: metadata.descripcion.trim()
+      descripcion: metadata.descripcion.trim(),
+      portada: typeof metadata.portada !== "string" ? null : metadata.portada,
     }),
   });
 
@@ -214,6 +234,7 @@ export async function saveBookJson(
 ): Promise<void> {
   let libroId: string | null = IdLibro ?? null;
   const uploadedImages: string[] = [];
+  let portadaUrl;
 
   try {
     // Validar usuario autenticado
@@ -252,10 +273,18 @@ export async function saveBookJson(
       console.log("Archivos eliminados:", removeResult.removed);
     }
 
+
+    // Subir portada si existe
+    if (metadata.portada instanceof File) {
+      metadata.portada = await uploadPortada(metadata.portada, userId, libroId);
+    }
+
+
+
     // Subir archivos nuevos
     const { convertedPages, uploadedImages: newUploadedImages } = await uploadPagesFiles(
-      pages, 
-      userId, 
+      pages,
+      userId,
       libroId!
     );
     uploadedImages.push(...newUploadedImages);
@@ -279,7 +308,7 @@ export async function saveBookJson(
     if (!IdLibro && libroId) {
       await rollbackNewBook(libroId, uploadedImages);
     }
-    
+
     throw error; // Re-lanzar para manejo superior si es necesario
   }
 }

@@ -13,7 +13,8 @@ export const updateBookFromPages = async (
   pages: Page[],
   categoria?: number,
   genero?: number,
-  descripcion?: string
+  descripcion?: string,
+  portada?: string
 
 
 ) => {
@@ -23,7 +24,6 @@ export const updateBookFromPages = async (
   const supabase = supabaseAdmin
 
   const firstPage = pages[0];
-  const portada = firstPage.background ?? firstPage.image ?? null;
   const titulo = firstPage.title ?? 'Sin título';
 
   try {

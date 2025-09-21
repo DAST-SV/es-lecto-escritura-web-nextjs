@@ -9,6 +9,7 @@ import { PageLayoutSelector } from '@/src/components/components-for-books/book/c
 import { TitleEditor } from '@/src/components/components-for-books/book/create-edits-books/components/TitleEditor';
 import { TextEditor } from '@/src/components/components-for-books/book/create-edits-books/components/TextEditor';
 import { ImageControls } from '@/src/components/components-for-books/book/create-edits-books/components/ImageControls';
+import { PortadaControls } from '@/src/components/components-for-books/book/create-edits-books/components/portadaControls';
 import { BackgroundControls } from '@/src/components/components-for-books/book/create-edits-books/components/BackgroundControls';
 import { FontSelector } from '@/src/components/components-for-books/book/create-edits-books/components/FontSelector';
 import { ColorSelector } from '@/src/components/components-for-books/book/create-edits-books/components/ColorSelector';
@@ -26,9 +27,11 @@ interface BookControlPanelProps {
   selectedCategoria: number | null;
   selectedGenero: number | null;
   descripcion: string;
+  portada: File | null;
   onCategoriaChange: (value: number | null) => void;
   onGeneroChange: (value: number | null) => void;
   onDescripcionChange: (value: string) => void;
+  onPortadaChange: (value: File | null) => void;
   
   // Handlers de configuración
   onLayoutChange: (layout: string) => void;
@@ -49,9 +52,11 @@ export const BookControlPanel: React.FC<BookControlPanelProps> = ({
   selectedCategoria,
   selectedGenero,
   descripcion,
+  portada,
   onCategoriaChange,
   onGeneroChange,
   onDescripcionChange,
+  onPortadaChange,
   onLayoutChange,
   onFontChange,
   onBackgroundChange,
@@ -64,98 +69,116 @@ export const BookControlPanel: React.FC<BookControlPanelProps> = ({
   if (!currentPageData) return null;
 
   return (
-    <div className="lg:w-96 bg-white rounded-xl shadow-xl p-6 border border-gray-100 h-fit max-h-screen overflow-y-auto">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center">
-        <span className="mr-2">📚</span> Editor de Libro
-      </h2>
+    <div className="lg:w-96 bg-white rounded-xl shadow-xl border border-gray-100 h-screen flex flex-col">
+      {/* Contenedor interno con scroll centrado */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-6">
+        <div className="min-h-full flex flex-col justify-center">
+          
+          {/* Encabezado */}
+          <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center">
+            <span className="mr-2">📚</span> Editor de Libro
+          </h2>
 
-      {/* Selector de Layout */}
-      <PageLayoutSelector
-        currentLayout={currentPageData.layout}
-        pageNumber={currentPage + 1}
-        onLayoutChange={onLayoutChange}
-      />
+          {/* Navegación y control de páginas */}
+          <PageNavigation
+            currentPage={currentPage}
+            totalPages={pages.length}
+            canGoNext={navigation.canGoNext}
+            canGoPrev={navigation.canGoPrev}
+            isFlipping={false}
+            onGoToPage={navigation.goToPage}
+            onNextPage={navigation.nextPage}
+            onPrevPage={navigation.prevPage}
+            onAddPage={onAddPage}
+            onDeletePage={onDeletePage}
+          />
 
-      {/* Editor de título */}
-      <TitleEditor
-        isEditing={editingState.editingField === 'title'}
-        currentTitle={editingState.getCurrentTitle()}
-        editingTitle={editingState.editingTitle}
-        pageNumber={currentPage + 1}
-        onStartEdit={() => editingState.startEdit('title')}
-        onSave={() => editingState.saveField('title')}
-        onCancel={() => editingState.cancelEdit('title')}
-        onTitleChange={editingState.setEditingTitle}
-      />
+           <p className='p-2'></p>
 
-      {/* Editor de texto */}
-      <TextEditor
-        isEditing={editingState.editingField === 'text'}
-        currentText={editingState.getCurrentText()}
-        editingText={editingState.editingText}
-        pageNumber={currentPage + 1}
-        onStartEdit={() => editingState.startEdit('text')}
-        onSave={() => editingState.saveField('text')}
-        onCancel={() => editingState.cancelEdit('text')}
-        onTextChange={editingState.setEditingText}
-      />
+          {/* Selector de Layout */}
+          <PageLayoutSelector
+            currentLayout={currentPageData.layout}
+            pageNumber={currentPage + 1}
+            onLayoutChange={onLayoutChange}
+          />
 
-      {/* Control de imagen */}
-      <ImageControls
-        hasImage={!!currentPageData.image}
-        pageNumber={currentPage + 1}
-        onImageChange={imageHandler.handleImageChange}
-        onRemoveImage={imageHandler.removeImage}
-      />
+                   {/* Editor de contenido */}
+          <TitleEditor
+            isEditing={editingState.editingField === 'title'}
+            currentTitle={editingState.getCurrentTitle()}
+            editingTitle={editingState.editingTitle}
+            pageNumber={currentPage + 1}
+            onStartEdit={() => editingState.startEdit('title')}
+            onSave={() => editingState.saveField('title')}
+            onCancel={() => editingState.cancelEdit('title')}
+            onTitleChange={editingState.setEditingTitle}
+          />
 
-      {/* Control de fondo */}
-      <BackgroundControls
-        currentBackground={currentPageData.background}
-        hasBackground={!!currentPageData.background}
-        pageNumber={currentPage + 1}
-        onBackgroundChange={onBackgroundChange}
-        onBackgroundFileChange={imageHandler.handleBackgroundFile}
-        onRemoveBackground={imageHandler.removeBackground}
-      />
+          <TextEditor
+            isEditing={editingState.editingField === 'text'}
+            currentText={editingState.getCurrentText()}
+            editingText={editingState.editingText}
+            pageNumber={currentPage + 1}
+            onStartEdit={() => editingState.startEdit('text')}
+            onSave={() => editingState.saveField('text')}
+            onCancel={() => editingState.cancelEdit('text')}
+            onTextChange={editingState.setEditingText}
+          />
 
-      {/* Control de fuente */}
-      <FontSelector
-        currentFont={currentPageData.font || 'Arial'}
-        pageNumber={currentPage + 1}
-        onFontChange={onFontChange}
-      />
+          {/* Control de fondo */}
+          <BackgroundControls
+            currentBackground={currentPageData.background}
+            hasBackground={!!currentPageData.background}
+            pageNumber={currentPage + 1}
+            onBackgroundChange={onBackgroundChange}
+            onBackgroundFileChange={imageHandler.handleBackgroundFile}
+            onRemoveBackground={imageHandler.removeBackground}
+          />
 
-      {/* Control de color de texto */}
-      <ColorSelector
-        currentColor={currentPageData.textColor}
-        pageNumber={currentPage + 1}
-        onColorChange={onTextColorChange}
-      />
+          
+          {/* Control de imagen de página */}
+          <ImageControls
+            hasImage={!!currentPageData.image}
+            pageNumber={currentPage + 1}
+            onImageChange={imageHandler.handleImageChange}
+            onRemoveImage={imageHandler.removeImage}
+          />
 
-      {/* Formulario de metadatos */}
-      <BookMetadataForm
-        selectedCategoria={selectedCategoria}
-        selectedGenero={selectedGenero}
-        descripcion={descripcion}
-        onCategoriaChange={onCategoriaChange}
-        onGeneroChange={onGeneroChange}
-        onDescripcionChange={onDescripcionChange}
-        onSave={onSave}
-      />
 
-      {/* Navegación y control de páginas */}
-      <PageNavigation
-        currentPage={currentPage}
-        totalPages={pages.length}
-        canGoNext={navigation.canGoNext}
-        canGoPrev={navigation.canGoPrev}
-        isFlipping={false} // El isFlipping se maneja en el hook
-        onGoToPage={navigation.goToPage}
-        onNextPage={navigation.nextPage}
-        onPrevPage={navigation.prevPage}
-        onAddPage={onAddPage}
-        onDeletePage={onDeletePage}
-      />
+          {/* Control de fuente */}
+          <FontSelector
+            currentFont={currentPageData.font || 'Arial'}
+            pageNumber={currentPage + 1}
+            onFontChange={onFontChange}
+          />
+
+          {/* Control de color de texto */}
+          <ColorSelector
+            currentColor={currentPageData.textColor}
+            pageNumber={currentPage + 1}
+            onColorChange={onTextColorChange}
+          />
+
+ 
+
+          {/* Control de portada */}
+          <PortadaControls
+            onImageChange={onPortadaChange}
+          />
+
+          {/* Formulario de metadatos */}
+          <BookMetadataForm
+            selectedCategoria={selectedCategoria}
+            selectedGenero={selectedGenero}
+            descripcion={descripcion}
+            onCategoriaChange={onCategoriaChange}
+            onGeneroChange={onGeneroChange}
+            onDescripcionChange={onDescripcionChange}
+            onSave={onSave}
+          />
+
+        </div>
+      </div>
     </div>
   );
 };

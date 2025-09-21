@@ -21,19 +21,19 @@ const juegos: Juego[] = [
   { 
     src: "/Imagenes/Secciones_juegos/Quizes.jpg", 
     alt: "Quizes", 
-    route: "/pages/pages-games/quizes",
+    route: "/pages-games/quizes",
     description: "Pon a prueba tus conocimientos con quizzes interactivos 🎓"
   },
   { 
     src: "/Imagenes/Secciones_juegos/Laberinto.jpg", 
     alt: "Laberinto", 
-    route: "/pages/pages-games/laberinto",
+    route: "/pages-games/laberinto",
     description: "Encuentra la salida en emocionantes laberintos 🌀"
   },
   { 
     src: "/Imagenes/Secciones_juegos/Colorea.jpg", 
     alt: "Colorea", 
-    route: "/pages/pages-games/coloreo",
+    route: "/pages-games/coloreo",
     description: "Da rienda suelta a tu creatividad coloreando dibujos 🎨"
   },
 ];
