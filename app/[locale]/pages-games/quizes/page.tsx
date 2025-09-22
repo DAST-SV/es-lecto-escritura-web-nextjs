@@ -26,11 +26,11 @@ const Quizes: React.FC = () => {
       {!selectedImage && (
         <>
           {/* Banner principal */}
-          <div className="w-300 mx-auto mb-6">
-            <img 
+          <div className="w-full max-w-6xl mx-auto mb-6 px-2 mt-2 md:mt-8 lg:mt-12">
+            <img
               src="/Imagenes/Secciones_juegos/Quizes/Banner.jpg" 
-              alt="Banner" 
-              className="w-full max-h-85 h-auto shadow-lg rounded-b-xl"
+              alt="Banner"
+              className="w-full h-[200px] sm:h-[250px] md:h-[350px] lg:h-[450px] object-fill shadow-lg rounded-b-xl"
             />
           </div>
 

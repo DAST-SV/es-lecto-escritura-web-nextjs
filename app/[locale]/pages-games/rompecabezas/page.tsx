@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState } from "react"; 
+import React, { useState } from "react";
 import ImageGrid from "@/src/utils/imagenes/ImageGrid";
-import RealJigsawPuzzle from "@/src/components/games/rompe-cabezas/RealJigsawPuzzle"; // tu componente del puzzle
+import RealJigsawPuzzle from "@/src/components/games/rompe-cabezas/RealJigsawPuzzle";
 import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
 
 const imagenes = [
@@ -25,7 +25,7 @@ const RompeCabezas: React.FC = () => {
   };
 
   const handleClosePuzzle = () => {
-    setSelectedImage(null); // volver a galería
+    setSelectedImage(null);
   };
 
   return (
@@ -34,40 +34,51 @@ const RompeCabezas: React.FC = () => {
       {!selectedImage && (
         <>
           {/* Banner principal */}
-          <div className="w-300 mx-auto mb-6">
-            <img 
-              src="/Imagenes/Secciones_juegos/Rompecabezas/Rompecabezas_Banner.jpg" 
-              alt="Banner" 
-              className="w-full max-h-85 h-auto shadow-lg rounded-b-xl"
+          <div className="w-full max-w-6xl mx-auto mb-6 px-2 mt-2 md:mt-8 lg:mt-12">
+            <img
+              src="/Imagenes/Secciones_juegos/Rompecabezas/Rompecabezas_Banner.jpg"
+              alt="Banner"
+              className="w-full h-[200px] sm:h-[250px] md:h-[350px] lg:h-[450px] object-fill shadow-lg rounded-b-xl"
             />
           </div>
 
+
+
           {/* Títulos */}
-          <h2 className="text-5xl text-center font-extrabold my-4 text-red-700 drop-shadow-lg">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl text-center font-extrabold my-4 text-red-700 drop-shadow-lg">
             Rompe Cabezas
           </h2>
-          <h3 className="text-3xl text-center font-medium my-4 text-blue-700">
+          <h3 className="text-lg sm:text-2xl md:text-3xl text-center font-medium my-4 text-blue-700">
             ¡Disfruta armando tus personajes favoritos!
           </h3>
 
           {/* GALERÍA */}
-          <div className="max-w-4xl mx-auto px-4 mb-12">
-            <ImageGrid images={imagenes} shapeType={2} onClick={(img) => handleImageClick(img.src)}/>
-            <h3 className="text-3xl text-center font-bold my-6 text-green-700">
+          <div className="max-w-6xl mx-auto px-4 mb-12">
+            <ImageGrid
+              images={imagenes}
+              shapeType={2}
+              onClick={(img) => handleImageClick(img.src)}
+            />
+
+            <h3 className="text-xl sm:text-2xl md:text-3xl text-center font-bold my-6 text-green-700">
               ¡Mira los rompecabezas más armados!
             </h3>
-            <ImageGrid images={imagenes2} shapeType={2} onClick={(img) => handleImageClick(img.src)} />
+
+            <ImageGrid
+              images={imagenes2}
+              shapeType={2}
+              onClick={(img) => handleImageClick(img.src)}
+            />
           </div>
         </>
       )}
 
       {selectedImage && (
-        console.log("entro"+selectedImage),
-        <div className="mx-auto my-6 text-center">
+        <div className="mx-auto my-6 text-center px-2">
           <RealJigsawPuzzle Url={selectedImage} />
-          <button 
-            onClick={handleClosePuzzle} 
-            className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+          <button
+            onClick={handleClosePuzzle}
+            className="mt-6 px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm sm:text-base"
           >
             Volver a la galería
           </button>

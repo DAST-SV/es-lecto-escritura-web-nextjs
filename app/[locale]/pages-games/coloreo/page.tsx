@@ -26,14 +26,14 @@ const Colorea: React.FC = () => {
       {!selectedImages[0] && !selectedImages[1] &&(
         <>
           {/* Banner */}
-          <div className="w-300 mx-auto mb-6">
-            <img 
+          <div className="w-full max-w-6xl mx-auto mb-6 px-2 mt-2 md:mt-8 lg:mt-12">
+            <img
               src="/Imagenes/Secciones_juegos/Colorea/Banner.jpg" 
-              alt="Banner" 
-              className="w-full max-h-85 h-auto shadow-lg rounded-b-xl"
+              alt="Banner"
+              className="w-full h-[200px] sm:h-[250px] md:h-[350px] lg:h-[450px] object-fill shadow-lg rounded-b-xl"
             />
           </div>
-
+          
           {/* Títulos */}
           <h2 className="text-5xl text-center font-extrabold my-4 text-purple-700 drop-shadow-lg">
             Coloreos

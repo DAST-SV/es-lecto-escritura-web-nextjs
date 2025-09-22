@@ -1,9 +1,22 @@
-import toast from 'react-hot-toast';
-import { getUserId } from '@/src/utils/supabase/utilsClient';
-import { uploadFile, generateFilePath, removeFolder } from '@/src/utils/supabase/storageService';
-import type { Page, page, LayoutType, backgroundstype, HtmlFontFamiliestype } from '@/src/typings/types-page-book/index';
-import { backgrounds } from '@/src/typings/types-page-book/backgrounds';
-import { getFileExtension, fetchFileFromUrl } from '@/src/components/components-for-books/book/create-edits-books/utils/imageUtils';
+import toast from "react-hot-toast";
+import { getUserId } from "@/src/utils/supabase/utilsClient";
+import {
+  uploadFile,
+  generateFilePath,
+  removeFolder,
+} from "@/src/utils/supabase/storageService";
+import type {
+  Page,
+  page,
+  LayoutType,
+  backgroundstype,
+  HtmlFontFamiliestype,
+} from "@/src/typings/types-page-book/index";
+import { backgrounds } from "@/src/typings/types-page-book/backgrounds";
+import {
+  getFileExtension,
+  fetchFileFromUrl,
+} from "@/src/components/components-for-books/book/create-edits-books/utils/imageUtils";
 
 /**
  * Metadata requerida para crear/actualizar un libro
@@ -31,7 +44,7 @@ export function convertPage(oldPage: page): Page {
     audio: undefined,
     interactiveGame: undefined,
     items: [],
-    border: undefined
+    border: undefined,
   };
 }
 
@@ -71,7 +84,7 @@ async function createNewBook(
       portada: typeof metadata.portada !== "string" ? null : metadata.portada,
       categoria: metadata.selectedCategoria,
       genero: metadata.selectedGenero,
-      descripcion: metadata.descripcion.trim()
+      descripcion: metadata.descripcion.trim(),
     }),
   });
 
@@ -92,16 +105,23 @@ async function fetchExistingBlobs(pages: page[]): Promise<void> {
   await Promise.all(
     pages.map(async (p: page, idx: number) => {
       // Obtener blob de imagen si solo hay URL
-      if (!p.file && p.image && typeof p.image === 'string' && httpUrlRegex.test(p.image)) {
+      if (
+        !p.file &&
+        p.image &&
+        typeof p.image === "string" &&
+        httpUrlRegex.test(p.image)
+      ) {
         p.file = await fetchFileFromUrl(p.image);
       }
 
       // Obtener blob de fondo si solo hay URL
-      if (!p.backgroundFile &&
+      if (
+        !p.backgroundFile &&
         p.background &&
-        typeof p.background === 'string' &&
+        typeof p.background === "string" &&
         httpUrlRegex.test(p.background) &&
-        !backgrounds[p.background as backgroundstype]) {
+        !backgrounds[p.background as backgroundstype]
+      ) {
         p.backgroundFile = await fetchFileFromUrl(p.background);
       }
     })
@@ -115,7 +135,7 @@ async function uploadPagesFiles(
   pages: page[],
   userId: string,
   libroId: string
-): Promise<{ convertedPages: Page[], uploadedImages: string[] }> {
+): Promise<{ convertedPages: Page[]; uploadedImages: string[] }> {
   const uploadedImages: string[] = [];
 
   const convertedPages: Page[] = await Promise.all(
@@ -125,7 +145,11 @@ async function uploadPagesFiles(
       // Manejar imagen principal
       if (p.file) {
         const ext = getFileExtension(p.file);
-        const filePath = generateFilePath(userId, libroId, `pagina_${idx + 1}_file.${ext}`);
+        const filePath = generateFilePath(
+          userId,
+          libroId,
+          `pagina_${idx + 1}_file.${ext}`
+        );
         pageCopy.image = await uploadFile(p.file, "ImgLibros", filePath);
         uploadedImages.push(filePath);
       }
@@ -133,8 +157,16 @@ async function uploadPagesFiles(
       // Manejar imagen de fondo
       if (p.backgroundFile) {
         const ext = getFileExtension(p.backgroundFile);
-        const bgPath = generateFilePath(userId, libroId, `pagina_${idx + 1}_bg.${ext}`);
-        pageCopy.background = await uploadFile(p.backgroundFile, "ImgLibros", bgPath);
+        const bgPath = generateFilePath(
+          userId,
+          libroId,
+          `pagina_${idx + 1}_bg.${ext}`
+        );
+        pageCopy.background = await uploadFile(
+          p.backgroundFile,
+          "ImgLibros",
+          bgPath
+        );
         uploadedImages.push(bgPath);
       }
 
@@ -158,7 +190,6 @@ async function uploadPortada(
   const uploadedUrl = await uploadFile(portadaFile, "ImgLibros", filePath);
   return uploadedUrl;
 }
-
 
 /**
  * Actualiza un libro existente
@@ -192,7 +223,8 @@ async function updateExistingBook(
  */
 async function updateNewBookPages(
   libroId: string,
-  convertedPages: Page[]
+  convertedPages: Page[],
+  portada: string
 ): Promise<void> {
   const response = await fetch("/api/libros/updatebook/", {
     method: "PATCH",
@@ -200,6 +232,7 @@ async function updateNewBookPages(
     body: JSON.stringify({
       idLibro: libroId,
       pages: convertedPages,
+      portada: portada
     }),
   });
 
@@ -212,7 +245,10 @@ async function updateNewBookPages(
 /**
  * Hace rollback eliminando un libro creado por error
  */
-async function rollbackNewBook(libroId: string, uploadedImages: string[]): Promise<void> {
+async function rollbackNewBook(
+  libroId: string,
+  uploadedImages: string[]
+): Promise<void> {
   try {
     await fetch(`/api/libros/deletebook`, {
       method: "POST",
@@ -269,24 +305,21 @@ export async function saveBookJson(
 
     // Eliminar archivos anteriores si es un libro existente
     if (IdLibro) {
-      const removeResult = await removeFolder("ImgLibros", `${userId}/${libroId}`);
+      const removeResult = await removeFolder(
+        "ImgLibros",
+        `${userId}/${libroId}`
+      );
       console.log("Archivos eliminados:", removeResult.removed);
     }
-
 
     // Subir portada si existe
     if (metadata.portada instanceof File) {
       metadata.portada = await uploadPortada(metadata.portada, userId, libroId);
     }
 
-
-
     // Subir archivos nuevos
-    const { convertedPages, uploadedImages: newUploadedImages } = await uploadPagesFiles(
-      pages,
-      userId,
-      libroId!
-    );
+    const { convertedPages, uploadedImages: newUploadedImages } =
+      await uploadPagesFiles(pages, userId, libroId!);
     uploadedImages.push(...newUploadedImages);
 
     // Guardar o actualizar el libro
@@ -296,10 +329,9 @@ export async function saveBookJson(
       toast.success("📚 Libro actualizado correctamente");
     } else {
       // Finalizar creación de libro nuevo
-      await updateNewBookPages(libroId!, convertedPages);
+      await updateNewBookPages(libroId!, convertedPages,metadata.portada as string);
       toast.success("📚 Libro guardado correctamente");
     }
-
   } catch (error: any) {
     console.error("❌ Error guardando libro:", error.message);
     toast.error("❌ Error al guardar el libro");
