@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import type { page, Page } from '@/src/typings/types-page-book/index';
@@ -76,11 +78,19 @@ export const BookViewer: React.FC<BookViewerProps> = ({
   const [bookDimensions, setBookDimensions] = useState({ width: 600, height: 700 });
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   const [activePage, setActivePage] = useState(currentPage);
+  const [isClient, setIsClient] = useState(false); // Nuevo estado para detectar cliente
 
-  // Detectar dispositivo y calcular dimensiones (similar al ejemplo)
+  // Detectar si estamos en el cliente
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Detectar dispositivo y calcular dimensiones
+  useEffect(() => {
+    if (!isClient) return; // Solo ejecutar en el cliente
+
     const checkDevice = () => {
-      const isMobile = window.innerWidth < 640; // Mismo breakpoint que el ejemplo
+      const isMobile = window.innerWidth < 640;
       const screenHeight = window.innerHeight;
       const screenWidth = window.innerWidth;
       
@@ -90,24 +100,20 @@ export const BookViewer: React.FC<BookViewerProps> = ({
 
       // Calcular dimensiones para PC que quepan en pantalla
       if (!isMobile) {
-        // Dejar espacio para padding, indicador y margen (aproximadamente 200px)
         const availableHeight = screenHeight - 200;
         const availableWidth = screenWidth - 100;
         
-        // Mantener ratio deseado pero ajustar si es necesario
         let bookWidth = 600;
         let bookHeight = 700;
         
-        // Si no cabe en altura, ajustar manteniendo proporciones
         if (bookHeight > availableHeight) {
           bookHeight = availableHeight;
-          bookWidth = (bookHeight * 600) / 700; // Mantener ratio
+          bookWidth = (bookHeight * 600) / 700;
         }
         
-        // Si no cabe en ancho, ajustar
         if (bookWidth > availableWidth) {
           bookWidth = availableWidth;
-          bookHeight = (bookWidth * 700) / 600; // Mantener ratio
+          bookHeight = (bookWidth * 700) / 600;
         }
         
         setBookDimensions({
@@ -120,14 +126,30 @@ export const BookViewer: React.FC<BookViewerProps> = ({
     checkDevice();
     window.addEventListener('resize', checkDevice);
     return () => window.removeEventListener('resize', checkDevice);
-  }, [isMobileDevice]);
+  }, [isMobileDevice, isClient]);
 
   // Sincronizar activePage con currentPage
   useEffect(() => {
     setActivePage(currentPage);
   }, [currentPage]);
 
-  // Configuración para PC (basada en el ejemplo)
+  // Si no estamos en el cliente, mostrar loading o placeholder
+  if (!isClient) {
+    return (
+      <div className="min-h-screen w-full relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-sky-200 via-purple-100 to-pink-200">
+          <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg px-6 py-8 shadow-lg max-w-md text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+              <p className="text-sm text-gray-600">Cargando libro...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Configuración para PC
   const desktopFlipBookProps: React.ComponentProps<typeof HTMLFlipBook> = {
     width: bookDimensions.width,
     height: bookDimensions.height,
@@ -147,7 +169,7 @@ export const BookViewer: React.FC<BookViewerProps> = ({
     maxWidth: 800,
     minHeight: 100,
     maxHeight: 800,
-    usePortrait: false, // FALSE para PC - dos páginas
+    usePortrait: false,
     startZIndex: 0,
     autoSize: false,
     mobileScrollSupport: false,
@@ -170,10 +192,10 @@ export const BookViewer: React.FC<BookViewerProps> = ({
     )),
   };
 
-  // Configuración para móvil (basada en el ejemplo)
+  // Configuración para móvil - FIXED: usar valores seguros
   const mobileFlipBookProps: React.ComponentProps<typeof HTMLFlipBook> = {
-    width: Math.min(window.innerWidth * 0.85, 300),
-    height: Math.min(window.innerWidth * 0.85, 300) * 1.3,
+    width: Math.min((typeof window !== 'undefined' ? window.innerWidth : 400) * 0.85, 300),
+    height: Math.min((typeof window !== 'undefined' ? window.innerWidth : 400) * 0.85, 300) * 1.3,
     maxShadowOpacity: 0.5,
     drawShadow: true,
     showCover: true,
@@ -190,7 +212,7 @@ export const BookViewer: React.FC<BookViewerProps> = ({
     maxWidth: 400,
     minHeight: 100,
     maxHeight: 600,
-    usePortrait: true, // TRUE para móvil - una página
+    usePortrait: true,
     startZIndex: 0,
     autoSize: false,
     mobileScrollSupport: true,
@@ -217,7 +239,7 @@ export const BookViewer: React.FC<BookViewerProps> = ({
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden">
-      {/* Fondo infantil animado (similar al ejemplo) */}
+      {/* Fondo infantil animado */}
       <div className="absolute inset-0 bg-gradient-to-br from-sky-200 via-purple-100 to-pink-200">
         {/* Nubes flotantes */}
         <div className="absolute top-10 left-10 w-20 h-12 bg-white rounded-full opacity-80 animate-float-slow"></div>
@@ -298,7 +320,7 @@ export const BookViewer: React.FC<BookViewerProps> = ({
         </div>
       </div>
 
-      {/* Estilos CSS personalizados (copiados del ejemplo) */}
+      {/* Estilos CSS personalizados */}
       <style jsx>{`
         @keyframes float-slow {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
