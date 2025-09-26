@@ -34,7 +34,7 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
   }
 
   revalidatePath('/', 'layout')
-  redirect(`/${locale}/pages-my-books`)
+  redirect(`/${locale}/explore-content`)
 }
 
 export async function loginWithProvider(
