@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { BookOpen, Zap, Award, LucideIcon } from 'lucide-react';
-import { eslectoescriturav1 } from '@/public/images';
 import type { FeatureTab, Stat } from './type';
+import { images } from '@/public/images';
+import { NextImage } from '../../ui/NextImage';
 
 type TabId = 'personalized' | 'simplified' | 'flexibility';
 
@@ -90,8 +91,8 @@ const FeaturesSection: React.FC = () => {
             <div className="order-1 lg:order-2 text-center">
               <div className="relative inline-block">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-green-400 rounded-2xl transform rotate-3 opacity-20"></div>
-                <Image
-                  src={eslectoescriturav1}
+                <NextImage
+                  src={images.lectoescritura.v1}
                   alt={activeTabData?.title || 'Feature image'}
                   width={400}
                   height={320}

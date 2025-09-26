@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: {
     domains: ["hxxtkzshnnrwxvvgtgsh.supabase.co"], // ✅ host de Supabase
+    qualities: [75, 85, 95], // Define los valores de calidad permitidos
   },
 };
 
