@@ -91,7 +91,7 @@ const Laberinto: React.FC = () => {
         <ImageGrid
           images={imagenes}
           shapeType={2}
-          onClick={(img) => setJuegoActivo(img.caption)}
+          onClick={(img) => setJuegoActivo(img.caption ?? null)}
         />
 
         <h3 className="text-2xl sm:text-3xl lg:text-4xl text-center font-bold my-6 text-blue-700">
@@ -101,7 +101,7 @@ const Laberinto: React.FC = () => {
         <ImageGrid
           images={imagenes2}
           shapeType={2}
-          onClick={(img) => setJuegoActivo(img.caption)}
+          onClick={(img) => setJuegoActivo(img.caption ?? null)}
         />
       </div>
     </UnifiedLayout>

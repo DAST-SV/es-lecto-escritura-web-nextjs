@@ -47,7 +47,7 @@ const Colorea: React.FC = () => {
             <ImageGrid 
               images={imagenes} 
               shapeType={2} 
-              onClick={(img) => setSelectedImages([img.src, img.caption])}
+              onClick={(img) => setSelectedImages([typeof img.src === 'string' ? img.src : null, img.caption ?? null])}
             />
             <h3 className="text-3xl text-center font-bold my-6 text-blue-700">
               ¡Los dibujos más visitados!
@@ -55,7 +55,7 @@ const Colorea: React.FC = () => {
             <ImageGrid 
               images={imagenes2} 
               shapeType={2} 
-              onClick={(img) => setSelectedImages([img.src, img.caption])}
+              onClick={(img) => setSelectedImages([typeof img.src === 'string' ? img.src : null, typeof img.caption === 'string' ? img.caption : null])}
             />
           </div>
         </>

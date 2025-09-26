@@ -57,7 +57,7 @@ const RompeCabezas: React.FC = () => {
             <ImageGrid
               images={imagenes}
               shapeType={2}
-              onClick={(img) => handleImageClick(img.src)}
+              onClick={(img) => typeof img.src === 'string' && handleImageClick(img.src)}
             />
 
             <h3 className="text-xl sm:text-2xl md:text-3xl text-center font-bold my-6 text-green-700">
@@ -67,7 +67,7 @@ const RompeCabezas: React.FC = () => {
             <ImageGrid
               images={imagenes2}
               shapeType={2}
-              onClick={(img) => handleImageClick(img.src)}
+              onClick={(img) => typeof img.src === 'string' && handleImageClick(img.src)}
             />
           </div>
         </>

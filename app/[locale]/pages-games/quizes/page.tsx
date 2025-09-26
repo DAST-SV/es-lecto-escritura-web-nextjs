@@ -47,7 +47,7 @@ const Quizes: React.FC = () => {
             <ImageGrid 
               images={imagenes} 
               shapeType={3} 
-              onClick={(img) => setSelectedImage(img.src)}
+              onClick={(img) => setSelectedImage(typeof img.src === 'string' ? img.src : null)}
             />
             <h3 className="text-3xl text-center font-bold my-6 text-green-700">
               ¡Los quizzes más jugados!
@@ -55,7 +55,7 @@ const Quizes: React.FC = () => {
             <ImageGrid 
               images={imagenes2} 
               shapeType={3}  
-              onClick={(img) => setSelectedImage(img.src)}
+              onClick={(img) => setSelectedImage(typeof img.src === 'string' ? img.src : null)}
             />
           </div>
         </>

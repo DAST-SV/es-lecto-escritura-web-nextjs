@@ -131,12 +131,12 @@ const MyBooks: React.FC = () => {
               images={libros}
               shapeType={2}
               columns={3}
-              onClick={(book) => setSelectedBook({ json: book.Json ?? "", caption: book.caption })}
+              onClick={(book) => setSelectedBook({ json: book.Json ?? "", caption: book.caption || "" })}
               showButton={true}
               buttonText="✏️ Editar"
               buttonColor="blue"
               buttonPosition="corner"
-              onButtonClick={(book) => setSelectedBook({ json: book.Json ?? "", caption: book.caption })}
+              onButtonClick={(book) => setSelectedBook({ json: book.Json ?? "", caption: book.caption || "" })}
             />
           </div>
           
