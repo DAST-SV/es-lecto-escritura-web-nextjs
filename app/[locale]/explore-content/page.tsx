@@ -2,6 +2,7 @@
 import React from "react";
 import Image from "next/image";
 import ImageGrid, { ImageItem } from "@/src/utils/imagenes/ImageGrid";
+import Carousel from "@/src/utils/components/Carousel"; // 🔹 Ajusta la ruta según tu estructura
 import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
 
 // 🔹 Imports de imágenes
@@ -22,113 +23,122 @@ import Diariopersonal from "@/public/Imagenes/explore-content/b274a0a3-3a24-4f8f
 import Caracoles from "@/public/Imagenes/explore-content/top10/04e5ba5c-10d1-4f6d-ac86-82b8a0ba59fc.jpg";
 import Hamster from "@/public/Imagenes/explore-content/top10/52063d7e-8fd6-4f18-9ce2-d05abbb78fbb.jpg";
 import Dragon from "@/public/Imagenes/explore-content/top10/9d6e7983-33e9-4192-af7c-80d5ce7186ae.jpg";
-
+import Mascuentos from "@/public/Imagenes/explore-content/top10/assets_task_01k61vx6wwftbrtw2644gnfvhb_1758852016_img_1.webp"; // 🔹 Ajusta la ruta según tu imagen
 
 const Page: React.FC = () => {
-    const explorarContenido: ImageItem[] = [
-        {
-            caption: "Cuentos",
-            component: <Image src={Cuentos} alt="Cuentos" className="w-full h-auto object-cover" />,
-        },
-        {
-            caption: "Fábulas",
-            component: <Image src={Fabulas} alt="Fábulas" className="w-full h-auto object-cover" />,
-        },
-        {
-            caption: "Poemas",
-            component: <Image src={Poemas} alt="Poemas" className="w-full h-auto object-cover" />,
-        },
-        {
-            caption: "Leyendas",
-            component: <Image src={Leyendas} alt="Leyendas" className="w-full h-auto object-cover" />,
-        },
-        {
-            caption: "Adivinanzas",
-            component: <Image src={Adivinanzas} alt="Adivinanzas" className="w-full h-auto object-cover" />,
-        },
-        {
-            caption: "Historietas",
-            component: <Image src={Historietas} alt="Historietas" className="w-full h-auto object-cover" />,
-        },
-        {
-            caption: "Trabalenguas",
-            component: <Image src={Trabalenguas} alt="Trabalenguas" className="w-full h-auto object-cover" />,
-        },
-        {
-            caption: "Refranes",
-            component: <Image src={Refranes} alt="Refranes" className="w-full h-auto object-cover" />,
-        },
-    ];
+  const explorarContenido: ImageItem[] = [
+    { caption: "Cuentos", src: Cuentos },
+    { caption: "Fábulas", src: Fabulas },
+    { caption: "Poemas", src: Poemas },
+    { caption: "Leyendas", src: Leyendas },
+    { caption: "Adivinanzas", src: Adivinanzas },
+    { caption: "Historietas", src: Historietas },
+    { caption: "Trabalenguas", src: Trabalenguas },
+    { caption: "Refranes", src: Refranes },
+  ];
 
-    const topLecturas: ImageItem[] = [
-        {
-            caption: "El Dragón de las Nubes",
-            component: <Image src={Dragon} alt="Dragón" width={400} height={300} className="w-full h-auto object-cover" />,
-        },
-        {
-            caption: "El Hámster Viajero",
-            component: <Image src={Hamster} alt="Hámster" width={400} height={300} className="w-full h-auto object-cover" />,
-        },
-        {
-            caption: "La Carrera de los Caracoles Valientes",
-            component: <Image src={Caracoles} alt="Caracoles" width={400} height={300} className="w-full h-auto object-cover" />,
-        },
-    ];
+  const topLecturas: ImageItem[] = [
+    { caption: "El Dragón de las Nubes", src: Dragon, Json: "/detalle-de-cuento" },
+    { caption: "El Hámster Viajero", src: Hamster, Json: "/detalle-de-cuento" },
+    { caption: "La Carrera de los Caracoles Valientes", src: Caracoles, Json: "/detalle-de-cuento" },
+    { caption: "El Dragón de las Nubes 2", src: Dragon, Json: "/detalle-de-cuento" },
+    { caption: "El Hámster Viajero 2", src: Hamster, Json: "/detalle-de-cuento" },
+    { caption: "La Carrera de los Caracoles Valientes 2", src: Caracoles, Json: "/detalle-de-cuento" },
+    { caption: "Mas Cuentos", src: Mascuentos, Json: "/cuentos" },
+  ];
 
-    const extras: ImageItem[] = [
-        {
-            caption: "Crea tu Libro",
-            component: <Image src={Creatulibro} alt="Crea tu Libro" width={300} height={300} className="w-full h-auto object-cover" />,
-        },
-        {
-            caption: "Diario Personal",
-            component: <Image src={Diariopersonal} alt="Diario" width={300} height={300} className="w-full h-auto object-cover" />,
-        },
-        {
-            caption: "Mis Libros",
-            component: <Image src={Mislibros}alt="Mis Libros" width={300} height={300} className="w-full h-auto object-cover" />,
-        },
-    ];
+  const extras: ImageItem[] = [
+    { caption: "Crea tu Libro", src: Creatulibro },
+    { caption: "Diario Personal", src: Diariopersonal },
+    { caption: "Mis Libros", src: Mislibros },
+  ];
 
-    return (
-     <UnifiedLayout className="relative flex flex-col min-h-screen overflow-hidden">
-        <div className="p-6 space-y-10 bg-white">
-            {/* Explorar Contenido con fondo */}
-            <div
-                className="rounded-2xl p-6 shadow-lg bg-cover bg-center"
-                style={{
-                    backgroundImage: `url(${fondo.src})`,
-                    backgroundRepeat: "no-repeat",
-                    backgroundSize: "cover",
-                }}
-            >
-                <h2
-                    style={{ fontFamily: "'Itim', cursive" }}
-                    className="font-bold mb-4 text-center text-blue-600 text-5xl"
-                >
-                    Explorar Contenido
-                </h2>
+  // 🔹 Función para manejar clicks en el carrusel
+  const handleCarouselClick = (img: ImageItem, index: number) => {
+    console.log('Clicked on:', img.caption, 'at index:', index);
+    
+    // 🔹 Usar la ruta definida en Json o una ruta por defecto
+    const targetRoute = img.Json || "/detalle-de-cuento";
+    
+    // 🔹 Redirigir usando Next.js router o window.location
+    window.location.href = targetRoute;
+    
+    // 🔹 Alternativa con Next.js router (descomenta si prefieres esta opción):
+    // import { useRouter } from 'next/navigation';
+    // const router = useRouter();
+    // router.push(targetRoute);
+  };
 
-                <ImageGrid images={explorarContenido} columns={4} shapeType={2} captionColor="#ffffff"
-                textBackgroundColor="#87CEEB" captionSize="text-2xl" descriptionSize="text-sm" />
+  return (
+    <UnifiedLayout className="relative flex flex-col min-h-screen overflow-hidden">
+      <div className="px-10 py-6 space-y-16 bg-white">
+        {/* Explorar Contenido con fondo */}
+        <div
+          className="rounded-xl p-4 shadow-md bg-cover bg-center"
+          style={{
+            backgroundImage: `url(${fondo.src})`,
+            backgroundRepeat: "no-repeat",
+            backgroundSize: "cover",
+          }}
+        >
+          <h2
+            style={{ fontFamily: "'Itim', cursive" }}
+            className="font-bold mb-4 text-center text-blue-600 text-4xl"
+          >
+            Explorar Contenido
+          </h2>
 
-            </div>
-
-            {/* Top lecturas */}
-            <div>
-                <h2 className="text-5xl font-bold mb-4 text-center text-black font-">
-                    Top 10 de Lecturas
-                </h2>
-                <ImageGrid images={topLecturas} columns={3} shapeType={1} />
-            </div>
-
-            {/* Extras */}
-            <div>
-                <ImageGrid images={extras} columns={3} shapeType={2} />
-            </div>
+          <ImageGrid
+            images={explorarContenido}
+            columns={4}
+            shapeType={2}
+            captionColor="#ffffff"
+            textBackgroundColor="#87CEEB"
+            aspectRatio="3/3"
+            captionSize="text-2xl"
+            descriptionSize="text-sm"
+          />
         </div>
-     </UnifiedLayout>
-    );
+
+        {/* 🔹 Top lecturas con CARRUSEL GENÉRICO */}
+        <div className="rounded-xl p-6 shadow-md bg-white">
+          <h2 className="text-3xl font-bold mb-6 text-center text-black">
+            Top 10 de Lecturas
+          </h2>
+          
+          <Carousel
+            images={topLecturas}
+            itemsToShow={3}
+            aspectRatio="3/4"
+            onClick={handleCarouselClick}
+            showIndicators={true}
+            showArrows={true}
+            gap="gap-4"
+          />
+        </div>
+
+        {/* 🔹 Ejemplo adicional: Carrusel de extras con configuración diferente */}
+        <div className="rounded-xl p-6 shadow-md bg-gradient-to-r from-purple-100 to-pink-100">
+          <h2 className="text-2xl font-bold mb-4 text-center text-purple-800">
+            Herramientas Creativas
+          </h2>
+          
+          <Carousel
+            images={extras}
+            itemsToShow={2}
+            aspectRatio="2/3"
+            onClick={(img, index) => {
+              console.log('Extra clicked:', img.caption);
+              alert(`Clicked: ${img.caption}`);
+            }}
+            showIndicators={false}
+            showArrows={true}
+            gap="gap-6"
+          />
+        </div>
+      </div>
+    </UnifiedLayout>
+  );
 };
 
 export default Page;

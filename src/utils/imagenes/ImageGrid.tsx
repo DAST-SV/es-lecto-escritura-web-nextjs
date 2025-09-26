@@ -1,10 +1,12 @@
+'use client'
+
 import React from "react";
 import Image, { StaticImageData } from "next/image";
 
 export interface ImageItem {
   src?: string | StaticImageData;
   component?: React.ReactNode;
-  caption: string;
+  caption?: string;
   description?: string;
   Json?: string;
 }
@@ -13,23 +15,25 @@ interface ImageGridProps {
   images: ImageItem[];
   shapeType?: number;
   columns?: number;
+  aspectRatio?: string; // ej: "3/2" o "1/1"
   onClick?: (img: ImageItem) => void;
   showButton?: boolean;
   onButtonClick?: (img: ImageItem) => void;
   buttonText?: string;
   buttonColor?: string;
   buttonPosition?: "bottom" | "corner";
-  captionColor?: string;            // color del caption
-  descriptionColor?: string;        // color de description
-  textBackgroundColor?: string;     // color de fondo del div de texto
-  captionSize?: string;             // tamaño del caption
-  descriptionSize?: string;         // tamaño del description
+  captionColor?: string;            
+  descriptionColor?: string;        
+  textBackgroundColor?: string;     
+  captionSize?: string;             
+  descriptionSize?: string;         
 }
 
 const ImageGrid: React.FC<ImageGridProps> = ({
   images,
   shapeType = 1,
   columns,
+  aspectRatio = "3/2",
   onClick,
   showButton = false,
   onButtonClick,
@@ -47,11 +51,13 @@ const ImageGrid: React.FC<ImageGridProps> = ({
     2: "sm:grid-cols-2",
     3: "sm:grid-cols-3",
     4: "sm:grid-cols-4",
+    5: "sm:grid-cols-5",
+    6: "sm:grid-cols-6",
   };
 
   const gridClass = `grid gap-6 ${
     columns && columns > 0
-      ? colClasses[columns]
+      ? colClasses[columns] ?? "sm:grid-cols-2"
       : shapeType === 3
       ? "grid-cols-1"
       : "sm:grid-cols-2"
@@ -62,8 +68,9 @@ const ImageGrid: React.FC<ImageGridProps> = ({
       {images.map((img, index) => (
         <div
           key={index}
-          className="relative flex flex-col items-center bg-white rounded-xl shadow-md hover:shadow-xl transition overflow-hidden"
+          className="relative rounded-xl shadow-md hover:shadow-xl transition overflow-hidden"
         >
+          {/* Imagen o componente */}
           {img.component ? (
             <div
               className="w-full cursor-pointer"
@@ -73,19 +80,22 @@ const ImageGrid: React.FC<ImageGridProps> = ({
             </div>
           ) : (
             img.src && (
-              <Image
-                src={img.src}
-                alt={img.caption}
-                width={500}
-                height={300}
-                className={`w-full object-cover cursor-pointer ${
-                  shapeType === 2 ? "aspect-square" : "h-auto"
-                }`}
-                onClick={() => onClick && onClick(img)}
-              />
+              <div
+                className="relative w-full"
+                style={{ aspectRatio }}
+              >
+                <Image
+                  src={img.src}
+                  alt={img.caption ?? `image-${index}`}
+                  fill
+                  className="object-cover cursor-pointer"
+                  onClick={() => onClick && onClick(img)}
+                />
+              </div>
             )
           )}
 
+          {/* Botón en la esquina */}
           {showButton && buttonPosition === "corner" && (
             <button
               onClick={() => onButtonClick && onButtonClick(img)}
@@ -96,40 +106,43 @@ const ImageGrid: React.FC<ImageGridProps> = ({
             </button>
           )}
 
-          {/* Texto debajo */}
-          <div
-            className="p-3 w-full flex flex-col items-center"
-            style={{ backgroundColor: textBackgroundColor }}
-          >
-            <p
-              className={`font-semibold text-center ${captionSize}`}
-              style={{ color: captionColor }}
+          {/* Bloque de texto: solo si hay contenido */}
+          {(img.caption || img.description || (showButton && buttonPosition === "bottom")) && (
+            <div
+              className="p-3 flex flex-col items-center"
+              style={{ backgroundColor: textBackgroundColor }}
             >
-              {img.caption}
-            </p>
-            {img.description && (
-              <p
-                className={`text-center mt-1 ${descriptionSize}`}
-                style={{ color: descriptionColor }}
-              >
-                {img.description}
-              </p>
-            )}
+              {img.caption && (
+                <p
+                  className={`font-semibold text-center ${captionSize}`}
+                  style={{ color: captionColor }}
+                >
+                  {img.caption}
+                </p>
+              )}
+              {img.description && (
+                <p
+                  className={`text-center mt-1 ${descriptionSize}`}
+                  style={{ color: descriptionColor }}
+                >
+                  {img.description}
+                </p>
+              )}
 
-            {showButton && buttonPosition === "bottom" && (
-              <button
-                onClick={() => onButtonClick && onButtonClick(img)}
-                className={`mt-3 px-4 py-2 bg-${buttonColor}-500 text-white rounded-lg hover:bg-${buttonColor}-600 transition`}
-              >
-                {buttonText}
-              </button>
-            )}
-          </div>
+              {showButton && buttonPosition === "bottom" && (
+                <button
+                  onClick={() => onButtonClick && onButtonClick(img)}
+                  className={`mt-3 px-4 py-2 bg-${buttonColor}-500 text-white rounded-lg hover:bg-${buttonColor}-600 transition`}
+                >
+                  {buttonText}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       ))}
     </div>
   );
 };
-
 
 export default ImageGrid;

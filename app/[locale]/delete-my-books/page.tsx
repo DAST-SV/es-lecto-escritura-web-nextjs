@@ -20,7 +20,7 @@ interface LibroUI {
 }
 
 const MyBooks: React.FC = () => {
-  const [selectedBook, setSelectedBook] = useState<{ json: string; caption: string } | null>(null);
+  const [selectedBook, setSelectedBook] = useState<{ json: string;} | null>(null);
   const [bookData, setBookData] = useState<BookData | null>(null);
   const [libros, setLibros] = useState<LibroUI[]>([]);
 
@@ -111,14 +111,14 @@ const MyBooks: React.FC = () => {
           </p>
 
           {/* GALERÍA */}
-          <div className="max-w-5xl mx-auto px-4 mb-12">
+          <div className="max-w-5xl mx-auto px-4 mb-12">z
             <h2 className="text-2xl font-bold mb-6 text-center text-sky-700">Tu Galería de Cuentos</h2>
 
             <ImageGrid
               images={libros}
               shapeType={2}
               columns={3}
-              onClick={(book) => setSelectedBook({ json: book.Json!, caption: book.caption })}
+              onClick={(book) => setSelectedBook({ json: book.Json!})}
               showButton={true}
               buttonText="🗑"
               buttonColor="red"

@@ -3,7 +3,6 @@ import useEmblaCarousel from "embla-carousel-react";
 import { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { HeroSlide } from "./type";
 import { images } from "@/public/images";
