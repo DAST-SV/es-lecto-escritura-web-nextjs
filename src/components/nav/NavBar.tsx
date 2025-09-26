@@ -10,7 +10,7 @@ import { createClient } from "@/src/utils/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
 const NavBar: React.FC<NavBarProps> = ({ brandName, userAvatar }) => {
-    const defaultBrandName = brandName || "EslectoEscritura";
+    const defaultBrandName = brandName || "Eslectoescritura";
     const defaultUserAvatar =
         userAvatar ||
         "https://csspicker.dev/api/image/?q=professional+avatar&image_type=photo";

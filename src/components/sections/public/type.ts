@@ -8,7 +8,7 @@ export interface HeroSlide {
 }
 
 export interface FeatureTab {
-  id: 'personalized' | 'simplified' | 'flexibility';
+  id: 'our_difference' | 'for_students' | 'for_parents' | 'for_teachers' | 'plans_and_pricing';
   label: string;
   title: string;
   content: string;

@@ -33,4 +33,11 @@ export const images = {
   lectoescritura: {
     v1: `${baseUrl}/imgs/lectoescritura/6ec1cacc28b2f6e869123d93a0cdb67bae367231608d5c14e782357b9d51e616.webp`,
   },
+  tabs: {
+    diferencia: `${baseUrl}/imgs/tabs/diferencia/9997a10622f3b74bfe7d644e5c39baf8400c6350a66547864ce7ba3831e60da1.png`,
+    docente: `${baseUrl}/imgs/tabs/docente/d611fd590d1beb39e8d854100dd2583ec6f7b0d4e17b8379713a9e84d159be62.png`,
+    estudiante: `${baseUrl}/imgs/tabs/estudiante/bbf107f2547d1e8623b9571a4f18beb078fbbd77ed6b2b00f89383d9ee3e265b.png`,
+    padre: `${baseUrl}/imgs/tabs/padre/3e921843ee47403fcdc7f85e7d08f9e7be1a3336db2859a4ecb19c49dc907c95.png`,
+    precio: `${baseUrl}/imgs/tabs/precio/00f3f50127af3e8df221b3983a925e2a47045bfbfe38a34c317d3ee5b04ef514.png`,
+  }
 };

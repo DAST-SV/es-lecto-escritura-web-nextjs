@@ -1,7 +1,7 @@
 {
   "layout": {
     "meta": {
-      "title": "EsLectoEscritura",
+      "title": "EsLectoescritura",
       "description": "Our literacy platform is designed to support children, youth, and adults in the comprehensive development of reading and writing skills by combining proven pedagogical methods with cutting-edge interactive technology. Through playful activities, personalized exercises, and progress tracking, users can improve their reading comprehension, expand their vocabulary, perfect their spelling, and develop fluency in writing."
     }
   },
@@ -156,26 +156,37 @@
     "button": "Get Started Now"
   },
   "features": {
-    "title": "WHAT MAKES US DIFFERENT FROM OTHERS",
-    "subtitle": "Why EsReadWrite is different from other educational platforms",
+    "title": "Why are we different from other educational platforms?",
     "tabs": [
       {
-        "id": "personalized",
-        "label": "Personalized Attention",
-        "title": "Personalized Attention",
-        "content": "We understand that each student is unique. We offer personalized educational solutions that adapt to the individual learning needs of each student."
+        "id": "our_difference",
+        "label": "Our Difference",
+        "title": "Our Difference",
+        "content": "🚀 We blend technology with culture. Here, you'll find not only universal materials but also stories, legends, and proverbs unique to our region. Each story comes to life with dynamic activities, games, and challenges that motivate continued reading."
       },
       {
-        "id": "simplified",
-        "label": "Simplified Process",
-        "title": "Simplified Process",
-        "content": "Our learning process is simple and effective, designed to minimize complexity and maximize reading comprehension time."
+        "id": "for_students",
+        "label": "For Students",
+        "title": "For Students",
+        "content": "✨ Children and young people progress through levels designed for their age, earn badges, unlock achievements, and personalize their own avatar. Each reading becomes a challenge that turns into a game."
       },
       {
-        "id": "flexibility",
-        "label": "Flexibility and Transparency",
-        "title": "Flexibility and Transparency",
-        "content": "We offer flexible schedules and strive to maintain clear and transparent communication with parents and educators about each student's progress."
+        "id": "for_parents",
+        "label": "For Parents",
+        "title": "For Parents",
+        "content": "👨‍👩‍👧 Access clear and easy-to-understand reports on your child's progress. Discover how much time they read, which categories they enjoy most, and how they advance in reading comprehension."
+      },
+      {
+        "id": "for_teachers",
+        "label": "For Teachers",
+        "title": "For Teachers",
+        "content": "👩‍🏫 Monitor each student and your entire class in one place. Create challenges, assign readings, review reading comprehension, and download reports to help reinforce learning."
+      },
+      {
+        "id": "plans_and_pricing",
+        "label": "Plans and Pricing",
+        "title": "Plans and Pricing",
+        "content": "💡 Access free trial activities. Subscribe to unlock exclusive content, additional games, and comprehensive progress tracking."
       }
     ],
     "button": "Learn More",

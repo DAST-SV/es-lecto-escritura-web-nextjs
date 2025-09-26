@@ -1,7 +1,7 @@
 {
   "layout": {
     "meta": {
-      "title": "EsLectoEscritura",
+      "title": "EsLectoescritura",
       "description": "Nuestra plataforma de lectoescritura está diseñada para acompañar a niños, jóvenes y adultos en el desarrollo integral de habilidades de lectura y escritura, combinando métodos pedagógicos probados con tecnología interactiva de última generación. A través de actividades lúdicas, ejercicios personalizados y seguimiento del progreso, los usuarios pueden mejorar su comprensión lectora, ampliar su vocabulario, perfeccionar la ortografía y desarrollar fluidez al escribir"
     }
   },
@@ -156,26 +156,37 @@
     "button": "Comenzar Ahora"
   },
   "features": {
-    "title": "QUE NOS DIFERENCIA DE LOS DEMÁS",
-    "subtitle": "Porque EslectoEscritura es diferente que otras plataformas educativas",
+    "title": "¿Por qué  somos diferente que otras plataformas educativas?",
     "tabs": [
       {
-        "id": "personalized",
-        "label": "Atención Personalizada",
-        "title": "Atención Personalizada",
-        "content": "Entendemos que cada estudiante es único. Ofrecemos soluciones educativas personalizadas que se adaptan a las necesidades individuales de aprendizaje de cada alumno."
+        "id": "our_difference",
+        "label": "Nuestra Diferencia",
+        "title": "Nuestra Diferencia",
+        "content": "🚀 Unimos la tecnología con la cultura. Aquí encontrarás no solo materiales universales, sino también cuentos, leyendas y refranes propios de nuestra región. Además, cada historia cobra vida con actividades dinámicas, juegos y retos que motivan a seguir leyendo."
       },
       {
-        "id": "simplified",
-        "label": "Proceso Simplificado",
-        "title": "Proceso Simplificado",
-        "content": "Nuestro proceso de aprendizaje es sencillo y efectivo, diseñado para minimizar la complejidad y maximizar el tiempo de comprensión lectora."
+        "id": "for_students",
+        "label": "Para los Estudiantes",
+        "title": "Para los Estudiantes",
+        "content": "✨ Los niños y jóvenes avanzan por niveles diseñados según su edad, ganan insignias, desbloquean logros y personalizan su propio avatar. Cada lectura es un reto que se convierte en un juego."
       },
       {
-        "id": "flexibility",
-        "label": "Flexibilidad y Transparencia",
-        "title": "Flexibilidad y Transparencia",
-        "content": "Ofrecemos horarios flexibles y nos esforzamos por mantener una comunicación clara y transparente con padres y educadores sobre el progreso de cada estudiante."
+        "id": "for_parents",
+        "label": "Para los Padres",
+        "title": "Para los Padres",
+        "content": "👨‍👩‍👧 Accede a reportes claros y fáciles de entender sobre el progreso de tus hijos. Descubre cuánto tiempo leen, qué categorías disfrutan más y cómo avanzan en su comprensión lectora."
+      },
+      {
+        "id": "for_teachers",
+        "label": "Para los Docentes",
+        "title": "Para los Docentes",
+        "content": "👩‍🏫 Monitorea a cada estudiante y a toda tu clase en un solo lugar. Crea retos, asigna lecturas, revisa la comprensión lectora y descarga reportes que te ayudarán a reforzar el aprendizaje."
+      },
+      {
+        "id": "plans_and_pricing",
+        "label": "Planes y Precios",
+        "title": "Planes y Precios",
+        "content": "💡 Accede a actividades gratuitas de prueba. Suscríbete para desbloquear contenidos exclusivos, juegos adicionales y un seguimiento completo del progreso."
       }
     ],
     "button": "Conoce Más",

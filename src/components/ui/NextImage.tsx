@@ -26,7 +26,7 @@ export const NextImage: React.FC<ImageProps> = ({ src, alt, width, height, ...pr
       height={height} // Establecemos la altura de la imagen.
       unoptimized={unoptimized} // Establecemos si la imagen debe ser optimizada por Next.js.
       priority={props.priority || false} // Establecemos si la imagen tiene prioridad de carga.
-      style={{ width: '100%', height: 'auto' }} // Ajustamos el tamaño manteniendo la relación de aspecto.
+      style={{ width: width, height: height }} // Ajustamos el tamaño manteniendo la relación de aspecto.
     />
   );
 };

@@ -7,19 +7,30 @@ import type { FeatureTab, Stat } from './type';
 import { images } from '@/public/images';
 import { NextImage } from '../../ui/NextImage';
 
-type TabId = 'personalized' | 'simplified' | 'flexibility';
+type TabId = 'our_difference' | 'for_students' | 'for_parents' | 'for_teachers' | 'plans_and_pricing';
 
 const iconMap: Record<TabId, LucideIcon> = {
-  'personalized': BookOpen,
-  'simplified': Zap,
-  'flexibility': Award
+  'our_difference': BookOpen,
+  'for_students': Zap,
+  'for_parents': Award,
+  'for_teachers': BookOpen,
+  'plans_and_pricing': Zap
+};
+
+// Mapeo de imágenes según el ID del tab
+const imageMap: Record<TabId, string> = {
+  'our_difference': images.tabs.diferencia,
+  'for_students': images.tabs.estudiante,
+  'for_parents': images.tabs.padre,
+  'for_teachers': images.tabs.docente,
+  'plans_and_pricing': images.tabs.precio
 };
 
 const FeaturesSection: React.FC = () => {
   const t = useTranslations('features');
   const tabs: FeatureTab[] = t.raw('tabs');
   const stats: Stat[] = t.raw('stats');
-  const [activeTab, setActiveTab] = useState<TabId>('personalized');
+  const [activeTab, setActiveTab] = useState<TabId>('our_difference');
 
   const activeTabData = tabs.find(tab => tab.id === activeTab);
 
@@ -39,31 +50,27 @@ const FeaturesSection: React.FC = () => {
 
       <div className="container mx-auto max-w-6xl relative z-10">
         <div className="text-center mb-12">
-          <p className="text-blue-600 text-sm font-bold uppercase tracking-wide mb-3">
-            {t('title')}
-          </p>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-800 leading-tight">
-            {t('subtitle')}
+            {t('title')}
           </h2>
         </div>
 
         {/* Tabs Navigation */}
         <div className="flex flex-wrap justify-center gap-4 mb-8">
-          {tabs.map((tab: FeatureTab) => {
-            const IconComponent = iconMap[tab.id];
+          {tabs.map((tab: FeatureTab, index: number) => {
+            const IconComponent = iconMap[tab.id as TabId] || BookOpen; // Fallback a BookOpen si no existe
             return (
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-300 ${
-                  activeTab === tab.id
+                key={tab.id || index} // Usa index como fallback si no hay id
+                onClick={() => setActiveTab(tab.id as TabId)}
+                className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-300 ${activeTab === tab.id
                     ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
                     : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 shadow-md'
-                }`}
+                  }`}
               >
                 <IconComponent className="w-5 h-5" />
                 <span className="hidden sm:inline">{tab.label}</span>
-                <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
+                <span className="sm:hidden">{tab.label?.split(' ')[0] || tab.label}</span>
               </button>
             );
           })}
@@ -92,7 +99,7 @@ const FeaturesSection: React.FC = () => {
               <div className="relative inline-block">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-green-400 rounded-2xl transform rotate-3 opacity-20"></div>
                 <NextImage
-                  src={images.lectoescritura.v1}
+                  src={imageMap[activeTab] || images.lectoescritura.v1} // Fallback si no existe la imagen
                   alt={activeTabData?.title || 'Feature image'}
                   width={400}
                   height={320}
@@ -110,7 +117,7 @@ const FeaturesSection: React.FC = () => {
             const colors: string[] = ['blue', 'green', 'yellow'];
             const IconComponent = icons[index];
             const color = colors[index];
-            
+
             return (
               <div key={index} className="text-center p-6 bg-white rounded-xl shadow-lg">
                 <div className={`w-16 h-16 bg-${color}-100 rounded-full flex items-center justify-center mx-auto mb-4`}>
