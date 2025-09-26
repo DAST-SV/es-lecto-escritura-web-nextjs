@@ -44,6 +44,7 @@ export const PageRenderer: React.FC<Props> = ({ page, isActive }) => {
         overflow: "hidden",
         width: "100%",
         height: "100%",
+        whiteSpace : "pre-wrap"
       }}
     >
       <Layout page={page} />
