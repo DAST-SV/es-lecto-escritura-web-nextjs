@@ -12,7 +12,6 @@ export const ImageFullLayout: React.FC<Props> = ({ page }) => {
       {page.image && (
         <img
           src={page.image}
-          alt={page.title}
           className="w-full h-full object-cover"
         />
       )}

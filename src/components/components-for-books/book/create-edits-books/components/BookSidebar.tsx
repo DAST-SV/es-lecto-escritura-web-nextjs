@@ -1,30 +1,37 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Save, FileText, Palette, BookOpen, Navigation, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { 
+  Navigation, 
+  FileText, 
+  Palette, 
+  BookOpen, 
+  PanelLeftClose, 
+  PanelLeftOpen,
+  Save,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react';
 
-// 📌 Tipos
+// Tipos
 import type { page } from '@/src/typings/types-page-book/index';
 import type { UseBookEditorReturn } from '@/src/components/components-for-books/book/create-edits-books/hooks/useBookEditor';
 import type { UseImageHandlerReturn } from '@/src/components/components-for-books/book/create-edits-books/hooks/useImageHandler';
 import type { UseBookNavigationReturn } from '@/src/components/components-for-books/book/create-edits-books/hooks/useBookNavigation';
 
-// 📌 Componentes de edición
+// Componentes de edición
 import { PageLayoutSelector } from '@/src/components/components-for-books/book/create-edits-books/components/PageLayoutSelector';
 import { RichTitleEditor } from '@/src/components/components-for-books/book/create-edits-books/components/RichTitleEditor';
 import { RichTextEditor } from '@/src/components/components-for-books/book/create-edits-books/components/RichTextEditor';
 
-// 📌 Componentes visuales
+// Componentes visuales
 import { ImageControls } from '@/src/components/components-for-books/book/create-edits-books/components/ImageControls';
 import { PortadaControls } from '@/src/components/components-for-books/book/create-edits-books/components/portadaControls';
 import { BackgroundControls } from '@/src/components/components-for-books/book/create-edits-books/components/BackgroundControls';
 
-// 📌 Navegación y metadatos
+// Navegación y metadatos
 import { PageNavigation } from '@/src/components/components-for-books/book/create-edits-books/components/PageNavigation';
 import { BookMetadataForm } from '@/src/components/components-for-books/book/create-edits-books/components/BookMetadataForm';
 
-// --------------------------------------------------
-// 📌 Interfaz de Props
-// --------------------------------------------------
-interface BookControlPanelProps {
+interface BookSidebarProps {
   pages: page[];
   currentPage: number;
   editingState: UseBookEditorReturn;
@@ -59,10 +66,7 @@ interface BookControlPanelProps {
   onDeletePage: () => void;
 }
 
-// --------------------------------------------------
-// 📌 Componente principal
-// --------------------------------------------------
-export const BookControlPanel: React.FC<BookControlPanelProps> = ({
+export const BookSidebar: React.FC<BookSidebarProps> = ({
   pages,
   currentPage,
   editingState,
@@ -92,11 +96,15 @@ export const BookControlPanel: React.FC<BookControlPanelProps> = ({
 }) => {
   const currentPageData = pages[currentPage];
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [activeSection, setActiveSection] = useState('navegacion');
+  const [activeSection, setActiveSection] = useState<string | null>(null);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  
+  const toggleSection = (sectionId: string) => {
+    setActiveSection(activeSection === sectionId ? null : sectionId);
+  };
 
-  // Definir secciones del menú
+  // Secciones del menú
   const menuSections = [
     { id: 'navegacion', icon: Navigation, label: 'Navegación', color: 'bg-blue-500' },
     { id: 'contenido', icon: FileText, label: 'Contenido', color: 'bg-green-500' },
@@ -107,8 +115,8 @@ export const BookControlPanel: React.FC<BookControlPanelProps> = ({
   if (!currentPageData) return null;
 
   // Renderizar contenido de cada sección
-  const renderSectionContent = () => {
-    switch(activeSection) {
+  const renderSectionContent = (sectionId: string) => {
+    switch(sectionId) {
       case 'navegacion':
         return (
           <div className="space-y-6">
@@ -250,118 +258,120 @@ export const BookControlPanel: React.FC<BookControlPanelProps> = ({
   };
 
   return (
-    <>
-      {/* 🔹 Sidebar colapsible - Flotante sobre el contenido */}
-      <div className={`
-        fixed left-0 top-0 h-full bg-white border-r border-gray-200 shadow-2xl transition-all duration-300 ease-in-out z-40
-        ${isSidebarOpen ? 'w-80' : 'w-16'}
-      `}>
-        {/* Toggle button */}
+    <div className={`
+      bg-white border-r border-gray-200 shadow-lg transition-all duration-300 ease-in-out flex flex-col
+      ${isSidebarOpen ? 'w-80' : 'w-16'}
+    `}>
+      
+      {/* Header con toggle */}
+      <div className={`flex items-center border-b border-gray-200 ${
+        isSidebarOpen ? 'justify-between p-4' : 'justify-center p-2'
+      }`}>
+        {isSidebarOpen && (
+          <h2 className="font-semibold text-gray-800 text-lg">
+            🛠️ Herramientas
+          </h2>
+        )}
         <button
           onClick={toggleSidebar}
-          className="absolute -right-3 top-6 z-50 p-1.5 bg-white border border-gray-200 rounded-full shadow-md hover:shadow-lg transition-shadow"
+          className={`bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors shadow-md ${
+            isSidebarOpen ? 'p-1.5' : 'p-3 my-2'
+          }`}
         >
           {isSidebarOpen ? (
-            <PanelLeftClose size={16} className="text-gray-600" />
+            <PanelLeftClose size={16} />
           ) : (
-            <PanelLeftOpen size={16} className="text-gray-600" />
+            <PanelLeftOpen size={20} />
           )}
         </button>
+      </div>
 
-        {/* Header del sidebar */}
-        <div className={`p-4 border-b border-gray-200 ${!isSidebarOpen ? 'text-center' : ''}`}>
-          <h2 className={`font-semibold text-gray-800 transition-all duration-300 ${
-            isSidebarOpen ? 'text-lg' : 'text-xs'
-          }`}>
-            {isSidebarOpen ? '🛠️ Herramientas' : '🛠️'}
-          </h2>
-        </div>
-
-        {/* Navegación vertical */}
-        <div className="p-2">
-          {menuSections.map(section => {
-            const Icon = section.icon;
-            return (
+      {/* Navegación de secciones con acordeón */}
+      <div className="flex-1 overflow-y-auto">
+        {menuSections.map(section => {
+          const Icon = section.icon;
+          const isActive = activeSection === section.id;
+          
+          return (
+            <div key={section.id} className="border-b border-gray-200">
+              {/* Botón de sección */}
               <button
-                key={section.id}
-                onClick={() => setActiveSection(section.id)}
+                onClick={() => toggleSection(section.id)}
                 className={`
-                  w-full flex items-center gap-3 p-3 mb-2 rounded-lg transition-all duration-200
-                  ${activeSection === section.id
-                    ? `${section.color} text-white shadow-md`
+                  w-full flex items-center gap-3 p-3 transition-all duration-200
+                  ${isActive
+                    ? `${section.color} text-white`
                     : 'text-gray-600 hover:bg-gray-100'
                   }
-                  ${!isSidebarOpen ? 'justify-center' : ''}
+                  ${!isSidebarOpen ? 'justify-center' : 'justify-between'}
                 `}
                 title={!isSidebarOpen ? section.label : undefined}
               >
-                <Icon size={18} />
+                <div className={`flex items-center gap-3 ${!isSidebarOpen ? '' : ''}`}>
+                  <Icon size={18} />
+                  {isSidebarOpen && (
+                    <span className="font-medium text-sm">{section.label}</span>
+                  )}
+                </div>
                 {isSidebarOpen && (
-                  <span className="font-medium">{section.label}</span>
+                  <ChevronRight 
+                    size={16} 
+                    className={`transition-transform duration-200 ${
+                      isActive ? 'rotate-90' : ''
+                    }`}
+                  />
                 )}
               </button>
-            );
-          })}
-        </div>
 
-        {/* Contenido de la sección */}
-        {isSidebarOpen && (
-          <div className="flex-1 overflow-y-auto p-4">
-            {renderSectionContent()}
-          </div>
-        )}
+              {/* Contenido desplegable */}
+              {isSidebarOpen && isActive && (
+                <div className="p-4 bg-gray-50 animate-slideDown">
+                  {renderSectionContent(section.id)}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
-      {/* 🔹 Overlay para cerrar sidebar en mobile */}
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-20 z-30 lg:hidden"
-          onClick={toggleSidebar}
-        />
-      )}
-
-      {/* 🔹 Barra superior minimalista - Flotante */}
-      <div className="fixed top-0 right-0 left-0 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-6 py-3 z-30">
-        <div className={`flex items-center justify-between transition-all duration-300 ${
-          isSidebarOpen ? 'ml-80' : 'ml-16'
-        }`}>
-          <h1 className="text-xl font-semibold text-gray-800">📚 Editor de Libro</h1>
-          
-          <div className="flex items-center gap-4">
-            {/* Navegación de páginas */}
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <button 
-                className="p-1.5 hover:bg-gray-100 rounded disabled:opacity-50 transition-colors"
-                disabled={!navigation.canGoPrev}
-                onClick={navigation.prevPage}
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <span className="px-3 py-1.5 bg-gray-100 rounded text-gray-700 font-medium min-w-[70px] text-center">
-                {currentPage + 1} / {pages.length}
-              </span>
-              <button 
-                className="p-1.5 hover:bg-gray-100 rounded disabled:opacity-50 transition-colors"
-                disabled={!navigation.canGoNext}
-                onClick={navigation.nextPage}
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-            
+      {/* Botón guardar */}
+      <div className="p-4 border-t border-gray-200 space-y-3">
+        {/* Navegación de páginas rápida - solo cuando está abierto */}
+        {isSidebarOpen && (
+          <div className="flex items-center gap-2 text-sm">
             <button 
-              onClick={onSave}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+              className="p-1.5 hover:bg-gray-100 rounded disabled:opacity-50 transition-colors"
+              disabled={!navigation.canGoPrev}
+              onClick={navigation.prevPage}
             >
-              <Save size={16} />
-              Guardar
+              <ChevronLeft size={16} />
+            </button>
+            <span className="px-3 py-1.5 bg-gray-100 rounded text-gray-700 font-medium min-w-[70px] text-center">
+              {currentPage + 1} / {pages.length}
+            </span>
+            <button 
+              className="p-1.5 hover:bg-gray-100 rounded disabled:opacity-50 transition-colors"
+              disabled={!navigation.canGoNext}
+              onClick={navigation.nextPage}
+            >
+              <ChevronRight size={16} />
             </button>
           </div>
-        </div>
+        )}
+        
+        {/* Botón guardar - siempre visible */}
+        <button 
+          onClick={onSave}
+          className={`
+            flex items-center gap-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm
+            ${isSidebarOpen ? 'w-full px-4 py-3 justify-center' : 'w-full px-2 py-3 justify-center'}
+          `}
+          title={!isSidebarOpen ? 'Guardar libro' : undefined}
+        >
+          <Save size={18} />
+          {isSidebarOpen && <span className="font-medium">Guardar</span>}
+        </button>
       </div>
-
-      {/* 🔹 Espaciador para la barra superior */}
-      <div className="h-16" />
-    </>
+    </div>
   );
 };

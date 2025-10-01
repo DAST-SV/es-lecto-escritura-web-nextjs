@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import type { page, Page } from '@/src/typings/types-page-book/index';
 import { PageRenderer } from "@/src/components/components-for-books/book/PageRenderer";
-import type { LayoutType, backgroundstype, HtmlFontFamiliestype, textColorstype } from '@/src/typings/types-page-book/index';
+import type { LayoutType, backgroundstype } from '@/src/typings/types-page-book/index';
 
 interface PageRendererIndexProps {
   page: page;
@@ -14,47 +14,46 @@ interface PageRendererIndexProps {
 
 // Conversor de `page` a `Page`
 function convertPage(oldPage: page): Page {
-    return {
-        layout: oldPage.layout as LayoutType,
-        title: oldPage.title,
-        text: oldPage.text,
-        image: oldPage.image ?? undefined,
-        background: oldPage.background as backgroundstype,
-        font: oldPage.font as HtmlFontFamiliestype,
-        textColor: oldPage.textColor || undefined,
-        animation: undefined,
-        audio: undefined,
-        interactiveGame: undefined,
-        items: [],
-        border: undefined
-    };
+  return {
+    layout: oldPage.layout as LayoutType,
+    title: oldPage.title,
+    text: oldPage.text,
+    image: oldPage.image ?? undefined,
+    background: oldPage.background as backgroundstype,
+    animation: undefined,
+    audio: undefined,
+    interactiveGame: undefined,
+    items: [],
+    border: undefined
+  };
 }
 
 // ============= COMPONENTE RENDERIZADOR DE PÁGINA =============
 const PageRendererIndex: React.FC<PageRendererIndexProps> = ({ page, pageNumber, isActive }) => {
-    const Pagina = convertPage(page);
-    return (
-        <div className="w-full h-full relative overflow-hidden">
-            {/* Overlay para mejorar legibilidad si hay imagen de fondo */}
-            {page.background && page.background !== "blanco" && (
-                <div
-                    className="absolute inset-0 pointer-events-none"
-                    style={{ background: "rgba(255, 255, 255, 0.1)" }}
-                />
-            )}
+  const Pagina = convertPage(page);
+  return (
+    <div className="w-full h-full relative overflow-hidden">
+      {/* Overlay para mejorar legibilidad si hay imagen de fondo */}
+      {page.background && page.background !== "blanco" && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: "rgba(255, 255, 255, 0.1)" }}
+        />
+      )}
 
-            {/* Contenido del layout */}
-            <div className="relative z-10 h-full">
-                <PageRenderer page={Pagina} isActive={isActive} />
-            </div>
+      {/* Contenido del layout */}
+      <div className="relative z-10 h-full">
+        <PageRenderer page={Pagina} isActive={isActive} />
+      </div>
 
-            {/* Número de página */}
-            <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs font-bold bg-black bg-opacity-70 text-white z-50">
-                {pageNumber}
-            </div>
-        </div>
-    );
+      {/* Número de página (único que conserva clases de texto) */}
+      <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs font-bold bg-black bg-opacity-70 text-white z-50">
+        {pageNumber}
+      </div>
+    </div>
+  );
 };
+
 
 interface BookViewerProps {
   pages: page[];
@@ -93,7 +92,7 @@ export const BookViewer: React.FC<BookViewerProps> = ({
       const isMobile = window.innerWidth < 640;
       const screenHeight = window.innerHeight;
       const screenWidth = window.innerWidth;
-      
+
       if (isMobile !== isMobileDevice) {
         setIsMobileDevice(isMobile);
       }
@@ -102,20 +101,20 @@ export const BookViewer: React.FC<BookViewerProps> = ({
       if (!isMobile) {
         const availableHeight = screenHeight - 200;
         const availableWidth = screenWidth - 100;
-        
+
         let bookWidth = 600;
         let bookHeight = 700;
-        
+
         if (bookHeight > availableHeight) {
           bookHeight = availableHeight;
           bookWidth = (bookHeight * 600) / 700;
         }
-        
+
         if (bookWidth > availableWidth) {
           bookWidth = availableWidth;
           bookHeight = (bookWidth * 700) / 600;
         }
-        
+
         setBookDimensions({
           width: Math.round(bookWidth),
           height: Math.round(bookHeight)
@@ -160,7 +159,7 @@ export const BookViewer: React.FC<BookViewerProps> = ({
     size: "fixed",
     className: "storybook-flipbook",
     onFlip: (e: unknown) => {
-      const ev = e as { data: number }; 
+      const ev = e as { data: number };
       setActivePage(ev.data);
       onFlip(e);
     },
@@ -182,9 +181,9 @@ export const BookViewer: React.FC<BookViewerProps> = ({
     children: pages.map((page, idx) => (
       <div className="page w-full h-full" key={page.id || idx}>
         <div className="page-inner w-full h-full box-border">
-          <PageRendererIndex 
-            page={page} 
-            pageNumber={idx + 1} 
+          <PageRendererIndex
+            page={page}
+            pageNumber={idx + 1}
             isActive={activePage === idx || activePage + 1 === idx}
           />
         </div>
@@ -203,7 +202,7 @@ export const BookViewer: React.FC<BookViewerProps> = ({
     size: "fixed",
     className: "storybook-flipbook",
     onFlip: (e: unknown) => {
-      const ev = e as { data: number }; 
+      const ev = e as { data: number };
       setActivePage(ev.data);
       onFlip(e);
     },
@@ -225,9 +224,9 @@ export const BookViewer: React.FC<BookViewerProps> = ({
     children: pages.map((page, idx) => (
       <div className="page w-full h-full" key={page.id || idx}>
         <div className="page-inner w-full h-full box-border">
-          <PageRendererIndex 
-            page={page} 
-            pageNumber={idx + 1} 
+          <PageRendererIndex
+            page={page}
+            pageNumber={idx + 1}
             isActive={activePage === idx}
           />
         </div>
@@ -245,12 +244,12 @@ export const BookViewer: React.FC<BookViewerProps> = ({
         <div className="absolute top-10 left-10 w-20 h-12 bg-white rounded-full opacity-80 animate-float-slow"></div>
         <div className="absolute top-20 right-16 w-16 h-10 bg-white rounded-full opacity-70 animate-float-medium"></div>
         <div className="absolute top-32 left-1/3 w-12 h-8 bg-white rounded-full opacity-60 animate-float-fast"></div>
-        
+
         {/* Estrellas brillantes */}
         <div className="absolute top-16 left-1/4 w-3 h-3 bg-yellow-300 rounded-full animate-twinkle"></div>
         <div className="absolute top-24 right-1/4 w-2 h-2 bg-yellow-400 rounded-full animate-twinkle-slow"></div>
         <div className="absolute top-40 left-3/4 w-4 h-4 bg-yellow-200 rounded-full animate-twinkle-fast"></div>
-        
+
         {/* Sol sonriente */}
         <div className="absolute top-8 right-8 w-16 h-16 bg-yellow-300 rounded-full flex items-center justify-center opacity-80">
           <div className="text-orange-600 text-lg">☀️</div>
@@ -258,11 +257,10 @@ export const BookViewer: React.FC<BookViewerProps> = ({
       </div>
 
       {/* Contenedor del libro */}
-      <div className={`relative z-10 min-h-screen max-h-screen flex items-center p-4 ${
-        isMobileDevice ? 'justify-center' : 'justify-center pr-16'
-      } overflow-hidden`}>
+      <div className={`relative z-10 min-h-screen max-h-screen flex items-center p-4 ${isMobileDevice ? 'justify-center' : 'justify-center pr-16'
+        } overflow-hidden`}>
         <div className="flex flex-col items-center space-y-4">
-          
+
           {/* Indicador de página */}
           <div className="bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg">
             <span className="text-sm font-medium text-gray-700">
@@ -287,11 +285,10 @@ export const BookViewer: React.FC<BookViewerProps> = ({
                   key={index}
                   onClick={() => onPageClick(index)}
                   disabled={isFlipping}
-                  className={`h-3 rounded-full transition-all ${
-                    activePage === index
-                      ? "bg-indigo-600 w-8"
-                      : "bg-white/60 hover:bg-white/80 w-3"
-                  }`}
+                  className={`h-3 rounded-full transition-all ${activePage === index
+                    ? "bg-indigo-600 w-8"
+                    : "bg-white/60 hover:bg-white/80 w-3"
+                    }`}
                   title={`Ir a página ${index + 1}`}
                 />
               ))}
@@ -406,6 +403,48 @@ export const BookViewer: React.FC<BookViewerProps> = ({
             width: 50% !important;
             height: 100% !important;
             flex-shrink: 0 !important;
+          }
+            /* Estilos para evitar overflow en HTMLFlipBook */
+
+          /* Contenedor principal del flipbook */
+          .flipbook-container {
+            overflow: hidden;
+          }
+
+          /* Páginas individuales del flipbook */
+          .flipbook-page {
+            overflow: hidden;
+            padding: 1rem;
+            box-sizing: border-box;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+          }
+
+          /* Scroll interno si el contenido es muy largo */
+          .flipbook-page-content {
+            overflow-y: auto;
+            overflow-x: hidden;
+            height: 100%;
+            padding-right: 0.5rem;
+          }
+
+          /* Scrollbar personalizado (opcional) */
+          .flipbook-page-content::-webkit-scrollbar {
+            width: 4px;
+          }
+
+          .flipbook-page-content::-webkit-scrollbar-track {
+            background: transparent;
+          }
+
+          .flipbook-page-content::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 2px;
+          }
+
+          .flipbook-page-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.3);
           }
         }
       `}</style>

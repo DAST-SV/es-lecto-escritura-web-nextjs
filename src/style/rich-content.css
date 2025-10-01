@@ -1,0 +1,296 @@
+/* rich-content.css - Estilos para contenido generado por Quill */
+
+/* IMPORTANTE: Evitar overflow en flipbook */
+.rich-content {
+  overflow: hidden;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  box-sizing: border-box;
+}
+
+.rich-content * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Estilos para páginas del flipbook */
+.flipbook-page {
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* Contenido con scroll interno */
+.flipbook-page-content {
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100%;
+  width: 100%;
+  padding: 1rem;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+/* Scrollbar personalizado para WebKit */
+.flipbook-page-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.flipbook-page-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.flipbook-page-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+
+.flipbook-page-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Encabezados */
+.rich-content h1 {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.rich-content h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.8rem;
+  line-height: 1.3;
+}
+
+.rich-content h3 {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 0.6rem;
+  line-height: 1.4;
+}
+
+/* Párrafos y texto */
+.rich-content p {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.rich-content strong {
+  font-weight: bold;
+}
+
+.rich-content em {
+  font-style: italic;
+}
+
+.rich-content u {
+  text-decoration: underline;
+}
+
+.rich-content s {
+  text-decoration: line-through;
+}
+
+/* Listas con estilos personalizables */
+.rich-content ul {
+  list-style: none; /* Quitamos el estilo por defecto */
+  margin-left: 2rem;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.rich-content ol {
+  list-style: none; /* Quitamos el estilo por defecto */
+  margin-left: 2rem;
+  margin-bottom: 1rem;
+  position: relative;
+  counter-reset: list-counter;
+}
+
+.rich-content li {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+  position: relative;
+  padding-left: 1rem;
+}
+
+/* Bullets personalizados para ul */
+.rich-content ul > li::before {
+  content: "•";
+  color: #3b82f6; /* Color azul personalizable */
+  font-size: 1.2em;
+  position: absolute;
+  left: -0.5rem;
+  top: 0;
+}
+
+/* Números personalizados para ol */
+.rich-content ol > li {
+  counter-increment: list-counter;
+}
+
+.rich-content ol > li::before {
+  content: counter(list-counter) ".";
+  color: #3b82f6; /* Color azul personalizable */
+  font-weight: bold;
+  position: absolute;
+  left: -0.8rem;
+  top: 0;
+}
+
+/* Colores alternativos para listas */
+.rich-content ul.red-bullets > li::before { color: #dc2626; }
+.rich-content ol.red-numbers > li::before { color: #dc2626; }
+
+.rich-content ul.green-bullets > li::before { color: #16a34a; }
+.rich-content ol.green-numbers > li::before { color: #16a34a; }
+
+.rich-content ul.purple-bullets > li::before { color: #9333ea; }
+.rich-content ol.purple-numbers > li::before { color: #9333ea; }
+
+/* Enlaces */
+.rich-content a {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+.rich-content a:hover {
+  color: #1d4ed8;
+}
+
+/* Alineación - Quill genera estas clases */
+.rich-content .ql-align-left {
+  text-align: left;
+}
+
+.rich-content .ql-align-center {
+  text-align: center;
+}
+
+.rich-content .ql-align-right {
+  text-align: right;
+}
+
+.rich-content .ql-align-justify {
+  text-align: justify;
+}
+
+/* Sangría - Quill genera ql-indent-1, ql-indent-2, etc. */
+.rich-content .ql-indent-1 { padding-left: 3rem; }
+.rich-content .ql-indent-2 { padding-left: 6rem; }
+.rich-content .ql-indent-3 { padding-left: 9rem; }
+.rich-content .ql-indent-4 { padding-left: 12rem; }
+.rich-content .ql-indent-5 { padding-left: 15rem; }
+.rich-content .ql-indent-6 { padding-left: 18rem; }
+.rich-content .ql-indent-7 { padding-left: 21rem; }
+.rich-content .ql-indent-8 { padding-left: 24rem; }
+
+/* Colores de texto - Quill usa inline styles, estas son fallback */
+.rich-content .ql-color-red { color: #e60000; }
+.rich-content .ql-color-orange { color: #f90; }
+.rich-content .ql-color-yellow { color: #ff0; }
+.rich-content .ql-color-green { color: #008a00; }
+.rich-content .ql-color-blue { color: #06c; }
+.rich-content .ql-color-purple { color: #93f; }
+
+/* Colores de fondo */
+.rich-content .ql-bg-red { background-color: #e60000; }
+.rich-content .ql-bg-orange { background-color: #f90; }
+.rich-content .ql-bg-yellow { background-color: #ff0; }
+.rich-content .ql-bg-green { background-color: #008a00; }
+.rich-content .ql-bg-blue { background-color: #06c; }
+.rich-content .ql-bg-purple { background-color: #93f; }
+
+/* Blockquotes */
+.rich-content blockquote {
+  border-left: 4px solid #ccc;
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 16px;
+  color: #666;
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+/* Código */
+.rich-content code {
+  background-color: #f3f4f6;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+}
+
+.rich-content pre {
+  background-color: #f3f4f6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.rich-content pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Tablas (si las agregas al editor) */
+.rich-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.rich-content th,
+.rich-content td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.rich-content th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .rich-content h1 { font-size: 1.5rem; }
+  .rich-content h2 { font-size: 1.3rem; }
+  .rich-content h3 { font-size: 1.1rem; }
+  
+  .rich-content ul,
+  .rich-content ol {
+    margin-left: 1.5rem;
+  }
+  
+  .rich-content .ql-indent-1 { padding-left: 2rem; }
+  .rich-content .ql-indent-2 { padding-left: 4rem; }
+  .rich-content .ql-indent-3 { padding-left: 6rem; }
+}
+
+/* Utilidades adicionales para layouts específicos */
+.rich-content.title-content {
+  margin-bottom: 2rem;
+}
+
+.rich-content.text-content {
+  margin-top: 1rem;
+}
+
+/* Para centrar todo el contenido */
+.rich-content.centered {
+  text-align: center;
+}
+
+.rich-content.centered ul,
+.rich-content.centered ol {
+  display: inline-block;
+  text-align: left;
+}

@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { page, LayoutType, backgroundstype, HtmlFontFamiliestype, textColorstype } from '@/src/typings/types-page-book/index';
-import { backgrounds } from '@/src/typings/types-page-book/backgrounds';
+import type { page } from '@/src/typings/types-page-book/index';
 
 interface UseBookStateProps {
   initialPages?: page[];
@@ -26,8 +25,6 @@ interface UseBookStateReturn {
   // Métodos de configuración de página
   handleLayoutChange: (layout: string) => void;
   handleBackgroundChange: (value: string) => void;
-  handleFontChange: (font: string) => void;
-  handleTextColorChange: (color: string) => void;
   
   // Utilidades
   forceRerender: () => void;
@@ -41,8 +38,7 @@ const createDefaultPages = (title?: string): page[] => [
     title: title || "Mi Libro Interactivo",
     text: "Una historia maravillosa comienza aquí...",
     image: null,
-    background: 'Gradiente Azul',
-    font: 'Georgia'
+    background: null,
   },
   {
     id: 'page-2',
@@ -51,7 +47,6 @@ const createDefaultPages = (title?: string): page[] => [
     text: "Érase una vez en un reino muy lejano, donde las historias cobran vida...",
     image: null,
     background: null,
-    font: 'Arial'
   },
 ];
 
@@ -66,8 +61,6 @@ export const validateAndNormalizePage = (inputPage: any, index: number): page =>
     file: null, // Los archivos no se pasan como props iniciales
     background: inputPage.background || null,
     backgroundFile: null, // Los archivos de fondo tampoco
-    font: inputPage.font || 'Arial',
-    textColor: inputPage.textColor || undefined
   };
 };
 
@@ -193,26 +186,6 @@ export const useBookState = ({
     setTimeout(() => forceRerender(), 50);
   }, [currentPage, forceRerender]);
 
-  // Handler para cambio de fuente
-  const handleFontChange = useCallback((font: string) => {
-    setPages(prev => {
-      const updated = [...prev];
-      updated[currentPage] = { ...updated[currentPage], font };
-      return updated;
-    });
-  }, [currentPage]);
-
-  // Handler para cambio de color de texto
-  const handleTextColorChange = useCallback((color: string) => {
-    setPages(prev => {
-      const updated = [...prev];
-      updated[currentPage] = { 
-        ...updated[currentPage], 
-        textColor: color as textColorstype 
-      };
-      return updated;
-    });
-  }, [currentPage]);
 
   return {
     // Estados principales
@@ -233,8 +206,6 @@ export const useBookState = ({
     // Métodos de configuración
     handleLayoutChange,
     handleBackgroundChange,
-    handleFontChange,
-    handleTextColorChange,
     
     // Utilidades
     forceRerender

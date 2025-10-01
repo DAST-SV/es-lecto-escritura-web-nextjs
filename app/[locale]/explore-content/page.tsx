@@ -11,10 +11,10 @@ import Cuentos from "@/public/Imagenes/explore-content/categorias/79c80681-ef41-
 import Fabulas from "@/public/Imagenes/explore-content/categorias/5edbfbf6-4768-481a-b301-39a00d1f2f2b.jpg";
 import Poemas from "@/public/Imagenes/explore-content/categorias/65d2dbfa-d6f3-4187-8df2-ac6833d4904d.jpg";
 import Leyendas from "@/public/Imagenes/explore-content/categorias/50c6a1f6-eac7-498c-9051-397ab4efe255.jpg";
-import Adivinanzas from "@/public/Imagenes/explore-content/categorias/7ac87c2b-43ab-4940-9046-7fb9a4768325.jpg";
 import Historietas from "@/public/Imagenes/explore-content/categorias/a5ccc1f4-99db-4e23-ad79-ea7122e1e027.jpg";
-import Trabalenguas from "@/public/Imagenes/explore-content/categorias/136104fb-592f-44ef-a327-59724400f150.jpg";
 import Refranes from "@/public/Imagenes/explore-content/categorias/5fb1ddb5-d22b-4d39-89fe-d070cafc9929.jpg";
+import Novelas from "@/public/Imagenes/explore-content/categorias/8f70911b-4c6c-4e09-b382-00c0115c90d6.jpg";
+import Historiasdemiabuelo from "@/public/Imagenes/explore-content/categorias/4b490074-ffda-40b7-88f2-2ade734d659b.jpg";
 
 import Creatulibro from "@/public/Imagenes/explore-content/2d43332e-d758-4522-a557-3c190e53fb95.jpg";
 import Mislibros from "@/public/Imagenes/explore-content/395e87e6-37fc-4a9f-8915-87c11a93caa7.jpg";
@@ -31,10 +31,10 @@ const Page: React.FC = () => {
     { caption: "Fábulas", src: Fabulas },
     { caption: "Poemas", src: Poemas },
     { caption: "Leyendas", src: Leyendas },
-    { caption: "Adivinanzas", src: Adivinanzas },
-    { caption: "Historietas", src: Historietas },
-    { caption: "Trabalenguas", src: Trabalenguas },
     { caption: "Refranes", src: Refranes },
+    { caption: "Historietas", src: Historietas },
+    { caption: "Historias de mi abuelo", src: Historiasdemiabuelo },
+    { caption: "Novelas", src: Novelas },
   ];
 
   const topLecturas: ImageItem[] = [
@@ -94,7 +94,7 @@ const Page: React.FC = () => {
             shapeType={2}
             captionColor="#ffffff"
             textBackgroundColor="#87CEEB"
-            aspectRatio="3/3"
+            aspectRatio="2/2"
             captionSize="text-2xl"
             descriptionSize="text-sm"
           />
@@ -108,7 +108,7 @@ const Page: React.FC = () => {
           
           <Carousel
             images={topLecturas}
-            itemsToShow={3}
+            itemsToShow={4}
             aspectRatio="3/4"
             onClick={handleCarouselClick}
             showIndicators={true}
@@ -125,8 +125,8 @@ const Page: React.FC = () => {
           
           <Carousel
             images={extras}
-            itemsToShow={2}
-            aspectRatio="2/3"
+            itemsToShow={3}
+            aspectRatio="4/5"
             onClick={(img, index) => {
               console.log('Extra clicked:', img.caption);
               alert(`Clicked: ${img.caption}`);

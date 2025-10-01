@@ -1,16 +1,20 @@
 // src/app/api/libros/route.ts
 import { NextResponse } from "next/server";
 import { crearLibroCompleto } from "@/src/DAL/Libros/librosDAL"; // tu DAL
+import { noSSR } from "next/dynamic";
 
 export async function POST(req: Request) {
   try {
     // 🔹 Parsear JSON del request
-    const { userId, title,categoria,genero,descripcion,portada } = (await req.json()) as {
+    const { userId, title,categoria,genero,descripcion,portada,etiquetas,autor,nivel } = (await req.json()) as {
       userId: string;
       title: string;
-      categoria? : number;
-      genero? : number;
+      nivel : number;
+      categoria? : number[];
+      genero? : number[];
       descripcion? : string;
+      autor : string;
+      etiquetas? : number[];
       portada? : string;
     };
 
@@ -22,7 +26,7 @@ export async function POST(req: Request) {
     }
 
     // 🔹 Llamar a la DAL para crear libro (con background)
-    const libroId = await crearLibroCompleto(userId, title,categoria,genero,descripcion,portada);
+    const libroId = await crearLibroCompleto(userId, title,nivel,autor,categoria,genero,descripcion,etiquetas,portada);
 
     return NextResponse.json({ ok: true, libroId });
   } catch (error: any) {

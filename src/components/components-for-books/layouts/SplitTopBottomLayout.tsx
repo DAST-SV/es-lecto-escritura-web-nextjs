@@ -14,14 +14,17 @@ export const SplitTopBottomLayout: React.FC<Props> = ({ page }) => {
         <div className="flex-1 flex items-center justify-center w-full">
           <img
             src={page.image}
-            alt={page.title}
             className="max-w-full max-h-full object-contain"
           />
         </div>
       )}
-      <div className="flex-1 flex flex-col items-center justify-start mt-2 w-full">
-        <h2 className="text-2xl font-bold mb-2">{page.title}</h2>
-        <p className="text-base text-center">{page.text}</p>
+       <div>
+        {page.title && (
+          <div dangerouslySetInnerHTML={{ __html: page.title }} />
+        )}
+        {page.text && (
+          <div dangerouslySetInnerHTML={{ __html: page.text }} />
+        )}
       </div>
     </div>
   );

@@ -3,11 +3,10 @@ import React from "react";
 import type { Page } from "@/src/typings/types-page-book/index";
 import { layouts } from "../layouts";
 import { backgrounds } from "@/src/typings/types-page-book/backgrounds";
-import { HtmlFontFamilies } from "@/src/typings/types-page-book/HtmlFontFamilies";
 import { borders } from "@/src/typings/types-page-book/borders";
-import { textColors } from "@/src/typings/types-page-book/textColors ";
 import { motion } from "framer-motion";
 import { getAnimation } from "@/src/utils/animations/animations";
+import '@/src/style/rich-content.css';
 
 interface Props {
   page: Page;
@@ -19,7 +18,6 @@ export const PageRenderer: React.FC<Props> = ({ page, isActive }) => {
   const Layout = layoutMap[String(page.layout)] || layoutMap.FullPageLayout;
 
   const getBorderRadius = page.border ? borders[page.border] : borders.cuadrado;
-  const getFont = page.font ? HtmlFontFamilies[page.font] : HtmlFontFamilies.Arial;
 
   const getBackground =
     page.background && page.background in backgrounds
@@ -28,33 +26,29 @@ export const PageRenderer: React.FC<Props> = ({ page, isActive }) => {
         ? `url(${page.background}) center/cover no-repeat`
         : backgrounds.blanco;
 
-  // Cambiar esta línea para obtener el color correctamente:
-  const pageTextColor = page.textColor && page.textColor in textColors
-    ? textColors[page.textColor as keyof typeof textColors]
-    : textColors.negro;
   const animation = page.animation ? getAnimation(page.animation) : null;
 
   const content = (
-    <div
+ <div
+      className="flipbook-page" // Contenedor de página
       style={{
         background: getBackground,
-        fontFamily: getFont,
         borderRadius: getBorderRadius,
-        color: pageTextColor, // ← Agregar esta línea
-        overflow: "hidden",
         width: "100%",
         height: "100%",
-        whiteSpace : "pre-wrap"
       }}
     >
-      <Layout page={page} />
+      {/* Contenido con scroll interno */}
+      <div className="flipbook-page-content">
+        <Layout page={page} />
+      </div>
     </div>
   );
 
   if (animation) {
     return (
       <motion.div
-        className="w-full h-full flex items-center justify-center box-border"
+        className="w-full h-full rich-content  flex box-border"
         initial="hidden"
         animate={isActive ? "visible" : "hidden"}
         variants={animation}
@@ -65,7 +59,7 @@ export const PageRenderer: React.FC<Props> = ({ page, isActive }) => {
   }
 
   return (
-    <div className="w-full h-full flex items-center justify-center box-border">
+    <div className="w-full h-full rich-content flex box-border">
       {content}
     </div>
   );

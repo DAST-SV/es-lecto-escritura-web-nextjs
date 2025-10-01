@@ -1,7 +1,7 @@
 // layouts/index.ts
 import { SplitLayout } from "./SplitLayout";
 import { InteractiveLayout } from "./InteractiveLayout";
-import { FullPageLayout } from "./FullPageLayout";
+import { CenterImageDownTextLayout } from "./CenterImageDownTextLayout";
 import { CoverLayout } from "./CoverLayout";
 import { TextLeftImageRightLayout } from "./TextLeftImageRightLayout";
 import { ImageLeftTextRightLayout } from "./ImageLeftTextRightLayout";
@@ -13,7 +13,7 @@ import { TextCenterLayout } from "./TextCenterLayout";
 export const layouts = {
   SplitLayout,
   InteractiveLayout,
-  FullPageLayout,
+  CenterImageDownTextLayout,
   CoverLayout,
   TextLeftImageRightLayout,
   ImageLeftTextRightLayout,

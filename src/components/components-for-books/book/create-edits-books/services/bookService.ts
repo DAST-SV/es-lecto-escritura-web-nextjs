@@ -10,21 +10,27 @@ import type {
   page,
   LayoutType,
   backgroundstype,
-  HtmlFontFamiliestype,
 } from "@/src/typings/types-page-book/index";
 import { backgrounds } from "@/src/typings/types-page-book/backgrounds";
 import {
   getFileExtension,
   fetchFileFromUrl,
 } from "@/src/components/components-for-books/book/create-edits-books/utils/imageUtils";
+import { number } from "framer-motion";
 
 /**
  * Metadata requerida para crear/actualizar un libro
  */
+
+// En bookService.ts
 export interface BookMetadata {
-  selectedCategoria: number | null;
-  selectedGenero: number | null;
+  selectedCategorias: (number | string)[];
+  selectedGeneros: (number | string)[];
+  selectedEtiquetas: (number | string)[];
+  selectedNivel: number | null;
+  autor: string;
   descripcion: string;
+  titulo: string;
   portada: File | null | string;
 }
 
@@ -38,8 +44,6 @@ export function convertPage(oldPage: page): Page {
     text: oldPage.text,
     image: oldPage.image ?? undefined,
     background: oldPage.background as backgroundstype,
-    font: oldPage.font as HtmlFontFamiliestype,
-    textColor: oldPage.textColor || undefined,
     animation: undefined,
     audio: undefined,
     interactiveGame: undefined,
@@ -52,27 +56,50 @@ export function convertPage(oldPage: page): Page {
  * Valida que los metadatos del libro sean correctos
  */
 function validateBookMetadata(metadata: BookMetadata): string | null {
-  if (!metadata.selectedCategoria) {
-    return "Por favor selecciona una categoría";
+  // Categorías: debe ser un array de números y no vacío
+  if (!Array.isArray(metadata.selectedCategorias) || metadata.selectedCategorias.length === 0) {
+    return "Por favor selecciona al menos una categoría";
   }
-  if (!metadata.selectedGenero) {
-    return "Por favor selecciona un género";
+
+  // Géneros: debe ser un array de números y no vacío
+  if (!Array.isArray(metadata.selectedGeneros) || metadata.selectedGeneros.length === 0) {
+    return "Por favor selecciona al menos un género";
   }
+
+  // Etiquetas: si se envían, debe ser un array de números (opcional)
+  if (metadata.selectedEtiquetas && !Array.isArray(metadata.selectedEtiquetas)) {
+    return "Etiquetas inválidas";
+  }
+
+  // Portada obligatoria
   if (!metadata.portada) {
-    return "Por favor selecciona una Portada";
+    return "Por favor selecciona una portada";
   }
-  if (!metadata.descripcion.trim()) {
+
+  // Autor obligatorio
+  if (!metadata.autor || metadata.autor.trim() === "") {
+    return "Por favor ingresa un autor";
+  }
+
+  // Descripción obligatoria
+  if (!metadata.descripcion || metadata.descripcion.trim() === "") {
     return "Por favor ingresa una descripción";
   }
-  return null;
+
+  // Título obligatorio
+  if (!metadata.titulo || metadata.titulo.trim() === "") {
+    return "Por favor ingresa un título";
+  }
+
+  return null; // Todo válido
 }
+
 
 /**
  * Crea un nuevo libro en la base de datos
  */
 async function createNewBook(
   userId: string,
-  firstPageTitle: string,
   metadata: BookMetadata
 ): Promise<string> {
   const response = await fetch("/api/libros/createbook", {
@@ -80,10 +107,13 @@ async function createNewBook(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       userId,
-      title: firstPageTitle,
+      title: metadata.titulo,
       portada: typeof metadata.portada !== "string" ? null : metadata.portada,
-      categoria: metadata.selectedCategoria,
-      genero: metadata.selectedGenero,
+      categoria: metadata.selectedCategorias,
+      genero: metadata.selectedGeneros,
+      etiquetas : metadata.selectedEtiquetas,
+      autor : metadata.autor,
+      nivel : metadata.selectedNivel,
       descripcion: metadata.descripcion.trim(),
     }),
   });
@@ -205,9 +235,13 @@ async function updateExistingBook(
     body: JSON.stringify({
       idLibro: libroId,
       pages: convertedPages,
-      categoria: metadata.selectedCategoria,
-      genero: metadata.selectedGenero,
+      categoria: metadata.selectedCategorias,
+      genero: metadata.selectedGeneros,
+      etiquetas : metadata.selectedEtiquetas,
+      autor : metadata.autor,
       descripcion: metadata.descripcion.trim(),
+      titulo: metadata.titulo.trim(),
+      nivel : metadata.selectedNivel,
       portada: typeof metadata.portada !== "string" ? null : metadata.portada,
     }),
   });
@@ -224,7 +258,7 @@ async function updateExistingBook(
 async function updateNewBookPages(
   libroId: string,
   convertedPages: Page[],
-  portada: string
+  metadata: BookMetadata
 ): Promise<void> {
   const response = await fetch("/api/libros/updatebook/", {
     method: "PATCH",
@@ -232,7 +266,7 @@ async function updateNewBookPages(
     body: JSON.stringify({
       idLibro: libroId,
       pages: convertedPages,
-      portada: portada
+      portada: metadata.portada,
     }),
   });
 
@@ -270,7 +304,6 @@ export async function saveBookJson(
 ): Promise<void> {
   let libroId: string | null = IdLibro ?? null;
   const uploadedImages: string[] = [];
-  let portadaUrl;
 
   try {
     // Validar usuario autenticado
@@ -293,9 +326,7 @@ export async function saveBookJson(
 
     // Si no hay ID de libro, crear uno nuevo
     if (!libroId) {
-      const firstPage = pages[0];
-      const firstPageTitle = firstPage?.title?.replace(/\s+/g, "_") || "pagina";
-      libroId = await createNewBook(userId, firstPageTitle, metadata);
+      libroId = await createNewBook(userId, metadata);
     }
 
     // Obtener blobs desde URLs existentes (solo para libros existentes)
@@ -329,7 +360,7 @@ export async function saveBookJson(
       toast.success("📚 Libro actualizado correctamente");
     } else {
       // Finalizar creación de libro nuevo
-      await updateNewBookPages(libroId!, convertedPages,metadata.portada as string);
+      await updateNewBookPages(libroId!, convertedPages, metadata);
       toast.success("📚 Libro guardado correctamente");
     }
   } catch (error: any) {

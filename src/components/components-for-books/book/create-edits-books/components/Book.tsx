@@ -10,8 +10,8 @@ import { useBookEditor } from "../hooks/useBookEditor";
 import { useImageHandler } from "../hooks/useImageHandler";
 import { useBookNavigation } from "../hooks/useBookNavigation";
 
-// Importar componentes
-import { BookControlPanel } from "./BookControlPanel";
+// Importar componentes - NUEVO SIDEBAR
+import { BookSidebar } from "./BookSidebar";
 import { BookViewer } from "./BookViewer";
 
 // Importar servicios
@@ -24,12 +24,15 @@ interface BookProps {
   initialPages?: page[];
   title?: string;
   IdLibro?: string;
-  // Agregar metadatos iniciales
   initialMetadata?: {
-    selectedCategoria?: number | null;
-    selectedGenero?: number | null;
+    selectedCategorias?: (number | string)[];
+    selectedGeneros?: (number | string)[];
+    selectedEtiquetas?: (number | string)[];
+    selectedNivel?: number | null;
+    autor?: string;
     descripcion?: string;
-    portada?: File | string | null; // Puede ser File o URL string
+    titulo?: string;
+    portada?: File | string | null;
   };
 }
 
@@ -38,9 +41,21 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
   const bookRef = useRef<any>(null);
 
   // Estados de metadatos
-  const [selectedCategoria, setSelectedCategoria] = useState<number | null>(null);
-  const [selectedGenero, setSelectedGenero] = useState<number | null>(null);
-  const [descripcion, setDescripcion] = useState<string>("");
+  const [selectedCategorias, setSelectedCategorias] = useState<(number | string)[]>(
+    initialMetadata?.selectedCategorias || []
+  );
+  const [selectedGeneros, setSelectedGeneros] = useState<(number | string)[]>(
+    initialMetadata?.selectedGeneros || []
+  );
+  const [selectedEtiquetas, setSelectedEtiquetas] = useState<(number | string)[]>(
+    initialMetadata?.selectedEtiquetas || []
+  );
+  const [selectedNivel, setSelectedNivel] = useState<number | null>(
+    initialMetadata?.selectedNivel || null
+  );
+  const [autor, setAutor] = useState<string>(initialMetadata?.autor || "");
+  const [descripcion, setDescripcion] = useState<string>(initialMetadata?.descripcion || "");
+  const [titulo, setTitulo] = useState<string>(initialMetadata?.titulo || "");
   const [portada, setPortada] = useState<File | null>(
     initialMetadata?.portada instanceof File ? initialMetadata.portada : null
   );
@@ -70,15 +85,17 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
     bookRef
   });
 
-  // En tu componente Book.tsx, cambia esta línea:
+  // Handler para guardar
   const handleSave = useCallback(async () => {
-    console.log('📸 Portada actual:', portada ? portada.name : 'null');
-
     const metadata: BookMetadata = {
-      selectedCategoria,
-      selectedGenero,
+      selectedCategorias,
+      selectedGeneros,
+      selectedEtiquetas,
+      selectedNivel,
+      autor,
       descripcion,
-      portada
+      titulo,
+      portada,
     };
 
     try {
@@ -87,47 +104,64 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
     } catch (error) {
       console.error("❌ Error en handleSave:", error);
     }
-  }, [bookState.pages, selectedCategoria, selectedGenero, descripcion, portada, IdLibro]);
+  }, [
+    bookState.pages, 
+    selectedCategorias, 
+    selectedGeneros, 
+    selectedEtiquetas, 
+    selectedNivel,
+    autor, 
+    descripcion, 
+    titulo, 
+    portada, 
+    IdLibro
+  ]);
 
-  // Handler para cambio de fondo con actualización de libro
+  // Handler para cambio de fondo
   const handleBackgroundChangeWithRerender = useCallback((value: string) => {
     bookState.handleBackgroundChange(value);
   }, [bookState.handleBackgroundChange]);
 
   return (
     <UnifiedLayout>
-      <div className="flex flex-col lg:flex-row gap-6 p-4 lg:p-6 min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-
+      <div className="flex h-screen bg-gray-50">
         <Toaster position="bottom-center" />
 
-        {/* Panel de Control */}
-        <div className="w-full lg:w-96 max-w-md bg-white rounded-xl shadow-xl border border-gray-100 p-4 lg:p-6 h-fit max-h-screen overflow-y-auto">
-          <BookControlPanel
-            pages={bookState.pages}
-            currentPage={bookState.currentPage}
-            editingState={bookEditor}
-            imageHandler={imageHandler}
-            navigation={navigation}
-            selectedCategoria={selectedCategoria}
-            portada={portada}
-            selectedGenero={selectedGenero}
-            descripcion={descripcion}
-            onCategoriaChange={setSelectedCategoria}
-            onPortadaChange={setPortada}
-            onGeneroChange={setSelectedGenero}
-            onDescripcionChange={setDescripcion}
-            onLayoutChange={bookState.handleLayoutChange}
-            onFontChange={bookState.handleFontChange}
-            onBackgroundChange={handleBackgroundChangeWithRerender}
-            onTextColorChange={bookState.handleTextColorChange}
-            onSave={handleSave}
-            onAddPage={bookState.addPage}
-            onDeletePage={bookState.deletePage}
-          />
-        </div>
+        {/* SIDEBAR COLAPSIBLE - Reemplaza el BookControlPanel */}
+        <BookSidebar
+          pages={bookState.pages}
+          currentPage={bookState.currentPage}
+          editingState={bookEditor}
+          imageHandler={imageHandler}
+          navigation={navigation}
+          // Metadatos
+          selectedCategorias={selectedCategorias}
+          selectedGeneros={selectedGeneros}
+          selectedEtiquetas={selectedEtiquetas}
+          selectedNivel={selectedNivel}
+          autor={autor}
+          descripcion={descripcion}
+          titulo={titulo}
+          portada={portada}
+          // Handlers de metadatos
+          onCategoriasChange={setSelectedCategorias}
+          onGenerosChange={setSelectedGeneros}
+          onEtiquetasChange={setSelectedEtiquetas}
+          onNivelChange={setSelectedNivel}
+          onAutorChange={setAutor}
+          onDescripcionChange={setDescripcion}
+          onTituloChange={setTitulo}
+          onPortadaChange={setPortada}
+          // Handlers de configuración
+          onLayoutChange={bookState.handleLayoutChange}
+          onBackgroundChange={handleBackgroundChangeWithRerender}
+          onSave={handleSave}
+          onAddPage={bookState.addPage}
+          onDeletePage={bookState.deletePage}
+        />
 
-        {/* Vista del libro */}
-        <div className="w-full flex-1">
+        {/* CONTENIDO PRINCIPAL - BookViewer */}
+        <div className="flex-1 flex flex-col overflow-hidden">
           <BookViewer
             pages={bookState.pages}
             currentPage={bookState.currentPage}
@@ -138,10 +172,7 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
             onPageClick={navigation.goToPage}
           />
         </div>
-
       </div>
-
     </UnifiedLayout>
   );
-};
-
+}

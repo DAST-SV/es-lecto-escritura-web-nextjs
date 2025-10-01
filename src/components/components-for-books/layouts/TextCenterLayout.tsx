@@ -7,16 +7,15 @@ interface Props {
 
 export const TextCenterLayout: React.FC<Props> = ({ page }) => {
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center p-4 box-border">
+    <div>
       {page.title && (
-        <h1 className="text-4xl font-bold mb-4 text-center">{page.title}</h1>
+        <div dangerouslySetInnerHTML={{ __html: page.title }} />
       )}
       {page.text && (
-        <p className="text-lg leading-relaxed text-center">{page.text}</p>
+        <div dangerouslySetInnerHTML={{ __html: page.text }} />
       )}
     </div>
   );
 };
-
 
 export default TextCenterLayout;

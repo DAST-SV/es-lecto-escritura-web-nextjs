@@ -1,15 +1,11 @@
 // src/types/index.ts
 import { layouts } from "@/src/components/components-for-books/layouts";
 import  {backgrounds } from "./backgrounds"; 
-import  { HtmlFontFamilies } from "./HtmlFontFamilies";
-import  { textColors } from "./textColors ";
 import  {borders} from "./borders"
 
 export type LayoutType = keyof typeof layouts;
 export type borderstype = keyof typeof borders;
-export type HtmlFontFamiliestype = keyof typeof HtmlFontFamilies;
 export type backgroundstype = keyof typeof backgrounds;
-export type textColorstype = keyof typeof textColors;
 
 
 ////
@@ -26,9 +22,7 @@ export interface Page {
   interactiveGame?: string;
   items?: string[];
   background?: backgroundstype | string; 
-  font?: HtmlFontFamiliestype;       
   border?: borderstype;
-  textColor?: textColorstype; // Nueva propiedad para color de texto
 }
 
 ////
@@ -43,8 +37,6 @@ export interface page {
     file?: Blob | File | null;     // Archivo real para subir
     background?: string | null;    // color o URL para mostrar
     backgroundFile?: Blob | File | null; // Archivo real del background
-    font?: string;
-    textColor?: textColorstype | null;     // Nueva propiedad para color de texto
 }
 
 export interface LibroUI {

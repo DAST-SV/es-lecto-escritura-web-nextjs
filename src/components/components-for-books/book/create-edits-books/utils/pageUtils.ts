@@ -10,8 +10,7 @@ export const createDefaultPages = (title?: string): page[] => [
     title: title || "Mi Libro Interactivo",
     text: "Una historia maravillosa comienza aquí...",
     image: null,
-    background: 'Gradiente Azul',
-    font: 'Georgia'
+    background: null,
   },
   {
     id: 'page-2',
@@ -20,7 +19,6 @@ export const createDefaultPages = (title?: string): page[] => [
     text: "Érase una vez en un reino muy lejano, donde las historias cobran vida...",
     image: null,
     background: null,
-    font: 'Arial'
   },
 ];
 
@@ -37,8 +35,6 @@ export const validateAndNormalizePage = (inputPage: any, index: number): page =>
     file: null, // Los archivos no se pasan como props iniciales
     background: inputPage.background || null,
     backgroundFile: null, // Los archivos de fondo tampoco
-    font: inputPage.font || 'Arial',
-    textColor: inputPage.textColor || undefined
   };
 };
 
@@ -60,8 +56,6 @@ export const createBlankPage = (pageNumber: number): page => {
     text: `Continúa tu historia aquí...`,
     image: null,
     background: null,
-    font: 'Arial',
-    textColor: undefined
   };
 };
 

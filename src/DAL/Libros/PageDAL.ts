@@ -21,8 +21,6 @@ export async function insertarPaginas(libroId: string, pages: Page[]) {
     interactive_game: p.interactiveGame || null,
     items: p.items || [],
     background: p.background || null,
-    text_color : p.textColor || null,
-    font: p.font || null,
     border: p.border || null,
     numero_pagina: idx + 1,
   }));

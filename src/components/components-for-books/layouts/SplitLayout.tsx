@@ -18,7 +18,6 @@ export const SplitLayout: React.FC<Props> = ({ page }) => {
           <div className="flex-1 flex items-center justify-center">
             <img
               src={page.image}
-              alt={page.title}
               className="max-w-full max-h-[85%] object-contain rounded-lg shadow"
             />
           </div>
@@ -26,8 +25,12 @@ export const SplitLayout: React.FC<Props> = ({ page }) => {
 
         {/* Right: text */}
         <div className="flex-1 flex flex-col items-start justify-center">
-          <h2 className="text-2xl font-bold mb-2 text-left">{page.title}</h2>
-          <p className="text-base leading-relaxed">{page.text}</p>
+        {page.title && (
+          <div dangerouslySetInnerHTML={{ __html: page.title }} />
+        )}
+        {page.text && (
+          <div dangerouslySetInnerHTML={{ __html: page.text }} />
+        )}
         </div>
       </div>
   );

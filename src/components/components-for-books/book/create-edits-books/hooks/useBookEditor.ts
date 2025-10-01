@@ -90,6 +90,7 @@ export const useBookEditor = ({
     setEditingField(null);
   }, [currentPage, editingTitle, editingText, setPages]);
 
+  
   // Cancelar edición y restaurar valor original
   const cancelEdit = useCallback((field: 'title' | 'text') => {
     if (field === 'title') {
