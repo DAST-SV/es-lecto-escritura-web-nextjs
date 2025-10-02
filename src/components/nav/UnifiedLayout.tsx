@@ -3,13 +3,13 @@
 import React from "react";
 import NavBar from "./NavBar";
 
-
 export const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
   children,
   backgroundComponent,
   className = "",
   mainClassName = "",
   showNavbar = true,
+  brandName
 }) => {
   return (
     <div className={`relative min-h-screen flex flex-col ${className}`}>
@@ -19,10 +19,16 @@ export const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
       )}
 
       {/* Header flotante - fixed positioning ya manejado en NavBar */}
-      {showNavbar && <NavBar />}
+      {showNavbar && <NavBar brandName={brandName} />}
 
-      {/* Main con padding mínimo para el navbar */}
-      <main className={`flex-1 relative z-10 pt-14 ${mainClassName}`}>
+      {/* Main que ocupa toda la altura menos el navbar */}
+      <main 
+        className={`relative z-10 ${mainClassName}`}
+        style={{
+          minHeight: showNavbar ? 'calc(100vh - 60px)' : '100vh',
+          marginTop: showNavbar ? '60px' : '0'
+        }}
+      >
         {children}
       </main>
     </div>

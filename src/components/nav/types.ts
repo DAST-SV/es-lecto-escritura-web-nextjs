@@ -40,6 +40,7 @@ interface UnifiedLayoutProps {
   className?: string;
   mainClassName?: string;
   showNavbar?: boolean;
+  brandName?: string;
 }
 
 interface UserMenuProps {
