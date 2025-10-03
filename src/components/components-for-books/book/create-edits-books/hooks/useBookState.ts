@@ -42,7 +42,7 @@ const createDefaultPages = (title?: string): page[] => [
   },
   {
     id: 'page-2',
-    layout: 'TextLeftImageRightLayout',
+    layout: 'TextCenterLayout',
     title: "Capítulo 1",
     text: "Érase una vez en un reino muy lejano, donde las historias cobran vida...",
     image: null,
@@ -122,13 +122,12 @@ export const useBookState = ({
     const newPageId = `page-${Date.now()}`;
     setPages(prev => [...prev, {
       id: newPageId,
-      layout: 'FullpageLayout',
+      layout: 'TextCenterLayout',
       title: `Página ${prev.length + 1}`,
       text: `Continúa tu historia aquí...`,
       image: null,
-      background: null,
-      font: 'Arial'
-    }]);
+      background: null
+     }]);
   }, []);
 
   // Eliminar página actual
