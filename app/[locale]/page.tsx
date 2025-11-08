@@ -8,7 +8,7 @@ import LoginBackground from '@/src/components/auth/LoginBackground';
 
 const HomePage: React.FC = () => {
   return (
-    <UnifiedLayout className="min-h-screen bg-gradient-to-b from-blue-400 via-blue-300 to-green-300" mainClassName="pt-0">
+    <UnifiedLayout className="min-h-screen bg-gradient-to-b from-blue-400 via-blue-300 to-cyan-200" mainClassName="pt-0">
       {/* Hero Carousel - Altura responsiva mejorada */}
       <div className="w-full">
         <HeroCarousel />

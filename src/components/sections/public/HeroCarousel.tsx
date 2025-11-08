@@ -385,7 +385,7 @@ const HeroCarousel: React.FC = () => {
   return (
     <div
       ref={carouselRef}
-      className="relative h-[calc(100vh-56px)] overflow-hidden bg-gradient-to-br from-blue-400 via-blue-300 to-cyan-200"
+      className="relative h-[calc(100vh-56px)] overflow-hidden"
       role="region"
       aria-label="Carrusel de contenido educativo"
       aria-live="polite"
