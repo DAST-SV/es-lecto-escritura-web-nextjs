@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { BookOpen, Zap, Award, Users, DollarSign, LucideIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BookOpen, Zap, Award, Users, DollarSign, LucideIcon, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import type { FeatureTab, Stat } from './type';
 import { images } from '@/public/images';
 import { NextImage } from '../../ui/NextImage';
@@ -30,11 +30,10 @@ const FeaturesSection: React.FC = () => {
   const stats: Stat[] = t.raw('stats');
   const [activeTab, setActiveTab] = useState<TabId>('our_difference');
   const [isImageLoaded, setIsImageLoaded] = useState<Record<TabId, boolean>>({} as Record<TabId, boolean>);
-  const [currentMobileTab, setCurrentMobileTab] = useState(0);
 
   const activeTabData = tabs.find(tab => tab.id === activeTab);
 
-  // Auto-rotación de tabs cada 8 segundos
+  // Auto-rotación optimizada cada 8 segundos
   useEffect(() => {
     const interval = setInterval(() => {
       const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
@@ -45,11 +44,12 @@ const FeaturesSection: React.FC = () => {
     return () => clearInterval(interval);
   }, [activeTab, tabs]);
 
-  // Precargar imágenes
+  // Precargar solo las 2 primeras imágenes
   useEffect(() => {
-    Object.entries(imageMap).forEach(([tabId, imageSrc]) => {
+    const priorityTabs: TabId[] = ['our_difference', 'for_students'];
+    priorityTabs.forEach((tabId) => {
       const img = new Image();
-      img.src = imageSrc;
+      img.src = imageMap[tabId];
       img.onload = () => {
         setIsImageLoaded(prev => ({ ...prev, [tabId]: true }));
       };
@@ -58,57 +58,47 @@ const FeaturesSection: React.FC = () => {
 
   const handleTabChange = useCallback((tabId: TabId) => {
     setActiveTab(tabId);
-  }, []);
+    
+    // Cargar imagen del tab si no está cargada
+    if (!isImageLoaded[tabId]) {
+      const img = new Image();
+      img.src = imageMap[tabId];
+      img.onload = () => {
+        setIsImageLoaded(prev => ({ ...prev, [tabId]: true }));
+      };
+    }
+  }, [isImageLoaded]);
 
-  // Navegación mobile con flechas
+  // Navegación mobile optimizada
   const handleMobileNavigation = (direction: 'prev' | 'next') => {
     const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
-    let newIndex;
+    const newIndex = direction === 'prev' 
+      ? (currentIndex === 0 ? tabs.length - 1 : currentIndex - 1)
+      : (currentIndex + 1) % tabs.length;
     
-    if (direction === 'prev') {
-      newIndex = currentIndex === 0 ? tabs.length - 1 : currentIndex - 1;
-    } else {
-      newIndex = (currentIndex + 1) % tabs.length;
-    }
-    
-    setActiveTab(tabs[newIndex].id as TabId);
-    setCurrentMobileTab(newIndex);
+    handleTabChange(tabs[newIndex].id as TabId);
   };
 
   return (
-    <section className="py-20 px-4 md:px-8 lg:px-16 bg-gradient-to-br from-gray-50 via-blue-50/30 to-green-50/30 relative overflow-hidden">
-      {/* Elementos decorativos mejorados */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Círculos flotantes */}
-        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-blue-200/20 to-cyan-200/20 rounded-full blur-xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-40 h-40 bg-gradient-to-r from-orange-200/20 to-pink-200/20 rounded-full blur-xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-gradient-to-r from-green-200/20 to-teal-200/20 rounded-full blur-xl animate-pulse delay-2000"></div>
-        
-        {/* Formas geométricas */}
-        <svg className="absolute -left-20 top-10 text-blue-100/50" width="200" height="400" viewBox="0 0 200 400" fill="none">
-          <path d="M-50 50C-50 100 0 150 50 150C100 150 150 200 150 250C150 300 100 350 50 350"
-            stroke="currentColor" strokeWidth="2" fill="none" opacity="0.4" 
-            className="animate-pulse" />
-        </svg>
-        <svg className="absolute -right-20 bottom-10 text-orange-100/50" width="200" height="400" viewBox="0 0 200 400" fill="none">
-          <path d="M250 350C250 300 200 250 150 250C100 250 50 200 50 150C50 100 100 50 150 50"
-            stroke="currentColor" strokeWidth="2" fill="none" opacity="0.4" 
-            className="animate-pulse delay-500" />
-        </svg>
-      </div>
+    <section className="py-16 lg:py-20 px-4 md:px-8 lg:px-16 bg-gradient-to-br from-slate-50 to-blue-50 relative overflow-hidden">
+      {/* Patrón decorativo sutil - Optimizado */}
+      <div className="absolute inset-0 opacity-[0.03]" style={{
+        backgroundImage: `radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)`,
+        backgroundSize: '48px 48px'
+      }}></div>
 
       <div className="container mx-auto max-w-7xl relative z-10">
-        {/* Título mejorado */}
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-800 via-blue-700 to-green-700 bg-clip-text text-transparent leading-tight mb-4">
+        {/* Título profesional */}
+        <div className="text-center mb-12 lg:mb-16">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 leading-tight mb-3">
             {t('title')}
           </h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-green-500 mx-auto rounded-full"></div>
+          <div className="w-20 h-1.5 bg-gradient-to-r from-teal-500 to-cyan-500 mx-auto rounded-full"></div>
         </div>
 
-        {/* Desktop Tabs - Mejoradas */}
-        <div className="hidden md:block mb-12">
-          <div className="flex flex-wrap justify-center gap-2 md:gap-3 lg:gap-4">
+        {/* Desktop Tabs - Profesionales */}
+        <div className="hidden md:block mb-10 lg:mb-12">
+          <div className="flex flex-wrap justify-center gap-3">
             {tabs.map((tab: FeatureTab, index: number) => {
               const IconComponent = iconMap[tab.id as TabId] || BookOpen;
               const isActive = activeTab === tab.id;
@@ -117,24 +107,20 @@ const FeaturesSection: React.FC = () => {
                 <button
                   key={tab.id || index}
                   onClick={() => handleTabChange(tab.id as TabId)}
-                  className={`group relative flex items-center gap-2 px-4 md:px-5 lg:px-6 py-3 md:py-4 rounded-xl font-semibold text-sm md:text-base transition-all duration-500 transform hover:scale-105 ${
+                  className={`group relative flex items-center gap-2 px-5 lg:px-6 py-3 lg:py-3.5 rounded-xl font-bold text-sm lg:text-base transition-all duration-300 ${
                     isActive
-                      ? 'bg-gradient-to-r from-blue-600 via-blue-500 to-green-500 text-white shadow-2xl shadow-blue-500/25'
-                      : 'bg-white/80 backdrop-blur-sm text-gray-700 hover:bg-white hover:text-blue-600 shadow-lg hover:shadow-xl border border-gray-200/50'
+                      ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg scale-105'
+                      : 'bg-white text-slate-700 hover:bg-slate-50 hover:text-teal-700 shadow-md hover:shadow-lg border border-slate-200'
                   }`}
                 >
-                  {isActive && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-green-500 rounded-xl blur-lg opacity-30 -z-10"></div>
-                  )}
-                  
-                  <IconComponent className={`w-4 md:w-5 h-4 md:h-5 transition-all duration-300 ${
-                    isActive ? 'text-white' : 'text-gray-600 group-hover:text-blue-600'
+                  <IconComponent className={`w-4 lg:w-5 h-4 lg:h-5 transition-colors ${
+                    isActive ? 'text-white' : 'text-slate-600 group-hover:text-teal-600'
                   }`} />
                   
-                  <span className="relative z-10 whitespace-nowrap">{tab.label}</span>
+                  <span className="whitespace-nowrap">{tab.label}</span>
                   
                   {isActive && (
-                    <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full"></div>
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-white rounded-full shadow-lg"></div>
                   )}
                 </button>
               );
@@ -144,27 +130,28 @@ const FeaturesSection: React.FC = () => {
 
         {/* Mobile Navigation - Mejorada */}
         <div className="md:hidden mb-8">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between gap-3">
             <button
               onClick={() => handleMobileNavigation('prev')}
-              className="p-2 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-300 hover:bg-blue-50"
+              className="p-2.5 rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-300 hover:bg-teal-50 border border-slate-200"
+              aria-label="Tab anterior"
             >
-              <ChevronLeft className="w-5 h-5 text-gray-600" />
+              <ChevronLeft className="w-5 h-5 text-slate-700" />
             </button>
             
-            <div className="flex-1 mx-4">
-              <div className="text-center">
-                <span className="text-sm text-gray-500 font-medium">
-                  {tabs.findIndex(tab => tab.id === activeTab) + 1} de {tabs.length}
+            <div className="flex-1">
+              <div className="text-center space-y-2">
+                <span className="text-xs text-slate-600 font-semibold">
+                  {tabs.findIndex(tab => tab.id === activeTab) + 1} / {tabs.length}
                 </span>
-                <div className="flex justify-center mt-2 gap-2">
+                <div className="flex justify-center gap-1.5">
                   {tabs.map((_, index) => (
                     <div
                       key={index}
-                      className={`h-1 rounded-full transition-all duration-300 ${
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
                         tabs.findIndex(tab => tab.id === activeTab) === index
-                          ? 'w-8 bg-gradient-to-r from-blue-500 to-green-500'
-                          : 'w-2 bg-gray-300'
+                          ? 'w-8 bg-gradient-to-r from-teal-500 to-cyan-500'
+                          : 'w-1.5 bg-slate-300'
                       }`}
                     />
                   ))}
@@ -174,55 +161,56 @@ const FeaturesSection: React.FC = () => {
             
             <button
               onClick={() => handleMobileNavigation('next')}
-              className="p-2 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-300 hover:bg-blue-50"
+              className="p-2.5 rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-300 hover:bg-teal-50 border border-slate-200"
+              aria-label="Tab siguiente"
             >
-              <ChevronRight className="w-5 h-5 text-gray-600" />
+              <ChevronRight className="w-5 h-5 text-slate-700" />
             </button>
           </div>
         </div>
 
-        {/* Tab Content - Mejorado */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl shadow-gray-500/10 overflow-hidden border border-gray-200/50">
-          <div className="grid grid-cols-1 lg:grid-cols-5 min-h-[500px] md:min-h-[600px]">
+        {/* Tab Content - Optimizado */}
+        <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200">
+          <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[480px] lg:min-h-[560px]">
             
-            {/* Content - Más espacio */}
-            <div className="lg:col-span-3 p-6 sm:p-8 md:p-10 lg:p-12 xl:p-16 flex flex-col justify-center order-2 lg:order-1">
-              <div className="space-y-4 md:space-y-6">
-                {/* Badge del tab activo */}
-                <div className="inline-flex items-center gap-2 px-3 md:px-4 py-2 rounded-full bg-gradient-to-r from-blue-100 to-green-100 text-blue-700 text-xs md:text-sm font-medium">
+            {/* Content */}
+            <div className="p-6 sm:p-8 lg:p-12 xl:p-16 flex flex-col justify-center order-2 lg:order-1">
+              <div className="space-y-5 lg:space-y-6">
+                {/* Badge */}
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200">
                   {(() => {
                     const IconComponent = iconMap[activeTab] || BookOpen;
-                    return <IconComponent className="w-3 md:w-4 h-3 md:h-4" />;
+                    return <IconComponent className="w-4 h-4 text-teal-600" />;
                   })()}
-                  <span>{activeTabData?.label}</span>
+                  <span className="text-sm font-bold text-teal-700">{activeTabData?.label}</span>
                 </div>
 
-                <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold text-gray-900 leading-tight">
+                {/* Título */}
+                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 leading-tight">
                   {activeTabData?.title}
                 </h3>
                 
-                <div className="text-gray-600 text-base sm:text-lg md:text-xl leading-relaxed space-y-3 md:space-y-4">
-                  <p>{activeTabData?.content}</p>
-                </div>
+                {/* Descripción */}
+                <p className="text-base lg:text-lg text-slate-600 leading-relaxed font-medium">
+                  {activeTabData?.content}
+                </p>
                 
-                <div className="pt-2 md:pt-4">
-                  <button className="group relative bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white font-bold px-6 sm:px-8 md:px-10 py-3 md:py-4 text-sm md:text-base rounded-xl hover:from-orange-600 hover:via-red-600 hover:to-pink-600 transition-all duration-500 shadow-xl hover:shadow-2xl transform hover:-translate-y-2 hover:scale-105 overflow-hidden">
-                    <span className="relative z-10 flex items-center gap-2">
-                      {t('button')}
-                      <ChevronRight className="w-4 md:w-5 h-4 md:h-5 transition-transform group-hover:translate-x-1" />
-                    </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                {/* CTA */}
+                <div className="pt-2">
+                  <button className="group inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white font-bold px-7 py-3.5 rounded-xl hover:shadow-xl transition-all duration-300 hover:scale-105">
+                    <span>{t('button')}</span>
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Image - Mejorada */}
-            <div className="lg:col-span-2 relative bg-gradient-to-br from-blue-50 via-indigo-50 to-green-50 p-4 sm:p-6 md:p-8 lg:p-10 xl:p-12 order-1 lg:order-2 flex items-center justify-center overflow-hidden">
-              <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-sm h-72 sm:h-80 md:h-96 lg:h-80 xl:h-96 mx-auto">
-                {/* Elementos decorativos de fondo - Estables */}
-                <div className="absolute top-2 left-2 right-4 bottom-4 bg-gradient-to-r from-blue-400/12 to-green-400/12 rounded-2xl transform rotate-2 blur-sm will-change-transform"></div>
-                <div className="absolute top-4 left-4 right-2 bottom-2 bg-gradient-to-r from-purple-400/6 to-pink-400/6 rounded-2xl transform -rotate-2 blur-sm will-change-transform"></div>
+            {/* Image */}
+            <div className="relative bg-gradient-to-br from-teal-50 to-cyan-50 p-6 sm:p-8 lg:p-12 order-1 lg:order-2 flex items-center justify-center">
+              <div className="relative w-full max-w-sm h-72 sm:h-80 lg:h-96">
+                {/* Decoración de fondo */}
+                <div className="absolute inset-0 bg-white/40 rounded-2xl transform rotate-3 blur-sm"></div>
+                <div className="absolute inset-0 bg-white/30 rounded-2xl transform -rotate-3 blur-sm"></div>
                 
                 {/* Contenedor de imágenes */}
                 <div className="relative z-10 w-full h-full">
@@ -231,30 +219,30 @@ const FeaturesSection: React.FC = () => {
                     return (
                       <div
                         key={tabId}
-                        className={`absolute inset-0 transition-all duration-700 ease-in-out ${
+                        className={`absolute inset-0 transition-all duration-500 ${
                           isActive 
-                            ? 'opacity-100 scale-100 rotate-0' 
-                            : 'opacity-0 scale-95 rotate-1 pointer-events-none'
+                            ? 'opacity-100 scale-100' 
+                            : 'opacity-0 scale-95 pointer-events-none'
                         }`}
                       >
-                        <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-xl will-change-transform">
+                        <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl">
                           {/* Loading skeleton */}
                           {!isImageLoaded[tabId as TabId] && (
-                            <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse rounded-2xl"></div>
+                            <div className="absolute inset-0 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 animate-pulse"></div>
                           )}
                           
                           <NextImage
                             src={imageSrc}
-                            alt={tabs.find(tab => tab.id === tabId)?.title || 'Feature image'}
+                            alt={tabs.find(tab => tab.id === tabId)?.title || 'Feature'}
                             fill
-                            className="object-cover transition-transform duration-700 hover:scale-105 will-change-transform"
+                            className="object-cover"
                             priority={tabId === 'our_difference' || tabId === 'for_students'}
-                            quality={95}
-                            sizes="(max-width: 640px) 85vw, (max-width: 768px) 75vw, (max-width: 1024px) 45vw, (max-width: 1280px) 35vw, 400px"
+                            quality={90}
+                            sizes="(max-width: 640px) 90vw, (max-width: 1024px) 80vw, 45vw"
                           />
                           
-                          {/* Overlay sutil - Estable */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/8 via-transparent to-transparent rounded-2xl"></div>
+                          {/* Overlay sutil */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent"></div>
                         </div>
                       </div>
                     );
@@ -265,31 +253,35 @@ const FeaturesSection: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats - Mejoradas */}
-        <div className="mt-16 md:mt-20">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
+        {/* Stats - Profesionales */}
+        <div className="mt-12 lg:mt-16">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 lg:gap-8">
             {stats.map((stat: Stat, index: number) => {
               const icons: LucideIcon[] = [BookOpen, Zap, Award];
               const IconComponent = icons[index];
-              const colors = [
-                { bg: 'bg-gradient-to-br from-blue-100 to-blue-200', text: 'text-blue-600', ring: 'ring-blue-500/20' },
-                { bg: 'bg-gradient-to-br from-green-100 to-green-200', text: 'text-green-600', ring: 'ring-green-500/20' },
-                { bg: 'bg-gradient-to-br from-yellow-100 to-yellow-200', text: 'text-yellow-600', ring: 'ring-yellow-500/20' }
+              const gradients = [
+                'from-blue-500 to-cyan-500',
+                'from-teal-500 to-emerald-500',
+                'from-orange-500 to-pink-500'
               ];
-              const color = colors[index];
+              const bgGradients = [
+                'from-blue-50 to-cyan-50',
+                'from-teal-50 to-emerald-50',
+                'from-orange-50 to-pink-50'
+              ];
 
               return (
                 <div 
                   key={index} 
-                  className="group text-center p-6 md:p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 border border-gray-200/50"
+                  className="group text-center p-6 lg:p-8 bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border border-slate-200"
                 >
-                  <div className={`w-16 md:w-20 h-16 md:h-20 ${color.bg} rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 ring-4 ${color.ring}`}>
-                    <IconComponent className={`w-8 md:w-10 h-8 md:h-10 ${color.text}`} />
+                  <div className={`w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br ${bgGradients[index]} rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                    <IconComponent className={`w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-br ${gradients[index]} bg-clip-text text-transparent`} strokeWidth={2.5} />
                   </div>
-                  <h4 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 md:mb-3 group-hover:text-blue-600 transition-colors duration-300">
+                  <h4 className="text-3xl lg:text-4xl font-black text-slate-900 mb-2">
                     {stat.number}
                   </h4>
-                  <p className="text-gray-600 text-base md:text-lg font-medium">
+                  <p className="text-slate-600 text-sm lg:text-base font-semibold">
                     {stat.label}
                   </p>
                 </div>

@@ -2,6 +2,7 @@
 
 import React from "react";
 import NavBar from "./NavBar";
+import LoginBackground from "../auth/LoginBackground";
 
 export const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
   children,
@@ -14,9 +15,9 @@ export const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
   return (
     <div className={`relative min-h-screen flex flex-col ${className}`}>
       {/* Fondo */}
-      {backgroundComponent && (
+      {backgroundComponent ? (
         <div className="absolute inset-0 z-0">{backgroundComponent}</div>
-      )}
+      ) : <LoginBackground />}
 
       {/* Header flotante - fixed positioning ya manejado en NavBar */}
       {showNavbar && <NavBar brandName={brandName} />}
