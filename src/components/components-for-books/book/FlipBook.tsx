@@ -168,7 +168,7 @@ export const FlipBook: React.FC<Props> = ({ pages, width, height }) => {
         <div className="absolute top-12 left-2/3 w-2.5 h-2.5 bg-yellow-300 rounded-full animate-twinkle"></div>
         
         {/* Arcoíris sutil */}
-        <div className="absolute top-20 left-0 w-full h-2 bg-gradient-to-r from-red-300 via-yellow-300 via-green-300 via-blue-300 to-purple-300 opacity-30 rounded-full transform -skew-y-2"></div>
+        <div className="absolute top-20 left-0 w-full h-2 bg-gradient-to-r from-red-300  via-blue-300 to-purple-300 opacity-30 rounded-full transform -skew-y-2"></div>
         
         {/* Elementos decorativos flotantes */}
         <div className="absolute bottom-20 left-8 w-8 h-8 bg-pink-300 rounded-full opacity-60 animate-bounce-slow"></div>

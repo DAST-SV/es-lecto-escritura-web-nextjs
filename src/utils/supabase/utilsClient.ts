@@ -4,7 +4,7 @@ import { createClient } from '@/src/utils/supabase/client'
 /**
  * Crea un cliente de Supabase para el navegador.
  */
-const  supabase = createClient()
+export const supabase = createClient()
 
 /**
  * Obtener el ID del usuario actual desde la sesión en el navegador.
@@ -39,4 +39,10 @@ export async function isLoggedIn(): Promise<boolean> {
   return !!userData.user;
 }
 
+
+// Helper para obtener usuario actual
+export const getCurrentUser = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
+};
 
