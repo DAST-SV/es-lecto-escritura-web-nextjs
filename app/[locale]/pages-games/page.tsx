@@ -12,27 +12,21 @@ interface Juego {
 }
 
 const juegos: Juego[] = [
-  { 
-    src: "/Imagenes/Secciones_juegos/Rompe-cabezas.jpg", 
-    alt: "Rompe Cabezas", 
+  {
+    src: "/Imagenes/Secciones_juegos/Rompe-cabezas.jpg",
+    alt: "Rompe Cabezas",
     route: "/pages-games/rompecabezas",
     description: "Ejercita tu mente resolviendo divertidos rompecabezas 🧩"
   },
-  { 
-    src: "/Imagenes/Secciones_juegos/Quizes.jpg", 
-    alt: "Quizes", 
-    route: "/pages-games/quizes",
-    description: "Pon a prueba tus conocimientos con quizzes interactivos 🎓"
-  },
-  { 
-    src: "/Imagenes/Secciones_juegos/Laberinto.jpg", 
-    alt: "Laberinto", 
+  {
+    src: "/Imagenes/Secciones_juegos/Laberinto.jpg",
+    alt: "Laberinto",
     route: "/pages-games/laberinto",
     description: "Encuentra la salida en emocionantes laberintos 🌀"
   },
-  { 
-    src: "/Imagenes/Secciones_juegos/Colorea.jpg", 
-    alt: "Colorea", 
+  {
+    src: "/Imagenes/Secciones_juegos/Colorea.jpg",
+    alt: "Colorea",
     route: "/pages-games/coloreo",
     description: "Da rienda suelta a tu creatividad coloreando dibujos 🎨"
   },
@@ -65,9 +59,9 @@ const SeccionJuegos: React.FC = () => {
 
       {/* Banner principal */}
       <div className="w-full mb-6">
-        <img 
-          src="/Imagenes/Seccion_de_juegos.jpg" 
-          alt="Banner" 
+        <img
+          src="/Imagenes/Seccion_de_juegos.jpg"
+          alt="Banner"
           className="w-full max-h-72 h-auto shadow-lg rounded-b-2xl"
         />
       </div>
@@ -80,24 +74,64 @@ const SeccionJuegos: React.FC = () => {
         Diviértete, aprende y crea recuerdos mágicos con nuestros juegos ✨
       </p>
 
-      {/* Grid de juegos */}
-      <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {juegos.map((juego) => (
-          <Link key={juego.alt} href={juego.route}>
-            <div className="flex flex-col items-center bg-white rounded-2xl shadow-lg p-3 hover:scale-105 hover:shadow-2xl transition-all duration-300 relative overflow-hidden">
-              {/* Animación de brillo al hover */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-blue-100 via-cyan-100 to-pink-100 opacity-30 rounded-2xl pointer-events-none animate-pulse-slow" />
+      <div className="max-w-5xl mx-auto flex flex-col items-center gap-10">
+
+        {/* 🔹 Primera fila — dos imágenes lado a lado */}
+        <div className="flex justify-center gap-8 flex-wrap">
+          {/* Rompecabezas */}
+          <Link href="/pages-games/rompecabezas">
+            <div className="bg-white rounded-2xl shadow-md hover:scale-105 hover:shadow-2xl transition-all duration-300 overflow-hidden w-100">
               <img
-                src={juego.src}
-                alt={juego.alt}
-                className="w-full h-48 object-cover rounded-lg mb-2 shadow-inner"
+                src="/Imagenes/Secciones_juegos/Rompe-cabezas.jpg"
+                alt="Rompe Cabezas"
+                className="w-full h-40 object-contain bg-white"
               />
-              <h3 className="font-bold text-blue-800 text-lg">{juego.alt}</h3>
-              <p className="text-sm text-sky-700 text-center">{juego.description}</p>
+              <div className="text-center p-2 bg-white">
+                <h3 className="font-bold text-blue-800 text-lg">Rompe Cabezas</h3>
+                <p className="text-sm text-sky-700">Ejercita tu mente resolviendo divertidos rompecabezas 🧩</p>
+              </div>
             </div>
           </Link>
-        ))}
+
+          {/* Laberinto */}
+          <Link href="/pages-games/laberinto">
+            <div className="bg-white rounded-2xl shadow-md hover:scale-105 hover:shadow-2xl transition-all duration-300 overflow-hidden w-100">
+              <img
+                src="/Imagenes/Secciones_juegos/Laberinto.jpg"
+                alt="Laberinto"
+                className="w-full h-40 object-contain bg-white"
+              />
+              <div className="text-center p-2 bg-white">
+                <h3 className="font-bold text-blue-800 text-lg">Laberinto</h3>
+                <p className="text-sm text-sky-700">Encuentra la salida en emocionantes laberintos 🌀</p>
+              </div>
+            </div>
+          </Link>
+        </div>
+
+        {/* 🔹 Segunda fila — imagen centrada */}
+        <div className="flex justify-center">
+          <Link href="/pages-games/coloreo">
+            <div className="bg-white rounded-2xl shadow-md hover:scale-105 hover:shadow-2xl transition-all duration-300 overflow-hidden w-100">
+              <img
+                src="/Imagenes/Secciones_juegos/Colorea.jpg"
+                alt="Colorea"
+                className="w-full h-40 object-contain bg-white"
+              />
+              <div className="text-center p-2 bg-white">
+                <h3 className="font-bold text-blue-800 text-lg">Colorea</h3>
+                <p className="text-sm text-sky-700">Da rienda suelta a tu creatividad coloreando dibujos 🎨</p>
+              </div>
+            </div>
+          </Link>
+        </div>
+
       </div>
+
+
+
+
+
     </UnifiedLayout>
   );
 };

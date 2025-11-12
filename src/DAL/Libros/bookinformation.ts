@@ -1,13 +1,8 @@
 import { createClient } from "@/src/utils/supabase/client"; // Ajusta tu import
+import {Libro} from "@/src/typings/Libro"
 
-export interface LibroUsuario {
-  idlibro: string;
-  idusuario: string;
-  titulo: string;
-  fechacreacion: string;
-}
 
-export async function getBooksByUserId(idUsuario: string): Promise<LibroUsuario[]> {
+export async function getBooksByUserId(idUsuario: string): Promise<Libro[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase

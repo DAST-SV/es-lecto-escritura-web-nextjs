@@ -3,6 +3,7 @@ import React from "react";
 import Image from "next/image";
 import ImageGrid, { ImageItem } from "@/src/utils/imagenes/ImageGrid";
 import Carousel from "@/src/utils/components/Carousel"; // 🔹 Ajusta la ruta según tu estructura
+import CarouselLibros from "@/src/utils/components/CarouselLibros"; // 🔹 Ajusta la ruta según tu estructura
 import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
 
 // 🔹 Imports de imágenes
@@ -106,7 +107,7 @@ const Page: React.FC = () => {
             Top 10 de Lecturas
           </h2>
           
-          <Carousel
+          <CarouselLibros
             images={topLecturas}
             itemsToShow={4}
             aspectRatio="3/4"

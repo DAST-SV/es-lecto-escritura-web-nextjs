@@ -161,7 +161,7 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
         />
 
         {/* CONTENIDO PRINCIPAL - BookViewer */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col">
           <BookViewer
             pages={bookState.pages}
             currentPage={bookState.currentPage}

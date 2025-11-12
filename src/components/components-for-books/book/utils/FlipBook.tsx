@@ -64,6 +64,71 @@ export const FlipBook: React.FC<Props> = ({ pages, width, height }) => {
     return () => window.removeEventListener('resize', checkDevice);
   }, [isMobileDevice]);
 
+  // Scroll automático al centro cuando se carga el componente
+  useEffect(() => {
+    const scrollToCenter = () => {
+      // Esperar un momento para que el DOM esté completamente renderizado
+      setTimeout(() => {
+        const scrollHeight = document.documentElement.scrollHeight;
+        const clientHeight = document.documentElement.clientHeight;
+        const scrollPosition = (scrollHeight - clientHeight) / 2;
+        
+        window.scrollTo({
+          top: scrollPosition,
+          behavior: 'smooth'
+        });
+      }, 100);
+    };
+
+    scrollToCenter();
+  }, []);
+  
+  // Detectar dispositivo y calcular dimensiones
+  useEffect(() => {
+    const checkDevice = () => {
+      const isMobile = window.innerWidth < 640;
+      const screenHeight = window.innerHeight;
+      const screenWidth = window.innerWidth;
+      
+      if (isMobile !== isMobileDevice) {
+        setIsMobileDevice(isMobile);
+        setBookKey(prev => prev + 1); // Forzar re-render
+      }
+
+      // Calcular dimensiones para PC que quepan en pantalla
+      if (!isMobile) {
+        // Dejar espacio para padding, indicador y margen (aproximadamente 200px)
+        const availableHeight = screenHeight - 200;
+        const availableWidth = screenWidth - 100;
+        
+        // Mantener ratio deseado pero ajustar si es necesario
+        let bookWidth = 600;
+        let bookHeight = 700;
+        
+        // Si no cabe en altura, ajustar manteniendo proporciones
+        if (bookHeight > availableHeight) {
+          bookHeight = availableHeight;
+          bookWidth = (bookHeight * 600) / 700; // Mantener ratio
+        }
+        
+        // Si no cabe en ancho, ajustar
+        if (bookWidth > availableWidth) {
+          bookWidth = availableWidth;
+          bookHeight = (bookWidth * 700) / 600; // Mantener ratio
+        }
+        
+        setBookDimensions({
+          width: Math.round(bookWidth),
+          height: Math.round(bookHeight)
+        });
+      }
+    };
+
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
+  }, [isMobileDevice]);
+
   if (pages.length < 2) return null;
 
   // Configuración para PC (con dimensiones adaptativas)
@@ -186,13 +251,6 @@ export const FlipBook: React.FC<Props> = ({ pages, width, height }) => {
         isMobileDevice ? 'justify-center' : 'justify-center pr-16'
       } overflow-hidden`}>
         <div className="flex flex-col items-center space-y-4">
-          
-          {/* Indicador de página */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg">
-            <span className="text-sm font-medium text-gray-700">
-              Página {activePage + 1} de {pages.length}
-            </span>
-          </div>
 
           {/* Libro con configuración específica según dispositivo */}
           <div className="drop-shadow-2xl">

@@ -1,7 +1,7 @@
 // src/components/PageRenderer.tsx
 import React from "react";
 import type { Page } from "@/src/typings/types-page-book/index";
-import { layouts } from "../layouts";
+import { layouts } from "@/src/components/components-for-books/layouts";
 import { backgrounds } from "@/src/typings/types-page-book/backgrounds";
 import { borders } from "@/src/typings/types-page-book/borders";
 import { motion } from "framer-motion";
@@ -23,13 +23,15 @@ export const PageRenderer: React.FC<Props> = ({ page, isActive }) => {
     page.background && page.background in backgrounds
       ? backgrounds[page.background as keyof typeof backgrounds]
       : typeof page.background === "string"
-        ? `url(${page.background}) center/cover no-repeat`
+        ? /^(https?:\/\/|localhost)/.test(page.background)
+          ? `url(${page.background}) center/cover no-repeat`
+          : backgrounds.blanco
         : backgrounds.blanco;
 
   const animation = page.animation ? getAnimation(page.animation) : null;
 
   const content = (
- <div
+    <div
       className="flipbook-page" // Contenedor de página
       style={{
         background: getBackground,

@@ -1,0 +1,128 @@
+/* ========================================
+   ESTILOS PARA EL SELECTOR DE INTERLINEADO
+   ======================================== */
+
+/* Mostrar valores en el dropdown de interlineado */
+.ql-snow .ql-picker.ql-lineheight .ql-picker-label::before,
+.ql-snow .ql-picker.ql-lineheight .ql-picker-item::before {
+  content: attr(data-value);
+}
+
+/* Valores específicos del dropdown */
+.ql-snow .ql-picker.ql-lineheight .ql-picker-label[data-value="0.5"]::before,
+.ql-snow .ql-picker.ql-lineheight .ql-picker-item[data-value="0.5"]::before {
+  content: '0.5x';
+}
+
+.ql-snow .ql-picker.ql-lineheight .ql-picker-label[data-value="1"]::before,
+.ql-snow .ql-picker.ql-lineheight .ql-picker-item[data-value="1"]::before {
+  content: '1x';
+}
+
+.ql-snow .ql-picker.ql-lineheight .ql-picker-label[data-value="1.15"]::before,
+.ql-snow .ql-picker.ql-lineheight .ql-picker-item[data-value="1.15"]::before {
+  content: '1.15x';
+}
+
+.ql-snow .ql-picker.ql-lineheight .ql-picker-label[data-value="1.5"]::before,
+.ql-snow .ql-picker.ql-lineheight .ql-picker-item[data-value="1.5"]::before {
+  content: '1.5x';
+}
+
+.ql-snow .ql-picker.ql-lineheight .ql-picker-label[data-value="1.75"]::before,
+.ql-snow .ql-picker.ql-lineheight .ql-picker-item[data-value="1.75"]::before {
+  content: '1.75x';
+}
+
+.ql-snow .ql-picker.ql-lineheight .ql-picker-label[data-value="2"]::before,
+.ql-snow .ql-picker.ql-lineheight .ql-picker-item[data-value="2"]::before {
+  content: '2x';
+}
+
+.ql-snow .ql-picker.ql-lineheight .ql-picker-label[data-value="2.5"]::before,
+.ql-snow .ql-picker.ql-lineheight .ql-picker-item[data-value="2.5"]::before {
+  content: '2.5x';
+}
+
+.ql-snow .ql-picker.ql-lineheight .ql-picker-label[data-value="3"]::before,
+.ql-snow .ql-picker.ql-lineheight .ql-picker-item[data-value="3"]::before {
+  content: '3x';
+}
+
+/* ========================================
+   ESTILOS PARA EL EDITOR (MIENTRAS EDITAS)
+   ======================================== */
+
+/* Line-height base del editor */
+.ql-editor {
+  line-height: 1.42;
+  min-height: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* CRÍTICO: Permitir que elementos con style inline sobrescriban el line-height */
+.ql-editor p,
+.ql-editor div,
+.ql-editor h1,
+.ql-editor h2,
+.ql-editor h3,
+.ql-editor h4,
+.ql-editor h5,
+.ql-editor h6,
+.ql-editor ol,
+.ql-editor ul,
+.ql-editor li,
+.ql-editor blockquote,
+.ql-editor pre {
+  line-height: inherit;
+}
+
+/* Permitir que los estilos inline de line-height se respeten */
+.ql-editor [style*="line-height"] {
+  line-height: unset !important;
+}
+
+/* ========================================
+   ESTILOS ADICIONALES PARA MEJOR UX
+   ======================================== */
+
+/* Mejorar visibilidad del selector activo */
+.ql-snow .ql-picker.ql-lineheight.ql-expanded .ql-picker-label {
+  border-color: #06c;
+}
+
+/* Hover en items del dropdown */
+.ql-snow .ql-picker.ql-lineheight .ql-picker-item:hover {
+  background-color: #f0f0f0;
+}
+
+/* Item seleccionado */
+.ql-snow .ql-picker.ql-lineheight .ql-picker-item.ql-selected {
+  color: #06c;
+  font-weight: 600;
+}
+
+/* Asegurar que el editor sea responsive */
+.ql-container {
+  font-size: 14px;
+}
+
+/* Scrollbar personalizado para el editor */
+.ql-editor::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ql-editor::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.ql-editor::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.ql-editor::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

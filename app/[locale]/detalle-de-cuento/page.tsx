@@ -13,24 +13,16 @@ import Volver from "@/public/Imagenes/detalle-de-cuento/213275df-e013-446d-b6a5-
 import Desafio from "@/public/Imagenes/detalle-de-cuento/8bc051e2-a614-488f-beb1-c4666c24ade0.jpg";
 import Leer from "@/public/Imagenes/detalle-de-cuento/d8621f18-298a-427a-b0c9-617fa1e6f2e7.jpg";
 
-// 🔹 Grid genérico
+// 🔹 Grid genérico (solo para la imagen del cuento)
 import ImageGrid, { ImageItem } from "@/src/utils/imagenes/ImageGrid";
 
 const StoryCard: React.FC = () => {
-  // 🔹 Configuración de la imagen del cuento
+  // 🔹 Imagen del cuento
   const cuentoImage: ImageItem[] = [
     {
       src: Cuento,
-      caption: "EL SECRETO DEL ÁRBOL AZUL"
-    }
-  ];
-
-  // 🔹 Configuración de los botones
-  const botones: ImageItem[] = [
-    { src: Leer ,},
-    { src: Desafio, Json: "/pages-games"},
-    { src: Retos,Json : "/pages-games" },
-    { src: Volver, Json: "/explore-content" }
+      caption: "EL SECRETO DEL ÁRBOL AZUL",
+    },
   ];
 
   return (
@@ -45,7 +37,7 @@ const StoryCard: React.FC = () => {
         }}
       >
         {/* 🔹 Contenedor principal con fondo azul gradiente */}
-        <div className="mx-auto w-full max-w-5xl bg-gradient-to-r from-cyan-300 via-cyan-400 to-blue-400 rounded-3xl p-6 relative">
+        <div className="mx-auto w-full max-w-5xl bg-gradient-to-r from-cyan-300 via-cyan-400 to-blue-400 rounded-3xl p-6 relative shadow-lg">
 
           {/* 🔹 Estrellas decorativas */}
           <div className="absolute top-4 right-6 text-white text-3xl">✦</div>
@@ -54,7 +46,7 @@ const StoryCard: React.FC = () => {
           {/* 🔹 Layout principal: imagen + texto */}
           <div className="flex flex-col md:flex-row gap-6 mb-6">
 
-            {/* 🔹 Imagen del cuento usando ImageGrid */}
+            {/* 🔹 Imagen del cuento */}
             <div className="flex-shrink-0 w-full md:w-80">
               <ImageGrid
                 images={cuentoImage}
@@ -66,7 +58,7 @@ const StoryCard: React.FC = () => {
               />
             </div>
 
-            {/* 🔹 Contenido de texto en dos columnas como en la imagen original */}
+            {/* 🔹 Contenido de texto */}
             <div className="flex-1 text-black">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -80,7 +72,6 @@ const StoryCard: React.FC = () => {
                     Con astucia y valentía, logra recuperar una chispa dorada que devuelve la luz y el poder al árbol. Al final, el bosque brilla de nuevo y Tomás se despide con el corazón lleno.
                   </p>
 
-                  {/* 🔹 Información del cuento */}
                   <div className="space-y-2 text-sm text-black">
                     <p><span className="font-bold">Género:</span> Fantasía</p>
                     <p><span className="font-bold">Personajes:</span> Tomás, un árbol parlante, y un hada traviesa</p>
@@ -100,19 +91,28 @@ const StoryCard: React.FC = () => {
                   </p>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* 🔹 Botones usando ImageGrid */}
-          <div className="mt-6">
-            <ImageGrid
-              images={botones}
-              columns={4}
-              aspectRatio="5/2"
-              onClick={(img) =>
-                window.location.href = `${img.Json?.toLowerCase().replace(/\s/g, "")}`
-              }
-            />
+              {/* 🔹 Fila de botones */}
+              {/* 🔹 Fila de botones */}
+              <div className="flex justify-center items-center gap-6 mt-6">
+                {[Leer, Desafio, Retos, Volver].map((img, index) => (
+                  <button
+                    key={index}
+                    className="transition-transform hover:scale-105"
+                  >
+                    <Image
+                      src={img}
+                      alt={`Botón ${index + 1}`}
+                      width={160} // 🔹 Tamaño mediano (ajustable)
+                      height={160}
+                      className="rounded-2xl shadow-md cursor-pointer"
+                    />
+                  </button>
+                ))}
+              </div>
+
+
+            </div>
           </div>
         </div>
       </div>

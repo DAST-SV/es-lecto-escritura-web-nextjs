@@ -7,6 +7,7 @@
   overflow-wrap: break-word;
   hyphens: auto;
   box-sizing: border-box;
+  line-height: 1.6; /* Base line-height por defecto */
 }
 
 .rich-content * {
@@ -53,7 +54,21 @@
   background: rgba(0, 0, 0, 0.3);
 }
 
-/* Encabezados */
+/* ========================================
+   LINE-HEIGHT: Prioridad a estilos inline
+   ======================================== */
+
+
+/* 🔹 Valor base solo para párrafos sin inline line-height */
+.rich-content p:not([style*="line-height"]) {
+  line-height: 1.6;
+}
+
+
+/* ========================================
+   ENCABEZADOS
+   ======================================== */
+
 .rich-content h1 {
   font-size: 2rem;
   font-weight: bold;
@@ -75,10 +90,20 @@
   line-height: 1.4;
 }
 
-/* Párrafos y texto */
+/* Encabezados con line-height personalizado */
+.rich-content h1[style*="line-height"],
+.rich-content h2[style*="line-height"],
+.rich-content h3[style*="line-height"] {
+  line-height: inherit !important;
+}
+
+/* ========================================
+   PÁRRAFOS Y TEXTO
+   ======================================== */
+
 .rich-content p {
   margin-bottom: 1rem;
-  line-height: 1.6;
+  line-height: inherit;
 }
 
 .rich-content strong {
@@ -97,16 +122,19 @@
   text-decoration: line-through;
 }
 
-/* Listas con estilos personalizables */
+/* ========================================
+   LISTAS
+   ======================================== */
+
 .rich-content ul {
-  list-style: none; /* Quitamos el estilo por defecto */
+  list-style: none;
   margin-left: 2rem;
   margin-bottom: 1rem;
   position: relative;
 }
 
 .rich-content ol {
-  list-style: none; /* Quitamos el estilo por defecto */
+  list-style: none;
   margin-left: 2rem;
   margin-bottom: 1rem;
   position: relative;
@@ -115,7 +143,7 @@
 
 .rich-content li {
   margin-bottom: 0.5rem;
-  line-height: 1.5;
+  line-height: inherit; /* Heredar del padre */
   position: relative;
   padding-left: 1rem;
 }
@@ -123,7 +151,7 @@
 /* Bullets personalizados para ul */
 .rich-content ul > li::before {
   content: "•";
-  color: #3b82f6; /* Color azul personalizable */
+  color: #3b82f6;
   font-size: 1.2em;
   position: absolute;
   left: -0.5rem;
@@ -137,7 +165,7 @@
 
 .rich-content ol > li::before {
   content: counter(list-counter) ".";
-  color: #3b82f6; /* Color azul personalizable */
+  color: #3b82f6;
   font-weight: bold;
   position: absolute;
   left: -0.8rem;
@@ -154,7 +182,10 @@
 .rich-content ul.purple-bullets > li::before { color: #9333ea; }
 .rich-content ol.purple-numbers > li::before { color: #9333ea; }
 
-/* Enlaces */
+/* ========================================
+   ENLACES
+   ======================================== */
+
 .rich-content a {
   color: #3b82f6;
   text-decoration: underline;
@@ -164,7 +195,10 @@
   color: #1d4ed8;
 }
 
-/* Alineación - Quill genera estas clases */
+/* ========================================
+   ALINEACIÓN (Quill genera estas clases)
+   ======================================== */
+
 .rich-content .ql-align-left {
   text-align: left;
 }
@@ -181,7 +215,10 @@
   text-align: justify;
 }
 
-/* Sangría - Quill genera ql-indent-1, ql-indent-2, etc. */
+/* ========================================
+   SANGRÍA
+   ======================================== */
+
 .rich-content .ql-indent-1 { padding-left: 3rem; }
 .rich-content .ql-indent-2 { padding-left: 6rem; }
 .rich-content .ql-indent-3 { padding-left: 9rem; }
@@ -191,7 +228,10 @@
 .rich-content .ql-indent-7 { padding-left: 21rem; }
 .rich-content .ql-indent-8 { padding-left: 24rem; }
 
-/* Colores de texto - Quill usa inline styles, estas son fallback */
+/* ========================================
+   COLORES DE TEXTO (Fallback)
+   ======================================== */
+
 .rich-content .ql-color-red { color: #e60000; }
 .rich-content .ql-color-orange { color: #f90; }
 .rich-content .ql-color-yellow { color: #ff0; }
@@ -199,7 +239,10 @@
 .rich-content .ql-color-blue { color: #06c; }
 .rich-content .ql-color-purple { color: #93f; }
 
-/* Colores de fondo */
+/* ========================================
+   COLORES DE FONDO
+   ======================================== */
+
 .rich-content .ql-bg-red { background-color: #e60000; }
 .rich-content .ql-bg-orange { background-color: #f90; }
 .rich-content .ql-bg-yellow { background-color: #ff0; }
@@ -207,7 +250,10 @@
 .rich-content .ql-bg-blue { background-color: #06c; }
 .rich-content .ql-bg-purple { background-color: #93f; }
 
-/* Blockquotes */
+/* ========================================
+   BLOCKQUOTES
+   ======================================== */
+
 .rich-content blockquote {
   border-left: 4px solid #ccc;
   margin-left: 0;
@@ -216,9 +262,13 @@
   color: #666;
   font-style: italic;
   margin-bottom: 1rem;
+  line-height: inherit;
 }
 
-/* Código */
+/* ========================================
+   CÓDIGO
+   ======================================== */
+
 .rich-content code {
   background-color: #f3f4f6;
   padding: 0.2rem 0.4rem;
@@ -233,6 +283,7 @@
   border-radius: 0.5rem;
   overflow-x: auto;
   margin-bottom: 1rem;
+  line-height: inherit;
 }
 
 .rich-content pre code {
@@ -240,7 +291,10 @@
   padding: 0;
 }
 
-/* Tablas (si las agregas al editor) */
+/* ========================================
+   TABLAS
+   ======================================== */
+
 .rich-content table {
   border-collapse: collapse;
   width: 100%;
@@ -259,7 +313,10 @@
   font-weight: bold;
 }
 
-/* Responsive */
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
 @media (max-width: 640px) {
   .rich-content h1 { font-size: 1.5rem; }
   .rich-content h2 { font-size: 1.3rem; }
@@ -275,7 +332,10 @@
   .rich-content .ql-indent-3 { padding-left: 6rem; }
 }
 
-/* Utilidades adicionales para layouts específicos */
+/* ========================================
+   UTILIDADES ADICIONALES
+   ======================================== */
+
 .rich-content.title-content {
   margin-bottom: 2rem;
 }

@@ -52,7 +52,7 @@ const Carousel: React.FC<CarouselProps> = ({
   const shouldShowControls = images.length > itemsToShow;
 
   return (
-    <div className={`relative w-full ${className}`}>
+    <div className={`relative w-full ${className} py-4`}>
       {/* 🔹 Botón anterior */}
       {showArrows && shouldShowControls && (
         <button
@@ -66,7 +66,7 @@ const Carousel: React.FC<CarouselProps> = ({
       )}
 
       {/* 🔹 Contenedor del carrusel */}
-      <div className={shouldShowControls ? "overflow-hidden mx-12" : "overflow-hidden"}>
+     <div className={shouldShowControls ? "overflow-hidden px-8 md:px-12" : "overflow-visible"}>
         <div 
           className={`flex transition-transform duration-500 ease-in-out ${gap}`}
           style={{ 
@@ -76,7 +76,7 @@ const Carousel: React.FC<CarouselProps> = ({
           {images.map((img, index) => (
             <div 
               key={index} 
-              className="flex-shrink-0"
+              className="flex-shrink-0 px-1 py-4"
               style={{ width: `calc(${100 / itemsToShow}% - ${gap === 'gap-4' ? '12px' : gap === 'gap-6' ? '18px' : '6px'})` }}
             >
               <div 

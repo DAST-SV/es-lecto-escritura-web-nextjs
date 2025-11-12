@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import type { page, Page } from '@/src/typings/types-page-book/index';
-import { PageRenderer } from "@/src/components/components-for-books/book/PageRenderer";
+import { PageRenderer } from "@/src/components/components-for-books/book/utils/PageRenderer";
 import type { LayoutType, backgroundstype } from '@/src/typings/types-page-book/index';
+import FlipBook from "@/src/components/components-for-books/book/utils/FlipBook";
 
 interface PageRendererIndexProps {
   page: page;
@@ -28,12 +29,15 @@ function convertPage(oldPage: page): Page {
   };
 }
 
-// ============= COMPONENTE RENDERIZADOR DE PÁGINA =============
+function convertPages(oldPages: page[]): Page[] {
+  return oldPages.map(page => convertPage(page));
+}
+
 const PageRendererIndex: React.FC<PageRendererIndexProps> = ({ page, pageNumber, isActive }) => {
   const Pagina = convertPage(page);
+
   return (
     <div className="w-full h-full relative overflow-hidden">
-      {/* Overlay para mejorar legibilidad si hay imagen de fondo */}
       {page.background && page.background !== "blanco" && (
         <div
           className="absolute inset-0 pointer-events-none"
@@ -41,19 +45,16 @@ const PageRendererIndex: React.FC<PageRendererIndexProps> = ({ page, pageNumber,
         />
       )}
 
-      {/* Contenido del layout */}
       <div className="relative z-10 h-full">
         <PageRenderer page={Pagina} isActive={isActive} />
       </div>
 
-      {/* Número de página (único que conserva clases de texto) */}
       <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs font-bold bg-black bg-opacity-70 text-white z-50">
         {pageNumber}
       </div>
     </div>
   );
 };
-
 
 interface BookViewerProps {
   pages: page[];
@@ -77,16 +78,15 @@ export const BookViewer: React.FC<BookViewerProps> = ({
   const [bookDimensions, setBookDimensions] = useState({ width: 600, height: 700 });
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   const [activePage, setActivePage] = useState(currentPage);
-  const [isClient, setIsClient] = useState(false); // Nuevo estado para detectar cliente
+  const [isClient, setIsClient] = useState(false);
+  const [previsualizar, setPrevisualizarBook] = useState<boolean>(false);
 
-  // Detectar si estamos en el cliente
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Detectar dispositivo y calcular dimensiones
   useEffect(() => {
-    if (!isClient) return; // Solo ejecutar en el cliente
+    if (!isClient) return;
 
     const checkDevice = () => {
       const isMobile = window.innerWidth < 640;
@@ -97,7 +97,6 @@ export const BookViewer: React.FC<BookViewerProps> = ({
         setIsMobileDevice(isMobile);
       }
 
-      // Calcular dimensiones para PC que quepan en pantalla
       if (!isMobile) {
         const availableHeight = screenHeight - 200;
         const availableWidth = screenWidth - 100;
@@ -127,12 +126,10 @@ export const BookViewer: React.FC<BookViewerProps> = ({
     return () => window.removeEventListener('resize', checkDevice);
   }, [isMobileDevice, isClient]);
 
-  // Sincronizar activePage con currentPage
   useEffect(() => {
     setActivePage(currentPage);
   }, [currentPage]);
 
-  // Si no estamos en el cliente, mostrar loading o placeholder
   if (!isClient) {
     return (
       <div className="min-h-screen w-full relative overflow-hidden">
@@ -148,7 +145,6 @@ export const BookViewer: React.FC<BookViewerProps> = ({
     );
   }
 
-  // Configuración para PC
   const desktopFlipBookProps: React.ComponentProps<typeof HTMLFlipBook> = {
     width: bookDimensions.width,
     height: bookDimensions.height,
@@ -191,7 +187,6 @@ export const BookViewer: React.FC<BookViewerProps> = ({
     )),
   };
 
-  // Configuración para móvil - FIXED: usar valores seguros
   const mobileFlipBookProps: React.ComponentProps<typeof HTMLFlipBook> = {
     width: Math.min((typeof window !== 'undefined' ? window.innerWidth : 400) * 0.85, 300),
     height: Math.min((typeof window !== 'undefined' ? window.innerWidth : 400) * 0.85, 300) * 1.3,
@@ -234,8 +229,22 @@ export const BookViewer: React.FC<BookViewerProps> = ({
     )),
   };
 
-  if (pages.length < 1) return null;
+  // SI ESTÁ EN MODO PREVISUALIZACIÓN - Renderizar SOLO el FlipBook
+  if (previsualizar) {
+    return (
+      <div className="w-full h-full relative">
+        <FlipBook pages={convertPages(pages)} />
+        <button
+          onClick={() => setPrevisualizarBook(false)}
+          className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[9999] px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-400 text-white text-lg font-bold rounded-full shadow-lg hover:scale-110 transition-transform"
+        >
+          ⬅️ Volver a editar
+        </button>
+      </div>
+    );
+  }
 
+  // MODO EDICIÓN - Renderizar con fondo y controles
   return (
     <div className="min-h-screen w-full relative overflow-hidden">
       {/* Fondo infantil animado */}
@@ -257,10 +266,12 @@ export const BookViewer: React.FC<BookViewerProps> = ({
       </div>
 
       {/* Contenedor del libro */}
-      <div className={`relative z-10 min-h-screen max-h-screen flex items-center p-4 ${isMobileDevice ? 'justify-center' : 'justify-center pr-16'
-        } overflow-hidden`}>
+      <div
+        className={`relative z-10 min-h-screen max-h-screen flex items-center p-4 ${
+          isMobileDevice ? 'justify-center' : 'justify-center pr-16'
+        } overflow-hidden`}
+      >
         <div className="flex flex-col items-center space-y-4">
-
           {/* Indicador de página */}
           <div className="bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg">
             <span className="text-sm font-medium text-gray-700">
@@ -285,35 +296,48 @@ export const BookViewer: React.FC<BookViewerProps> = ({
                   key={index}
                   onClick={() => onPageClick(index)}
                   disabled={isFlipping}
-                  className={`h-3 rounded-full transition-all ${activePage === index
-                    ? "bg-indigo-600 w-8"
-                    : "bg-white/60 hover:bg-white/80 w-3"
-                    }`}
+                  className={`h-3 rounded-full transition-all ${
+                    activePage === index
+                      ? 'bg-indigo-600 w-8'
+                      : 'bg-white/60 hover:bg-white/80 w-3'
+                  }`}
                   title={`Ir a página ${index + 1}`}
                 />
               ))}
             </div>
           )}
 
-          {/* Instrucciones para móviles */}
-          {isMobileDevice && (
-            <div className="bg-white/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg max-w-xs text-center">
-              <p className="text-xs text-gray-600">
-                👆 Toca las esquinas o desliza para pasar páginas
-              </p>
-            </div>
-          )}
-
-          {/* Instrucciones para desktop */}
-          {!isMobileDevice && (
-            <div className="bg-white/90 backdrop-blur-sm rounded-lg px-4 py-3 shadow-lg max-w-md text-center">
-              <p className="text-sm font-semibold mb-2 text-gray-700">💡 Instrucciones:</p>
-              <div className="text-xs text-gray-600 space-y-1">
-                <p>• Haz clic en las páginas o usa los indicadores para navegar</p>
-                <p>• Edita cada página individualmente desde el panel lateral</p>
+          <div className="flex items-start justify-between mt-6 gap-6 flex-wrap">
+            {/* Instrucciones para móviles */}
+            {isMobileDevice && (
+              <div className="bg-white/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg max-w-xs text-center flex-1">
+                <p className="text-xs text-gray-600">
+                  👆 Toca las esquinas o desliza para pasar páginas
+                </p>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Instrucciones para desktop */}
+            {!isMobileDevice && (
+              <div className="bg-white/90 backdrop-blur-sm rounded-lg px-4 py-3 shadow-lg max-w-md text-center flex-1">
+                <p className="text-sm font-semibold mb-2 text-gray-700">
+                  💡 Instrucciones:
+                </p>
+                <div className="text-xs text-gray-600 space-y-1">
+                  <p>• Haz clic en las páginas o usa los indicadores para navegar</p>
+                  <p>• Edita cada página individualmente desde el panel lateral</p>
+                </div>
+              </div>
+            )}
+
+            {/* Botón de previsualización */}
+            <button
+              onClick={() => setPrevisualizarBook(true)}
+              className="relative -translate-y-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-400 text-white text-lg font-bold rounded-full shadow-lg hover:scale-110 transition-transform flex-shrink-0"
+            >
+              Previsualizar Libro 📖
+            </button>
+          </div>
         </div>
       </div>
 
@@ -404,14 +428,12 @@ export const BookViewer: React.FC<BookViewerProps> = ({
             height: 100% !important;
             flex-shrink: 0 !important;
           }
-            /* Estilos para evitar overflow en HTMLFlipBook */
-
-          /* Contenedor principal del flipbook */
+          
+          /* Estilos para evitar overflow en HTMLFlipBook */
           .flipbook-container {
             overflow: hidden;
           }
 
-          /* Páginas individuales del flipbook */
           .flipbook-page {
             overflow: hidden;
             padding: 1rem;
@@ -421,7 +443,6 @@ export const BookViewer: React.FC<BookViewerProps> = ({
             flex-direction: column;
           }
 
-          /* Scroll interno si el contenido es muy largo */
           .flipbook-page-content {
             overflow-y: auto;
             overflow-x: hidden;
@@ -429,7 +450,6 @@ export const BookViewer: React.FC<BookViewerProps> = ({
             padding-right: 0.5rem;
           }
 
-          /* Scrollbar personalizado (opcional) */
           .flipbook-page-content::-webkit-scrollbar {
             width: 4px;
           }
@@ -450,4 +470,4 @@ export const BookViewer: React.FC<BookViewerProps> = ({
       `}</style>
     </div>
   );
-};
+}

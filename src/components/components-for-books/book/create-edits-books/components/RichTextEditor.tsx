@@ -1,16 +1,57 @@
 import React, { useMemo, useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import 'react-quill-new/dist/quill.snow.css';
+import '@/src/style/RichTextEditor.css';
 
-// ✅ Crear un wrapper que maneje el ref
+// Variable para registro único
+let isLineHeightRegistered = false;
+
+// Función para registrar el formato de line-height ANTES de crear Quill
+const registerLineHeightFormat = async () => {
+  if (isLineHeightRegistered) return;
+  
+  try {
+    // Importar Quill dinámicamente
+    const QuillModule = await import('react-quill-new');
+    const Quill = QuillModule.default.Quill || QuillModule.Quill;
+    
+    if (!Quill) {
+      console.error('No se pudo cargar Quill');
+      return;
+    }
+
+    // Importar Parchment
+    const Parchment = Quill.import('parchment');
+    
+    // Crear un Attributor de estilo para line-height
+    const LineHeightStyle = new Parchment.StyleAttributor('lineheight', 'line-height', {
+      scope: Parchment.Scope.BLOCK,
+      whitelist: ['0.5', '1', '1.15', '1.5', '1.75', '2', '2.5', '3']
+    });
+    
+    // Registrar el formato en Quill
+    Quill.register(LineHeightStyle, true);
+    
+    console.log('✅ Line-height format registrado correctamente');
+    isLineHeightRegistered = true;
+    
+  } catch (error) {
+    console.error('Error al registrar line-height:', error);
+  }
+};
+
+// ✅ Wrapper de ReactQuill con registro previo
 const ReactQuillWrapper = dynamic(
   async () => {
-    const { default: RQ } = await import('react-quill-new');
+    // CRÍTICO: Registrar el formato ANTES de retornar el componente
+    await registerLineHeightFormat();
     
+    const { default: RQ } = await import('react-quill-new');
+
     // Componente wrapper con forwardRef
     return React.forwardRef<any, any>((props, ref) => {
       const innerRef = React.useRef<any>(null);
-      
+
       React.useImperativeHandle(ref, () => ({
         getEditor: () => innerRef.current?.getEditor(),
       }));
@@ -50,15 +91,17 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const [stats, setStats] = useState({ words: 0, characters: 0 });
   const [textTooLong, setTextTooLong] = useState(false);
 
-  // Toolbar
+  // Toolbar configuration
   const modules = useMemo(() => ({
     toolbar: {
       container: [
         [{ 'header': [1, 2, 3, false] }],
         ['bold', 'italic', 'underline', 'strike'],
         [{ 'color': [] }, { 'background': [] }],
+        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
         [{ 'indent': '-1' }, { 'indent': '+1' }],
         [{ 'align': [] }],
+        [{ 'lineheight': ['0.5', '1', '1.15', '1.5', '1.75', '2', '2.5', '3'] }],
         ['link', 'blockquote'],
         ['clean']
       ]
@@ -68,8 +111,42 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   const formats = [
     'header', 'bold', 'italic', 'underline', 'strike',
-    'color', 'background', 'indent', 'align', 'link', 'blockquote'
+    'color', 'background', 'list', 'indent', 'align', 'lineheight', 'link', 'blockquote'
   ];
+
+  // Inyectar estilos CSS una sola vez
+  useEffect(() => {
+    if (typeof document !== 'undefined' && !document.getElementById('quill-lineheight-styles')) {
+      const style = document.createElement('style');
+      style.id = 'quill-lineheight-styles';
+      style.innerHTML = `
+        /* Asegurar que line-height se vea en el editor */
+        .ql-editor p,
+        .ql-editor h1,
+        .ql-editor h2,
+        .ql-editor h3,
+        .ql-editor h4,
+        .ql-editor h5,
+        .ql-editor h6,
+        .ql-editor ol,
+        .ql-editor ul,
+        .ql-editor li,
+        .ql-editor div,
+        .ql-editor blockquote {
+          line-height: inherit;
+        }
+        
+        .ql-editor [style*="line-height"] {
+          line-height: inherit !important;
+        }
+        
+        .ql-editor [style*="line-height"] * {
+          line-height: inherit;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
 
   // Enfocar editor al abrir
   useEffect(() => {
