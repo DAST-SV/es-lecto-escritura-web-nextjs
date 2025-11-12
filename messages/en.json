@@ -57,6 +57,21 @@
       "href": "/diario",
       "title": "View your diary"
     },
+    "library": {
+      "text": "Library",
+      "href": "/library",
+      "title": "Library"
+    },
+    "myWorld": {
+      "text": "My World",
+      "href": "/my-world",
+      "title": "My World"
+    },
+    "myProgress": {
+      "text": "My Progress",
+      "href": "/my-progress",
+      "title": "See your progress"
+    },
     "myBooks": {
       "text": "My Books",
       "href": "/mis-libros",

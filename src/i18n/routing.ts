@@ -41,6 +41,18 @@ export const routing = defineRouting({
     '/pages-create-book':{
       en: '/create-book',
       es: '/crear-libro'
+    },
+    '/library': {
+      en: '/library',
+      es: '/biblioteca'
+    },
+    '/my-world': {
+      en: '/my-world',
+      es: '/mi-mundo'
+    },
+    '/my-progress': {
+      en: '/my-progress',
+      es: '/mi-progreso'
     }
   }
 });

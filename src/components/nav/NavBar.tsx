@@ -79,23 +79,23 @@ const NavBar: React.FC<NavBarProps> = ({ brandName, userAvatar }) => {
     // Menú privado
     const privateItems = [
         {
-            label: t("myBooks.text"),
-            href: `/${locale}${t("myBooks.href")}`,
-            title: t("myBooks.title")
+            label: t("library.text"),
+            href: `/${locale}${t("library.href")}`,
+            title: t("library.title")
         },
         {
-            label: t("createBook.text"),
-            href: `/${locale}${t("createBook.href")}`,
-            title: t("createBook.title")
+            label: t("myWorld.text"),
+            href: `/${locale}${t("myWorld.href")}`,
+            title: t("myWorld.title")
         },
         {
-            label: t("profile.text"),
-            href: `/${locale}${t("profile.href")}`,
-            title: t("profile.title")
+            label: t("myProgress.text"),
+            href: `/${locale}${t("myProgress.href")}`,
+            title: t("myProgress.title")
         }
     ];
 
-    const defaultNavItems = user ? privateItems : publicItems;
+    const defaultNavItems = !user ? privateItems : publicItems;
 
     // Logout handler
     const handleLogout = async () => {
