@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-export async function createClient() {
+export async function createClient(rememberMe: boolean = false) {
   const cookieStore = await cookies()
 
   return createServerClient(
@@ -14,13 +14,24 @@ export async function createClient() {
         },
         setAll(cookiesToSet) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
+            cookiesToSet.forEach(({ name, value, options }) => {
+              const baseOptions = {
+                ...options,
+                sameSite: 'lax' as const,
+                secure: true,
+                httpOnly: true,
+                path: '/',
+              }
+
+              // Si el usuario marcó "Recordar sesión", extendemos la expiración
+              const finalOptions = rememberMe
+                ? { ...baseOptions, maxAge: 60 * 60 * 24 * 30 } // 30 días
+                : baseOptions
+
+              cookieStore.set(name, value, finalOptions)
+            })
           } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
+            // Si se ejecuta en un Server Component puro, se ignora (middleware se encarga)
           }
         },
       },
