@@ -44,7 +44,9 @@ export function useActividadesLibro() {
     if (!confirm('¿Estás seguro de eliminar esta actividad?')) return;
 
     try {
-      const response = await fetch(`/api/actividades/quizzes/${id_actividad}`, { method: 'DELETE' });
+      const response = await fetch(`/api/actividades/quizzes/${id_actividad}`, { 
+        method: 'DELETE' 
+      });
       const result = await response.json();
 
       if (result.success) {
@@ -59,6 +61,61 @@ export function useActividadesLibro() {
     }
   };
 
+  // 🆕 Actualización OPTIMISTA sin recargar
+  const handleToggleOficial = async (id_actividad: string, esOficialActual: boolean) => {
+    // 1️⃣ Actualización optimista del estado local
+    setActividades((prev) =>
+      prev.map((actividad) => ({
+        ...actividad,
+        // Si es la actividad clickeada, invertir su estado
+        // Si no, y vamos a marcar como oficial, desmarcar las demás
+        es_oficial:
+          actividad.id_actividad === id_actividad
+            ? !esOficialActual
+            : !esOficialActual
+            ? false
+            : actividad.es_oficial,
+      }))
+    );
+
+    // 2️⃣ Llamada al API en segundo plano
+    try {
+      const response = await fetch(`/api/libros/actividades/quizzes/${id_actividad}/oficial`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          es_oficial: !esOficialActual,
+          id_libro: id_libro,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Error al actualizar');
+      }
+
+      // 3️⃣ Opcional: mostrar notificación de éxito
+      console.log('✅', result.message);
+      
+    } catch (error) {
+      console.error('Error al actualizar actividad oficial:', error);
+      
+      // 4️⃣ Revertir cambios si falla (rollback)
+      setActividades((prev) =>
+        prev.map((actividad) =>
+          actividad.id_actividad === id_actividad
+            ? { ...actividad, es_oficial: esOficialActual }
+            : actividad
+        )
+      );
+      
+      alert('Error al actualizar el estado oficial');
+    }
+  };
+
   return {
     id_libro,
     router,
@@ -68,5 +125,6 @@ export function useActividadesLibro() {
     error,
     fetchData,
     handleDeleteActividad,
+    handleToggleOficial,
   };
 }

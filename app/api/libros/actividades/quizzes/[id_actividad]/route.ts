@@ -134,6 +134,7 @@ export async function PUT(
   }
 }
 
+
 export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ id_actividad: string }> }

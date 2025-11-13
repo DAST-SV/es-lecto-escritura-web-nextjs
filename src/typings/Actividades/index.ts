@@ -10,4 +10,5 @@ export interface Actividad {
   intentos_permitidos?: number | null; // SMALLINT (NULL = ilimitados)
   fecha_creacion?: string;             // TIMESTAMP (ISO string en JS)
   activo?: boolean;                    // BOOLEAN (default: true)
+  es_oficial: boolean;               // BOOLEAN PARA SABER SI ES EL PRINCIPAL
 }

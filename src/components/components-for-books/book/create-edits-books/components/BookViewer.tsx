@@ -1,11 +1,10 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import type { page, Page } from '@/src/typings/types-page-book/index';
 import { PageRenderer } from "@/src/components/components-for-books/book/utils/PageRenderer";
 import type { LayoutType, backgroundstype } from '@/src/typings/types-page-book/index';
-import FlipBook from "@/src/components/components-for-books/book/utils/FlipBook";
 
 interface PageRendererIndexProps {
   page: page;
@@ -27,10 +26,6 @@ function convertPage(oldPage: page): Page {
     items: [],
     border: undefined
   };
-}
-
-function convertPages(oldPages: page[]): Page[] {
-  return oldPages.map(page => convertPage(page));
 }
 
 const PageRendererIndex: React.FC<PageRendererIndexProps> = ({ page, pageNumber, isActive }) => {
@@ -61,7 +56,7 @@ interface BookViewerProps {
   currentPage: number;
   isFlipping: boolean;
   bookKey: number;
-  bookRef: React.RefObject<any>;
+  bookRef: React.RefObject<any>; 
   onFlip: (e: unknown) => void;
   onPageClick: (pageIndex: number) => void;
 }
@@ -71,15 +66,15 @@ export const BookViewer: React.FC<BookViewerProps> = ({
   currentPage,
   isFlipping,
   bookKey,
-  bookRef,
+  bookRef, // ✅ Recibir el ref externo
   onFlip,
   onPageClick
 }) => {
-  const [bookDimensions, setBookDimensions] = useState({ width: 600, height: 700 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [bookDimensions, setBookDimensions] = useState({ width: 400, height: 500 });
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   const [activePage, setActivePage] = useState(currentPage);
   const [isClient, setIsClient] = useState(false);
-  const [previsualizar, setPrevisualizarBook] = useState<boolean>(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -90,40 +85,48 @@ export const BookViewer: React.FC<BookViewerProps> = ({
 
     const checkDevice = () => {
       const isMobile = window.innerWidth < 640;
-      const screenHeight = window.innerHeight;
-      const screenWidth = window.innerWidth;
-
+      
       if (isMobile !== isMobileDevice) {
         setIsMobileDevice(isMobile);
       }
 
-      if (!isMobile) {
-        const availableHeight = screenHeight - 200;
-        const availableWidth = screenWidth - 100;
+      if (!isMobile && containerRef.current) {
+        const containerHeight = containerRef.current.clientHeight;
+        const containerWidth = containerRef.current.clientWidth;
 
-        let bookWidth = 600;
-        let bookHeight = 700;
+        const reservedHeight = 180;
+        const availableHeight = containerHeight - reservedHeight;
+        const availableWidth = containerWidth - 100;
 
-        if (bookHeight > availableHeight) {
-          bookHeight = availableHeight;
-          bookWidth = (bookHeight * 600) / 700;
-        }
+        const aspectRatio = 5 / 6;
 
-        if (bookWidth > availableWidth) {
-          bookWidth = availableWidth;
-          bookHeight = (bookWidth * 700) / 600;
+        let bookWidth = 400;
+        let bookHeight = 500;
+
+        if (availableHeight > 0 && availableWidth > 0) {
+          bookHeight = Math.min(availableHeight, 600);
+          bookWidth = bookHeight * aspectRatio;
+
+          if (bookWidth > availableWidth) {
+            bookWidth = availableWidth;
+            bookHeight = bookWidth / aspectRatio;
+          }
         }
 
         setBookDimensions({
-          width: Math.round(bookWidth),
-          height: Math.round(bookHeight)
+          width: Math.max(Math.round(bookWidth), 300),
+          height: Math.max(Math.round(bookHeight), 350)
         });
       }
     };
 
     checkDevice();
+    const timer = setTimeout(checkDevice, 100);
     window.addEventListener('resize', checkDevice);
-    return () => window.removeEventListener('resize', checkDevice);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', checkDevice);
+    };
   }, [isMobileDevice, isClient]);
 
   useEffect(() => {
@@ -132,14 +135,10 @@ export const BookViewer: React.FC<BookViewerProps> = ({
 
   if (!isClient) {
     return (
-      <div className="min-h-screen w-full relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-sky-200 via-purple-100 to-pink-200">
-          <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-            <div className="bg-white/90 backdrop-blur-sm rounded-lg px-6 py-8 shadow-lg max-w-md text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-              <p className="text-sm text-gray-600">Cargando libro...</p>
-            </div>
-          </div>
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg px-6 py-8 shadow-lg max-w-md text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-sm text-gray-600">Cargando libro...</p>
         </div>
       </div>
     );
@@ -229,115 +228,68 @@ export const BookViewer: React.FC<BookViewerProps> = ({
     )),
   };
 
-  // SI ESTÁ EN MODO PREVISUALIZACIÓN - Renderizar SOLO el FlipBook
-  if (previsualizar) {
-    return (
-      <div className="w-full h-full relative">
-        <FlipBook pages={convertPages(pages)} />
-        <button
-          onClick={() => setPrevisualizarBook(false)}
-          className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[9999] px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-400 text-white text-lg font-bold rounded-full shadow-lg hover:scale-110 transition-transform"
-        >
-          ⬅️ Volver a editar
-        </button>
-      </div>
-    );
-  }
-
-  // MODO EDICIÓN - Renderizar con fondo y controles
   return (
-    <div className="min-h-screen w-full relative overflow-hidden">
+    <div ref={containerRef} className="w-full h-full relative overflow-hidden">
       {/* Fondo infantil animado */}
       <div className="absolute inset-0 bg-gradient-to-br from-sky-200 via-purple-100 to-pink-200">
-        {/* Nubes flotantes */}
         <div className="absolute top-10 left-10 w-20 h-12 bg-white rounded-full opacity-80 animate-float-slow"></div>
         <div className="absolute top-20 right-16 w-16 h-10 bg-white rounded-full opacity-70 animate-float-medium"></div>
         <div className="absolute top-32 left-1/3 w-12 h-8 bg-white rounded-full opacity-60 animate-float-fast"></div>
 
-        {/* Estrellas brillantes */}
         <div className="absolute top-16 left-1/4 w-3 h-3 bg-yellow-300 rounded-full animate-twinkle"></div>
         <div className="absolute top-24 right-1/4 w-2 h-2 bg-yellow-400 rounded-full animate-twinkle-slow"></div>
         <div className="absolute top-40 left-3/4 w-4 h-4 bg-yellow-200 rounded-full animate-twinkle-fast"></div>
 
-        {/* Sol sonriente */}
         <div className="absolute top-8 right-8 w-16 h-16 bg-yellow-300 rounded-full flex items-center justify-center opacity-80">
           <div className="text-orange-600 text-lg">☀️</div>
         </div>
       </div>
 
       {/* Contenedor del libro */}
-      <div
-        className={`relative z-10 min-h-screen max-h-screen flex items-center p-4 ${
-          isMobileDevice ? 'justify-center' : 'justify-center pr-16'
-        } overflow-hidden`}
-      >
-        <div className="flex flex-col items-center space-y-4">
-          {/* Indicador de página */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg">
-            <span className="text-sm font-medium text-gray-700">
-              Página {activePage + 1} de {pages.length}
-            </span>
-          </div>
+      <div className="relative z-10 w-full h-full flex flex-col items-center justify-center py-4 px-4">
+        {/* Indicador de página */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg mb-3 flex-shrink-0">
+          <span className="text-sm font-medium text-gray-700">
+            Página {activePage + 1} de {pages.length}
+          </span>
+        </div>
 
-          {/* Libro con configuración específica según dispositivo */}
-          <div className="drop-shadow-2xl">
-            {isMobileDevice ? (
-              <HTMLFlipBook {...mobileFlipBookProps} ref={bookRef} key={`mobile-${bookKey}`} />
-            ) : (
-              <HTMLFlipBook {...desktopFlipBookProps} ref={bookRef} key={`desktop-${bookKey}`} />
-            )}
-          </div>
-
-          {/* Indicadores de página para desktop */}
-          {!isMobileDevice && (
-            <div className="flex gap-2 mt-4">
-              {pages.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => onPageClick(index)}
-                  disabled={isFlipping}
-                  className={`h-3 rounded-full transition-all ${
-                    activePage === index
-                      ? 'bg-indigo-600 w-8'
-                      : 'bg-white/60 hover:bg-white/80 w-3'
-                  }`}
-                  title={`Ir a página ${index + 1}`}
-                />
-              ))}
-            </div>
+        {/* Libro con configuración específica según dispositivo */}
+        <div className="flex-shrink-0 drop-shadow-2xl">
+          {isMobileDevice ? (
+            <HTMLFlipBook {...mobileFlipBookProps} ref={bookRef} key={`mobile-${bookKey}`} />
+          ) : (
+            <HTMLFlipBook {...desktopFlipBookProps} ref={bookRef} key={`desktop-${bookKey}`} />
           )}
+        </div>
 
-          <div className="flex items-start justify-between mt-6 gap-6 flex-wrap">
-            {/* Instrucciones para móviles */}
-            {isMobileDevice && (
-              <div className="bg-white/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg max-w-xs text-center flex-1">
-                <p className="text-xs text-gray-600">
-                  👆 Toca las esquinas o desliza para pasar páginas
-                </p>
-              </div>
-            )}
-
-            {/* Instrucciones para desktop */}
-            {!isMobileDevice && (
-              <div className="bg-white/90 backdrop-blur-sm rounded-lg px-4 py-3 shadow-lg max-w-md text-center flex-1">
-                <p className="text-sm font-semibold mb-2 text-gray-700">
-                  💡 Instrucciones:
-                </p>
-                <div className="text-xs text-gray-600 space-y-1">
-                  <p>• Haz clic en las páginas o usa los indicadores para navegar</p>
-                  <p>• Edita cada página individualmente desde el panel lateral</p>
-                </div>
-              </div>
-            )}
-
-            {/* Botón de previsualización */}
-            <button
-              onClick={() => setPrevisualizarBook(true)}
-              className="relative -translate-y-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-400 text-white text-lg font-bold rounded-full shadow-lg hover:scale-110 transition-transform flex-shrink-0"
-            >
-              Previsualizar Libro 📖
-            </button>
+        {/* Indicadores de página para desktop */}
+        {!isMobileDevice && (
+          <div className="flex gap-2 flex-wrap justify-center max-w-xl mt-3 flex-shrink-0">
+            {pages.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => onPageClick(index)}
+                disabled={isFlipping}
+                className={`h-2.5 rounded-full transition-all ${
+                  activePage === index
+                    ? 'bg-indigo-600 w-7'
+                    : 'bg-white/60 hover:bg-white/80 w-2.5'
+                }`}
+                title={`Ir a página ${index + 1}`}
+              />
+            ))}
           </div>
+        )}
+
+        {/* Instrucciones */}
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-lg max-w-md text-center mt-2 flex-shrink-0">
+          <p className="text-xs text-gray-600">
+            {isMobileDevice 
+              ? '👆 Toca las esquinas o desliza para pasar páginas'
+              : '🖱️ Haz clic en las páginas para navegar'
+            }
+          </p>
         </div>
       </div>
 
@@ -402,34 +354,12 @@ export const BookViewer: React.FC<BookViewerProps> = ({
           overflow: hidden;
         }
 
-        /* Estilos específicos para PC - forzar dos páginas */
         @media (min-width: 640px) {
           .storybook-flipbook .page {
             display: inline-block !important;
             position: relative !important;
           }
           
-          .storybook-flipbook[data-portrait="false"] .page:nth-child(even) {
-            margin-left: 0 !important;
-          }
-          
-          .storybook-flipbook[data-portrait="false"] .page:nth-child(odd) {
-            margin-right: 0 !important;
-          }
-          
-          /* Forzar el contenedor a mostrar páginas lado a lado */
-          .storybook-flipbook[data-portrait="false"] {
-            display: flex !important;
-            align-items: center !important;
-          }
-          
-          .storybook-flipbook[data-portrait="false"] .page {
-            width: 50% !important;
-            height: 100% !important;
-            flex-shrink: 0 !important;
-          }
-          
-          /* Estilos para evitar overflow en HTMLFlipBook */
           .flipbook-container {
             overflow: hidden;
           }
@@ -470,4 +400,4 @@ export const BookViewer: React.FC<BookViewerProps> = ({
       `}</style>
     </div>
   );
-}
+};

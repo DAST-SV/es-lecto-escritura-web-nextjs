@@ -1,7 +1,7 @@
 'use client';
 
 import { useActividadesLibro } from '@/src/components/components-for-books/book/books/hooks/useActividadesLibro';
-import { BookOpen, Plus, FileQuestion, Trash2, Edit3, Eye, Clock, Target, Award } from 'lucide-react';
+import { BookOpen, Plus, FileQuestion, Trash2, Edit3, Eye, Clock, Target, Award, Star } from 'lucide-react';
 
 export default function ActividadesLibroPage() {
   const {
@@ -13,6 +13,7 @@ export default function ActividadesLibroPage() {
     error,
     fetchData,
     handleDeleteActividad,
+    handleToggleOficial,
   } = useActividadesLibro();
 
   if (loading)
@@ -215,6 +216,44 @@ export default function ActividadesLibroPage() {
                       </div>
                     </div>
                   </div>
+                {/* 🎯 Toggle de actividad oficial */}
+                <div className="mb-4 p-3 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl border border-amber-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Star className={`w-5 h-5 ${actividad.es_oficial ? 'text-amber-500 fill-amber-500' : 'text-gray-400'}`} />
+                      <div>
+                        <p className="text-sm font-bold text-gray-900">
+                          Actividad Oficial del Cuento
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          Se mostrará en el botón "Desafío"
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* 🔘 Toggle Switch */}
+                    <button
+                      onClick={() => handleToggleOficial(actividad.id_actividad, actividad.es_oficial)}
+                      className={`
+                        relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
+                        ${actividad.es_oficial ? 'bg-gradient-to-r from-amber-400 to-yellow-500' : 'bg-gray-300'}
+                      `}
+                    >
+                      <span
+                        className={`
+                          inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform duration-300
+                          ${actividad.es_oficial ? 'translate-x-7' : 'translate-x-1'}
+                        `}
+                      >
+                        {actividad.es_oficial && (
+                          <Star className="w-4 h-4 text-amber-500 fill-amber-500 m-1" />
+                        )}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+
 
                   {/* Estadísticas */}
                   <div className="grid grid-cols-3 gap-3 mb-4">

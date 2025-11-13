@@ -38,8 +38,8 @@ const RealJigsawPuzzle: React.FC<RealJigsawPuzzleProps> = ({ Url }) => {
   const [draggedPiece, setDraggedPiece] = useState<PuzzlePiece | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isCompleted, setIsCompleted] = useState(false);
-  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 900 });
-  const [puzzleSize, setPuzzleSize] = useState({ width: 500, height: 500 });
+  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 800 });
+  const [puzzleSize, setPuzzleSize] = useState({ width: 800, height: 800 });
   const [isMobile, setIsMobile] = useState(false);
 
   // Detectar dispositivo móvil y ajustar tamaños
@@ -49,22 +49,21 @@ const RealJigsawPuzzle: React.FC<RealJigsawPuzzleProps> = ({ Url }) => {
       setIsMobile(mobile);
       
       if (mobile) {
-        // Ajustar tamaños para móvil
+        // Ajustar tamaños para móvil - canvas y puzzle del mismo tamaño
         const containerWidth = Math.min(window.innerWidth - 40, 400);
-        const puzzleArea = Math.min(containerWidth * 0.8, 300);
         
         setCanvasSize({
           width: containerWidth,
-          height: containerWidth * 1.2
+          height: containerWidth
         });
         setPuzzleSize({
-          width: puzzleArea,
-          height: puzzleArea
+          width: containerWidth,
+          height: containerWidth
         });
       } else {
-        // Tamaños para escritorio
-        setCanvasSize({ width: 800, height: 900 });
-        setPuzzleSize({ width: 500, height: 500 });
+        // Tamaños para escritorio - canvas y puzzle del mismo tamaño
+        setCanvasSize({ width: 800, height: 800 });
+        setPuzzleSize({ width: 800, height: 800 });
       }
     };
 
@@ -295,18 +294,17 @@ const RealJigsawPuzzle: React.FC<RealJigsawPuzzleProps> = ({ Url }) => {
         const correctX = c * pieceWidth;
         const correctY = r * pieceHeight;
 
-        // Posición inicial aleatoria fuera del área del puzzle
-        const margin = isMobile ? 20 : 50;
-        const maxX = canvas.width - pieceWidth - margin;
-        const maxY = canvas.height - pieceHeight - margin;
-        const minY = puzzleSize.height + margin;
+        // Posición inicial aleatoria dentro del área del puzzle (mezcladas)
+        const margin = pieceWidth * 0.1;
+        const maxX = puzzleSize.width - pieceWidth - margin;
+        const maxY = puzzleSize.height - pieceHeight - margin;
 
         newPieces.push({
           id: r * cols + c,
           row: r,
           col: c,
-          x: Math.random() * maxX,
-          y: minY + Math.random() * (maxY - minY),
+          x: margin + Math.random() * maxX,
+          y: margin + Math.random() * maxY,
           correctX,
           correctY,
           width: pieceWidth,
@@ -336,18 +334,9 @@ const RealJigsawPuzzle: React.FC<RealJigsawPuzzleProps> = ({ Url }) => {
     // Limpiar canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Dibujar marco del área del puzzle
-    ctx.strokeStyle = '#ddd';
-    ctx.lineWidth = isMobile ? 2 : 3;
-    ctx.setLineDash([8, 8]);
-    ctx.strokeRect(0, 0, puzzleSize.width, puzzleSize.height);
-    ctx.setLineDash([]);
-
-    // Texto de ayuda en el marco
-    ctx.fillStyle = '#999';
-    ctx.font = `${isMobile ? '14' : '16'}px Arial`;
-    ctx.textAlign = 'center';
-    ctx.fillText('Área del Puzzle', puzzleSize.width / 2, puzzleSize.height / 2);
+    // Fondo sutil para el área del puzzle
+    ctx.fillStyle = '#f8f9fa';
+    ctx.fillRect(0, 0, puzzleSize.width, puzzleSize.height);
 
     // Dibujar cada pieza con su forma irregular
     pieces.forEach((piece) => {
@@ -662,19 +651,17 @@ const RealJigsawPuzzle: React.FC<RealJigsawPuzzleProps> = ({ Url }) => {
   const shufflePieces = () => {
     if (!canvasRef.current) return;
 
-    const canvas = canvasRef.current;
-    const margin = isMobile ? 20 : 50;
+    const margin = pieces.length > 0 ? pieces[0].width * 0.1 : 20;
     
     setPieces((prev) =>
       prev.map((piece) => {
-        const maxX = canvas.width - piece.width - margin;
-        const maxY = canvas.height - piece.height - margin;
-        const minY = puzzleSize.height + margin;
+        const maxX = puzzleSize.width - piece.width - margin;
+        const maxY = puzzleSize.height - piece.height - margin;
         
         return {
           ...piece,
-          x: Math.random() * maxX,
-          y: minY + Math.random() * (maxY - minY),
+          x: margin + Math.random() * maxX,
+          y: margin + Math.random() * maxY,
           isPlaced: false,
           isDragging: false,
         };

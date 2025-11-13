@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  Navigation, 
-  FileText, 
-  Palette, 
-  BookOpen, 
-  PanelLeftClose, 
-  PanelLeftOpen,
+import {
+  Navigation,
+  FileText,
+  Palette,
+  BookOpen,
+  Eye,
   Save,
   ChevronLeft,
   ChevronRight
@@ -31,12 +30,22 @@ import { BackgroundControls } from '@/src/components/components-for-books/book/c
 import { PageNavigation } from '@/src/components/components-for-books/book/create-edits-books/components/PageNavigation';
 import { BookMetadataForm } from '@/src/components/components-for-books/book/create-edits-books/components/BookMetadataForm';
 
+// Importar BookViewer
+import { BookViewer } from '@/src/components/components-for-books/book/create-edits-books/components/BookViewer';
+
 interface BookSidebarProps {
   pages: page[];
   currentPage: number;
   editingState: UseBookEditorReturn;
   imageHandler: UseImageHandlerReturn;
   navigation: UseBookNavigationReturn;
+
+  // Props para BookViewer
+  isFlipping: boolean;
+  bookKey: number;
+  bookRef: React.RefObject<any>;
+  onFlip: (data: any) => void;
+  onPageClick: (pageNumber: number) => void;
 
   // Metadatos
   selectedCategorias: (number | string)[];
@@ -72,6 +81,11 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
   editingState,
   imageHandler,
   navigation,
+  isFlipping,
+  bookKey,
+  bookRef,
+  onFlip,
+  onPageClick,
   selectedCategorias,
   selectedGeneros,
   selectedEtiquetas,
@@ -95,17 +109,15 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
   onDeletePage,
 }) => {
   const currentPageData = pages[currentPage];
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<string | null>('visualizacion');
 
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-  
   const toggleSection = (sectionId: string) => {
     setActiveSection(activeSection === sectionId ? null : sectionId);
   };
 
-  // Secciones del menú
+  // Secciones del menú - AÑADIDA VISUALIZACIÓN
   const menuSections = [
+    { id: 'visualizacion', icon: Eye, label: 'Visualización', color: 'bg-indigo-500' },
     { id: 'navegacion', icon: Navigation, label: 'Navegación', color: 'bg-blue-500' },
     { id: 'contenido', icon: FileText, label: 'Contenido', color: 'bg-green-500' },
     { id: 'visual', icon: Palette, label: 'Visual', color: 'bg-purple-500' },
@@ -116,7 +128,10 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
 
   // Renderizar contenido de cada sección
   const renderSectionContent = (sectionId: string) => {
-    switch(sectionId) {
+    switch (sectionId) {
+      case 'visualizacion':
+        return null; //
+
       case 'navegacion':
         return (
           <div className="space-y-6">
@@ -150,7 +165,7 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
             </div>
           </div>
         );
-      
+
       case 'contenido':
         return (
           <div className="space-y-6">
@@ -187,7 +202,7 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
             </div>
           </div>
         );
-      
+
       case 'visual':
         return (
           <div className="space-y-6">
@@ -225,7 +240,7 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
             </div>
           </div>
         );
-      
+
       case 'libro':
         return (
           <div>
@@ -251,125 +266,99 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
             />
           </div>
         );
-      
+
       default:
         return null;
     }
   };
 
   return (
-    <div className={`
-      bg-white border-r border-gray-200 shadow-lg transition-all duration-300 ease-in-out flex flex-col
-      ${isSidebarOpen ? 'w-80' : 'w-16'}
-    `}>
-      
-      {/* Header con toggle */}
-      <div className={`flex items-center border-b border-gray-200 ${
-        isSidebarOpen ? 'justify-between p-4' : 'justify-center p-2'
-      }`}>
-        {isSidebarOpen && (
-          <h2 className="font-semibold text-gray-800 text-lg">
-            🛠️ Herramientas
-          </h2>
-        )}
-        <button
-          onClick={toggleSidebar}
-          className={`bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors shadow-md ${
-            isSidebarOpen ? 'p-1.5' : 'p-3 my-2'
-          }`}
-        >
-          {isSidebarOpen ? (
-            <PanelLeftClose size={16} />
-          ) : (
-            <PanelLeftOpen size={20} />
-          )}
-        </button>
+    <div className="w-full h-screen bg-white flex flex-col">
+
+      {/* Header con título */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+        <h2 className="font-bold text-gray-800 text-xl">
+          🛠️ Panel de Edición
+        </h2>
+        <div className="flex items-center gap-2 text-sm">
+          <button
+            className="p-1.5 hover:bg-white rounded disabled:opacity-50 transition-colors"
+            disabled={!navigation.canGoPrev}
+            onClick={navigation.prevPage}
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <span className="px-3 py-1.5 bg-white rounded text-gray-700 font-medium min-w-[70px] text-center shadow-sm">
+            {currentPage + 1} / {pages.length}
+          </span>
+          <button
+            className="p-1.5 hover:bg-white rounded disabled:opacity-50 transition-colors"
+            disabled={!navigation.canGoNext}
+            onClick={navigation.nextPage}
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
       </div>
 
-      {/* Navegación de secciones con acordeón */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Menú de pestañas horizontal */}
+      <div className="flex border-b border-gray-200 bg-gray-50">
         {menuSections.map(section => {
           const Icon = section.icon;
           const isActive = activeSection === section.id;
-          
-          return (
-            <div key={section.id} className="border-b border-gray-200">
-              {/* Botón de sección */}
-              <button
-                onClick={() => toggleSection(section.id)}
-                className={`
-                  w-full flex items-center gap-3 p-3 transition-all duration-200
-                  ${isActive
-                    ? `${section.color} text-white`
-                    : 'text-gray-600 hover:bg-gray-100'
-                  }
-                  ${!isSidebarOpen ? 'justify-center' : 'justify-between'}
-                `}
-                title={!isSidebarOpen ? section.label : undefined}
-              >
-                <div className={`flex items-center gap-3 ${!isSidebarOpen ? '' : ''}`}>
-                  <Icon size={18} />
-                  {isSidebarOpen && (
-                    <span className="font-medium text-sm">{section.label}</span>
-                  )}
-                </div>
-                {isSidebarOpen && (
-                  <ChevronRight 
-                    size={16} 
-                    className={`transition-transform duration-200 ${
-                      isActive ? 'rotate-90' : ''
-                    }`}
-                  />
-                )}
-              </button>
 
-              {/* Contenido desplegable */}
-              {isSidebarOpen && isActive && (
-                <div className="p-4 bg-gray-50 animate-slideDown">
-                  {renderSectionContent(section.id)}
-                </div>
-              )}
-            </div>
+          return (
+            <button
+              key={section.id}
+              onClick={() => toggleSection(section.id)}
+              className={`
+              flex-1 flex flex-col items-center gap-2 py-4 px-4 transition-all duration-200
+              ${isActive
+                  ? `${section.color} text-white shadow-lg`
+                  : 'text-gray-600 hover:bg-gray-100'
+                }
+            `}
+              title={section.label}
+            >
+              <Icon size={24} />
+              <span className="font-medium text-sm">{section.label}</span>
+            </button>
           );
         })}
       </div>
 
-      {/* Botón guardar */}
-      <div className="p-4 border-t border-gray-200 space-y-3">
-        {/* Navegación de páginas rápida - solo cuando está abierto */}
-        {isSidebarOpen && (
-          <div className="flex items-center gap-2 text-sm">
-            <button 
-              className="p-1.5 hover:bg-gray-100 rounded disabled:opacity-50 transition-colors"
-              disabled={!navigation.canGoPrev}
-              onClick={navigation.prevPage}
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <span className="px-3 py-1.5 bg-gray-100 rounded text-gray-700 font-medium min-w-[70px] text-center">
-              {currentPage + 1} / {pages.length}
-            </span>
-            <button 
-              className="p-1.5 hover:bg-gray-100 rounded disabled:opacity-50 transition-colors"
-              disabled={!navigation.canGoNext}
-              onClick={navigation.nextPage}
-            >
-              <ChevronRight size={16} />
-            </button>
+      {/* BookViewer - SIEMPRE MONTADO pero visible solo cuando activeSection === 'visualizacion' */}
+      <div className={`flex-1 ${activeSection === 'visualizacion' ? 'block' : 'hidden'}`}>
+        <div className="h-full flex items-center justify-center bg-gray-100 rounded-lg">
+          <BookViewer
+            bookRef={bookRef}
+            pages={pages}
+            currentPage={currentPage}
+            isFlipping={isFlipping}
+            bookKey={bookKey}
+            onFlip={onFlip}
+            onPageClick={onPageClick}
+          />
+        </div>
+      </div>
+
+      {/* Contenido de otras secciones */}
+      {activeSection && activeSection !== 'visualizacion' && (
+        <div className="flex-1 overflow-y-auto bg-gray-50">
+          <div className="max-w-4xl mx-auto p-6">
+            {renderSectionContent(activeSection)}
           </div>
-        )}
-        
-        {/* Botón guardar - siempre visible */}
-        <button 
+        </div>
+      )}
+
+      {/* Footer con botón guardar */}
+      <div className="p-4 border-t border-gray-200 bg-white">
+        <button
           onClick={onSave}
-          className={`
-            flex items-center gap-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm
-            ${isSidebarOpen ? 'w-full px-4 py-3 justify-center' : 'w-full px-2 py-3 justify-center'}
-          `}
-          title={!isSidebarOpen ? 'Guardar libro' : undefined}
+          className="w-full max-w-md mx-auto flex items-center justify-center gap-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md px-6 py-3"
         >
-          <Save size={18} />
-          {isSidebarOpen && <span className="font-medium">Guardar</span>}
+          <Save size={20} />
+          <span className="font-semibold">Guardar Cambios</span>
         </button>
       </div>
     </div>

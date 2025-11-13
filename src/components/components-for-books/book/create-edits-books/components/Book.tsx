@@ -12,7 +12,6 @@ import { useBookNavigation } from "../hooks/useBookNavigation";
 
 // Importar componentes - NUEVO SIDEBAR
 import { BookSidebar } from "./BookSidebar";
-import { BookViewer } from "./BookViewer";
 
 // Importar servicios
 import { saveBookJson, type BookMetadata } from "../services/bookService";
@@ -124,16 +123,22 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
 
   return (
     <UnifiedLayout>
-      <div className="flex h-screen bg-gray-50">
+      <div className="h-screen bg-gray-50">
         <Toaster position="bottom-center" />
 
-        {/* SIDEBAR COLAPSIBLE - Reemplaza el BookControlPanel */}
+        {/* SIDEBAR CON TODAS LAS SECCIONES INCLUYENDO VISUALIZACIÓN */}
         <BookSidebar
           pages={bookState.pages}
           currentPage={bookState.currentPage}
           editingState={bookEditor}
           imageHandler={imageHandler}
           navigation={navigation}
+          // Props para BookViewer
+          isFlipping={bookState.isFlipping}
+          bookKey={bookState.bookKey}
+          bookRef={bookRef}
+          onFlip={navigation.onFlip}
+          onPageClick={navigation.goToPage}
           // Metadatos
           selectedCategorias={selectedCategorias}
           selectedGeneros={selectedGeneros}
@@ -159,19 +164,6 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
           onAddPage={bookState.addPage}
           onDeletePage={bookState.deletePage}
         />
-
-        {/* CONTENIDO PRINCIPAL - BookViewer */}
-        <div className="flex-1 flex flex-col">
-          <BookViewer
-            pages={bookState.pages}
-            currentPage={bookState.currentPage}
-            isFlipping={bookState.isFlipping}
-            bookKey={bookState.bookKey}
-            bookRef={bookRef}
-            onFlip={navigation.onFlip}
-            onPageClick={navigation.goToPage}
-          />
-        </div>
       </div>
     </UnifiedLayout>
   );
