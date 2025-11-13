@@ -1,12 +1,12 @@
 'use client'
 
 import React, { useState, useEffect } from "react";
-import BookCarousel from "@/src/components/components-for-books/book/BookCarousel";
-import FlipBook from "@/src/components/components-for-books/book/FlipBook";
 import type { Page, LibroUI } from "@/src/typings/types-page-book/index";
 import Link from "next/link";
 import { getUserId } from "@/src/utils/supabase/utilsClient";
 import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
+import BookCarousel from "@/src/components/components-for-books/book/utils/BookCarousel";
+import FlipBook from "@/src/components/components-for-books/book/utils/FlipBook";
 
 interface BookData {
   pages: Page[];
