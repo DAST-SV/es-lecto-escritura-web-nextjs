@@ -1,20 +1,22 @@
+// ==========================================
+// 1. src/utils/supabase/actions/auth.ts
+// ==========================================
 'use server'
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/src/utils/supabase/server'
 import { translateAuthError } from '@/src/utils/supabase/auth-errors'
-import { headers } from "next/headers"
 import { getLocale } from "next-intl/server"
+import { headers } from 'next/headers'
 
 export interface AuthState {
   error?: string;
-  email?: string;  // ← NUEVO
-  password?: string; // ← NUEVO (opcional, por seguridad mejor no)
+  success?: boolean;
+  email?: string;
 }
 
 export async function login(prevState: AuthState, formData: FormData): Promise<AuthState> {
-  const locale = await getLocale()
   const supabase = await createClient()
 
   const data = {
@@ -28,22 +30,68 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
     const translatedError = await translateAuthError(error.message);
     return {
       error: translatedError,
-      email: data.email  // ← Preservar el email
-      // password: data.password // ← NO recomendado por seguridad
+      email: data.email,
+      success: false
+    };
+  }
+
+  // Revalidar para actualizar server components
+  revalidatePath('/', 'layout')
+  
+  // Obtener redirect desde URL
+  const headersList = await headers()
+  const referer = headersList.get('referer') || ''
+  const url = new URL(referer || 'http://localhost')
+  const redirectParam = url.searchParams.get('redirect')
+  
+  const locale = await getLocale()
+  const redirectTo = redirectParam || `/${locale}/library`
+  
+  // Redirect directo
+  redirect(redirectTo)
+}
+
+export async function signup(prevState: AuthState, formData: FormData): Promise<AuthState> {
+  const supabase = await createClient()
+
+  const data = {
+    email: formData.get('email') as string,
+    password: formData.get('password') as string,
+  }
+
+  const { error } = await supabase.auth.signUp(data)
+
+  if (error) {
+    const translatedError = await translateAuthError(error.message);
+    return {
+      error: translatedError,
+      email: data.email,
+      success: false
     };
   }
 
   revalidatePath('/', 'layout')
-  redirect(`/${locale}/explore-content`)
+  const locale = await getLocale()
+  redirect(`/${locale}/library`)
 }
 
 export async function loginWithProvider(
-  provider: "google" | "apple" | "azure" | "facebook" | "twitter" | "spotify",
-  baseUrl: string
+  provider: "google" | "apple" | "azure" | "facebook" | "twitter" | "spotify"
 ) {
   const supabase = await createClient()
   const locale = await getLocale()
-  const redirectTo = `${baseUrl}/${locale}/pages-my-books`
+  
+  // Obtener redirect desde URL
+  const headersList = await headers()
+  const referer = headersList.get('referer') || ''
+  const url = new URL(referer || 'http://localhost')
+  const redirectParam = url.searchParams.get('redirect')
+  
+  const baseUrl = url.origin
+  const finalDestination = redirectParam || `/${locale}/library`
+  
+  // Callback que incluye el destino final
+  const redirectTo = `${baseUrl}/auth/callback?next=${encodeURIComponent(finalDestination)}`
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: provider === "azure" ? "azure" : provider,
@@ -56,26 +104,5 @@ export async function loginWithProvider(
     throw new Error(await translateAuthError(error.message))
   }
 
-  redirect(data.url)
-}
-
-export async function signup(formData: FormData) {
-  const supabase = await createClient()
-
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
-  const data = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
-  }
-
-  const { error } = await supabase.auth.signUp(data)
-
-  if (error) {
-    // redirect('/error')
-    return;
-  }
-
-  revalidatePath('/', 'layout')
-  redirect('/es/pages-my-books')
+  redirect(data.url);
 }
