@@ -1,15 +1,19 @@
 'use client';
 
 import React, { useState,useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { BookOpen, Star, Moon, Cloud, TreePine, Flame } from 'lucide-react';
 import { Libro } from '@/src/typings/Libro';
 import { useLibros } from '@/src/components/components-for-books/book/books/hooks/useLibros';
 
 // 🌙 Componente LibroCard con estilo "Libro de Cuentos Nocturno"
 const LibroCard = ({ libro }: { libro: Libro }) => {
-
-
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleClick = () => {
+    router.push(`/Libros/${libro.id_libro}/actividades`);
+  };
   
   // Generar color basado en id_tipo
   const colorByType = {
@@ -25,9 +29,10 @@ const LibroCard = ({ libro }: { libro: Libro }) => {
   
   return (
     <div 
-      className="relative perspective-1000"
+      className="relative perspective-1000 cursor-pointer"
       onMouseEnter={() => setIsOpen(true)}
       onMouseLeave={() => setIsOpen(false)}
+      onClick={handleClick}
     >
       {/* Libro cerrado/abierto con efecto 3D */}
       <div 
@@ -119,7 +124,6 @@ const LibroCard = ({ libro }: { libro: Libro }) => {
     </div>
   );
 };
-
 export default function LibrosPage() {
   const { libros, loading, error, fetchLibros } = useLibros();
 
