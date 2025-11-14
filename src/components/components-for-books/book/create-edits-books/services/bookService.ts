@@ -63,7 +63,7 @@ function validateBookMetadata(metadata: BookMetadata): string | null {
 
   // Géneros: debe ser un array de números y no vacío
   if (!Array.isArray(metadata.selectedGeneros) || metadata.selectedGeneros.length === 0) {
-    return "Por favor selecciona al menos un género";
+    return "Por favor selecciona al menos un Tipo de Lectura";
   }
 
   // Etiquetas: si se envían, debe ser un array de números (opcional)

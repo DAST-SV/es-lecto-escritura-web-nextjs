@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { BookPlus, Edit, Trash2, Lightbulb, Image, Star, Sparkles, ArrowLeft } from "lucide-react";
 import ImageGrid, { ImageItem } from "@/src/utils/imagenes/ImageGrid";
 import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
 
@@ -22,31 +23,61 @@ const CreateBook: React.FC = () => {
   ];
 
   return (
-    <UnifiedLayout className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 relative overflow-hidden">
+    <UnifiedLayout className="min-h-screen bg-gradient-to-b from-sky-50 via-blue-50 to-cyan-50 relative overflow-hidden">
       
-      {/* Elementos decorativos de fondo */}
-      <div className="absolute top-0 left-0 w-72 h-72 bg-yellow-300 rounded-full opacity-20 blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-300 rounded-full opacity-20 blur-3xl translate-x-1/3 translate-y-1/3"></div>
-      <div className="absolute top-1/2 right-1/4 w-64 h-64 bg-pink-300 rounded-full opacity-15 blur-3xl"></div>
+      {/* ✨ Decoraciones de fondo animadas */}
+      <div className="absolute inset-0 -z-10 pointer-events-none">
+        {/* Nubes flotantes */}
+        <div className="absolute top-10 left-[-10%] w-60 h-32 bg-white rounded-full blur-2xl opacity-40 animate-cloud" />
+        <div className="absolute top-1/4 right-[-10%] w-80 h-40 bg-white rounded-full blur-3xl opacity-30 animate-cloud-slow" />
+        <div className="absolute bottom-20 left-[20%] w-64 h-36 bg-white rounded-full blur-2xl opacity-40 animate-cloud" />
+
+        {/* Estrellas parpadeantes */}
+        {Array.from({ length: 15 }).map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-2 h-2 rounded-full animate-pulse"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              backgroundColor: ["#38bdf8", "#60a5fa", "#93c5fd", "#7dd3fc", "#bfdbfe"][i % 5],
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${2 + Math.random() * 2}s`
+            }}
+          />
+        ))}
+      </div>
 
       {/* Contenedor principal */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         
-        {/* Encabezado con título */}
-        <div className="text-center mb-8 sm:mb-12">
-          <div className="inline-block bg-white rounded-3xl shadow-2xl px-8 py-6 transform hover:scale-105 transition-all duration-300">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 mb-2">
-              ✨ Taller de Creación ✨
-            </h1>
-            <p className="text-gray-600 text-sm sm:text-base font-medium">
-              Donde tus historias cobran vida
-            </p>
+        {/* Hero Section */}
+        <div className="text-center mb-12">
+          <div className="inline-block mb-6 animate-bounce">
+            <div className="bg-white rounded-full p-6 shadow-2xl">
+              <BookPlus size={64} className="text-sky-500" />
+            </div>
           </div>
+          
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-blue-700 mb-4 drop-shadow-lg" 
+              style={{ textShadow: '4px 4px 0px rgba(255,255,255,0.5)' }}>
+            ✨ Taller de Creación ✨
+          </h1>
+          
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Star className="text-yellow-400 animate-spin" size={24} style={{ animationDuration: '3s' }} />
+            <div className="h-2 w-32 bg-gradient-to-r from-sky-400 via-cyan-400 to-blue-400 rounded-full" />
+            <Star className="text-yellow-400 animate-spin" size={24} style={{ animationDuration: '3s' }} />
+          </div>
+
+          <p className="text-xl sm:text-2xl text-blue-600 font-bold">
+            🌈 Donde tus historias cobran vida 🌈
+          </p>
         </div>
 
-        {/* Banner superior con efecto card */}
-        <div className="mb-10 sm:mb-16">
-          <div className="bg-white rounded-3xl shadow-2xl p-4 sm:p-6 transform hover:shadow-3xl transition-all duration-300 border-4 border-purple-200">
+        {/* Banner superior */}
+        <div className="mb-12 sm:mb-16">
+          <div className="bg-white rounded-3xl shadow-2xl p-4 sm:p-6 transform hover:shadow-3xl transition-all duration-300 border-4 border-sky-200">
             <ImageGrid
               images={Banner}
               shapeType={3}
@@ -59,38 +90,55 @@ const CreateBook: React.FC = () => {
 
         {/* Sección de acciones principales */}
         <div className="mb-12 sm:mb-16">
-          <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-3xl shadow-2xl p-1 mb-6">
+          <div className="bg-gradient-to-r from-sky-400 to-blue-500 rounded-3xl shadow-2xl p-1 mb-6">
             <div className="bg-white rounded-3xl p-6 sm:p-8">
-              <h2 className="text-center text-2xl sm:text-3xl font-black text-gray-800 mb-3 flex items-center justify-center gap-3">
-                <span className="text-3xl sm:text-4xl">🎨</span>
-                <span>¿Qué quieres hacer hoy?</span>
-                <span className="text-3xl sm:text-4xl">📚</span>
+              <h2 className="text-center text-3xl sm:text-4xl font-black text-blue-700 mb-3"
+                  style={{ textShadow: '2px 2px 0px rgba(255,255,255,0.5)' }}>
+                🎨 ¿Qué quieres hacer hoy? 📚
               </h2>
-              <p className="text-center text-gray-600 text-sm sm:text-base mb-6">
-                Elige una opción para comenzar tu aventura creativa
+              <p className="text-center text-blue-600 text-base sm:text-lg font-bold mb-8">
+                ¡Elige una opción y comienza tu aventura!
               </p>
               
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-                {acciones.map((accion, index) => (
-                  <div
-                    key={index}
-                    onClick={() => window.location.href = `${accion.Json?.toLowerCase().replace(/\s/g, "")}`}
-                    className="group cursor-pointer"
-                  >
-                    <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300 border-3 border-transparent hover:border-purple-300">
-                      <div className="bg-white rounded-xl p-4 mb-4 shadow-md group-hover:shadow-lg transition-all duration-300">
-                        <img 
-                          src={accion.src as string} 
-                          alt={accion.caption}
-                          className="w-full h-auto object-contain"
-                        />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
+                {acciones.map((accion, index) => {
+                  const icons = [
+                    <BookPlus size={40} className="text-sky-600" />,
+                    <Edit size={40} className="text-cyan-600" />,
+                    <Trash2 size={40} className="text-blue-600" />
+                  ];
+                  const gradients = [
+                    "from-sky-100 to-blue-100",
+                    "from-cyan-100 to-teal-100",
+                    "from-blue-100 to-indigo-100"
+                  ];
+
+                  return (
+                    <div
+                      key={index}
+                      onClick={() => window.location.href = `${accion.Json?.toLowerCase().replace(/\s/g, "")}`}
+                      className="group cursor-pointer"
+                    >
+                      <div className={`bg-gradient-to-br ${gradients[index]} rounded-3xl p-6 shadow-xl hover:shadow-2xl transform hover:-translate-y-3 hover:scale-105 transition-all duration-300 border-4 border-transparent hover:border-sky-300`}>
+                        <div className="bg-white rounded-2xl p-6 mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 flex items-center justify-center">
+                          <div className="mb-4">
+                            {icons[index]}
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-xl p-4 mb-4 shadow-md group-hover:shadow-lg transition-all duration-300">
+                          <img 
+                            src={accion.src as string} 
+                            alt={accion.caption}
+                            className="w-full h-auto object-contain"
+                          />
+                        </div>
+                        <h3 className="text-center text-xl font-black text-gray-800 group-hover:text-sky-600 transition-colors duration-300">
+                          {accion.caption}
+                        </h3>
                       </div>
-                      <h3 className="text-center text-lg font-bold text-gray-800 group-hover:text-purple-600 transition-colors duration-300">
-                        {accion.caption}
-                      </h3>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -98,57 +146,93 @@ const CreateBook: React.FC = () => {
 
         {/* Sección de ideas e imágenes */}
         <div className="mb-12">
-          <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 border-4 border-blue-200">
-            <h2 className="text-center text-2xl sm:text-3xl font-black text-gray-800 mb-6 flex items-center justify-center gap-3">
-              <span className="text-3xl">💡</span>
-              <span>Tu Biblioteca Personal</span>
-              <span className="text-3xl">🖼️</span>
+          <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 border-4 border-cyan-200">
+            <h2 className="text-center text-3xl sm:text-4xl font-black text-blue-700 mb-8"
+                style={{ textShadow: '2px 2px 0px rgba(255,255,255,0.5)' }}>
+              💡 Tu Biblioteca Personal 🖼️
             </h2>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {guardarIdeas.map((idea, index) => (
-                <div
-                  key={index}
-                  className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-6 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border-2 border-yellow-200"
-                >
-                  <div className="bg-white rounded-xl p-4 mb-4 shadow-md">
-                    <img 
-                      src={idea.src as string} 
-                      alt={idea.caption}
-                      className="w-full h-auto object-contain"
-                    />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+              {guardarIdeas.map((idea, index) => {
+                const icons = [
+                  <Lightbulb size={48} className="text-yellow-500" />,
+                  <Image size={48} className="text-blue-500" />
+                ];
+                const gradients = [
+                  "from-yellow-100 to-amber-100",
+                  "from-sky-100 to-cyan-100"
+                ];
+                const borders = [
+                  "border-yellow-300",
+                  "border-sky-300"
+                ];
+
+                return (
+                  <div
+                    key={index}
+                    className={`bg-gradient-to-br ${gradients[index]} rounded-3xl p-6 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border-4 ${borders[index]}`}
+                  >
+                    <div className="flex justify-center mb-4">
+                      <div className="bg-white rounded-full p-4 shadow-lg">
+                        {icons[index]}
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 mb-4 shadow-md">
+                      <img 
+                        src={idea.src as string} 
+                        alt={idea.caption}
+                        className="w-full h-auto object-contain"
+                      />
+                    </div>
+                    <h3 className="text-center text-xl font-black text-gray-800">
+                      {idea.caption}
+                    </h3>
                   </div>
-                  <h3 className="text-center text-lg font-bold text-gray-800">
-                    {idea.caption}
-                  </h3>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
 
-        {/* Botón de regreso mejorado */}
-        <div className="flex justify-center">
+        {/* Botón de regreso */}
+        <div className="flex justify-center mb-8">
           <Link href="/pages-my-books">
-            <button className="group relative bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-full text-base sm:text-lg font-bold shadow-2xl hover:shadow-3xl transform hover:scale-110 transition-all duration-300 flex items-center gap-3 overflow-hidden">
-              <span className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-              <span className="relative text-2xl">⬅</span>
-              <span className="relative">Volver al menú de Lectoescritura</span>
+            <button className="flex items-center gap-4 px-10 py-5 bg-gradient-to-r from-sky-500 via-blue-500 to-cyan-500 text-white text-2xl font-black rounded-full shadow-2xl hover:shadow-3xl transform transition-all duration-300 hover:scale-110 hover:-translate-y-2"
+                    style={{ textShadow: '2px 2px 0px rgba(0,0,0,0.2)' }}>
+              <ArrowLeft size={28} />
+              ⬅️ Volver al menú
             </button>
           </Link>
         </div>
 
         {/* Mensaje motivacional */}
-        <div className="mt-12 text-center">
-          <div className="inline-block bg-white rounded-2xl shadow-lg px-6 py-4">
-            <p className="text-gray-700 text-sm sm:text-base font-medium">
-              <span className="text-2xl mr-2">🌟</span>
+        <div className="text-center">
+          <div className="inline-block bg-white rounded-3xl shadow-xl px-8 py-6 border-4 border-sky-200 transform hover:scale-105 transition-all duration-300">
+            <p className="text-blue-700 text-lg sm:text-xl font-black flex items-center gap-3">
+              <Sparkles className="text-yellow-400" size={32} />
               ¡Cada historia comienza con una idea maravillosa!
-              <span className="text-2xl ml-2">🌟</span>
+              <Sparkles className="text-yellow-400" size={32} />
             </p>
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes cloud {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(30px); }
+        }
+        @keyframes cloud-slow {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(-20px); }
+        }
+        .animate-cloud {
+          animation: cloud 20s ease-in-out infinite;
+        }
+        .animate-cloud-slow {
+          animation: cloud-slow 30s ease-in-out infinite;
+        }
+      `}</style>
     </UnifiedLayout>
   );
 };

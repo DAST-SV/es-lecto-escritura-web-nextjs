@@ -163,14 +163,6 @@ export const BookMetadataForm: React.FC<BookMetadataFormProps> = ({
           onChange={(value) => onNivelChange(value as number)}
         />
       </div>
-
-      {/* Botón de guardar */}
-      <button
-        onClick={onSave}
-        className="w-full p-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 font-medium transition-all mt-2"
-      >
-        📖 Guardar Libro
-      </button>
     </>
   );
 };

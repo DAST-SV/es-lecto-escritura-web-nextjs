@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from "react";
+import { BookOpen, ArrowLeft, Star, Sparkles, Heart, Gamepad2 } from "lucide-react";
 import BookCarousel from "@/src/components/components-for-books/book/utils/BookCarousel";
 import FlipBook from "@/src/components/components-for-books/book/utils/FlipBook";
 import type { Page, LibroUI } from "@/src/typings/types-page-book/index";
@@ -62,35 +63,24 @@ const MyBooks: React.FC = () => {
   }, [selectedBook]);
 
   return (
-    <UnifiedLayout className="relative flex flex-col min-h-screen overflow-hidden">
-      {/* 🎨 BACKGROUND MÁGICO - tonos celeste/azul */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-200 via-blue-100 to-white overflow-hidden">
-        {/* Nubes ☁️ */}
-        <div className="absolute top-[10%] left-[-20%] w-60 h-32 bg-white rounded-full blur-xl opacity-70 animate-cloud" />
-        <div className="absolute top-[30%] left-[60%] w-72 h-40 bg-white rounded-full blur-2xl opacity-60 animate-cloud-slow" />
-        <div className="absolute top-[55%] left-[-15%] w-48 h-28 bg-white rounded-full blur-xl opacity-70 animate-cloud" />
+    <UnifiedLayout className="relative flex flex-col min-h-screen overflow-hidden bg-gradient-to-b from-sky-50 via-blue-50 to-cyan-50">
+      {/* 🎨 Decoraciones de fondo sutiles y elegantes */}
+      <div className="absolute inset-0 -z-10 pointer-events-none">
+        {/* Nubes suaves */}
+        <div className="absolute top-[10%] left-[-10%] w-60 h-32 bg-white rounded-full blur-3xl opacity-30 animate-cloud" />
+        <div className="absolute top-[30%] right-[-10%] w-72 h-40 bg-white rounded-full blur-3xl opacity-25 animate-cloud-slow" />
+        <div className="absolute bottom-[20%] left-[20%] w-48 h-28 bg-white rounded-full blur-3xl opacity-30 animate-cloud" />
 
-        {/* Estrellas 🌟 - tonos suaves */}
-        <div className="absolute left-[20%] top-[20%] w-6 h-6 bg-blue-300 rounded-full shadow-lg animate-star" />
-        <div className="absolute left-[75%] top-[40%] w-8 h-8 bg-cyan-300 rounded-full shadow-lg animate-star" />
-        <div className="absolute left-[50%] top-[70%] w-5 h-5 bg-blue-200 rounded-full shadow-lg animate-star" />
-
-        {/* Globos 🎈 - azul, celeste y amarillo */}
-        <div className="absolute w-12 h-16 bg-blue-400 rounded-full animate-balloon left-[10%] bottom-[-20%]" />
-        <div className="absolute w-14 h-20 bg-cyan-400 rounded-full animate-balloon-slow left-[60%] bottom-[-25%]" />
-        <div className="absolute w-10 h-14 bg-yellow-300 rounded-full animate-balloon left-[85%] bottom-[-30%]" />
-
-        {/* Confetti ✨ - tonos coherentes */}
-        {Array.from({ length: 20 }).map((_, i) => (
+        {/* Estrellas pequeñas y sutiles */}
+        {Array.from({ length: 8 }).map((_, i) => (
           <div
             key={i}
-            className="absolute w-2 h-2 rounded-full animate-confetti"
+            className="absolute w-1.5 h-1.5 rounded-full bg-sky-300 animate-pulse opacity-40"
             style={{
               left: `${Math.random() * 100}%`,
-              top: `${Math.random() * -100}%`,
-              backgroundColor: ["#60a5fa", "#38bdf8", "#22d3ee", "#0ea5e9"][Math.floor(Math.random() * 4)],
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${5 + Math.random() * 5}s`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${2 + Math.random() * 2}s`
             }}
           />
         ))}
@@ -99,67 +89,177 @@ const MyBooks: React.FC = () => {
       {/* CONTENIDO */}
       {!selectedBook && (
         <>
-          {/* BANNER */}
-          <div className="relative w-full mb-8">
-            <img
-              src="/Imagenes/Banner.jpg"
-              alt="Banner"
-              className="w-full max-h-96 h-auto shadow-lg rounded-b-3xl"
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-b-3xl">
-              <h1 className="text-6xl font-extrabold text-white drop-shadow-xl animate-bounce">
-                📚 ¡Mis Aventuras!
-              </h1>
+          {/* Hero Section con Banner */}
+          <div className="relative w-full mb-10">
+            <div className="relative overflow-hidden rounded-b-3xl shadow-2xl">
+              <img
+                src="/Imagenes/Banner.jpg"
+                alt="Banner"
+                className="w-full max-h-80 h-auto object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-blue-900/60 via-blue-600/30 to-transparent" />
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
+                <div className="inline-block mb-4 animate-bounce">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
+                    <BookOpen size={56} className="text-white drop-shadow-lg" />
+                  </div>
+                </div>
+                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black mb-3 drop-shadow-2xl text-center px-4"
+                    style={{ textShadow: '4px 4px 8px rgba(0,0,0,0.3)' }}>
+                  📚 Mis Aventuras de Lectura
+                </h1>
+                <div className="flex items-center gap-2">
+                  <Star className="text-yellow-300 animate-pulse" size={24} />
+                  <p className="text-xl sm:text-2xl font-bold drop-shadow-lg">
+                    Explora, aprende y diviértete
+                  </p>
+                  <Star className="text-yellow-300 animate-pulse" size={24} />
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Título principal */}
-          <h2 className="text-5xl text-center font-extrabold my-6 text-blue-900 drop-shadow-md animate-pulse">
-            ¡Bienvenidos a Mis Lecturas!
-          </h2>
-          <p className="text-center text-xl text-blue-700 mb-10 font-medium">
-            Explora cuentos mágicos, aprende y diviértete. ✨🌈
-          </p>
+          {/* Tarjetas de estadísticas */}
+          <div className="max-w-6xl mx-auto px-4 mb-12">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div className="bg-white rounded-2xl shadow-lg p-6 transform transition-all duration-300 hover:scale-105 border-2 border-sky-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-sky-100 p-3 rounded-full">
+                    <BookOpen size={32} className="text-sky-600" />
+                  </div>
+                  <div>
+                    <p className="text-3xl font-black text-gray-800">{libros.length}</p>
+                    <p className="text-sm text-gray-600 font-semibold">Cuentos Disponibles</p>
+                  </div>
+                </div>
+              </div>
 
-          {/* GALERÍA - Carrusel de cuentos */}
-          <div className="max-w-6xl mx-auto px-6 mb-16">
-            <h2 className="text-4xl font-bold mb-8 text-center text-blue-800 drop-shadow-sm">
-              🌟 Galería de Cuentos 🌟
-            </h2>
-            <BookCarousel
-              libros={libros}
-              onSelect={(book) => setSelectedBook({ json: book.Json ?? "", caption: book.caption })}
-            />
+              <div className="bg-white rounded-2xl shadow-lg p-6 transform transition-all duration-300 hover:scale-105 border-2 border-cyan-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-cyan-100 p-3 rounded-full">
+                    <Sparkles size={32} className="text-cyan-600" />
+                  </div>
+                  <div>
+                    <p className="text-3xl font-black text-gray-800">∞</p>
+                    <p className="text-sm text-gray-600 font-semibold">Aventuras por Vivir</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-lg p-6 transform transition-all duration-300 hover:scale-105 border-2 border-blue-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-blue-100 p-3 rounded-full">
+                    <Heart size={32} className="text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-3xl font-black text-gray-800">100%</p>
+                    <p className="text-sm text-gray-600 font-semibold">Aprendizaje Divertido</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* BANNER Juegos */}
-          <div className="max-w-3xl mx-auto mb-16 text-center">
-            <Link href="../../es/pages-games">
-              <img
-                src="/Imagenes/Juega aqui.jpg"
-                alt="Banner"
-                className="w-full rounded-2xl shadow-lg hover:scale-110 hover:rotate-2 transition-transform duration-300 ease-out"
+          {/* Galería de Cuentos */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 mb-16">
+            <div className="text-center mb-10">
+              <h2 className="text-4xl sm:text-5xl font-black text-blue-700 mb-3"
+                  style={{ textShadow: '2px 2px 0px rgba(255,255,255,0.5)' }}>
+                🌟 Galería de Cuentos 🌟
+              </h2>
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <div className="h-1.5 w-24 bg-gradient-to-r from-sky-400 via-cyan-400 to-blue-400 rounded-full" />
+              </div>
+              <p className="text-lg text-blue-600 font-semibold">
+                Selecciona un cuento para comenzar tu aventura
+              </p>
+            </div>
+
+            <div className="bg-white rounded-3xl shadow-xl p-6 border-4 border-sky-200">
+              <BookCarousel
+                libros={libros}
+                onSelect={(book) => setSelectedBook({ json: book.Json ?? "", caption: book.caption })}
               />
-            </Link>
-            <p className="mt-4 text-xl text-blue-700 font-semibold animate-bounce">
-              🎮 ¡Haz clic y juega mientras aprendes! ✨
-            </p>
+            </div>
+          </div>
+
+          {/* Banner de Juegos */}
+          <div className="max-w-4xl mx-auto px-4 mb-16">
+            <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-3xl shadow-2xl p-1">
+              <div className="bg-white rounded-3xl p-6">
+                <div className="text-center mb-6">
+                  <div className="inline-block mb-4">
+                    <div className="bg-gradient-to-r from-sky-100 to-cyan-100 rounded-full p-4">
+                      <Gamepad2 size={48} className="text-blue-600" />
+                    </div>
+                  </div>
+                  <h3 className="text-3xl font-black text-blue-700 mb-2"
+                      style={{ textShadow: '1px 1px 0px rgba(255,255,255,0.5)' }}>
+                    🎮 ¡Es Hora de Jugar! 🎮
+                  </h3>
+                  <p className="text-blue-600 font-semibold text-lg">
+                    Aprende mientras te diviertes con nuestros juegos educativos
+                  </p>
+                </div>
+
+                <Link href="../../es/pages-games">
+                  <div className="relative group cursor-pointer overflow-hidden rounded-2xl">
+                    <img
+                      src="/Imagenes/Juega aqui.jpg"
+                      alt="Banner de juegos"
+                      className="w-full rounded-2xl shadow-lg transform transition-all duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-blue-600/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl flex items-center justify-center">
+                      <div className="bg-white/90 backdrop-blur-sm rounded-full px-8 py-4 transform translate-y-8 group-hover:translate-y-0 transition-transform duration-300">
+                        <p className="text-blue-700 font-black text-xl">
+                          ¡Click para jugar! 🚀
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            </div>
           </div>
         </>
       )}
 
-      {/* FlipBook */}
+      {/* Vista de Lectura */}
       {selectedBook && bookData && (
-        <div className="mx-auto my-6 w-full h-full">
-          <FlipBook pages={bookData.pages} />
-          <button
-            onClick={() => setSelectedBook(null)}
-            className="mt-6 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-400 text-white text-lg font-bold rounded-full shadow-lg hover:scale-110 transition-transform"
-          >
-            ⬅️ Volver a la galería
-          </button>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 mb-8">
+            <FlipBook pages={bookData.pages} />
+          </div>
+          
+          <div className="flex justify-center">
+            <button
+              onClick={() => setSelectedBook(null)}
+              className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-sky-500 via-blue-500 to-cyan-500 text-white text-xl font-bold rounded-full shadow-xl hover:shadow-2xl transform transition-all duration-300 hover:scale-110 hover:-translate-y-1"
+              style={{ textShadow: '2px 2px 0px rgba(0,0,0,0.2)' }}
+            >
+              <ArrowLeft size={24} />
+              Volver a la galería
+            </button>
+          </div>
         </div>
       )}
+
+      <style jsx>{`
+        @keyframes cloud {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(25px); }
+        }
+        @keyframes cloud-slow {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(-20px); }
+        }
+        .animate-cloud {
+          animation: cloud 25s ease-in-out infinite;
+        }
+        .animate-cloud-slow {
+          animation: cloud-slow 35s ease-in-out infinite;
+        }
+      `}</style>
     </UnifiedLayout>
   );
 };

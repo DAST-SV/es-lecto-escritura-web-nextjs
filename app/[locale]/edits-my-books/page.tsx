@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from "react";
+import { Edit, ArrowLeft, Star, Sparkles, BookOpen, Palette } from "lucide-react";
 import ImageGrid from "@/src/utils/imagenes/ImageGrid";
 import { Book } from "@/src/components/components-for-books/book/create-edits-books/components/Book";
 import type { page } from "@/src/typings/types-page-book/index";
@@ -33,7 +34,7 @@ const MyBooks: React.FC = () => {
   const [bookData, setBookData] = useState<BookData | null>(null);
   const [libros, setLibros] = useState<LibroUI[]>([]);
 
-  // 🔹 Cargar libros
+  // 🔹 Cargar libros desde la API
   useEffect(() => {
     const fetchLibros = async () => {
       try {
@@ -53,14 +54,14 @@ const MyBooks: React.FC = () => {
 
         setLibros(librosUI.filter(Boolean) as LibroUI[]);
       } catch (error) {
-        console.error("❌ Error cargando libros y páginas:", error);
+        console.error("❌ Error cargando libros:", error);
       }
     };
 
     fetchLibros();
   }, []);
 
-  // 🔹 Cargar libro seleccionado
+  // 🔹 Cargar libro seleccionado desde la API
   useEffect(() => {
     if (selectedBook) {
       const fetchBook = async () => {
@@ -70,7 +71,7 @@ const MyBooks: React.FC = () => {
           const transformedPages = data.pages.map((p: any, idx: number) => transformPageData(p, idx));
           setBookData({ pages: transformedPages, title: selectedBook.caption });
         } catch (error) {
-          console.error("Error al cargar el libro:", error);
+          console.error("❌ Error al cargar el libro:", error);
         }
       };
       fetchBook();
@@ -80,24 +81,25 @@ const MyBooks: React.FC = () => {
   }, [selectedBook]);
 
   return (
-    <UnifiedLayout className="flex flex-col min-h-screen bg-gradient-to-b from-sky-200 via-blue-100 to-yellow-100 relative overflow-hidden">
-      {/* ✨ Fondo Animado */}
-      <div className="absolute inset-0 -z-10">
-        {/* Nubes */}
-        <div className="absolute top-10 left-[-20%] w-60 h-32 bg-white rounded-full blur-xl opacity-70 animate-cloud" />
-        <div className="absolute top-1/3 left-[60%] w-72 h-40 bg-white rounded-full blur-2xl opacity-60 animate-cloud-slow" />
-        <div className="absolute top-[60%] left-[-15%] w-48 h-28 bg-white rounded-full blur-xl opacity-70 animate-cloud" />
+    <UnifiedLayout className="min-h-screen bg-gradient-to-b from-sky-50 via-blue-50 to-cyan-50 relative overflow-hidden">
+      {/* ✨ Decoraciones de fondo animadas */}
+      <div className="absolute inset-0 -z-10 pointer-events-none">
+        {/* Nubes flotantes */}
+        <div className="absolute top-10 left-[-10%] w-60 h-32 bg-white rounded-full blur-2xl opacity-40 animate-cloud" />
+        <div className="absolute top-1/4 right-[-10%] w-80 h-40 bg-white rounded-full blur-3xl opacity-30 animate-cloud-slow" />
+        <div className="absolute bottom-20 left-[20%] w-64 h-36 bg-white rounded-full blur-2xl opacity-40 animate-cloud" />
 
-        {/* Estrellitas y confetti */}
-        {Array.from({ length: 15 }).map((_, i) => (
+        {/* Estrellas parpadeantes */}
+        {Array.from({ length: 12 }).map((_, i) => (
           <div
             key={i}
             className="absolute w-2 h-2 rounded-full animate-pulse"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
-              backgroundColor: ["#fbbf24", "#34d399", "#60a5fa", "#a78bfa", "#f472b6"][i % 5],
-              animationDelay: `${Math.random() * 5}s`
+              backgroundColor: ["#38bdf8", "#60a5fa", "#93c5fd", "#7dd3fc", "#bfdbfe"][i % 5],
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${2 + Math.random() * 2}s`
             }}
           />
         ))}
@@ -105,53 +107,154 @@ const MyBooks: React.FC = () => {
 
       {!selectedBook && (
         <>
-          {/* Banner */}
-          <div className="w-full mb-6">
-            <img
-              src="/Imagenes/Banner.jpg"
-              alt="Banner"
-              className="w-full max-h-72 h-auto shadow-lg rounded-b-2xl"
-            />
+          {/* Hero Section */}
+          <div className="relative w-full overflow-hidden bg-gradient-to-r from-blue-400 via-cyan-400 to-sky-400 py-16">
+            {/* Decoraciones flotantes */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <Star className="absolute top-10 left-10 text-white animate-pulse" size={40} />
+              <Edit className="absolute top-20 right-20 text-yellow-200 animate-bounce" size={30} />
+              <Palette className="absolute bottom-10 left-20 text-white animate-pulse" size={35} />
+              <Sparkles className="absolute bottom-20 right-10 text-yellow-100 animate-bounce" size={35} />
+            </div>
+
+            <div className="relative z-10 max-w-6xl mx-auto px-4 text-center">
+              <div className="inline-block mb-6 animate-bounce">
+                <div className="bg-white rounded-full p-6 shadow-2xl">
+                  <BookOpen size={64} className="text-sky-500" />
+                </div>
+              </div>
+              
+              <h1 className="text-6xl md:text-7xl font-black text-white mb-4 drop-shadow-lg" 
+                  style={{ textShadow: '4px 4px 0px rgba(0,0,0,0.2)' }}>
+                ✨ Mi Taller de Cuentos ✨
+              </h1>
+              
+              <p className="text-2xl md:text-3xl text-white font-bold drop-shadow-md">
+                🎨 ¡Crea y edita tus historias mágicas! 🎨
+              </p>
+            </div>
           </div>
 
-          <h2 className="text-4xl text-center font-extrabold my-6 text-blue-800 drop-shadow-md">
-            🧸 Mis Libros Interactivos
-          </h2>
-          <p className="text-center text-lg text-sky-600 mb-8">
-            Edita tus cuentos, juega y diviértete ✨📚
-          </p>
+          {/* Contenido Principal */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            
+            {/* Tarjetas de Stats Divertidas */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+              <div className="bg-gradient-to-br from-sky-400 to-blue-500 rounded-3xl shadow-xl p-8 transform transition-all duration-300 hover:scale-110 hover:rotate-2">
+                <div className="text-center text-white">
+                  <div className="inline-block bg-white rounded-full p-4 mb-4">
+                    <BookOpen size={48} className="text-sky-600" />
+                  </div>
+                  <p className="text-5xl font-black mb-2">{libros.length}</p>
+                  <p className="text-xl font-bold">Cuentos Creados</p>
+                </div>
+              </div>
 
-          {/* Galería */}
-          <div className="max-w-5xl mx-auto px-4 mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-center text-blue-700">Galería de Cuentos</h2>
-            <ImageGrid
-              images={libros}
-              shapeType={2}
-              columns={3}
-              onClick={(book) => setSelectedBook({ json: book.Json ?? "", caption: book.caption || "" })}
-              showButton={true}
-              buttonText="✏️ Editar"
-              buttonColor="blue"
-              buttonPosition="corner"
-              onButtonClick={(book) => setSelectedBook({ json: book.Json ?? "", caption: book.caption || "" })}
-            />
+              <div className="bg-gradient-to-br from-cyan-400 to-teal-500 rounded-3xl shadow-xl p-8 transform transition-all duration-300 hover:scale-110 hover:rotate-2">
+                <div className="text-center text-white">
+                  <div className="inline-block bg-white rounded-full p-4 mb-4">
+                    <Edit size={48} className="text-cyan-600" />
+                  </div>
+                  <p className="text-5xl font-black mb-2">∞</p>
+                  <p className="text-xl font-bold">Ediciones</p>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-blue-400 to-indigo-500 rounded-3xl shadow-xl p-8 transform transition-all duration-300 hover:scale-110 hover:rotate-2">
+                <div className="text-center text-white">
+                  <div className="inline-block bg-white rounded-full p-4 mb-4">
+                    <Palette size={48} className="text-blue-600" />
+                  </div>
+                  <p className="text-5xl font-black mb-2">100%</p>
+                  <p className="text-xl font-bold">Creatividad</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Título de Sección */}
+            <div className="text-center mb-12">
+              <h2 className="text-5xl md:text-6xl font-black text-blue-700 mb-4"
+                  style={{ textShadow: '3px 3px 0px rgba(255,255,255,0.5)' }}>
+                🎪 Tus Cuentos para Editar 🎪
+              </h2>
+              
+              <div className="flex items-center justify-center gap-2 mb-6">
+                <Star className="text-yellow-400 animate-spin" size={24} style={{ animationDuration: '3s' }} />
+                <div className="h-2 w-32 bg-gradient-to-r from-sky-400 via-cyan-400 to-blue-400 rounded-full" />
+                <Star className="text-yellow-400 animate-spin" size={24} style={{ animationDuration: '3s' }} />
+              </div>
+
+              <p className="text-2xl text-blue-600 font-bold max-w-2xl mx-auto">
+                ¡Haz clic en un libro para editarlo! ✏️✨
+              </p>
+            </div>
+
+            {/* Grid de Libros */}
+            {libros.length > 0 ? (
+              <ImageGrid
+                images={libros}
+                shapeType={2}
+                columns={3}
+                onClick={(book: any) => setSelectedBook({ json: book.Json ?? "", caption: book.caption || "" })}
+                showButton={true}
+                buttonText="✏️ Editar"
+                buttonColor="blue"
+                buttonPosition="corner"
+                onButtonClick={(book: any) => setSelectedBook({ json: book.Json ?? "", caption: book.caption || "" })}
+              />
+            ) : (
+              <div className="text-center py-20 bg-white rounded-3xl shadow-xl">
+                <div className="inline-block animate-bounce mb-6">
+                  <BookOpen size={80} className="text-gray-300" />
+                </div>
+                <p className="text-3xl font-bold text-gray-600 mb-3">
+                  ¡Ups! No hay cuentos para editar
+                </p>
+                <p className="text-xl text-gray-400">
+                  🌟 ¡Empieza a crear tus primeras historias! 🌟
+                </p>
+              </div>
+            )}
           </div>
-          
         </>
       )}
 
-      {/* Book Editor */}
+      {/* Editor de Libro */}
       {selectedBook && bookData && (
-        <div className="mx-auto my-6 w-full h-full flex flex-col items-center">
-          <Book initialPages={bookData.pages} IdLibro={selectedBook.json} />
-          <button
-            onClick={() => setSelectedBook(null)}
-            className="mt-4 px-6 py-3 bg-sky-500 text-white font-bold rounded-xl shadow-md hover:bg-sky-600 hover:scale-105 transition-all duration-300"
-          >
-            ⬅ Volver a la galería
-          </button>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 mb-8">
+            <Book initialPages={bookData.pages} IdLibro={selectedBook.json} />
+          </div>
+          
+          <div className="flex justify-center">
+            <button
+              onClick={() => setSelectedBook(null)}
+              className="flex items-center gap-4 px-10 py-5 bg-gradient-to-r from-sky-500 via-blue-500 to-cyan-500 text-white text-2xl font-black rounded-full shadow-2xl hover:shadow-3xl transform transition-all duration-300 hover:scale-110 hover:-translate-y-2"
+              style={{ textShadow: '2px 2px 0px rgba(0,0,0,0.2)' }}
+            >
+              <ArrowLeft size={28} />
+              ⬅️ Volver al taller
+            </button>
+          </div>
         </div>
       )}
+
+      <style jsx>{`
+        @keyframes cloud {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(30px); }
+        }
+        @keyframes cloud-slow {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(-20px); }
+        }
+        .animate-cloud {
+          animation: cloud 20s ease-in-out infinite;
+        }
+        .animate-cloud-slow {
+          animation: cloud-slow 30s ease-in-out infinite;
+        }
+      `}</style>
     </UnifiedLayout>
   );
 }

@@ -32,6 +32,7 @@ import { BookMetadataForm } from '@/src/components/components-for-books/book/cre
 
 // Importar BookViewer
 import { BookViewer } from '@/src/components/components-for-books/book/create-edits-books/components/BookViewer';
+import { Button } from '@/src/components/ui';
 
 interface BookSidebarProps {
   pages: page[];
@@ -70,7 +71,7 @@ interface BookSidebarProps {
   // Handlers de configuración
   onLayoutChange: (layout: string) => void;
   onBackgroundChange: (value: string) => void;
-  onSave: () => void;
+  onSave: () => Promise<void>;
   onAddPage: () => void;
   onDeletePage: () => void;
 }
@@ -110,9 +111,22 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
 }) => {
   const currentPageData = pages[currentPage];
   const [activeSection, setActiveSection] = useState<string | null>('visualizacion');
+  const [isSaving, setIsSaving] = useState(false);
 
   const toggleSection = (sectionId: string) => {
     setActiveSection(activeSection === sectionId ? null : sectionId);
+  };
+
+  // Handler para guardar con estado de carga
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await onSave();
+    } catch (error) {
+      console.error('Error al guardar:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Secciones del menú - AÑADIDA VISUALIZACIÓN
@@ -130,7 +144,7 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
   const renderSectionContent = (sectionId: string) => {
     switch (sectionId) {
       case 'visualizacion':
-        return null; //
+        return null;
 
       case 'navegacion':
         return (
@@ -262,7 +276,7 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
               onAutorChange={onAutorChange}
               onDescripcionChange={onDescripcionChange}
               onTituloChange={onTituloChange}
-              onSave={onSave}
+              onSave={handleSave}
             />
           </div>
         );
@@ -354,11 +368,24 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
       {/* Footer con botón guardar */}
       <div className="p-4 border-t border-gray-200 bg-white">
         <button
-          onClick={onSave}
-          className="w-full max-w-md mx-auto flex items-center justify-center gap-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md px-6 py-3"
+          onClick={handleSave}
+          disabled={isSaving}
+          className="w-full max-w-md mx-auto flex items-center justify-center gap-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md px-6 py-3 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-green-600"
         >
-          <Save size={20} />
-          <span className="font-semibold">Guardar Cambios</span>
+          {isSaving ? (
+            <>
+              <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span className="font-semibold">Guardando...</span>
+            </>
+          ) : (
+            <>
+              <Save size={20} />
+              <span className="font-semibold">Guardar Cambios</span>
+            </>
+          )}
         </button>
       </div>
     </div>
