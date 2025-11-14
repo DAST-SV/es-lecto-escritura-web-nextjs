@@ -2,137 +2,199 @@
 
 import React from "react";
 import Link from "next/link";
-import { BookPlus, Edit, Trash2, Lightbulb, Image, Star, Sparkles, ArrowLeft } from "lucide-react";
-import ImageGrid, { ImageItem } from "@/src/utils/imagenes/ImageGrid";
+import { BookPlus, Edit, Trash2, Lightbulb, Image, ArrowLeft, Sparkles, LucideIcon } from "lucide-react";
 import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
+
+interface ImageItem {
+  src: string;
+  caption: string;
+  Json?: string;
+  icon?: LucideIcon;
+  color?: "blue" | "green" | "yellow" | "red";
+}
+
+interface ColorClasses {
+  bg: string;
+  border: string;
+  text: string;
+  hover: string;
+  icon: string;
+}
 
 const CreateBook: React.FC = () => {
   const acciones: ImageItem[] = [
-    { src: "/Imagenes/create-libros/creatulibro.png", caption: "Crea tu libro", Json: "/es/interfaz-create-book" },
-    { src: "/Imagenes/create-libros/editatuslibros.png", caption: "Edita tus libros", Json: "/es/edits-my-books" },
-    { src: "/Imagenes/create-libros/papelera.png", caption: "Papelera", Json: "/es/delete-my-books" },
+    { 
+      src: "/Imagenes/create-libros/creatulibro.png", 
+      caption: "Crea tu libro", 
+      Json: "/es/interfaz-create-book", 
+      icon: BookPlus, 
+      color: "green" 
+    },
+    { 
+      src: "/Imagenes/create-libros/editatuslibros.png", 
+      caption: "Edita tus libros", 
+      Json: "/es/edits-my-books", 
+      icon: Edit, 
+      color: "blue" 
+    },
+    { 
+      src: "/Imagenes/create-libros/papelera.png", 
+      caption: "Papelera", 
+      Json: "/es/delete-my-books", 
+      icon: Trash2, 
+      color: "red" 
+    },
   ];
 
   const Banner: ImageItem[] = [
-    { src: "/Imagenes/create-libros/Banner.png", caption: "Crea tu libro", Json: "/es/interfaz-create-book" },
+    { 
+      src: "/Imagenes/create-libros/Banner.png", 
+      caption: "Crea tu libro", 
+      Json: "/es/interfaz-create-book" 
+    },
   ];
 
   const guardarIdeas: ImageItem[] = [
-    { src: "/Imagenes/create-libros/guardatusideas.png", caption: "Guarda tus ideas" },
-    { src: "/Imagenes/create-libros/guardatusimagenes.png", caption: "Guarda tus imágenes" },
+    { 
+      src: "/Imagenes/create-libros/guardatusideas.png", 
+      caption: "Guarda tus ideas", 
+      icon: Lightbulb, 
+      color: "yellow" 
+    },
+    { 
+      src: "/Imagenes/create-libros/guardatusimagenes.png", 
+      caption: "Guarda tus imágenes", 
+      icon: Image, 
+      color: "blue" 
+    },
   ];
 
+  const getColorClasses = (color: "blue" | "green" | "yellow" | "red"): ColorClasses => {
+    const colors: Record<"blue" | "green" | "yellow" | "red", ColorClasses> = {
+      blue: {
+        bg: "bg-blue-100",
+        border: "border-blue-300",
+        text: "text-blue-600",
+        hover: "hover:bg-blue-200",
+        icon: "text-blue-500"
+      },
+      green: {
+        bg: "bg-green-100",
+        border: "border-green-300",
+        text: "text-green-600",
+        hover: "hover:bg-green-200",
+        icon: "text-green-500"
+      },
+      yellow: {
+        bg: "bg-yellow-100",
+        border: "border-yellow-300",
+        text: "text-yellow-600",
+        hover: "hover:bg-yellow-200",
+        icon: "text-yellow-500"
+      },
+      red: {
+        bg: "bg-red-100",
+        border: "border-red-300",
+        text: "text-red-600",
+        hover: "hover:bg-red-200",
+        icon: "text-red-500"
+      }
+    };
+    return colors[color];
+  };
+
+  const handleNavigation = (url: string | undefined): void => {
+    if (url) {
+      window.location.href = url.toLowerCase().replace(/\s/g, "");
+    }
+  };
+
   return (
-    <UnifiedLayout className="min-h-screen bg-gradient-to-b from-sky-50 via-blue-50 to-cyan-50 relative overflow-hidden">
-      
-      {/* ✨ Decoraciones de fondo animadas */}
-      <div className="absolute inset-0 -z-10 pointer-events-none">
-        {/* Nubes flotantes */}
-        <div className="absolute top-10 left-[-10%] w-60 h-32 bg-white rounded-full blur-2xl opacity-40 animate-cloud" />
-        <div className="absolute top-1/4 right-[-10%] w-80 h-40 bg-white rounded-full blur-3xl opacity-30 animate-cloud-slow" />
-        <div className="absolute bottom-20 left-[20%] w-64 h-36 bg-white rounded-full blur-2xl opacity-40 animate-cloud" />
+    <UnifiedLayout className="min-h-screen bg-gradient-to-b from-blue-400 via-blue-300 to-green-300">
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto">
+          
+          {/* Hero Section */}
+          <div className="text-center mb-6 sm:mb-8 lg:mb-12">
+            <div className="inline-block mb-4 sm:mb-6">
+              <div className="bg-white rounded-full p-4 sm:p-6 shadow-2xl">
+                <BookPlus size={48} className="text-blue-500 sm:w-16 sm:h-16" />
+              </div>
+            </div>
+            
+            <h1 
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-gray-700 mb-3 sm:mb-4 px-4"
+              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            >
+              TALLER DE CREACIÓN
+            </h1>
+            
+            <p 
+              className="text-lg sm:text-xl md:text-2xl text-gray-600 font-bold mb-4 sm:mb-6 px-4"
+              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            >
+              🌈 Donde tus historias cobran vida 🌈
+            </p>
+          </div>
 
-        {/* Estrellas parpadeantes */}
-        {Array.from({ length: 15 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-2 h-2 rounded-full animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              backgroundColor: ["#38bdf8", "#60a5fa", "#93c5fd", "#7dd3fc", "#bfdbfe"][i % 5],
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${2 + Math.random() * 2}s`
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Contenedor principal */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <div className="inline-block mb-6 animate-bounce">
-            <div className="bg-white rounded-full p-6 shadow-2xl">
-              <BookPlus size={64} className="text-sky-500" />
+          {/* Banner Principal */}
+          <div className="mb-6 sm:mb-8 lg:mb-12 px-2 sm:px-0">
+            <div 
+              className="bg-white rounded-2xl shadow-2xl p-3 sm:p-4 lg:p-6 border-3 border-yellow-300 transform transition-all duration-300 hover:scale-105 cursor-pointer"
+              onClick={() => handleNavigation(Banner[0].Json)}
+            >
+              <img 
+                src={Banner[0].src}
+                alt={Banner[0].caption}
+                className="w-full h-auto object-contain rounded-xl"
+              />
             </div>
           </div>
-          
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-blue-700 mb-4 drop-shadow-lg" 
-              style={{ textShadow: '4px 4px 0px rgba(255,255,255,0.5)' }}>
-            ✨ Taller de Creación ✨
-          </h1>
-          
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Star className="text-yellow-400 animate-spin" size={24} style={{ animationDuration: '3s' }} />
-            <div className="h-2 w-32 bg-gradient-to-r from-sky-400 via-cyan-400 to-blue-400 rounded-full" />
-            <Star className="text-yellow-400 animate-spin" size={24} style={{ animationDuration: '3s' }} />
-          </div>
 
-          <p className="text-xl sm:text-2xl text-blue-600 font-bold">
-            🌈 Donde tus historias cobran vida 🌈
-          </p>
-        </div>
-
-        {/* Banner superior */}
-        <div className="mb-12 sm:mb-16">
-          <div className="bg-white rounded-3xl shadow-2xl p-4 sm:p-6 transform hover:shadow-3xl transition-all duration-300 border-4 border-sky-200">
-            <ImageGrid
-              images={Banner}
-              shapeType={3}
-              onClick={(img) =>
-                window.location.href = `${img.Json?.toLowerCase().replace(/\s/g, "")}`
-              }
-            />
-          </div>
-        </div>
-
-        {/* Sección de acciones principales */}
-        <div className="mb-12 sm:mb-16">
-          <div className="bg-gradient-to-r from-sky-400 to-blue-500 rounded-3xl shadow-2xl p-1 mb-6">
-            <div className="bg-white rounded-3xl p-6 sm:p-8">
-              <h2 className="text-center text-3xl sm:text-4xl font-black text-blue-700 mb-3"
-                  style={{ textShadow: '2px 2px 0px rgba(255,255,255,0.5)' }}>
+          {/* Sección de Acciones Principales */}
+          <div className="mb-6 sm:mb-8 lg:mb-12 px-2 sm:px-0">
+            <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-6 lg:p-8 border-3 border-yellow-300">
+              <h2 
+                className="text-center text-2xl sm:text-3xl lg:text-4xl font-black text-gray-700 mb-2 sm:mb-3 px-2"
+                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              >
                 🎨 ¿Qué quieres hacer hoy? 📚
               </h2>
-              <p className="text-center text-blue-600 text-base sm:text-lg font-bold mb-8">
-                ¡Elige una opción y comienza tu aventura!
+              <p 
+                className="text-center text-gray-600 text-base sm:text-lg lg:text-xl font-bold mb-4 sm:mb-6 px-2"
+                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              >
+                ¡Elige una opción y comienza!
               </p>
               
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
-                {acciones.map((accion, index) => {
-                  const icons = [
-                    <BookPlus size={40} className="text-sky-600" />,
-                    <Edit size={40} className="text-cyan-600" />,
-                    <Trash2 size={40} className="text-blue-600" />
-                  ];
-                  const gradients = [
-                    "from-sky-100 to-blue-100",
-                    "from-cyan-100 to-teal-100",
-                    "from-blue-100 to-indigo-100"
-                  ];
-
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {acciones.map((accion: ImageItem, index: number) => {
+                  const Icon = accion.icon;
+                  const colors: ColorClasses = getColorClasses(accion.color || "blue");
+                  
                   return (
                     <div
                       key={index}
-                      onClick={() => window.location.href = `${accion.Json?.toLowerCase().replace(/\s/g, "")}`}
-                      className="group cursor-pointer"
+                      className="group cursor-pointer transform transition-all duration-300 hover:scale-105"
+                      onClick={() => handleNavigation(accion.Json)}
                     >
-                      <div className={`bg-gradient-to-br ${gradients[index]} rounded-3xl p-6 shadow-xl hover:shadow-2xl transform hover:-translate-y-3 hover:scale-105 transition-all duration-300 border-4 border-transparent hover:border-sky-300`}>
-                        <div className="bg-white rounded-2xl p-6 mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 flex items-center justify-center">
-                          <div className="mb-4">
-                            {icons[index]}
+                      <div className={`${colors.bg} rounded-2xl p-3 sm:p-4 shadow-xl ${colors.hover} border-2 ${colors.border}`}>
+                        {Icon && (
+                          <div className="bg-white rounded-xl p-3 sm:p-4 mb-3 sm:mb-4 shadow-lg flex items-center justify-center">
+                            <Icon size={40} className={`${colors.icon} sm:w-12 sm:h-12`} />
                           </div>
-                        </div>
-                        <div className="bg-white rounded-xl p-4 mb-4 shadow-md group-hover:shadow-lg transition-all duration-300">
+                        )}
+                        <div className="bg-white rounded-xl p-2 sm:p-3 mb-2 sm:mb-3 shadow-md">
                           <img 
-                            src={accion.src as string} 
+                            src={accion.src} 
                             alt={accion.caption}
-                            className="w-full h-auto object-contain"
+                            className="w-full h-auto object-contain rounded-lg"
                           />
                         </div>
-                        <h3 className="text-center text-xl font-black text-gray-800 group-hover:text-sky-600 transition-colors duration-300">
+                        <h3 
+                          className={`text-center text-base sm:text-lg font-black ${colors.text} px-2`}
+                          style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                        >
                           {accion.caption}
                         </h3>
                       </div>
@@ -142,97 +204,82 @@ const CreateBook: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Sección de ideas e imágenes */}
-        <div className="mb-12">
-          <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 border-4 border-cyan-200">
-            <h2 className="text-center text-3xl sm:text-4xl font-black text-blue-700 mb-8"
-                style={{ textShadow: '2px 2px 0px rgba(255,255,255,0.5)' }}>
-              💡 Tu Biblioteca Personal 🖼️
-            </h2>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-              {guardarIdeas.map((idea, index) => {
-                const icons = [
-                  <Lightbulb size={48} className="text-yellow-500" />,
-                  <Image size={48} className="text-blue-500" />
-                ];
-                const gradients = [
-                  "from-yellow-100 to-amber-100",
-                  "from-sky-100 to-cyan-100"
-                ];
-                const borders = [
-                  "border-yellow-300",
-                  "border-sky-300"
-                ];
-
-                return (
-                  <div
-                    key={index}
-                    className={`bg-gradient-to-br ${gradients[index]} rounded-3xl p-6 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border-4 ${borders[index]}`}
-                  >
-                    <div className="flex justify-center mb-4">
-                      <div className="bg-white rounded-full p-4 shadow-lg">
-                        {icons[index]}
+          {/* Sección de Ideas e Imágenes */}
+          <div className="mb-6 sm:mb-8 lg:mb-12 px-2 sm:px-0">
+            <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-6 lg:p-8 border-3 border-blue-300">
+              <h2 
+                className="text-center text-2xl sm:text-3xl lg:text-4xl font-black text-gray-700 mb-4 sm:mb-6 px-2"
+                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              >
+                💡 Tu Biblioteca Personal 🖼️
+              </h2>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+                {guardarIdeas.map((idea: ImageItem, index: number) => {
+                  const Icon = idea.icon;
+                  const colors: ColorClasses = getColorClasses(idea.color || "blue");
+                  
+                  return (
+                    <div
+                      key={index}
+                      className={`${colors.bg} rounded-2xl p-4 sm:p-6 shadow-xl transform transition-all duration-300 hover:scale-105 border-2 ${colors.border}`}
+                    >
+                      {Icon && (
+                        <div className="flex justify-center mb-3 sm:mb-4">
+                          <div className="bg-white rounded-full p-3 sm:p-4 shadow-lg">
+                            <Icon size={36} className={`${colors.icon} sm:w-10 sm:h-10`} />
+                          </div>
+                        </div>
+                      )}
+                      <div className="bg-white rounded-xl p-2 sm:p-3 mb-3 sm:mb-4 shadow-md">
+                        <img 
+                          src={idea.src}
+                          alt={idea.caption}
+                          className="w-full h-auto object-contain rounded-lg"
+                        />
                       </div>
+                      <h3 
+                        className={`text-center text-lg sm:text-xl font-black ${colors.text} px-2`}
+                        style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                      >
+                        {idea.caption}
+                      </h3>
                     </div>
-                    <div className="bg-white rounded-xl p-4 mb-4 shadow-md">
-                      <img 
-                        src={idea.src as string} 
-                        alt={idea.caption}
-                        className="w-full h-auto object-contain"
-                      />
-                    </div>
-                    <h3 className="text-center text-xl font-black text-gray-800">
-                      {idea.caption}
-                    </h3>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Botón de Regreso */}
+          <div className="flex justify-center mb-6 sm:mb-8 px-2 sm:px-0">
+            <Link href="/pages-my-books">
+              <button 
+                className="flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-500 to-green-500 text-white text-lg sm:text-xl font-black rounded-full shadow-2xl transform transition-all duration-300 hover:scale-110"
+                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              >
+                <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
+                ⬅️ Volver al menú
+              </button>
+            </Link>
+          </div>
+
+          {/* Mensaje Motivacional */}
+          <div className="text-center px-2 sm:px-0">
+            <div className="inline-block bg-white rounded-2xl shadow-2xl px-4 sm:px-8 py-3 sm:py-4 border-3 border-yellow-300 transform transition-all duration-300 hover:scale-105">
+              <p 
+                className="text-gray-700 text-base sm:text-lg lg:text-xl font-black flex flex-col sm:flex-row items-center gap-2 sm:gap-3"
+                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              >
+                <Sparkles className="text-yellow-500 w-6 h-6 sm:w-7 sm:h-7" />
+                <span className="text-center sm:text-left">¡Cada historia comienza con una idea maravillosa!</span>
+                <Sparkles className="text-yellow-500 w-6 h-6 sm:w-7 sm:h-7" />
+              </p>
             </div>
           </div>
         </div>
-
-        {/* Botón de regreso */}
-        <div className="flex justify-center mb-8">
-          <Link href="/pages-my-books">
-            <button className="flex items-center gap-4 px-10 py-5 bg-gradient-to-r from-sky-500 via-blue-500 to-cyan-500 text-white text-2xl font-black rounded-full shadow-2xl hover:shadow-3xl transform transition-all duration-300 hover:scale-110 hover:-translate-y-2"
-                    style={{ textShadow: '2px 2px 0px rgba(0,0,0,0.2)' }}>
-              <ArrowLeft size={28} />
-              ⬅️ Volver al menú
-            </button>
-          </Link>
-        </div>
-
-        {/* Mensaje motivacional */}
-        <div className="text-center">
-          <div className="inline-block bg-white rounded-3xl shadow-xl px-8 py-6 border-4 border-sky-200 transform hover:scale-105 transition-all duration-300">
-            <p className="text-blue-700 text-lg sm:text-xl font-black flex items-center gap-3">
-              <Sparkles className="text-yellow-400" size={32} />
-              ¡Cada historia comienza con una idea maravillosa!
-              <Sparkles className="text-yellow-400" size={32} />
-            </p>
-          </div>
-        </div>
       </div>
-
-      <style jsx>{`
-        @keyframes cloud {
-          0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(30px); }
-        }
-        @keyframes cloud-slow {
-          0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(-20px); }
-        }
-        .animate-cloud {
-          animation: cloud 20s ease-in-out infinite;
-        }
-        .animate-cloud-slow {
-          animation: cloud-slow 30s ease-in-out infinite;
-        }
-      `}</style>
     </UnifiedLayout>
   );
 };
