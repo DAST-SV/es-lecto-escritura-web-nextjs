@@ -27,6 +27,7 @@ export interface BookMetadata {
   selectedCategorias: (number | string)[];
   selectedGeneros: (number | string)[];
   selectedEtiquetas: (number | string)[];
+  selectedValores: (number | string)[];
   selectedNivel: number | null;
   autor: string;
   descripcion: string;
@@ -69,6 +70,10 @@ function validateBookMetadata(metadata: BookMetadata): string | null {
   // Etiquetas: si se envían, debe ser un array de números (opcional)
   if (metadata.selectedEtiquetas && !Array.isArray(metadata.selectedEtiquetas)) {
     return "Etiquetas inválidas";
+  }
+
+  if (metadata.selectedValores && !Array.isArray(metadata.selectedValores)) {
+    return "valores inválidas";
   }
 
   // Portada obligatoria

@@ -6,6 +6,7 @@ interface BookMetadataFormProps {
   selectedCategorias: (number | string)[];
   selectedGeneros: (number | string)[];
   selectedEtiquetas: (number | string)[];
+  selectedValores: (number | string)[];
   selectedNivel: number | null;
   autor: string;
   descripcion: string;
@@ -13,6 +14,7 @@ interface BookMetadataFormProps {
   onCategoriasChange: (values: (number | string)[]) => void;
   onGenerosChange: (values: (number | string)[]) => void;
   onEtiquetasChange: (values: (number | string)[]) => void;
+  onValoresChange: (values: (number | string)[]) => void;
   onNivelChange: (value: number | null) => void;
   onAutorChange: (value: string) => void;
   onDescripcionChange: (value: string) => void;
@@ -24,6 +26,7 @@ export const BookMetadataForm: React.FC<BookMetadataFormProps> = ({
   selectedCategorias,
   selectedGeneros,
   selectedEtiquetas,
+  selectedValores,
   selectedNivel,
   autor,
   descripcion,
@@ -31,6 +34,7 @@ export const BookMetadataForm: React.FC<BookMetadataFormProps> = ({
   onCategoriasChange,
   onGenerosChange,
   onEtiquetasChange,
+  onValoresChange,
   onNivelChange,
   onAutorChange,
   onDescripcionChange,
@@ -127,6 +131,23 @@ export const BookMetadataForm: React.FC<BookMetadataFormProps> = ({
           values={selectedGeneros}
           placeholder="Selecciona géneros..."
           onChange={onGenerosChange}
+          maxItems={2}
+        />
+      </div>
+
+      {/* Selector múltiple de géneros */}
+      <div className="mb-6 p-4 bg-cyan-50 rounded-lg">
+        <label className="block text-sm font-bold text-gray-700 mb-3">
+          🎭 Valores (máximo 2):
+        </label>
+        <MultiSelectFromTable<{ id_valor: number; nombre: string }>
+          table="valores"
+          valueField="id_valor"
+          labelField="nombre"
+          filterField="nombre"
+          values={selectedValores}
+          placeholder="Selecciona géneros..."
+          onChange={onValoresChange}
           maxItems={2}
         />
       </div>

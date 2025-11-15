@@ -1,3 +1,5 @@
+// REEMPLAZA TODO EL BOOKSIDEBAR CON ESTO:
+
 import React, { useState } from 'react';
 import {
   Navigation,
@@ -51,6 +53,7 @@ interface BookSidebarProps {
   // Metadatos
   selectedCategorias: (number | string)[];
   selectedGeneros: (number | string)[];
+  selectedValores: (number | string)[];
   selectedEtiquetas: (number | string)[];
   selectedNivel: number | null;
   autor: string;
@@ -62,6 +65,7 @@ interface BookSidebarProps {
   onCategoriasChange: (values: (number | string)[]) => void;
   onGenerosChange: (values: (number | string)[]) => void;
   onEtiquetasChange: (values: (number | string)[]) => void;
+  onValoresChange: (values: (number | string)[]) => void;
   onNivelChange: (value: number | null) => void;
   onAutorChange: (value: string) => void;
   onDescripcionChange: (value: string) => void;
@@ -89,6 +93,7 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
   onPageClick,
   selectedCategorias,
   selectedGeneros,
+  selectedValores,
   selectedEtiquetas,
   selectedNivel,
   autor,
@@ -97,6 +102,7 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
   portada,
   onCategoriasChange,
   onGenerosChange,
+  onValoresChange,
   onEtiquetasChange,
   onNivelChange,
   onAutorChange,
@@ -110,11 +116,11 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
   onDeletePage,
 }) => {
   const currentPageData = pages[currentPage];
-  const [activeSection, setActiveSection] = useState<string | null>('visualizacion');
+  const [activeSection, setActiveSection] = useState<string>('visualizacion');
   const [isSaving, setIsSaving] = useState(false);
 
   const toggleSection = (sectionId: string) => {
-    setActiveSection(activeSection === sectionId ? null : sectionId);
+    setActiveSection(sectionId);
   };
 
   // Handler para guardar con estado de carga
@@ -129,7 +135,7 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
     }
   };
 
-  // Secciones del menú - AÑADIDA VISUALIZACIÓN
+  // Secciones del menú
   const menuSections = [
     { id: 'visualizacion', icon: Eye, label: 'Visualización', color: 'bg-indigo-500' },
     { id: 'navegacion', icon: Navigation, label: 'Navegación', color: 'bg-blue-500' },
@@ -140,157 +146,17 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
 
   if (!currentPageData) return null;
 
-  // Renderizar contenido de cada sección
-  const renderSectionContent = (sectionId: string) => {
-    switch (sectionId) {
-      case 'visualizacion':
-        return null;
-
-      case 'navegacion':
-        return (
-          <div className="space-y-6">
-            <div>
-              <h4 className="text-sm font-medium mb-3 text-gray-700">
-                Navegación de Páginas
-              </h4>
-              <PageNavigation
-                currentPage={currentPage}
-                totalPages={pages.length}
-                canGoNext={navigation.canGoNext}
-                canGoPrev={navigation.canGoPrev}
-                isFlipping={false}
-                onGoToPage={navigation.goToPage}
-                onNextPage={navigation.nextPage}
-                onPrevPage={navigation.prevPage}
-                onAddPage={onAddPage}
-                onDeletePage={onDeletePage}
-              />
-            </div>
-
-            <div>
-              <h4 className="text-sm font-medium mb-3 text-gray-700">
-                Layout de Página
-              </h4>
-              <PageLayoutSelector
-                currentLayout={currentPageData.layout}
-                pageNumber={currentPage + 1}
-                onLayoutChange={onLayoutChange}
-              />
-            </div>
-          </div>
-        );
-
-      case 'contenido':
-        return (
-          <div className="space-y-6">
-            <div>
-              <h4 className="text-sm font-medium mb-3 text-gray-700">
-                Editor de Título
-              </h4>
-              <RichTitleEditor
-                isEditing={editingState.editingField === 'title'}
-                currentTitle={editingState.getCurrentTitle()}
-                editingTitle={editingState.editingTitle}
-                pageNumber={currentPage + 1}
-                onStartEdit={() => editingState.startEdit('title')}
-                onSave={() => editingState.saveField('title')}
-                onCancel={() => editingState.cancelEdit('title')}
-                onTitleChange={editingState.setEditingTitle}
-              />
-            </div>
-
-            <div>
-              <h4 className="text-sm font-medium mb-3 text-gray-700">
-                Editor de Contenido
-              </h4>
-              <RichTextEditor
-                isEditing={editingState.editingField === 'text'}
-                currentText={editingState.getCurrentText()}
-                editingText={editingState.editingText}
-                pageNumber={currentPage + 1}
-                onStartEdit={() => editingState.startEdit('text')}
-                onSave={() => editingState.saveField('text')}
-                onCancel={() => editingState.cancelEdit('text')}
-                onTextChange={editingState.setEditingText}
-              />
-            </div>
-          </div>
-        );
-
-      case 'visual':
-        return (
-          <div className="space-y-6">
-            <div>
-              <h4 className="text-sm font-medium mb-3 text-gray-700">
-                Fondo de Página
-              </h4>
-              <BackgroundControls
-                currentBackground={currentPageData.background}
-                hasBackground={!!currentPageData.background}
-                pageNumber={currentPage + 1}
-                onBackgroundChange={onBackgroundChange}
-                onBackgroundFileChange={imageHandler.handleBackgroundFile}
-                onRemoveBackground={imageHandler.removeBackground}
-              />
-            </div>
-
-            <div>
-              <h4 className="text-sm font-medium mb-3 text-gray-700">
-                Imagen Principal
-              </h4>
-              <ImageControls
-                hasImage={!!currentPageData.image}
-                pageNumber={currentPage + 1}
-                onImageChange={imageHandler.handleImageChange}
-                onRemoveImage={imageHandler.removeImage}
-              />
-            </div>
-
-            <div>
-              <h4 className="text-sm font-medium mb-3 text-gray-700">
-                Portada del Libro
-              </h4>
-              <PortadaControls onImageChange={onPortadaChange} />
-            </div>
-          </div>
-        );
-
-      case 'libro':
-        return (
-          <div>
-            <h4 className="text-sm font-medium mb-3 text-gray-700">
-              Metadatos del Libro
-            </h4>
-            <BookMetadataForm
-              selectedCategorias={selectedCategorias}
-              selectedGeneros={selectedGeneros}
-              selectedEtiquetas={selectedEtiquetas}
-              selectedNivel={selectedNivel}
-              autor={autor}
-              descripcion={descripcion}
-              titulo={titulo}
-              onCategoriasChange={onCategoriasChange}
-              onGenerosChange={onGenerosChange}
-              onEtiquetasChange={onEtiquetasChange}
-              onNivelChange={onNivelChange}
-              onAutorChange={onAutorChange}
-              onDescripcionChange={onDescripcionChange}
-              onTituloChange={onTituloChange}
-              onSave={handleSave}
-            />
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
+  // ✅ CÁLCULO DE ALTURA FIJA
+  const HEADER_HEIGHT = 72;
+  const TABS_HEIGHT = 88;
+  const FOOTER_HEIGHT = 88;
+  const CONTENT_HEIGHT = `calc(100vh - ${HEADER_HEIGHT + TABS_HEIGHT + FOOTER_HEIGHT}px)`;
 
   return (
     <div className="w-full h-screen bg-white flex flex-col">
 
       {/* Header con título */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50" style={{ height: `${HEADER_HEIGHT}px` }}>
         <h2 className="font-bold text-gray-800 text-xl">
           🛠️ Panel de Edición
         </h2>
@@ -316,7 +182,7 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
       </div>
 
       {/* Menú de pestañas horizontal */}
-      <div className="flex border-b border-gray-200 bg-gray-50">
+      <div className="flex border-b border-gray-200 bg-gray-50" style={{ height: `${TABS_HEIGHT}px` }}>
         {menuSections.map(section => {
           const Icon = section.icon;
           const isActive = activeSection === section.id;
@@ -341,9 +207,23 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
         })}
       </div>
 
-      {/* BookViewer - SIEMPRE MONTADO pero visible solo cuando activeSection === 'visualizacion' */}
-      <div className={`flex-1 ${activeSection === 'visualizacion' ? 'block' : 'hidden'}`}>
-        <div className="h-full flex items-center justify-center bg-gray-100 rounded-lg">
+      {/* ✅ CONTENEDOR CON ALTURA FIJA - TODAS LAS SECCIONES SIEMPRE RENDERIZADAS */}
+      <div style={{ height: CONTENT_HEIGHT, minHeight: CONTENT_HEIGHT, maxHeight: CONTENT_HEIGHT, overflow: 'hidden', position: 'relative' }}>
+        
+        {/* 📚 VISUALIZACIÓN - BookViewer */}
+        <div 
+          style={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%', 
+            height: '100%',
+            visibility: activeSection === 'visualizacion' ? 'visible' : 'hidden',
+            opacity: activeSection === 'visualizacion' ? 1 : 0,
+            pointerEvents: activeSection === 'visualizacion' ? 'auto' : 'none',
+            transition: 'opacity 0.2s ease-in-out'
+          }}
+        >
           <BookViewer
             bookRef={bookRef}
             pages={pages}
@@ -354,19 +234,212 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
             onPageClick={onPageClick}
           />
         </div>
-      </div>
 
-      {/* Contenido de otras secciones */}
-      {activeSection && activeSection !== 'visualizacion' && (
-        <div className="flex-1 overflow-y-auto bg-gray-50">
+        {/* 🧭 NAVEGACIÓN */}
+        <div 
+          style={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%', 
+            height: '100%',
+            visibility: activeSection === 'navegacion' ? 'visible' : 'hidden',
+            opacity: activeSection === 'navegacion' ? 1 : 0,
+            pointerEvents: activeSection === 'navegacion' ? 'auto' : 'none',
+            overflow: 'auto',
+            transition: 'opacity 0.2s ease-in-out'
+          }}
+          className="bg-gray-50"
+        >
           <div className="max-w-4xl mx-auto p-6">
-            {renderSectionContent(activeSection)}
+            <div className="space-y-6">
+              <div>
+                <h4 className="text-sm font-medium mb-3 text-gray-700">
+                  Navegación de Páginas
+                </h4>
+                <PageNavigation
+                  currentPage={currentPage}
+                  totalPages={pages.length}
+                  canGoNext={navigation.canGoNext}
+                  canGoPrev={navigation.canGoPrev}
+                  isFlipping={false}
+                  onGoToPage={navigation.goToPage}
+                  onNextPage={navigation.nextPage}
+                  onPrevPage={navigation.prevPage}
+                  onAddPage={onAddPage}
+                  onDeletePage={onDeletePage}
+                />
+              </div>
+
+              <div>
+                <h4 className="text-sm font-medium mb-3 text-gray-700">
+                  Layout de Página
+                </h4>
+                <PageLayoutSelector
+                  currentLayout={currentPageData.layout}
+                  pageNumber={currentPage + 1}
+                  onLayoutChange={onLayoutChange}
+                />
+              </div>
+            </div>
           </div>
         </div>
-      )}
+
+        {/* 📝 CONTENIDO */}
+        <div 
+          style={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%', 
+            height: '100%',
+            visibility: activeSection === 'contenido' ? 'visible' : 'hidden',
+            opacity: activeSection === 'contenido' ? 1 : 0,
+            pointerEvents: activeSection === 'contenido' ? 'auto' : 'none',
+            overflow: 'auto',
+            transition: 'opacity 0.2s ease-in-out'
+          }}
+          className="bg-gray-50"
+        >
+          <div className="max-w-4xl mx-auto p-6">
+            <div className="space-y-6">
+              <div>
+                <h4 className="text-sm font-medium mb-3 text-gray-700">
+                  Editor de Título
+                </h4>
+                <RichTitleEditor
+                  isEditing={editingState.editingField === 'title'}
+                  currentTitle={editingState.getCurrentTitle()}
+                  editingTitle={editingState.editingTitle}
+                  pageNumber={currentPage + 1}
+                  onStartEdit={() => editingState.startEdit('title')}
+                  onSave={() => editingState.saveField('title')}
+                  onCancel={() => editingState.cancelEdit('title')}
+                  onTitleChange={editingState.setEditingTitle}
+                />
+              </div>
+
+              <div>
+                <h4 className="text-sm font-medium mb-3 text-gray-700">
+                  Editor de Contenido
+                </h4>
+                <RichTextEditor
+                  isEditing={editingState.editingField === 'text'}
+                  currentText={editingState.getCurrentText()}
+                  editingText={editingState.editingText}
+                  pageNumber={currentPage + 1}
+                  onStartEdit={() => editingState.startEdit('text')}
+                  onSave={() => editingState.saveField('text')}
+                  onCancel={() => editingState.cancelEdit('text')}
+                  onTextChange={editingState.setEditingText}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 🎨 VISUAL */}
+        <div 
+          style={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%', 
+            height: '100%',
+            visibility: activeSection === 'visual' ? 'visible' : 'hidden',
+            opacity: activeSection === 'visual' ? 1 : 0,
+            pointerEvents: activeSection === 'visual' ? 'auto' : 'none',
+            overflow: 'auto',
+            transition: 'opacity 0.2s ease-in-out'
+          }}
+          className="bg-gray-50"
+        >
+          <div className="max-w-4xl mx-auto p-6">
+            <div className="space-y-6">
+              <div>
+                <h4 className="text-sm font-medium mb-3 text-gray-700">
+                  Fondo de Página
+                </h4>
+                <BackgroundControls
+                  currentBackground={currentPageData.background}
+                  hasBackground={!!currentPageData.background}
+                  pageNumber={currentPage + 1}
+                  onBackgroundChange={onBackgroundChange}
+                  onBackgroundFileChange={imageHandler.handleBackgroundFile}
+                  onRemoveBackground={imageHandler.removeBackground}
+                />
+              </div>
+
+              <div>
+                <h4 className="text-sm font-medium mb-3 text-gray-700">
+                  Imagen Principal
+                </h4>
+                <ImageControls
+                  hasImage={!!currentPageData.image}
+                  pageNumber={currentPage + 1}
+                  onImageChange={imageHandler.handleImageChange}
+                  onRemoveImage={imageHandler.removeImage}
+                />
+              </div>
+
+              <div>
+                <h4 className="text-sm font-medium mb-3 text-gray-700">
+                  Portada del Libro
+                </h4>
+                <PortadaControls onImageChange={onPortadaChange} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 📖 LIBRO */}
+        <div 
+          style={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%', 
+            height: '100%',
+            visibility: activeSection === 'libro' ? 'visible' : 'hidden',
+            opacity: activeSection === 'libro' ? 1 : 0,
+            pointerEvents: activeSection === 'libro' ? 'auto' : 'none',
+            overflow: 'auto',
+            transition: 'opacity 0.2s ease-in-out'
+          }}
+          className="bg-gray-50"
+        >
+          <div className="max-w-4xl mx-auto p-6">
+            <div>
+              <h4 className="text-sm font-medium mb-3 text-gray-700">
+                Metadatos del Libro
+              </h4>
+              <BookMetadataForm
+                selectedCategorias={selectedCategorias}
+                selectedGeneros={selectedGeneros}
+                selectedEtiquetas={selectedEtiquetas}
+                selectedValores={selectedValores}
+                selectedNivel={selectedNivel}
+                autor={autor}
+                descripcion={descripcion}
+                titulo={titulo}
+                onCategoriasChange={onCategoriasChange}
+                onGenerosChange={onGenerosChange}
+                onEtiquetasChange={onEtiquetasChange}
+                onValoresChange={onValoresChange}
+                onNivelChange={onNivelChange}
+                onAutorChange={onAutorChange}
+                onDescripcionChange={onDescripcionChange}
+                onTituloChange={onTituloChange}
+                onSave={handleSave}
+              />
+            </div>
+          </div>
+        </div>
+
+      </div>
 
       {/* Footer con botón guardar */}
-      <div className="p-4 border-t border-gray-200 bg-white">
+      <div className="p-4 border-t border-gray-200 bg-white" style={{ height: `${FOOTER_HEIGHT}px` }}>
         <button
           onClick={handleSave}
           disabled={isSaving}

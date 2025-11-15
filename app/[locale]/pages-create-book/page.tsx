@@ -26,7 +26,7 @@ const CreateBook: React.FC = () => {
     { 
       src: "/Imagenes/create-libros/creatulibro.png", 
       caption: "Crea tu libro", 
-      Json: "/es/interfaz-create-book", 
+      Json: "/es/book/create", 
       icon: BookPlus, 
       color: "green" 
     },

@@ -32,7 +32,7 @@ const PageRendererIndex: React.FC<PageRendererIndexProps> = ({ page, pageNumber,
   const Pagina = convertPage(page);
 
   return (
-    <div className="w-full h-full relative overflow-hidden">
+    <div className="w-full h-full relative overflow-hidden" style={{ position: 'relative' }}>
       {page.background && page.background !== "blanco" && (
         <div
           className="absolute inset-0 pointer-events-none"
@@ -40,7 +40,7 @@ const PageRendererIndex: React.FC<PageRendererIndexProps> = ({ page, pageNumber,
         />
       )}
 
-      <div className="relative z-10 h-full">
+      <div className="relative z-10 w-full h-full" style={{ position: 'relative', width: '100%', height: '100%' }}>
         <PageRenderer page={Pagina} isActive={isActive} />
       </div>
 
@@ -66,15 +66,17 @@ export const BookViewer: React.FC<BookViewerProps> = ({
   currentPage,
   isFlipping,
   bookKey,
-  bookRef, // ✅ Recibir el ref externo
+  bookRef,
   onFlip,
   onPageClick
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [bookDimensions, setBookDimensions] = useState({ width: 400, height: 500 });
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [bookDimensions, setBookDimensions] = useState({ width: 300, height: 375 });
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   const [activePage, setActivePage] = useState(currentPage);
   const [isClient, setIsClient] = useState(false);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     setIsClient(true);
@@ -94,38 +96,62 @@ export const BookViewer: React.FC<BookViewerProps> = ({
         const containerHeight = containerRef.current.clientHeight;
         const containerWidth = containerRef.current.clientWidth;
 
-        const reservedHeight = 180;
+        // Guardar tamaño del contenedor
+        setContainerSize({ width: containerWidth, height: containerHeight });
+
+        // Solo calcular si tenemos dimensiones válidas
+        if (containerHeight <= 0 || containerWidth <= 0) {
+          return;
+        }
+
+        // Espacio reservado para controles
+        const reservedHeight = 160;
         const availableHeight = containerHeight - reservedHeight;
-        const availableWidth = containerWidth - 100;
+        const availableWidth = containerWidth - 60;
 
         const aspectRatio = 5 / 6;
 
-        let bookWidth = 400;
-        let bookHeight = 500;
+        let bookWidth = 300;
+        let bookHeight = 375;
 
         if (availableHeight > 0 && availableWidth > 0) {
-          bookHeight = Math.min(availableHeight, 600);
+          bookHeight = Math.min(availableHeight, 500);
           bookWidth = bookHeight * aspectRatio;
 
-          if (bookWidth > availableWidth) {
-            bookWidth = availableWidth;
+          if (bookWidth > availableWidth / 2) {
+            bookWidth = availableWidth / 2;
             bookHeight = bookWidth / aspectRatio;
           }
         }
 
         setBookDimensions({
-          width: Math.max(Math.round(bookWidth), 300),
-          height: Math.max(Math.round(bookHeight), 350)
+          width: Math.max(Math.round(bookWidth), 250),
+          height: Math.max(Math.round(bookHeight), 300)
         });
       }
     };
 
     checkDevice();
-    const timer = setTimeout(checkDevice, 100);
+    const timer1 = setTimeout(checkDevice, 100);
+    const timer2 = setTimeout(checkDevice, 300);
+    
     window.addEventListener('resize', checkDevice);
+    
+    let resizeObserver: ResizeObserver | null = null;
+    if (containerRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        checkDevice();
+      });
+      resizeObserver.observe(containerRef.current);
+    }
+    
     return () => {
-      clearTimeout(timer);
+      clearTimeout(timer1);
+      clearTimeout(timer2);
       window.removeEventListener('resize', checkDevice);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
     };
   }, [isMobileDevice, isClient]);
 
@@ -159,10 +185,10 @@ export const BookViewer: React.FC<BookViewerProps> = ({
       onFlip(e);
     },
     startPage: Math.min(currentPage),
-    minWidth: 100,
-    maxWidth: 800,
-    minHeight: 100,
-    maxHeight: 800,
+    minWidth: bookDimensions.width,
+    maxWidth: bookDimensions.width,
+    minHeight: bookDimensions.height,
+    maxHeight: bookDimensions.height,
     usePortrait: false,
     startZIndex: 0,
     autoSize: false,
@@ -174,8 +200,8 @@ export const BookViewer: React.FC<BookViewerProps> = ({
     disableFlipByClick: false,
     style: {},
     children: pages.map((page, idx) => (
-      <div className="page w-full h-full" key={page.id || idx}>
-        <div className="page-inner w-full h-full box-border">
+      <div className="page w-full h-full" key={page.id || idx} style={{ position: 'relative', overflow: 'hidden' }}>
+        <div className="page-inner w-full h-full box-border" style={{ position: 'relative', width: '100%', height: '100%' }}>
           <PageRendererIndex
             page={page}
             pageNumber={idx + 1}
@@ -216,8 +242,8 @@ export const BookViewer: React.FC<BookViewerProps> = ({
     disableFlipByClick: false,
     style: {},
     children: pages.map((page, idx) => (
-      <div className="page w-full h-full" key={page.id || idx}>
-        <div className="page-inner w-full h-full box-border">
+      <div className="page w-full h-full" key={page.id || idx} style={{ position: 'relative', overflow: 'hidden' }}>
+        <div className="page-inner w-full h-full box-border" style={{ position: 'relative', width: '100%', height: '100%' }}>
           <PageRendererIndex
             page={page}
             pageNumber={idx + 1}
@@ -240,41 +266,77 @@ export const BookViewer: React.FC<BookViewerProps> = ({
         <div className="absolute top-24 right-1/4 w-2 h-2 bg-yellow-400 rounded-full animate-twinkle-slow"></div>
         <div className="absolute top-40 left-3/4 w-4 h-4 bg-yellow-200 rounded-full animate-twinkle-fast"></div>
 
-        <div className="absolute top-8 right-8 w-16 h-16 bg-yellow-300 rounded-full flex items-center justify-center opacity-80">
-          <div className="text-orange-600 text-lg">☀️</div>
+        <div className="absolute top-8 right-8 w-12 h-12 bg-yellow-300 rounded-full flex items-center justify-center opacity-80">
+          <div className="text-orange-600 text-base">☀️</div>
         </div>
       </div>
 
-      {/* Contenedor del libro */}
-      <div className="relative z-10 w-full h-full flex flex-col items-center justify-center py-4 px-4">
+      {/* Contenedor ABSOLUTO que ocupa todo el espacio */}
+      <div 
+        className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4"
+        style={{ 
+          width: '100%', 
+          height: '100%',
+          overflow: 'hidden'
+        }}
+      >
         {/* Indicador de página */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg mb-3 flex-shrink-0">
-          <span className="text-sm font-medium text-gray-700">
+        <div className="bg-white/80 backdrop-blur-sm rounded-full px-4 py-1.5 shadow-lg flex-shrink-0 z-20">
+          <span className="text-xs font-medium text-gray-700">
             Página {activePage + 1} de {pages.length}
           </span>
         </div>
 
-        {/* Libro con configuración específica según dispositivo */}
-        <div className="flex-shrink-0 drop-shadow-2xl">
-          {isMobileDevice ? (
-            <HTMLFlipBook {...mobileFlipBookProps} ref={bookRef} key={`mobile-${bookKey}`} />
-          ) : (
-            <HTMLFlipBook {...desktopFlipBookProps} ref={bookRef} key={`desktop-${bookKey}`} />
-          )}
+        {/* Wrapper del libro con posición y tamaño FIJOS */}
+        <div 
+          ref={wrapperRef}
+          className="flex-shrink-0 z-10"
+          style={{
+            width: isMobileDevice ? 'auto' : `${bookDimensions.width * 2}px`,
+            height: `${bookDimensions.height}px`,
+            minWidth: isMobileDevice ? 'auto' : `${bookDimensions.width * 2}px`,
+            minHeight: `${bookDimensions.height}px`,
+            maxWidth: isMobileDevice ? 'auto' : `${bookDimensions.width * 2}px`,
+            maxHeight: `${bookDimensions.height}px`,
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'visible'
+          }}
+        >
+          {/* Libro centrado ABSOLUTAMENTE dentro del wrapper */}
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <div className="drop-shadow-2xl">
+              {isMobileDevice ? (
+                <HTMLFlipBook {...mobileFlipBookProps} ref={bookRef} key={`mobile-${bookKey}`} />
+              ) : (
+                <HTMLFlipBook {...desktopFlipBookProps} ref={bookRef} key={`desktop-${bookKey}`} />
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Indicadores de página para desktop */}
         {!isMobileDevice && (
-          <div className="flex gap-2 flex-wrap justify-center max-w-xl mt-3 flex-shrink-0">
+          <div className="flex gap-1.5 flex-wrap justify-center max-w-xl flex-shrink-0 z-20">
             {pages.map((_, index) => (
               <button
                 key={index}
                 onClick={() => onPageClick(index)}
                 disabled={isFlipping}
-                className={`h-2.5 rounded-full transition-all ${
+                className={`h-2 rounded-full transition-all ${
                   activePage === index
-                    ? 'bg-indigo-600 w-7'
-                    : 'bg-white/60 hover:bg-white/80 w-2.5'
+                    ? 'bg-indigo-600 w-6'
+                    : 'bg-white/60 hover:bg-white/80 w-2'
                 }`}
                 title={`Ir a página ${index + 1}`}
               />
@@ -283,11 +345,11 @@ export const BookViewer: React.FC<BookViewerProps> = ({
         )}
 
         {/* Instrucciones */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-lg max-w-md text-center mt-2 flex-shrink-0">
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1 shadow-lg max-w-md text-center flex-shrink-0 z-20">
           <p className="text-xs text-gray-600">
             {isMobileDevice 
-              ? '👆 Toca las esquinas o desliza para pasar páginas'
-              : '🖱️ Haz clic en las páginas para navegar'
+              ? '👆 Toca las esquinas o desliza'
+              : '🖱️ Clic en las páginas'
             }
           </p>
         </div>
@@ -352,6 +414,8 @@ export const BookViewer: React.FC<BookViewerProps> = ({
         .storybook-flipbook {
           border-radius: 8px;
           overflow: hidden;
+          margin: 0 !important;
+          padding: 0 !important;
         }
 
         @media (min-width: 640px) {

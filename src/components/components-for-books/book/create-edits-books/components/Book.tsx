@@ -27,6 +27,7 @@ interface BookProps {
     selectedCategorias?: (number | string)[];
     selectedGeneros?: (number | string)[];
     selectedEtiquetas?: (number | string)[];
+    selectedValores?: (number | string)[];
     selectedNivel?: number | null;
     autor?: string;
     descripcion?: string;
@@ -48,6 +49,10 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
   );
   const [selectedEtiquetas, setSelectedEtiquetas] = useState<(number | string)[]>(
     initialMetadata?.selectedEtiquetas || []
+  );
+
+  const [selectedValores, setSelectedValores] = useState<(number | string)[]>(
+    initialMetadata?.selectedValores || []
   );
   const [selectedNivel, setSelectedNivel] = useState<number | null>(
     initialMetadata?.selectedNivel || null
@@ -90,6 +95,7 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
       selectedCategorias,
       selectedGeneros,
       selectedEtiquetas,
+      selectedValores,
       selectedNivel,
       autor,
       descripcion,
@@ -107,6 +113,7 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
     bookState.pages, 
     selectedCategorias, 
     selectedGeneros, 
+    selectedGeneros,
     selectedEtiquetas, 
     selectedNivel,
     autor, 
@@ -143,6 +150,7 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
           selectedCategorias={selectedCategorias}
           selectedGeneros={selectedGeneros}
           selectedEtiquetas={selectedEtiquetas}
+          selectedValores={selectedValores}
           selectedNivel={selectedNivel}
           autor={autor}
           descripcion={descripcion}
@@ -152,6 +160,7 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
           onCategoriasChange={setSelectedCategorias}
           onGenerosChange={setSelectedGeneros}
           onEtiquetasChange={setSelectedEtiquetas}
+          onValoresChange={setSelectedValores}
           onNivelChange={setSelectedNivel}
           onAutorChange={setAutor}
           onDescripcionChange={setDescripcion}

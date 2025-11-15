@@ -20,13 +20,14 @@ export const PageRenderer: React.FC<Props> = ({ page, isActive }) => {
   const getBorderRadius = page.border ? borders[page.border] : borders.cuadrado;
 
   const getBackground =
-    page.background && page.background in backgrounds
-      ? backgrounds[page.background as keyof typeof backgrounds]
-      : typeof page.background === "string"
-        ? /^(https?:\/\/|localhost)/.test(page.background)
-          ? `url(${page.background}) center/cover no-repeat`
-          : backgrounds.blanco
-        : backgrounds.blanco;
+  page.background && page.background in backgrounds
+    ? backgrounds[page.background as keyof typeof backgrounds]
+    : typeof page.background === "string"
+      ? /^(https?:\/\/|localhost|blob:)/.test(page.background)
+        ? `url(${page.background}) center/cover no-repeat`
+        : backgrounds.blanco
+      : backgrounds.blanco;
+
 
   const animation = page.animation ? getAnimation(page.animation) : null;
 
