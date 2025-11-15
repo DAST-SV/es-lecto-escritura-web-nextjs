@@ -21,6 +21,7 @@ interface BookData {
     descripcion?: string;
     titulo?: string;
     portada?: File | string | null;
+    portadaUrl?: string | null; // 👈 Nueva propiedad para la URL existente
   };
 }
 

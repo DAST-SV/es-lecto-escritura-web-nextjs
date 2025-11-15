@@ -16,13 +16,10 @@ import {
   getFileExtension,
   fetchFileFromUrl,
 } from "@/src/components/components-for-books/book/create-edits-books/utils/imageUtils";
-import { number } from "framer-motion";
 
 /**
  * Metadata requerida para crear/actualizar un libro
  */
-
-// En bookService.ts
 export interface BookMetadata {
   selectedCategorias: (number | string)[];
   selectedGeneros: (number | string)[];
@@ -32,7 +29,8 @@ export interface BookMetadata {
   autor: string;
   descripcion: string;
   titulo: string;
-  portada: File | null | string;
+  portada: File | null;         // 👈 Nuevo archivo a subir
+  portadaUrl?: string | null;   // 👈 URL existente de la BD
 }
 
 /**
@@ -59,7 +57,8 @@ export function convertPage(oldPage: page): Page {
 function validateBookMetadata(metadata: BookMetadata): string | null {
   // Categorías: debe ser un array de números y no vacío
   if (!Array.isArray(metadata.selectedCategorias) || metadata.selectedCategorias.length === 0) {
-    return "Por favor selecciona al menos un Tipo de Lectura";  }
+    return "Por favor selecciona al menos un Tipo de Lectura";
+  }
 
   // Géneros: debe ser un array de números y no vacío
   if (!Array.isArray(metadata.selectedGeneros) || metadata.selectedGeneros.length === 0) {
@@ -75,8 +74,8 @@ function validateBookMetadata(metadata: BookMetadata): string | null {
     return "valores inválidas";
   }
 
-  // Portada obligatoria
-  if (!metadata.portada) {
+  // Portada obligatoria (puede ser File nuevo o URL existente)
+  if (!metadata.portada && !metadata.portadaUrl) {
     return "Por favor selecciona una portada";
   }
 
@@ -98,13 +97,13 @@ function validateBookMetadata(metadata: BookMetadata): string | null {
   return null; // Todo válido
 }
 
-
 /**
  * Crea un nuevo libro en la base de datos
  */
 async function createNewBook(
   userId: string,
-  metadata: BookMetadata
+  metadata: BookMetadata,
+  portadaUrl: string | null
 ): Promise<string> {
   const response = await fetch("/api/libros/createbook", {
     method: "POST",
@@ -112,13 +111,13 @@ async function createNewBook(
     body: JSON.stringify({
       userId,
       title: metadata.titulo,
-      portada: typeof metadata.portada !== "string" ? null : metadata.portada,
+      portada: portadaUrl, // 👈 Usar la URL procesada
       categoria: metadata.selectedCategorias,
       genero: metadata.selectedGeneros,
-      etiquetas : metadata.selectedEtiquetas,
-      valores : metadata.selectedValores,
-      autor : metadata.autor,
-      nivel : metadata.selectedNivel,
+      etiquetas: metadata.selectedEtiquetas,
+      valores: metadata.selectedValores,
+      autor: metadata.autor,
+      nivel: metadata.selectedNivel,
       descripcion: metadata.descripcion.trim(),
     }),
   });
@@ -227,12 +226,35 @@ async function uploadPortada(
 }
 
 /**
+ * Procesa la portada: sube si es File, mantiene si es URL
+ */
+async function processPortada(
+  metadata: BookMetadata,
+  userId: string,
+  libroId: string
+): Promise<string | null> {
+  // Si hay un nuevo archivo, subirlo
+  if (metadata.portada instanceof File) {
+    return await uploadPortada(metadata.portada, userId, libroId);
+  }
+  
+  // Si no hay archivo nuevo, usar la URL existente
+  if (metadata.portadaUrl) {
+    return metadata.portadaUrl;
+  }
+  
+  // No hay portada
+  return null;
+}
+
+/**
  * Actualiza un libro existente
  */
 async function updateExistingBook(
   libroId: string,
   convertedPages: Page[],
-  metadata: BookMetadata
+  metadata: BookMetadata,
+  portadaUrl: string | null
 ): Promise<void> {
   const response = await fetch("/api/libros/updatebook/", {
     method: "PATCH",
@@ -242,13 +264,13 @@ async function updateExistingBook(
       pages: convertedPages,
       categoria: metadata.selectedCategorias,
       genero: metadata.selectedGeneros,
-      etiquetas : metadata.selectedEtiquetas,
-      valores : metadata.selectedValores,
-      autor : metadata.autor,
+      etiquetas: metadata.selectedEtiquetas,
+      valores: metadata.selectedValores,
+      autor: metadata.autor,
       descripcion: metadata.descripcion.trim(),
       titulo: metadata.titulo.trim(),
-      nivel : metadata.selectedNivel,
-      portada: typeof metadata.portada !== "string" ? null : metadata.portada,
+      nivel: metadata.selectedNivel,
+      portada: portadaUrl, // 👈 Usar la URL procesada
     }),
   });
 
@@ -264,7 +286,7 @@ async function updateExistingBook(
 async function updateNewBookPages(
   libroId: string,
   convertedPages: Page[],
-  metadata: BookMetadata
+  portadaUrl: string | null
 ): Promise<void> {
   const response = await fetch("/api/libros/updatebook/", {
     method: "PATCH",
@@ -272,7 +294,7 @@ async function updateNewBookPages(
     body: JSON.stringify({
       idLibro: libroId,
       pages: convertedPages,
-      portada: metadata.portada,
+      portada: portadaUrl, // 👈 Usar la URL procesada
     }),
   });
 
@@ -330,11 +352,6 @@ export async function saveBookJson(
       return;
     }
 
-    // Si no hay ID de libro, crear uno nuevo
-    if (!libroId) {
-      libroId = await createNewBook(userId, metadata);
-    }
-
     // Obtener blobs desde URLs existentes (solo para libros existentes)
     if (IdLibro) {
       await fetchExistingBlobs(pages);
@@ -349,12 +366,17 @@ export async function saveBookJson(
       console.log("Archivos eliminados:", removeResult.removed);
     }
 
-    // Subir portada si existe
-    if (metadata.portada instanceof File) {
-      metadata.portada = await uploadPortada(metadata.portada, userId, libroId);
+    // 🔥 PROCESAR PORTADA: subir si es File, mantener si es URL
+    const portadaUrl = libroId 
+      ? await processPortada(metadata, userId, libroId)
+      : null;
+
+    // Si no hay ID de libro, crear uno nuevo
+    if (!libroId) {
+      libroId = await createNewBook(userId, metadata, portadaUrl);
     }
 
-    // Subir archivos nuevos
+    // Subir archivos de páginas
     const { convertedPages, uploadedImages: newUploadedImages } =
       await uploadPagesFiles(pages, userId, libroId!);
     uploadedImages.push(...newUploadedImages);
@@ -362,11 +384,11 @@ export async function saveBookJson(
     // Guardar o actualizar el libro
     if (IdLibro) {
       // Actualizar libro existente
-      await updateExistingBook(libroId!, convertedPages, metadata);
+      await updateExistingBook(libroId!, convertedPages, metadata, portadaUrl);
       toast.success("📚 Libro actualizado correctamente");
     } else {
       // Finalizar creación de libro nuevo
-      await updateNewBookPages(libroId!, convertedPages, metadata);
+      await updateNewBookPages(libroId!, convertedPages, portadaUrl);
       toast.success("📚 Libro guardado correctamente");
     }
   } catch (error: any) {

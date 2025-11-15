@@ -34,7 +34,6 @@ import { BookMetadataForm } from '@/src/components/components-for-books/book/cre
 
 // Importar BookViewer
 import { BookViewer } from '@/src/components/components-for-books/book/create-edits-books/components/BookViewer';
-import { Button } from '@/src/components/ui';
 
 interface BookSidebarProps {
   pages: page[];
@@ -60,6 +59,7 @@ interface BookSidebarProps {
   descripcion: string;
   titulo: string;
   portada: File | null;
+  portadaUrl?: string | null; // 👈 Agregado
 
   // Handlers de metadatos
   onCategoriasChange: (values: (number | string)[]) => void;
@@ -100,6 +100,7 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
   descripcion,
   titulo,
   portada,
+  portadaUrl, // 👈 Agregado
   onCategoriasChange,
   onGenerosChange,
   onValoresChange,
@@ -386,7 +387,11 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
                 <h4 className="text-sm font-medium mb-3 text-gray-700">
                   Portada del Libro
                 </h4>
-                <PortadaControls onImageChange={onPortadaChange} />
+                <PortadaControls 
+                  onImageChange={onPortadaChange}
+                  portada={portada}
+                  portadaUrl={portadaUrl} 
+                />
               </div>
             </div>
           </div>
