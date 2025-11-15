@@ -18,6 +18,7 @@ export const updateBookFromPages = async (
   descripcion?: string,
   titulo?: string,
   portada?: string,
+  valores?: number[]
 ) => {
   if (!idLibro) throw new Error('idLibro es requerido');
   if (!pages || pages.length === 0) throw new Error('pages no puede estar vacío');
@@ -74,6 +75,17 @@ export const updateBookFromPages = async (
       const { error: etiquetasError } = await supabase
         .from('libro_etiquetas')
         .insert(etiquetas.map((id_etiqueta) => ({ id_libro: idLibro, id_etiqueta })));
+      if (etiquetasError) throw etiquetasError;
+    }
+
+    // ------------------------------
+    // 5 Reemplazar valores
+    // ------------------------------
+    if (valores?.length) {
+      await supabase.from('libro_valores').delete().eq('id_libro', idLibro);
+      const { error: etiquetasError } = await supabase
+        .from('libro_valores')
+        .insert(valores.map((id_valor) => ({ id_libro: idLibro, id_valor })));
       if (etiquetasError) throw etiquetasError;
     }
 

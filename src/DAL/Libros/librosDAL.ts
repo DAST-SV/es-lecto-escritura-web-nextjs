@@ -9,7 +9,8 @@ export async function crearLibroCompleto(
   genero?: number[],
   descripcion?: string,
   etiquetas?: number[],
-  portada?: string
+  portada?: string,
+  valores?: number[]
 ) {
   // 1️⃣ Insertar libro y obtener IdLibro
   const { data: libro, error: libroError } = await supabaseAdmin
@@ -71,6 +72,20 @@ export async function crearLibroCompleto(
       );
 
     if (etiquetasError) throw etiquetasError;
+  }
+
+  // 4️⃣ Insertar valores si existen
+  if (valores?.length) {
+    const { error: valoresError } = await supabaseAdmin
+      .from("libro_valores")
+      .insert(
+        valores.map((id_valor) => ({
+          id_libro: libroId,
+          id_valor,
+        }))
+      );
+
+    if (valoresError) throw valoresError;
   }
 
   return libroId;

@@ -59,12 +59,11 @@ export function convertPage(oldPage: page): Page {
 function validateBookMetadata(metadata: BookMetadata): string | null {
   // Categorías: debe ser un array de números y no vacío
   if (!Array.isArray(metadata.selectedCategorias) || metadata.selectedCategorias.length === 0) {
-    return "Por favor selecciona al menos una categoría";
-  }
+    return "Por favor selecciona al menos un Tipo de Lectura";  }
 
   // Géneros: debe ser un array de números y no vacío
   if (!Array.isArray(metadata.selectedGeneros) || metadata.selectedGeneros.length === 0) {
-    return "Por favor selecciona al menos un Tipo de Lectura";
+    return "Por favor selecciona al menos un Genero";
   }
 
   // Etiquetas: si se envían, debe ser un array de números (opcional)
@@ -117,6 +116,7 @@ async function createNewBook(
       categoria: metadata.selectedCategorias,
       genero: metadata.selectedGeneros,
       etiquetas : metadata.selectedEtiquetas,
+      valores : metadata.selectedValores,
       autor : metadata.autor,
       nivel : metadata.selectedNivel,
       descripcion: metadata.descripcion.trim(),
@@ -243,6 +243,7 @@ async function updateExistingBook(
       categoria: metadata.selectedCategorias,
       genero: metadata.selectedGeneros,
       etiquetas : metadata.selectedEtiquetas,
+      valores : metadata.selectedValores,
       autor : metadata.autor,
       descripcion: metadata.descripcion.trim(),
       titulo: metadata.titulo.trim(),

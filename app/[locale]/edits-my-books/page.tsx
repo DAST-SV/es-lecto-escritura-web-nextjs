@@ -11,6 +11,17 @@ import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
 interface BookData {
   pages: page[];
   title?: string;
+  metadata?: {
+    selectedCategorias?: (number | string)[];
+    selectedGeneros?: (number | string)[];
+    selectedEtiquetas?: (number | string)[];
+    selectedValores?: (number | string)[];
+    selectedNivel?: number | null;
+    autor?: string;
+    descripcion?: string;
+    titulo?: string;
+    portada?: File | string | null;
+  };
 }
 
 interface LibroUI {
@@ -61,15 +72,46 @@ const MyBooks: React.FC = () => {
     fetchLibros();
   }, []);
 
-  // 🔹 Cargar libro seleccionado desde la API
+  // 🔹 Cargar libro seleccionado con metadata desde la API
   useEffect(() => {
     if (selectedBook) {
       const fetchBook = async () => {
         try {
-          const response = await fetch(`/api/libros/pagesforbook/${selectedBook.json}`);
-          const data = await response.json();
-          const transformedPages = data.pages.map((p: any, idx: number) => transformPageData(p, idx));
-          setBookData({ pages: transformedPages, title: selectedBook.caption });
+          // Cargar páginas del libro
+          const responsePaginas = await fetch(`/api/libros/pagesforbook/${selectedBook.json}`);
+          const dataPaginas = await responsePaginas.json();
+          const transformedPages = dataPaginas.pages.map((p: any, idx: number) => transformPageData(p, idx));
+
+          // Cargar metadata del libro
+          const responseMetadata = await fetch(`/api/libros/bookinformation/metadata/${selectedBook.json}`);
+          const dataMetadata = await responseMetadata.json();
+          const libro = dataMetadata?.libro;
+
+          if (!libro) {
+            console.error("❌ No se encontró el libro");
+            return;
+          }
+
+          // Construir metadata con los datos de las tablas relacionales
+          const metadata = {
+            selectedCategorias: libro.categorias?.map((c: any) => c.id_categoria) || [],
+            selectedGeneros: libro.generos?.map((g: any) => g.id_genero) || [],
+            selectedEtiquetas: libro.etiquetas?.map((e: any) => e.id_etiqueta) || [],
+            selectedValores: libro.valores?.map((v: any) => v.id_valor) || [],
+            selectedNivel: libro.nivel || null,
+            autor: libro.autor || "",
+            descripcion: libro.descripcion || "",
+            titulo: libro.titulo || selectedBook.caption,
+            portada: libro.portada || null
+          };
+
+          console.log("✅ Metadata cargada:", metadata);
+
+          setBookData({ 
+            pages: transformedPages, 
+            title: libro.titulo || selectedBook.caption,
+            metadata 
+          });
         } catch (error) {
           console.error("❌ Error al cargar el libro:", error);
         }
@@ -223,7 +265,11 @@ const MyBooks: React.FC = () => {
       {selectedBook && bookData && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="bg-white rounded-3xl shadow-2xl p-6 mb-8">
-            <Book initialPages={bookData.pages} IdLibro={selectedBook.json} />
+            <Book 
+              initialPages={bookData.pages} 
+              IdLibro={selectedBook.json}
+              initialMetadata={bookData.metadata}
+            />
           </div>
           
           <div className="flex justify-center">

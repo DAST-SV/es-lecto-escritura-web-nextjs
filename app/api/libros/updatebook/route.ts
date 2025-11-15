@@ -5,11 +5,12 @@ import type { Page } from "@/src/typings/types-page-book/index";
 
 export async function PATCH(req: Request) {
   try {
-    const { idLibro, pages,categoria,genero,descripcion,portada,titulo,autor,etiquetas,nivel} = (await req.json()) as {
+    const { idLibro, pages,categoria,genero,descripcion,portada,titulo,autor,etiquetas,nivel,valores} = (await req.json()) as {
       idLibro: string;
       pages: Page[];
       categoria? : number[];
       genero? : number[];
+      valores? : number[];
       descripcion? : string;
       titulo? : string;
       portada? : string;
@@ -25,7 +26,7 @@ export async function PATCH(req: Request) {
       );
     }
 
-    const result = await updateBookFromPages(idLibro, pages,nivel,autor,etiquetas,categoria,genero,descripcion,titulo,portada);
+    const result = await updateBookFromPages(idLibro, pages,nivel,autor,etiquetas,categoria,genero,descripcion,titulo,portada,valores);
 
     return NextResponse.json({ ok: true, ...result });
   } catch (error: any) {

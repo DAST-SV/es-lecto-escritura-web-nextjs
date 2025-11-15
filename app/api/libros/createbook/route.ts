@@ -6,7 +6,7 @@ import { noSSR } from "next/dynamic";
 export async function POST(req: Request) {
   try {
     // 🔹 Parsear JSON del request
-    const { userId, title,categoria,genero,descripcion,portada,etiquetas,autor,nivel } = (await req.json()) as {
+    const { userId, title,categoria,genero,descripcion,portada,etiquetas,autor,nivel,valores } = (await req.json()) as {
       userId: string;
       title: string;
       nivel : number;
@@ -15,6 +15,7 @@ export async function POST(req: Request) {
       descripcion? : string;
       autor : string;
       etiquetas? : number[];
+      valores? : number[];
       portada? : string;
     };
 
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
     }
 
     // 🔹 Llamar a la DAL para crear libro (con background)
-    const libroId = await crearLibroCompleto(userId, title,nivel,autor,categoria,genero,descripcion,etiquetas,portada);
+    const libroId = await crearLibroCompleto(userId, title,nivel,autor,categoria,genero,descripcion,etiquetas,portada,valores);
 
     return NextResponse.json({ ok: true, libroId });
   } catch (error: any) {
