@@ -35,6 +35,7 @@ interface BookControlPanelProps {
   selectedCategorias: (number | string)[];
   selectedGeneros: (number | string)[];
   selectedEtiquetas: (number | string)[];
+  selectedValores: (number | string)[];
   selectedNivel: number | null;
   autor: string;
   descripcion: string;
@@ -45,6 +46,7 @@ interface BookControlPanelProps {
   onCategoriasChange: (values: (number | string)[]) => void;
   onGenerosChange: (values: (number | string)[]) => void;
   onEtiquetasChange: (values: (number | string)[]) => void;
+  onValoresChange: (values: (number | string)[]) => void;
   onNivelChange: (value: number | null) => void;
   onAutorChange: (value: string) => void;
   onDescripcionChange: (value: string) => void;
@@ -71,6 +73,7 @@ export const BookControlPanel: React.FC<BookControlPanelProps> = ({
   selectedCategorias,
   selectedGeneros,
   selectedEtiquetas,
+  selectedValores,
   selectedNivel,
   autor,
   descripcion,
@@ -79,6 +82,7 @@ export const BookControlPanel: React.FC<BookControlPanelProps> = ({
   onCategoriasChange,
   onGenerosChange,
   onEtiquetasChange,
+  onValoresChange,
   onNivelChange,
   onAutorChange,
   onDescripcionChange,
@@ -228,6 +232,7 @@ export const BookControlPanel: React.FC<BookControlPanelProps> = ({
               selectedCategorias={selectedCategorias}
               selectedGeneros={selectedGeneros}
               selectedEtiquetas={selectedEtiquetas}
+              selectedValores={selectedValores}
               selectedNivel={selectedNivel}
               autor={autor}
               descripcion={descripcion}
@@ -235,6 +240,7 @@ export const BookControlPanel: React.FC<BookControlPanelProps> = ({
               onCategoriasChange={onCategoriasChange}
               onGenerosChange={onGenerosChange}
               onEtiquetasChange={onEtiquetasChange}
+              onValoresChange={onValoresChange}
               onNivelChange={onNivelChange}
               onAutorChange={onAutorChange}
               onDescripcionChange={onDescripcionChange}
