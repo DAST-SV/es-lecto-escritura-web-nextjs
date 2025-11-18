@@ -76,7 +76,6 @@ export const BookViewer: React.FC<BookViewerProps> = ({
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   const [activePage, setActivePage] = useState(currentPage);
   const [isClient, setIsClient] = useState(false);
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     setIsClient(true);
@@ -96,15 +95,10 @@ export const BookViewer: React.FC<BookViewerProps> = ({
         const containerHeight = containerRef.current.clientHeight;
         const containerWidth = containerRef.current.clientWidth;
 
-        // Guardar tamaño del contenedor
-        setContainerSize({ width: containerWidth, height: containerHeight });
-
-        // Solo calcular si tenemos dimensiones válidas
         if (containerHeight <= 0 || containerWidth <= 0) {
           return;
         }
 
-        // Espacio reservado para controles
         const reservedHeight = 160;
         const availableHeight = containerHeight - reservedHeight;
         const availableWidth = containerWidth - 60;
@@ -155,6 +149,7 @@ export const BookViewer: React.FC<BookViewerProps> = ({
     };
   }, [isMobileDevice, isClient]);
 
+  // 🔥 FIX: Sincronizar activePage con currentPage desde las props
   useEffect(() => {
     setActivePage(currentPage);
   }, [currentPage]);
@@ -170,6 +165,28 @@ export const BookViewer: React.FC<BookViewerProps> = ({
     );
   }
 
+  // 🔥 FIX: Función mejorada para determinar si una página está activa
+  const isPageActive = (pageIndex: number): boolean => {
+    if (isMobileDevice) {
+      // En móvil, solo la página actual está activa
+      return pageIndex === activePage;
+    } else {
+      // En desktop: el libro muestra DOS páginas a la vez
+      // La lógica correcta es:
+      // - Si activePage = 0 (portada), mostrar SOLO página 0
+      // - Si activePage = 1, mostrar páginas 0 y 1
+      // - Si activePage = 2, mostrar páginas 2 y 3
+      // - Si activePage = 3, mostrar páginas 2 y 3
+      // etc.
+      
+      // Calcular el "spread" (par de páginas visible)
+      const spreadStart = Math.floor(activePage / 2) * 2;
+      const spreadEnd = spreadStart + 1;
+      
+      return pageIndex === spreadStart || pageIndex === spreadEnd;
+    }
+  };
+
   const desktopFlipBookProps: React.ComponentProps<typeof HTMLFlipBook> = {
     width: bookDimensions.width,
     height: bookDimensions.height,
@@ -181,10 +198,11 @@ export const BookViewer: React.FC<BookViewerProps> = ({
     className: "storybook-flipbook",
     onFlip: (e: unknown) => {
       const ev = e as { data: number };
+      console.log('🔄 onFlip triggered, new page:', ev.data); // Debug
       setActivePage(ev.data);
       onFlip(e);
     },
-    startPage: Math.min(currentPage),
+    startPage: Math.min(currentPage, pages.length - 1),
     minWidth: bookDimensions.width,
     maxWidth: bookDimensions.width,
     minHeight: bookDimensions.height,
@@ -199,17 +217,22 @@ export const BookViewer: React.FC<BookViewerProps> = ({
     showPageCorners: true,
     disableFlipByClick: false,
     style: {},
-    children: pages.map((page, idx) => (
-      <div className="page w-full h-full" key={page.id || idx} style={{ position: 'relative', overflow: 'hidden' }}>
-        <div className="page-inner w-full h-full box-border" style={{ position: 'relative', width: '100%', height: '100%' }}>
-          <PageRendererIndex
-            page={page}
-            pageNumber={idx + 1}
-            isActive={activePage === idx || activePage + 1 === idx}
-          />
+    children: pages.map((page, idx) => {
+      const active = isPageActive(idx);
+      console.log(`📄 Page ${idx + 1}: isActive=${active}, activePage=${activePage}`); // Debug
+      
+      return (
+        <div className="page w-full h-full" key={page.id || idx} style={{ position: 'relative', overflow: 'hidden' }}>
+          <div className="page-inner w-full h-full box-border" style={{ position: 'relative', width: '100%', height: '100%' }}>
+            <PageRendererIndex
+              page={page}
+              pageNumber={idx + 1}
+              isActive={active}
+            />
+          </div>
         </div>
-      </div>
-    )),
+      );
+    }),
   };
 
   const mobileFlipBookProps: React.ComponentProps<typeof HTMLFlipBook> = {
@@ -226,7 +249,7 @@ export const BookViewer: React.FC<BookViewerProps> = ({
       setActivePage(ev.data);
       onFlip(e);
     },
-    startPage: Math.min(currentPage),
+    startPage: Math.min(currentPage, pages.length - 1),
     minWidth: 100,
     maxWidth: 400,
     minHeight: 100,
@@ -247,7 +270,7 @@ export const BookViewer: React.FC<BookViewerProps> = ({
           <PageRendererIndex
             page={page}
             pageNumber={idx + 1}
-            isActive={activePage === idx}
+            isActive={isPageActive(idx)}
           />
         </div>
       </div>

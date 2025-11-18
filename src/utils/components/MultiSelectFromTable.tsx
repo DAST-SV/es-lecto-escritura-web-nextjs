@@ -1,189 +1,156 @@
-"use client";
+import React, { useEffect, useState, useMemo } from 'react';
+import AsyncSelect from 'react-select/async';
+import { createClient } from '@/src/utils/supabase/client';
 
-import React, { useEffect, useState } from "react";
-import AsyncSelect from "react-select/async";
-import { createClient } from "@/src/utils/supabase/client";
-import { MultiValue, ActionMeta } from "react-select";
-
-interface MultiSelectFromTableProps<T> {
+interface MultiSelectFromTableProps<T extends Record<string, any>> {
   table: string;
   valueField: keyof T;
   labelField: keyof T;
-  filterField?: keyof T;
-  values?: (number | string)[];
+  filterField: keyof T;
+  values: (number | string)[];
   placeholder?: string;
-  onChange?: (values: (number | string)[]) => void;
+  onChange: (values: (number | string)[]) => void;
   maxItems?: number;
 }
 
-interface OptionType {
-  value: number | string;
-  label: string;
-}
-
-export default function MultiSelectFromTable<T>({
+export default function MultiSelectFromTable<T extends Record<string, any>>({
   table,
   valueField,
   labelField,
   filterField,
-  values = [],
-  placeholder = "Selecciona...",
+  values,
+  placeholder = 'Selecciona...',
   onChange,
-  maxItems = 5
+  maxItems = 5,
 }: MultiSelectFromTableProps<T>) {
   const supabase = createClient();
-  const [selectedOptions, setSelectedOptions] = useState<OptionType[]>([]);
+  const [options, setOptions] = useState<{ value: number | string; label: string }[]>([]);
+  const [selectedOptions, setSelectedOptions] = useState<{ value: number | string; label: string }[]>([]);
 
-  // Cargar labels para los valores seleccionados
+  // 🔥 FIX: Generar instanceId único y estable basado en la tabla y campo
+  const instanceId = useMemo(() => {
+    return `select-${table}-${String(valueField)}`;
+  }, [table, valueField]);
+
   useEffect(() => {
-    if (!values.length) {
+    loadOptions('');
+  }, [table]);
+
+  useEffect(() => {
+    if (values.length > 0) {
+      loadSelectedOptions();
+    } else {
       setSelectedOptions([]);
-      return;
     }
+  }, [values]);
 
-    (async () => {
-      const { data, error } = await supabase
-        .from(table)
-        .select(`${String(valueField)}, ${String(labelField)}`)
-        .in(String(valueField), values);
-
-      if (!error && data) {
-        const options = data.map((item: any) => ({
-          value: item[String(valueField)],
-          label: item[String(labelField)],
-        }));
-        setSelectedOptions(options);
-      }
-    })();
-  }, [values, table, valueField, labelField, supabase]);
-
-  // Función para cargar opciones desde Supabase
   const loadOptions = async (inputValue: string) => {
     try {
-      let query = supabase.from(table).select(`${String(valueField)}, ${String(labelField)}`);
-      if (inputValue && filterField) {
+      let query = supabase.from(table).select('*');
+      
+      if (inputValue) {
         query = query.ilike(String(filterField), `%${inputValue}%`);
       }
-      const { data, error } = await query.limit(50);
+
+      const { data, error } = await query;
+
       if (error) throw error;
 
-      // Filtrar opciones ya seleccionadas
-      const availableOptions = (data || [])
-        .filter((item: any) => !values.includes(item[String(valueField)]))
-        .map((item: any) => ({
-          value: item[String(valueField)],
-          label: item[String(labelField)],
-        }));
+      const formattedOptions = (data || []).map((item: T) => ({
+        value: item[valueField] as number | string,
+        label: String(item[labelField]),
+      }));
 
-      return availableOptions;
-    } catch (err: any) {
-      console.error(`Error cargando opciones de ${table}:`, err.message);
+      setOptions(formattedOptions);
+      return formattedOptions;
+    } catch (error) {
+      console.error('Error cargando opciones:', error);
       return [];
     }
   };
 
-  const handleChange = (
-    selected: MultiValue<OptionType>,
-    _actionMeta: ActionMeta<OptionType>
-  ) => {
-    const newOptions = selected ? Array.from(selected) : [];
-    setSelectedOptions(newOptions);
+  const loadSelectedOptions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from(table)
+        .select('*')
+        .in(String(valueField), values);
 
-    if (onChange) {
-      const newValues = newOptions.map(option => option.value);
-      onChange(newValues);
+      if (error) throw error;
+
+      const formatted = (data || []).map((item: T) => ({
+        value: item[valueField] as number | string,
+        label: String(item[labelField]),
+      }));
+
+      setSelectedOptions(formatted);
+    } catch (error) {
+      console.error('Error cargando valores seleccionados:', error);
     }
   };
 
-
-  const removeItem = (valueToRemove: number | string) => {
-    const newOptions = selectedOptions.filter(option => option.value !== valueToRemove);
-    setSelectedOptions(newOptions);
-
-    if (onChange) {
-      const newValues = newOptions.map(option => option.value);
-      onChange(newValues);
-    }
+  const handleChange = (selected: any) => {
+    const selectedValues = (selected || []).map((opt: any) => opt.value);
+    setSelectedOptions(selected || []);
+    onChange(selectedValues);
   };
 
   const isMaxReached = selectedOptions.length >= maxItems;
 
   return (
     <div className="multi-select-container">
-      {/* Elementos seleccionados */}
-      {selectedOptions.length > 0 && (
-        <div className="mb-3">
-          <div className="flex flex-wrap gap-2">
-            {selectedOptions.map((option) => (
-              <div
-                key={option.value}
-                className="inline-flex items-center bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full"
-              >
-                <span>{option.label}</span>
-                <button
-                  onClick={() => removeItem(option.value)}
-                  className="ml-2 text-blue-600 hover:text-blue-800 focus:outline-none"
-                  type="button"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-          {isMaxReached && (
-            <p className="text-xs text-gray-500 mt-1">
-              Máximo {maxItems} elementos seleccionados
-            </p>
-          )}
-        </div>
-      )}
-
       {/* Selector */}
       {!isMaxReached && (
         <AsyncSelect
+          instanceId={instanceId} // 🔥 FIX: ID estable
           isMulti
           cacheOptions
           defaultOptions
           loadOptions={loadOptions}
+          value={selectedOptions}
           onChange={handleChange}
-          value={selectedOptions} // ahora sí usamos las opciones seleccionadas
           placeholder={placeholder}
+          noOptionsMessage={() => 'No hay opciones'}
+          loadingMessage={() => 'Cargando...'}
           styles={{
             control: (base) => ({
               ...base,
-              borderRadius: "12px",
-              padding: "6px 10px",
-              fontSize: "16px",
-              backgroundColor: "#fff3cd",
-              borderColor: "#ffcc80",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-              ":hover": { borderColor: "#ffb74d" },
-            }),
-            menu: (base) => ({
-              ...base,
-              borderRadius: "12px",
-              marginTop: "6px",
-              backgroundColor: "#fff9e6",
-            }),
-            option: (base, state) => ({
-              ...base,
-              fontSize: "15px",
-              padding: "10px",
-              backgroundColor: state.isSelected
-                ? "#ffe082"
-                : state.isFocused
-                  ? "#fff3cd"
-                  : "#fff9e6",
-              color: "#333",
-              cursor: "pointer",
-            }),
-            placeholder: (base) => ({
-              ...base,
-              color: "#666",
-              fontStyle: "italic",
+              borderRadius: '8px',
+              borderColor: '#d1d5db',
+              '&:hover': { borderColor: '#9ca3af' },
             }),
           }}
         />
+      )}
+
+      {/* Mensaje de límite alcanzado */}
+      {isMaxReached && (
+        <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+          ⚠️ Has alcanzado el máximo de {maxItems} elementos
+        </div>
+      )}
+
+      {/* Lista de seleccionados */}
+      {selectedOptions.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {selectedOptions.map((option) => (
+            <div
+              key={option.value}
+              className="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+            >
+              <span>{option.label}</span>
+              <button
+                onClick={() => {
+                  const newSelected = selectedOptions.filter((o) => o.value !== option.value);
+                  handleChange(newSelected);
+                }}
+                className="hover:text-red-600 font-bold"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

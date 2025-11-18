@@ -1,125 +1,119 @@
-"use client";
+import React, { useEffect, useState, useMemo } from 'react';
+import Select from 'react-select';
+import { createClient } from '@/src/utils/supabase/client';
 
-import React, { useEffect, useState } from "react";
-import AsyncSelect from "react-select/async";
-import { createClient } from "@/src/utils/supabase/client";
-
-interface SelectFromTableAsyncProps<T> {
+interface SelectFromTableAsyncProps<T extends Record<string, any>> {
   table: string;
   valueField: keyof T;
   labelField: keyof T;
-  filterField?: keyof T;
-  value?: number | string | null;
+  filterField: keyof T;
+  value: number | string | null;
   placeholder?: string;
-  onChange?: (value: number | string | null) => void;
+  onChange: (value: number | string | null) => void;
 }
 
-export default function SelectFromTableAsync<T>({
+export default function SelectFromTableAsync<T extends Record<string, any>>({
   table,
   valueField,
   labelField,
   filterField,
   value,
-  placeholder = "Selecciona...",
+  placeholder = 'Selecciona...',
   onChange,
 }: SelectFromTableAsyncProps<T>) {
   const supabase = createClient();
-  const [selectedOption, setSelectedOption] = useState<{ value: any; label: string } | null>(null);
+  const [options, setOptions] = useState<{ value: number | string; label: string }[]>([]);
+  const [selectedOption, setSelectedOption] = useState<{ value: number | string; label: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Cuando cambia `value`, obtenemos el label desde la BD
+  // 🔥 FIX: Generar instanceId único y estable
+  const instanceId = useMemo(() => {
+    return `select-single-${table}-${String(valueField)}`;
+  }, [table, valueField]);
+
   useEffect(() => {
-    if (!value) {
+    loadOptions();
+  }, [table]);
+
+  useEffect(() => {
+    if (value !== null && value !== undefined) {
+      loadSelectedOption();
+    } else {
       setSelectedOption(null);
-      return;
     }
+  }, [value, options]);
 
-    (async () => {
-      const { data, error } = await supabase
-        .from(table)
-        .select(`${String(valueField)}, ${String(labelField)}`)
-        .eq(String(valueField), value)
-        .maybeSingle();
-
-      if (!error && data) {
-        const d = data as any;
-        setSelectedOption({
-          value: d[String(valueField)],
-          label: d[String(labelField)],
-        });
-      }
-    })();
-  }, [value, table, valueField, labelField, supabase]);
-
-  // Función para cargar opciones desde Supabase
-  const loadOptions = async (inputValue: string) => {
+  const loadOptions = async () => {
     try {
-      let query = supabase.from(table).select(`${String(valueField)}, ${String(labelField)}`);
-      if (inputValue && filterField) {
-        query = query.ilike(String(filterField), `%${inputValue}%`);
-      }
-      const { data, error } = await query.limit(50);
+      setIsLoading(true);
+      const { data, error } = await supabase.from(table).select('*');
+
       if (error) throw error;
 
-      return (data || []).map((item: any) => ({
-        value: item[String(valueField)],
-        label: item[String(labelField)],
+      const formattedOptions = (data || []).map((item: T) => ({
+        value: item[valueField] as number | string,
+        label: String(item[labelField]),
       }));
-    } catch (err: any) {
-      console.error(`Error cargando opciones de ${table}:`, err.message);
-      return [];
+
+      setOptions(formattedOptions);
+    } catch (error) {
+      console.error('Error cargando opciones:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const loadSelectedOption = async () => {
+    if (!value) return;
+
+    try {
+      const { data, error } = await supabase
+        .from(table)
+        .select('*')
+        .eq(String(valueField), value)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setSelectedOption({
+          value: data[valueField] as number | string,
+          label: String(data[labelField]),
+        });
+      }
+    } catch (error) {
+      console.error('Error cargando valor seleccionado:', error);
+    }
+  };
+
+  const handleChange = (selected: any) => {
+    setSelectedOption(selected);
+    onChange(selected ? selected.value : null);
+  };
+
   return (
-    <div style={{ padding: "12px" }}>
-      <AsyncSelect
-        cacheOptions
-        defaultOptions
-        loadOptions={loadOptions}
-        onChange={(selected) => {
-          setSelectedOption(selected);
-          onChange && onChange(selected ? selected.value : null);
-        }}
+    <div style={{ padding: '12px' }}>
+      <Select
+        instanceId={instanceId} // 🔥 FIX: ID estable
         value={selectedOption}
+        onChange={handleChange}
+        options={options}
         placeholder={placeholder}
+        isClearable
+        isLoading={isLoading}
+        noOptionsMessage={() => 'No hay opciones'}
+        loadingMessage={() => 'Cargando...'}
         styles={{
           control: (base) => ({
             ...base,
-            borderRadius: "12px",
-            padding: "6px 10px",
-            fontSize: "16px",
-            backgroundColor: "#fff3cd",
-            borderColor: "#ffcc80",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-            ":hover": { borderColor: "#ffb74d" },
-          }),
-          menu: (base) => ({
-            ...base,
-            borderRadius: "12px",
-            marginTop: "6px",
-            backgroundColor: "#fff9e6",
-          }),
-          option: (base, state) => ({
-            ...base,
-            fontSize: "15px",
-            padding: "10px",
-            backgroundColor: state.isSelected
-              ? "#ffe082"
-              : state.isFocused
-              ? "#fff3cd"
-              : "#fff9e6",
-            color: "#333",
-            cursor: "pointer",
+            borderRadius: '8px',
+            borderColor: '#d1d5db',
+            minHeight: '42px',
+            '&:hover': { borderColor: '#9ca3af' },
           }),
           placeholder: (base) => ({
             ...base,
-            color: "#666",
-            fontStyle: "italic",
-          }),
-          singleValue: (base) => ({
-            ...base,
-            fontWeight: "bold",
-            color: "#444",
+            color: '#9ca3af',
           }),
         }}
       />

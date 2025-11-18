@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Eye,
   FileText,
@@ -13,7 +13,8 @@ import {
   ChevronRight,
   Plus,
   Trash2,
-  Info
+  Info,
+  Star
 } from 'lucide-react';
 
 // Tipos
@@ -108,6 +109,10 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
   const [activeTab, setActiveTab] = useState<string>('preview');
   const [isSaving, setIsSaving] = useState(false);
 
+  // 🔥 DETECCIÓN DE CONTEXTO: ¿Es la portada?
+  const isFirstPage = currentPage === 0;
+  const isLastPage = currentPage === pages.length - 1;
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -133,7 +138,9 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
       green: 'from-green-500 to-green-600',
       orange: 'from-orange-500 to-orange-600',
       pink: 'from-pink-500 to-pink-600',
-      indigo: 'from-indigo-500 to-indigo-600'
+      indigo: 'from-indigo-500 to-indigo-600',
+      teal: 'from-teal-500 to-teal-600',
+      cyan: 'from-cyan-500 to-cyan-600'
     };
 
     return (
@@ -156,72 +163,155 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
     );
   };
 
-  const tabs = [
-    { 
-      id: 'preview', 
-      icon: Eye, 
-      label: 'Vista Previa',
-      shortLabel: 'Vista',
-      color: 'indigo',
-      description: 'Visualización del libro'
-    },
-    { 
-      id: 'title', 
-      icon: Heading, 
-      label: 'Título Página',
-      shortLabel: 'Título',
-      color: 'blue',
-      description: 'Editar título'
-    },
-    { 
-      id: 'text', 
-      icon: FileText, 
-      label: 'Texto Página',
-      shortLabel: 'Texto',
-      color: 'cyan',
-      description: 'Editar contenido'
-    },
-    { 
-      id: 'layout', 
-      icon: Layout, 
-      label: 'Diseño Página',
-      shortLabel: 'Diseño',
-      color: 'purple',
-      description: 'Layout y estructura'
-    },
-    { 
-      id: 'images', 
-      icon: Image, 
-      label: 'Imágenes',
-      shortLabel: 'Imágenes',
-      color: 'green',
-      description: 'Imagen principal'
-    },
-    { 
-      id: 'background', 
-      icon: Paintbrush, 
-      label: 'Fondos',
-      shortLabel: 'Fondos',
-      color: 'teal',
-      description: 'Fondo de página'
-    },
-    { 
-      id: 'cover', 
-      icon: BookOpen, 
-      label: 'Portada Libro',
-      shortLabel: 'Portada',
-      color: 'orange',
-      description: 'Portada del libro'
-    },
-    { 
-      id: 'metadata', 
-      icon: Tag, 
-      label: 'Info Libro',
-      shortLabel: 'Info',
-      color: 'pink',
-      description: 'Metadatos generales'
+  // 🔥 PESTAÑAS CONTEXTUALES según la página actual
+  const tabs = useMemo(() => {
+    const baseTabs = [
+      { 
+        id: 'preview', 
+        icon: Eye, 
+        label: 'Vista Previa',
+        shortLabel: 'Vista',
+        color: 'indigo',
+        description: 'Visualización del libro',
+        showAlways: true
+      }
+    ];
+
+    // Si es la PRIMERA PÁGINA (Portada)
+    if (isFirstPage) {
+      return [
+        ...baseTabs,
+        { 
+          id: 'cover', 
+          icon: BookOpen, 
+          label: 'Portada',
+          shortLabel: 'Portada',
+          color: 'orange',
+          description: 'Imagen de portada',
+          showAlways: false
+        },
+        { 
+          id: 'metadata', 
+          icon: Tag, 
+          label: 'Info Libro',
+          shortLabel: 'Info',
+          color: 'pink',
+          description: 'Título, autor, categorías',
+          showAlways: false
+        },
+        { 
+          id: 'background', 
+          icon: Paintbrush, 
+          label: 'Fondo',
+          shortLabel: 'Fondo',
+          color: 'teal',
+          description: 'Fondo decorativo',
+          showAlways: false
+        }
+      ];
     }
-  ];
+
+    // Si es la ÚLTIMA PÁGINA (Contraportada/Fin)
+    if (isLastPage) {
+      return [
+        ...baseTabs,
+        { 
+          id: 'title', 
+          icon: Heading, 
+          label: 'Título',
+          shortLabel: 'Título',
+          color: 'blue',
+          description: 'Título de la página',
+          showAlways: false
+        },
+        { 
+          id: 'text', 
+          icon: FileText, 
+          label: 'Texto',
+          shortLabel: 'Texto',
+          color: 'cyan',
+          description: 'Contenido de la página',
+          showAlways: false
+        },
+        { 
+          id: 'background', 
+          icon: Paintbrush, 
+          label: 'Fondo',
+          shortLabel: 'Fondo',
+          color: 'teal',
+          description: 'Fondo decorativo',
+          showAlways: false
+        },
+        { 
+          id: 'metadata', 
+          icon: Tag, 
+          label: 'Info Libro',
+          shortLabel: 'Info',
+          color: 'pink',
+          description: 'Metadatos del libro',
+          showAlways: false
+        }
+      ];
+    }
+
+    // PÁGINAS NORMALES (contenido)
+    return [
+      ...baseTabs,
+      { 
+        id: 'title', 
+        icon: Heading, 
+        label: 'Título',
+        shortLabel: 'Título',
+        color: 'blue',
+        description: 'Título de la página',
+        showAlways: false
+      },
+      { 
+        id: 'text', 
+        icon: FileText, 
+        label: 'Texto',
+        shortLabel: 'Texto',
+        color: 'cyan',
+        description: 'Contenido de la página',
+        showAlways: false
+      },
+      { 
+        id: 'layout', 
+        icon: Layout, 
+        label: 'Diseño',
+        shortLabel: 'Diseño',
+        color: 'purple',
+        description: 'Layout de elementos',
+        showAlways: false
+      },
+      { 
+        id: 'images', 
+        icon: Image, 
+        label: 'Imágenes',
+        shortLabel: 'Imágenes',
+        color: 'green',
+        description: 'Imagen principal',
+        showAlways: false
+      },
+      { 
+        id: 'background', 
+        icon: Paintbrush, 
+        label: 'Fondos',
+        shortLabel: 'Fondos',
+        color: 'teal',
+        description: 'Fondo decorativo',
+        showAlways: false
+      }
+    ];
+  }, [isFirstPage, isLastPage]);
+
+  // Asegurar que activeTab sea válido para el contexto actual
+  React.useEffect(() => {
+    const validTabs = tabs.map(t => t.id);
+    if (!validTabs.includes(activeTab)) {
+      setActiveTab('preview');
+    }
+  }, [tabs, activeTab]);
 
   if (!currentPageData) return null;
 
@@ -233,6 +323,32 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
   const CONTENT_HEIGHT = `calc(100vh - ${HEADER_HEIGHT + TABS_HEIGHT + NAV_HEIGHT + FOOTER_HEIGHT}px)`;
 
   const currentTab = tabs.find(t => t.id === activeTab);
+
+  // 🔥 Mensaje contextual según la página
+  const getPageTypeMessage = () => {
+    if (isFirstPage) {
+      return (
+        <div className="flex items-center gap-2 px-4 py-2 bg-orange-100 text-orange-800 rounded-lg border border-orange-300">
+          <Star className="flex-shrink-0" size={18} />
+          <span className="font-semibold">Página 1 - PORTADA</span>
+        </div>
+      );
+    }
+    if (isLastPage) {
+      return (
+        <div className="flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-800 rounded-lg border border-purple-300">
+          <Star className="flex-shrink-0" size={18} />
+          <span className="font-semibold">Última Página - FINAL/CONTRAPORTADA</span>
+        </div>
+      );
+    }
+    return (
+      <div className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-800 rounded-lg border border-blue-300">
+        <FileText className="flex-shrink-0" size={18} />
+        <span className="font-semibold">Página {currentPage + 1} - CONTENIDO</span>
+      </div>
+    );
+  };
 
   return (
     <div className="w-full h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
@@ -269,7 +385,7 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
         </div>
       </div>
 
-      {/* TABS */}
+      {/* TABS - Contextuales */}
       <div 
         className="bg-white border-b-2 border-gray-200 shadow-sm overflow-x-auto"
         style={{ height: `${TABS_HEIGHT}px` }}
@@ -313,11 +429,12 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
         </div>
       </div>
 
-      {/* INFO BAR - Muestra descripción de la pestaña activa */}
+      {/* INFO BAR - Contextual */}
       <div className="bg-gradient-to-r from-gray-50 to-white px-6 py-2 border-b border-gray-200 flex items-center justify-between text-sm">
+        {getPageTypeMessage()}
         <div className="flex items-center gap-2 text-gray-700">
           <Info size={16} className="text-blue-500" />
-          <span className="font-medium">Estás editando:</span>
+          <span className="font-medium">Editando:</span>
           <span className="font-bold text-blue-600">{currentTab?.label}</span>
           <span className="text-gray-500">→</span>
           <span className="text-gray-600">{currentTab?.description}</span>
@@ -455,7 +572,7 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
               title="Contenido de la Página"
               description="Escribe la historia o texto principal de esta página"
               icon={<FileText size={24} />}
-              color="blue"
+              color="cyan"
             >
               <RichTextEditor
                 value={pages[currentPage]?.text || ''}
@@ -554,7 +671,7 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
           </div>
         </div>
 
-        {/* PORTADA */}
+        {/* PORTADA - Solo en página 1 */}
         <div 
           style={{ 
             position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
@@ -567,10 +684,15 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
           <div className="max-w-5xl mx-auto p-8">
             <SectionCard
               title="Portada del Libro"
-              description="Imagen que aparecerá como portada principal del libro"
+              description="Imagen principal que representa tu libro"
               icon={<BookOpen size={24} />}
               color="orange"
             >
+              <div className="mb-4 p-4 bg-orange-50 border-l-4 border-orange-500 rounded">
+                <p className="text-sm text-orange-800">
+                  <strong>💡 Tip:</strong> Esta es la primera página del libro. La portada aparecerá en las listas y catálogos.
+                </p>
+              </div>
               <PortadaControls 
                 onImageChange={onPortadaChange}
                 portada={portada}
@@ -593,10 +715,15 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
           <div className="max-w-5xl mx-auto p-8">
             <SectionCard
               title="Información del Libro"
-              description="Título, autor, categorías y clasificación del libro completo"
+              description="Datos generales, categorización y metadatos"
               icon={<Tag size={24} />}
               color="pink"
             >
+              <div className="mb-4 p-4 bg-pink-50 border-l-4 border-pink-500 rounded">
+                <p className="text-sm text-pink-800">
+                  <strong>📚 Nota:</strong> Esta información se aplica al libro completo, no solo a esta página.
+                </p>
+              </div>
               <BookMetadataForm
                 selectedCategorias={selectedCategorias}
                 selectedGeneros={selectedGeneros}
