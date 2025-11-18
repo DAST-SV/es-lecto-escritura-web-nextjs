@@ -53,6 +53,10 @@ export const routing = defineRouting({
     '/my-progress': {
       en: '/my-progress',
       es: '/mi-progreso'
+    },
+    '/diary/my-diaries':{
+      en: '/diary/my-diaries',
+      es: '/diario/mis-diarios'
     }
   }
 });

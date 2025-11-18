@@ -96,6 +96,40 @@
       "text": "Actividades",
       "href": "/actividades",
       "title": "Ver tus actividades"
+    },
+    "book": {
+      "create": {
+        "text": "Crear Libro",
+        "href": "/libro/crear",
+        "title": "Iniciar la creación de un nuevo libro"
+      }
+    },
+    "diary": {
+      "myDiaries":{
+        "text": "Mis Diarios Personales",
+        "href": "/diario/mis-diarios",
+        "title": "Ver mis diarios personales"
+      },
+      "create": {
+        "text": "Crear Diario Personal",
+        "href": "/diario/crear",
+        "title": "Iniciar la creación de un nuevo diario personal"
+      },
+      "view": {
+        "text": "Ver Diario Personal",
+        "href": "/diario/ver",
+        "title": "Ver mi diario personal"
+      },
+      "edit": {
+        "text": "Editar Diario Personal",
+        "href": "/diario/editar",
+        "title": "Editar mi diario personal"
+      },
+      "delete": {
+        "text": "Eliminar Diario Personal",
+        "href": "/diario/eliminar",
+        "title": "Eliminar mi diario personal"
+      }
     }
   },
   "content": {

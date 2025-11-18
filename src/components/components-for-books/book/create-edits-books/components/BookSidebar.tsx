@@ -1,55 +1,47 @@
-// REEMPLAZA TODO EL BOOKSIDEBAR CON ESTO:
-
 import React, { useState } from 'react';
 import {
-  Navigation,
-  FileText,
-  Palette,
-  BookOpen,
   Eye,
+  FileText,
+  Heading,
+  Layout,
+  Image,
+  Paintbrush,
+  BookOpen,
+  Tag,
   Save,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Plus,
+  Trash2,
+  Info
 } from 'lucide-react';
 
 // Tipos
 import type { page } from '@/src/typings/types-page-book/index';
-import type { UseBookEditorReturn } from '@/src/components/components-for-books/book/create-edits-books/hooks/useBookEditor';
 import type { UseImageHandlerReturn } from '@/src/components/components-for-books/book/create-edits-books/hooks/useImageHandler';
 import type { UseBookNavigationReturn } from '@/src/components/components-for-books/book/create-edits-books/hooks/useBookNavigation';
 
-// Componentes de edición
+// Componentes
 import { PageLayoutSelector } from '@/src/components/components-for-books/book/create-edits-books/components/PageLayoutSelector';
 import { RichTitleEditor } from '@/src/components/components-for-books/book/create-edits-books/components/RichTitleEditor';
 import { RichTextEditor } from '@/src/components/components-for-books/book/create-edits-books/components/RichTextEditor';
-
-// Componentes visuales
 import { ImageControls } from '@/src/components/components-for-books/book/create-edits-books/components/ImageControls';
 import { PortadaControls } from '@/src/components/components-for-books/book/create-edits-books/components/portadaControls';
 import { BackgroundControls } from '@/src/components/components-for-books/book/create-edits-books/components/BackgroundControls';
-
-// Navegación y metadatos
-import { PageNavigation } from '@/src/components/components-for-books/book/create-edits-books/components/PageNavigation';
 import { BookMetadataForm } from '@/src/components/components-for-books/book/create-edits-books/components/BookMetadataForm';
-
-// Importar BookViewer
 import { BookViewer } from '@/src/components/components-for-books/book/create-edits-books/components/BookViewer';
 
 interface BookSidebarProps {
   pages: page[];
   currentPage: number;
-  editingState: UseBookEditorReturn;
+  setPages: React.Dispatch<React.SetStateAction<page[]>>;
   imageHandler: UseImageHandlerReturn;
   navigation: UseBookNavigationReturn;
-
-  // Props para BookViewer
   isFlipping: boolean;
   bookKey: number;
   bookRef: React.RefObject<any>;
   onFlip: (data: any) => void;
   onPageClick: (pageNumber: number) => void;
-
-  // Metadatos
   selectedCategorias: (number | string)[];
   selectedGeneros: (number | string)[];
   selectedValores: (number | string)[];
@@ -59,9 +51,7 @@ interface BookSidebarProps {
   descripcion: string;
   titulo: string;
   portada: File | null;
-  portadaUrl?: string | null; // 👈 Agregado
-
-  // Handlers de metadatos
+  portadaUrl?: string | null;
   onCategoriasChange: (values: (number | string)[]) => void;
   onGenerosChange: (values: (number | string)[]) => void;
   onEtiquetasChange: (values: (number | string)[]) => void;
@@ -71,8 +61,6 @@ interface BookSidebarProps {
   onDescripcionChange: (value: string) => void;
   onTituloChange: (value: string) => void;
   onPortadaChange: (value: File | null) => void;
-
-  // Handlers de configuración
   onLayoutChange: (layout: string) => void;
   onBackgroundChange: (value: string) => void;
   onSave: () => Promise<void>;
@@ -83,7 +71,7 @@ interface BookSidebarProps {
 export const BookSidebar: React.FC<BookSidebarProps> = ({
   pages,
   currentPage,
-  editingState,
+  setPages,
   imageHandler,
   navigation,
   isFlipping,
@@ -100,7 +88,7 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
   descripcion,
   titulo,
   portada,
-  portadaUrl, // 👈 Agregado
+  portadaUrl,
   onCategoriasChange,
   onGenerosChange,
   onValoresChange,
@@ -117,14 +105,9 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
   onDeletePage,
 }) => {
   const currentPageData = pages[currentPage];
-  const [activeSection, setActiveSection] = useState<string>('visualizacion');
+  const [activeTab, setActiveTab] = useState<string>('preview');
   const [isSaving, setIsSaving] = useState(false);
 
-  const toggleSection = (sectionId: string) => {
-    setActiveSection(sectionId);
-  };
-
-  // Handler para guardar con estado de carga
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -136,93 +119,282 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
     }
   };
 
-  // Secciones del menú
-  const menuSections = [
-    { id: 'visualizacion', icon: Eye, label: 'Visualización', color: 'bg-indigo-500' },
-    { id: 'navegacion', icon: Navigation, label: 'Navegación', color: 'bg-blue-500' },
-    { id: 'contenido', icon: FileText, label: 'Contenido', color: 'bg-green-500' },
-    { id: 'visual', icon: Palette, label: 'Visual', color: 'bg-purple-500' },
-    { id: 'libro', icon: BookOpen, label: 'Libro', color: 'bg-orange-500' }
+  // Componente para tarjetas de sección
+  const SectionCard: React.FC<{
+    title: string;
+    description: string;
+    icon: React.ReactNode;
+    children: React.ReactNode;
+    color?: string;
+  }> = ({ title, description, icon, children, color = 'blue' }) => {
+    const colorClasses = {
+      blue: 'from-blue-500 to-blue-600',
+      purple: 'from-purple-500 to-purple-600',
+      green: 'from-green-500 to-green-600',
+      orange: 'from-orange-500 to-orange-600',
+      pink: 'from-pink-500 to-pink-600',
+      indigo: 'from-indigo-500 to-indigo-600'
+    };
+
+    return (
+      <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow">
+        <div className={`bg-gradient-to-r ${colorClasses[color as keyof typeof colorClasses]} p-4 text-white`}>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+              {icon}
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold">{title}</h3>
+              <p className="text-sm opacity-90">{description}</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-6">
+          {children}
+        </div>
+      </div>
+    );
+  };
+
+  const tabs = [
+    { 
+      id: 'preview', 
+      icon: Eye, 
+      label: 'Vista Previa',
+      shortLabel: 'Vista',
+      color: 'indigo',
+      description: 'Visualización del libro'
+    },
+    { 
+      id: 'title', 
+      icon: Heading, 
+      label: 'Título Página',
+      shortLabel: 'Título',
+      color: 'blue',
+      description: 'Editar título'
+    },
+    { 
+      id: 'text', 
+      icon: FileText, 
+      label: 'Texto Página',
+      shortLabel: 'Texto',
+      color: 'cyan',
+      description: 'Editar contenido'
+    },
+    { 
+      id: 'layout', 
+      icon: Layout, 
+      label: 'Diseño Página',
+      shortLabel: 'Diseño',
+      color: 'purple',
+      description: 'Layout y estructura'
+    },
+    { 
+      id: 'images', 
+      icon: Image, 
+      label: 'Imágenes',
+      shortLabel: 'Imágenes',
+      color: 'green',
+      description: 'Imagen principal'
+    },
+    { 
+      id: 'background', 
+      icon: Paintbrush, 
+      label: 'Fondos',
+      shortLabel: 'Fondos',
+      color: 'teal',
+      description: 'Fondo de página'
+    },
+    { 
+      id: 'cover', 
+      icon: BookOpen, 
+      label: 'Portada Libro',
+      shortLabel: 'Portada',
+      color: 'orange',
+      description: 'Portada del libro'
+    },
+    { 
+      id: 'metadata', 
+      icon: Tag, 
+      label: 'Info Libro',
+      shortLabel: 'Info',
+      color: 'pink',
+      description: 'Metadatos generales'
+    }
   ];
 
   if (!currentPageData) return null;
 
-  // ✅ CÁLCULO DE ALTURA FIJA
-  const HEADER_HEIGHT = 72;
-  const TABS_HEIGHT = 88;
-  const FOOTER_HEIGHT = 88;
-  const CONTENT_HEIGHT = `calc(100vh - ${HEADER_HEIGHT + TABS_HEIGHT + FOOTER_HEIGHT}px)`;
+  const canDeletePage = pages.length > 2;
+  const HEADER_HEIGHT = 80;
+  const TABS_HEIGHT = 70;
+  const NAV_HEIGHT = 70;
+  const FOOTER_HEIGHT = 80;
+  const CONTENT_HEIGHT = `calc(100vh - ${HEADER_HEIGHT + TABS_HEIGHT + NAV_HEIGHT + FOOTER_HEIGHT}px)`;
+
+  const currentTab = tabs.find(t => t.id === activeTab);
 
   return (
-    <div className="w-full h-screen bg-white flex flex-col">
+    <div className="w-full h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
 
-      {/* Header con título */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50" style={{ height: `${HEADER_HEIGHT}px` }}>
-        <h2 className="font-bold text-gray-800 text-xl">
-          🛠️ Panel de Edición
-        </h2>
-        <div className="flex items-center gap-2 text-sm">
-          <button
-            className="p-1.5 hover:bg-white rounded disabled:opacity-50 transition-colors"
-            disabled={!navigation.canGoPrev}
-            onClick={navigation.prevPage}
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <span className="px-3 py-1.5 bg-white rounded text-gray-700 font-medium min-w-[70px] text-center shadow-sm">
-            {currentPage + 1} / {pages.length}
-          </span>
-          <button
-            className="p-1.5 hover:bg-white rounded disabled:opacity-50 transition-colors"
-            disabled={!navigation.canGoNext}
-            onClick={navigation.nextPage}
-          >
-            <ChevronRight size={16} />
-          </button>
+      {/* HEADER */}
+      <div 
+        className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white shadow-lg"
+        style={{ height: `${HEADER_HEIGHT}px` }}
+      >
+        <div className="h-full px-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+              <BookOpen size={32} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Editor de Libros Infantiles</h1>
+              <p className="text-sm opacity-90">Crea historias maravillosas página por página</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="bg-white/20 backdrop-blur-sm px-6 py-3 rounded-xl border border-white/30">
+              <div className="text-center">
+                <div className="text-xs opacity-80 uppercase tracking-wide">Página Actual</div>
+                <div className="text-3xl font-bold">{currentPage + 1}</div>
+              </div>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm px-6 py-3 rounded-xl border border-white/30">
+              <div className="text-center">
+                <div className="text-xs opacity-80 uppercase tracking-wide">Total Páginas</div>
+                <div className="text-3xl font-bold">{pages.length}</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Menú de pestañas horizontal */}
-      <div className="flex border-b border-gray-200 bg-gray-50" style={{ height: `${TABS_HEIGHT}px` }}>
-        {menuSections.map(section => {
-          const Icon = section.icon;
-          const isActive = activeSection === section.id;
+      {/* TABS */}
+      <div 
+        className="bg-white border-b-2 border-gray-200 shadow-sm overflow-x-auto"
+        style={{ height: `${TABS_HEIGHT}px` }}
+      >
+        <div className="flex h-full min-w-max">
+          {tabs.map(tab => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            const colorClasses = {
+              indigo: 'bg-indigo-500 border-indigo-600',
+              blue: 'bg-blue-500 border-blue-600',
+              cyan: 'bg-cyan-500 border-cyan-600',
+              purple: 'bg-purple-500 border-purple-600',
+              green: 'bg-green-500 border-green-600',
+              teal: 'bg-teal-500 border-teal-600',
+              orange: 'bg-orange-500 border-orange-600',
+              pink: 'bg-pink-500 border-pink-600'
+            };
 
-          return (
-            <button
-              key={section.id}
-              onClick={() => toggleSection(section.id)}
-              className={`
-              flex-1 flex flex-col items-center gap-2 py-4 px-4 transition-all duration-200
-              ${isActive
-                  ? `${section.color} text-white shadow-lg`
-                  : 'text-gray-600 hover:bg-gray-100'
-                }
-            `}
-              title={section.label}
-            >
-              <Icon size={24} />
-              <span className="font-medium text-sm">{section.label}</span>
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`
+                  group relative px-6 py-3 flex flex-col items-center justify-center gap-1
+                  transition-all duration-200 min-w-[120px]
+                  ${isActive 
+                    ? `${colorClasses[tab.color as keyof typeof colorClasses]} text-white shadow-lg scale-105` 
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }
+                `}
+              >
+                <Icon size={22} className={isActive ? '' : 'group-hover:scale-110 transition-transform'} />
+                <span className="text-xs font-semibold">{tab.shortLabel}</span>
+                {isActive && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/50 rounded-t-full" />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* ✅ CONTENEDOR CON ALTURA FIJA - TODAS LAS SECCIONES SIEMPRE RENDERIZADAS */}
-      <div style={{ height: CONTENT_HEIGHT, minHeight: CONTENT_HEIGHT, maxHeight: CONTENT_HEIGHT, overflow: 'hidden', position: 'relative' }}>
+      {/* INFO BAR - Muestra descripción de la pestaña activa */}
+      <div className="bg-gradient-to-r from-gray-50 to-white px-6 py-2 border-b border-gray-200 flex items-center justify-between text-sm">
+        <div className="flex items-center gap-2 text-gray-700">
+          <Info size={16} className="text-blue-500" />
+          <span className="font-medium">Estás editando:</span>
+          <span className="font-bold text-blue-600">{currentTab?.label}</span>
+          <span className="text-gray-500">→</span>
+          <span className="text-gray-600">{currentTab?.description}</span>
+        </div>
+      </div>
+
+      {/* NAVIGATION */}
+      <div 
+        className="bg-white border-b border-gray-200 px-6 flex items-center justify-between shadow-sm"
+        style={{ height: `${NAV_HEIGHT}px` }}
+      >
+        <div className="flex items-center gap-3">
+          <button
+            onClick={navigation.prevPage}
+            disabled={!navigation.canGoPrev}
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed rounded-lg transition-all shadow-md hover:shadow-lg font-medium"
+          >
+            <ChevronLeft size={20} />
+            Anterior
+          </button>
+          
+          <div className="px-6 py-2.5 bg-gray-100 rounded-lg border-2 border-gray-300">
+            <span className="text-sm text-gray-600 font-medium">
+              Página <span className="text-xl font-bold text-gray-900">{currentPage + 1}</span> de <span className="text-lg font-semibold text-gray-900">{pages.length}</span>
+            </span>
+          </div>
+          
+          <button
+            onClick={navigation.nextPage}
+            disabled={!navigation.canGoNext}
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed rounded-lg transition-all shadow-md hover:shadow-lg font-medium"
+          >
+            Siguiente
+            <ChevronRight size={20} />
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onAddPage}
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all shadow-md hover:shadow-lg font-medium"
+          >
+            <Plus size={20} />
+            Agregar Página
+          </button>
+          
+          {canDeletePage && (
+            <button
+              onClick={onDeletePage}
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg transition-all shadow-md hover:shadow-lg font-medium"
+            >
+              <Trash2 size={20} />
+              Eliminar
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* CONTENT */}
+      <div 
+        style={{ 
+          height: CONTENT_HEIGHT, 
+          minHeight: CONTENT_HEIGHT, 
+          maxHeight: CONTENT_HEIGHT, 
+          overflow: 'hidden',
+          position: 'relative'
+        }}
+      >
         
-        {/* 📚 VISUALIZACIÓN - BookViewer */}
+        {/* VISTA PREVIA */}
         <div 
           style={{ 
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%', 
-            height: '100%',
-            visibility: activeSection === 'visualizacion' ? 'visible' : 'hidden',
-            opacity: activeSection === 'visualizacion' ? 1 : 0,
-            pointerEvents: activeSection === 'visualizacion' ? 'auto' : 'none',
-            transition: 'opacity 0.2s ease-in-out'
+            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+            visibility: activeTab === 'preview' ? 'visible' : 'hidden',
+            opacity: activeTab === 'preview' ? 1 : 0,
+            pointerEvents: activeTab === 'preview' ? 'auto' : 'none',
+            transition: 'opacity 0.2s'
           }}
         >
           <BookViewer
@@ -236,188 +408,195 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
           />
         </div>
 
-        {/* 🧭 NAVEGACIÓN */}
+        {/* TÍTULO */}
         <div 
           style={{ 
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%', 
-            height: '100%',
-            visibility: activeSection === 'navegacion' ? 'visible' : 'hidden',
-            opacity: activeSection === 'navegacion' ? 1 : 0,
-            pointerEvents: activeSection === 'navegacion' ? 'auto' : 'none',
-            overflow: 'auto',
-            transition: 'opacity 0.2s ease-in-out'
+            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+            visibility: activeTab === 'title' ? 'visible' : 'hidden',
+            opacity: activeTab === 'title' ? 1 : 0,
+            pointerEvents: activeTab === 'title' ? 'auto' : 'none',
+            overflow: 'auto', transition: 'opacity 0.2s'
           }}
-          className="bg-gray-50"
         >
-          <div className="max-w-4xl mx-auto p-6">
-            <div className="space-y-6">
-              <div>
-                <h4 className="text-sm font-medium mb-3 text-gray-700">
-                  Navegación de Páginas
-                </h4>
-                <PageNavigation
-                  currentPage={currentPage}
-                  totalPages={pages.length}
-                  canGoNext={navigation.canGoNext}
-                  canGoPrev={navigation.canGoPrev}
-                  isFlipping={false}
-                  onGoToPage={navigation.goToPage}
-                  onNextPage={navigation.nextPage}
-                  onPrevPage={navigation.prevPage}
-                  onAddPage={onAddPage}
-                  onDeletePage={onDeletePage}
-                />
-              </div>
-
-              <div>
-                <h4 className="text-sm font-medium mb-3 text-gray-700">
-                  Layout de Página
-                </h4>
-                <PageLayoutSelector
-                  currentLayout={currentPageData.layout}
-                  pageNumber={currentPage + 1}
-                  onLayoutChange={onLayoutChange}
-                />
-              </div>
-            </div>
+          <div className="max-w-5xl mx-auto p-8">
+            <SectionCard
+              title="Título de la Página"
+              description="Escribe un título llamativo para esta página"
+              icon={<Heading size={24} />}
+              color="blue"
+            >
+              <RichTitleEditor
+                value={pages[currentPage]?.title || ''}
+                onChange={(html) => {
+                  setPages(prev => {
+                    const newPages = [...prev];
+                    newPages[currentPage] = { ...newPages[currentPage], title: html };
+                    return newPages;
+                  });
+                }}
+                pageNumber={currentPage + 1}
+              />
+            </SectionCard>
           </div>
         </div>
 
-        {/* 📝 CONTENIDO */}
+        {/* TEXTO */}
         <div 
           style={{ 
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%', 
-            height: '100%',
-            visibility: activeSection === 'contenido' ? 'visible' : 'hidden',
-            opacity: activeSection === 'contenido' ? 1 : 0,
-            pointerEvents: activeSection === 'contenido' ? 'auto' : 'none',
-            overflow: 'auto',
-            transition: 'opacity 0.2s ease-in-out'
+            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+            visibility: activeTab === 'text' ? 'visible' : 'hidden',
+            opacity: activeTab === 'text' ? 1 : 0,
+            pointerEvents: activeTab === 'text' ? 'auto' : 'none',
+            overflow: 'auto', transition: 'opacity 0.2s'
           }}
-          className="bg-gray-50"
         >
-          <div className="max-w-4xl mx-auto p-6">
-            <div className="space-y-6">
-              <div>
-                <h4 className="text-sm font-medium mb-3 text-gray-700">
-                  Editor de Título
-                </h4>
-                <RichTitleEditor
-                  isEditing={editingState.editingField === 'title'}
-                  currentTitle={editingState.getCurrentTitle()}
-                  editingTitle={editingState.editingTitle}
-                  pageNumber={currentPage + 1}
-                  onStartEdit={() => editingState.startEdit('title')}
-                  onSave={() => editingState.saveField('title')}
-                  onCancel={() => editingState.cancelEdit('title')}
-                  onTitleChange={editingState.setEditingTitle}
-                />
-              </div>
-
-              <div>
-                <h4 className="text-sm font-medium mb-3 text-gray-700">
-                  Editor de Contenido
-                </h4>
-                <RichTextEditor
-                  isEditing={editingState.editingField === 'text'}
-                  currentText={editingState.getCurrentText()}
-                  editingText={editingState.editingText}
-                  pageNumber={currentPage + 1}
-                  onStartEdit={() => editingState.startEdit('text')}
-                  onSave={() => editingState.saveField('text')}
-                  onCancel={() => editingState.cancelEdit('text')}
-                  onTextChange={editingState.setEditingText}
-                />
-              </div>
-            </div>
+          <div className="max-w-5xl mx-auto p-8">
+            <SectionCard
+              title="Contenido de la Página"
+              description="Escribe la historia o texto principal de esta página"
+              icon={<FileText size={24} />}
+              color="blue"
+            >
+              <RichTextEditor
+                value={pages[currentPage]?.text || ''}
+                onChange={(html) => {
+                  setPages(prev => {
+                    const newPages = [...prev];
+                    newPages[currentPage] = { ...newPages[currentPage], text: html };
+                    return newPages;
+                  });
+                }}
+                pageNumber={currentPage + 1}
+              />
+            </SectionCard>
           </div>
         </div>
 
-        {/* 🎨 VISUAL */}
+        {/* LAYOUT */}
         <div 
           style={{ 
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%', 
-            height: '100%',
-            visibility: activeSection === 'visual' ? 'visible' : 'hidden',
-            opacity: activeSection === 'visual' ? 1 : 0,
-            pointerEvents: activeSection === 'visual' ? 'auto' : 'none',
-            overflow: 'auto',
-            transition: 'opacity 0.2s ease-in-out'
+            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+            visibility: activeTab === 'layout' ? 'visible' : 'hidden',
+            opacity: activeTab === 'layout' ? 1 : 0,
+            pointerEvents: activeTab === 'layout' ? 'auto' : 'none',
+            overflow: 'auto', transition: 'opacity 0.2s'
           }}
-          className="bg-gray-50"
         >
-          <div className="max-w-4xl mx-auto p-6">
-            <div className="space-y-6">
-              <div>
-                <h4 className="text-sm font-medium mb-3 text-gray-700">
-                  Fondo de Página
-                </h4>
-                <BackgroundControls
-                  currentBackground={currentPageData.background}
-                  hasBackground={!!currentPageData.background}
-                  pageNumber={currentPage + 1}
-                  onBackgroundChange={onBackgroundChange}
-                  onBackgroundFileChange={imageHandler.handleBackgroundFile}
-                  onRemoveBackground={imageHandler.removeBackground}
-                />
-              </div>
-
-              <div>
-                <h4 className="text-sm font-medium mb-3 text-gray-700">
-                  Imagen Principal
-                </h4>
-                <ImageControls
-                  hasImage={!!currentPageData.image}
-                  pageNumber={currentPage + 1}
-                  onImageChange={imageHandler.handleImageChange}
-                  onRemoveImage={imageHandler.removeImage}
-                />
-              </div>
-
-              <div>
-                <h4 className="text-sm font-medium mb-3 text-gray-700">
-                  Portada del Libro
-                </h4>
-                <PortadaControls 
-                  onImageChange={onPortadaChange}
-                  portada={portada}
-                  portadaUrl={portadaUrl} 
-                />
-              </div>
-            </div>
+          <div className="max-w-5xl mx-auto p-8">
+            <SectionCard
+              title="Diseño de la Página"
+              description="Elige cómo se distribuyen el título, texto e imagen"
+              icon={<Layout size={24} />}
+              color="purple"
+            >
+              <PageLayoutSelector
+                currentLayout={currentPageData.layout}
+                pageNumber={currentPage + 1}
+                onLayoutChange={onLayoutChange}
+              />
+            </SectionCard>
           </div>
         </div>
 
-        {/* 📖 LIBRO */}
+        {/* IMÁGENES */}
         <div 
           style={{ 
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%', 
-            height: '100%',
-            visibility: activeSection === 'libro' ? 'visible' : 'hidden',
-            opacity: activeSection === 'libro' ? 1 : 0,
-            pointerEvents: activeSection === 'libro' ? 'auto' : 'none',
-            overflow: 'auto',
-            transition: 'opacity 0.2s ease-in-out'
+            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+            visibility: activeTab === 'images' ? 'visible' : 'hidden',
+            opacity: activeTab === 'images' ? 1 : 0,
+            pointerEvents: activeTab === 'images' ? 'auto' : 'none',
+            overflow: 'auto', transition: 'opacity 0.2s'
           }}
-          className="bg-gray-50"
         >
-          <div className="max-w-4xl mx-auto p-6">
-            <div>
-              <h4 className="text-sm font-medium mb-3 text-gray-700">
-                Metadatos del Libro
-              </h4>
+          <div className="max-w-5xl mx-auto p-8">
+            <SectionCard
+              title="Imagen Principal de la Página"
+              description="Sube una imagen que acompañe el contenido"
+              icon={<Image size={24} />}
+              color="green"
+            >
+              <ImageControls
+                hasImage={!!currentPageData.image}
+                pageNumber={currentPage + 1}
+                onImageChange={imageHandler.handleImageChange}
+                onRemoveImage={imageHandler.removeImage}
+              />
+            </SectionCard>
+          </div>
+        </div>
+
+        {/* FONDOS */}
+        <div 
+          style={{ 
+            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+            visibility: activeTab === 'background' ? 'visible' : 'hidden',
+            opacity: activeTab === 'background' ? 1 : 0,
+            pointerEvents: activeTab === 'background' ? 'auto' : 'none',
+            overflow: 'auto', transition: 'opacity 0.2s'
+          }}
+        >
+          <div className="max-w-5xl mx-auto p-8">
+            <SectionCard
+              title="Fondo de la Página"
+              description="Elige o sube un fondo decorativo para esta página"
+              icon={<Paintbrush size={24} />}
+              color="teal"
+            >
+              <BackgroundControls
+                currentBackground={currentPageData.background}
+                hasBackground={!!currentPageData.background}
+                pageNumber={currentPage + 1}
+                onBackgroundChange={onBackgroundChange}
+                onBackgroundFileChange={imageHandler.handleBackgroundFile}
+                onRemoveBackground={imageHandler.removeBackground}
+              />
+            </SectionCard>
+          </div>
+        </div>
+
+        {/* PORTADA */}
+        <div 
+          style={{ 
+            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+            visibility: activeTab === 'cover' ? 'visible' : 'hidden',
+            opacity: activeTab === 'cover' ? 1 : 0,
+            pointerEvents: activeTab === 'cover' ? 'auto' : 'none',
+            overflow: 'auto', transition: 'opacity 0.2s'
+          }}
+        >
+          <div className="max-w-5xl mx-auto p-8">
+            <SectionCard
+              title="Portada del Libro"
+              description="Imagen que aparecerá como portada principal del libro"
+              icon={<BookOpen size={24} />}
+              color="orange"
+            >
+              <PortadaControls 
+                onImageChange={onPortadaChange}
+                portada={portada}
+                portadaUrl={portadaUrl} 
+              />
+            </SectionCard>
+          </div>
+        </div>
+
+        {/* METADATOS */}
+        <div 
+          style={{ 
+            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+            visibility: activeTab === 'metadata' ? 'visible' : 'hidden',
+            opacity: activeTab === 'metadata' ? 1 : 0,
+            pointerEvents: activeTab === 'metadata' ? 'auto' : 'none',
+            overflow: 'auto', transition: 'opacity 0.2s'
+          }}
+        >
+          <div className="max-w-5xl mx-auto p-8">
+            <SectionCard
+              title="Información del Libro"
+              description="Título, autor, categorías y clasificación del libro completo"
+              icon={<Tag size={24} />}
+              color="pink"
+            >
               <BookMetadataForm
                 selectedCategorias={selectedCategorias}
                 selectedGeneros={selectedGeneros}
@@ -437,31 +616,34 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
                 onTituloChange={onTituloChange}
                 onSave={handleSave}
               />
-            </div>
+            </SectionCard>
           </div>
         </div>
 
       </div>
 
-      {/* Footer con botón guardar */}
-      <div className="p-4 border-t border-gray-200 bg-white" style={{ height: `${FOOTER_HEIGHT}px` }}>
+      {/* FOOTER */}
+      <div 
+        className="bg-white border-t-2 border-gray-200 px-6 flex items-center justify-center shadow-lg"
+        style={{ height: `${FOOTER_HEIGHT}px` }}
+      >
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="w-full max-w-md mx-auto flex items-center justify-center gap-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md px-6 py-3 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-green-600"
+          className="flex items-center justify-center gap-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl transition-all shadow-xl hover:shadow-2xl px-10 py-4 disabled:opacity-60 disabled:cursor-not-allowed min-w-[350px] text-lg font-bold"
         >
           {isSaving ? (
             <>
-              <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg className="animate-spin h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span className="font-semibold">Guardando...</span>
+              Guardando Cambios...
             </>
           ) : (
             <>
-              <Save size={20} />
-              <span className="font-semibold">Guardar Cambios</span>
+              <Save size={24} />
+              💾 Guardar Todos los Cambios
             </>
           )}
         </button>

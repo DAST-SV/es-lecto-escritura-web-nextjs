@@ -96,6 +96,40 @@
       "text": "Activities",
       "href": "/actividades",
       "title": "See your activities"
+    },
+    "book": {
+      "create": {
+        "text": "Create Book",
+        "href": "/book/create",
+        "title": "Start creating a new book"
+      }
+    },
+    "diary": {
+      "myDiaries": {
+        "text": "My Personal Diaries",
+        "href": "/diary/my-diaries",
+        "title": "View my personal diaries"
+      },
+      "create": {
+        "text": "Create Personal Diary",
+        "href": "/diary/create",
+        "title": "Start creating a new personal diary"
+      },
+      "view": {
+        "text": "View Personal Diary",
+        "href": "/diary/view",
+        "title": "View my personal diary"
+      },
+      "edit": {
+        "text": "Edit Personal Diary",
+        "href": "/diary/edit",
+        "title": "Edit my personal diary"
+      },
+      "delete": {
+        "text": "Delete Personal Diary",
+        "href": "/diary/delete",
+        "title": "Delete my personal diary"
+      }
     }
   },
   "content": {

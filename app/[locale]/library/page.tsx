@@ -25,8 +25,12 @@ import Caracoles from "@/public/Imagenes/explore-content/top10/04e5ba5c-10d1-4f6
 import Hamster from "@/public/Imagenes/explore-content/top10/52063d7e-8fd6-4f18-9ce2-d05abbb78fbb.jpg";
 import Dragon from "@/public/Imagenes/explore-content/top10/9d6e7983-33e9-4192-af7c-80d5ce7186ae.jpg";
 import Mascuentos from "@/public/Imagenes/explore-content/top10/assets_task_01k61vx6wwftbrtw2644gnfvhb_1758852016_img_1.webp"; // 🔹 Ajusta la ruta según tu imagen
+import { useLocale, useTranslations } from "next-intl";
 
 const Page: React.FC = () => {
+  const t = useTranslations("nav");
+  const locale = useLocale();
+
   const explorarContenido: ImageItem[] = [
     { caption: "Cuentos", src: Cuentos },
     { caption: "Fábulas", src: Fabulas },
@@ -57,13 +61,13 @@ const Page: React.FC = () => {
   // 🔹 Función para manejar clicks en el carrusel
   const handleCarouselClick = (img: ImageItem, index: number) => {
     console.log('Clicked on:', img.caption, 'at index:', index);
-    
+
     // 🔹 Usar la ruta definida en Json o una ruta por defecto
     const targetRoute = img.Json || "/detalle-de-cuento";
-    
+
     // 🔹 Redirigir usando Next.js router o window.location
     window.location.href = targetRoute;
-    
+
     // 🔹 Alternativa con Next.js router (descomenta si prefieres esta opción):
     // import { useRouter } from 'next/navigation';
     // const router = useRouter();
@@ -106,7 +110,7 @@ const Page: React.FC = () => {
           <h2 className="text-3xl font-bold mb-6 text-center text-black">
             Top 10 de Lecturas
           </h2>
-          
+
           <CarouselLibros
             images={topLecturas}
             itemsToShow={4}
@@ -118,25 +122,104 @@ const Page: React.FC = () => {
           />
         </div>
 
-        {/* 🔹 Ejemplo adicional: Carrusel de extras con configuración diferente */}
-        <div className="rounded-xl p-6 shadow-md bg-gradient-to-r from-purple-100 to-pink-100">
-          <h2 className="text-2xl font-bold mb-4 text-center text-purple-800">
-            Herramientas Creativas
-          </h2>
-          
-          <Carousel
-            images={extras}
-            itemsToShow={3}
-            aspectRatio="4/5"
-            onClick={(img, index) => {
-              console.log('Extra clicked:', img.caption);
-              alert(`Clicked: ${img.caption}`);
-            }}
-            showIndicators={false}
-            showArrows={true}
-            gap="gap-6"
-          />
+        {/* Sección de Acciones Principales - Herramientas Creativas */}
+        <div className="mb-6 sm:mb-8 lg:mb-12 px-2 sm:px-0">
+          <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-6 lg:p-8 border-3 border-yellow-300">
+
+            <h2
+              className="text-center text-2xl sm:text-3xl lg:text-4xl font-black text-gray-700 mb-2 sm:mb-3 px-2"
+              style={{ fontFamily: "Comic Sans MS, cursive" }}
+            >
+              🎨 Herramientas Creativas 📚
+            </h2>
+
+            <p
+              className="text-center text-gray-600 text-base sm:text-lg lg:text-xl font-bold mb-4 sm:mb-6 px-2"
+              style={{ fontFamily: "Comic Sans MS, cursive" }}
+            >
+              ¡Elige una opción y comienza!
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+
+              {/* Crear tu libro */}
+              <div
+                className="group cursor-pointer transform transition-all duration-300 hover:scale-105"
+                onClick={() => window.location.href = `/${locale}${t("book.create.href")}`}
+              >
+                <div className="bg-yellow-100 rounded-2xl p-3 sm:p-4 shadow-xl hover:bg-yellow-200 border-2 border-yellow-300">
+
+                  <div className="bg-white rounded-xl p-2 sm:p-3 mb-2 sm:mb-3 shadow-md">
+                    <Image
+                      src={Creatulibro}
+                      alt={t("book.create.text")}
+                      className="w-full h-auto object-contain rounded-lg"
+                    />
+                  </div>
+
+                  <h3
+                    className="text-center text-base sm:text-lg font-black text-yellow-700 px-2"
+                    style={{ fontFamily: "Comic Sans MS, cursive" }}
+                  >
+                    {t("book.create.text")}
+                  </h3>
+                </div>
+              </div>
+
+              {/* Diario Personal */}
+              <div
+                className="group cursor-pointer transform transition-all duration-300 hover:scale-105"
+                onClick={() => window.location.href = `/${locale}${t("diary.myDiaries.href")}`}
+              >
+                <div className="bg-blue-100 rounded-2xl p-3 sm:p-4 shadow-xl hover:bg-blue-200 border-2 border-blue-300">
+
+                  <div className="bg-white rounded-xl p-2 sm:p-3 mb-2 sm:mb-3 shadow-md">
+                    <Image
+                      src={Diariopersonal}
+                      alt={t("diary.myDiaries.text")}
+                      className="w-full h-auto object-contain rounded-lg"
+                    />
+                  </div>
+
+                  <h3
+                    className="text-center text-base sm:text-lg font-black text-blue-700 px-2"
+                    style={{ fontFamily: "Comic Sans MS, cursive" }}
+                  >
+                    {t("diary.myDiaries.text")}
+                  </h3>
+                </div>
+              </div>
+
+              {/* Mis Libros */}
+              <div
+                className="group cursor-pointer transform transition-all duration-300 hover:scale-105"
+                onClick={() => window.location.href = `/${locale}${t("myProgress.href")}`}
+              >
+                <div className="bg-green-100 rounded-2xl p-3 sm:p-4 shadow-xl hover:bg-green-200 border-2 border-green-300">
+
+                  <div className="bg-white rounded-xl p-2 sm:p-3 mb-2 sm:mb-3 shadow-md">
+                    <Image
+                      src={Mislibros}
+                      alt={t("myProgress.text")}
+                      className="w-full h-auto object-contain rounded-lg"
+                    />
+                  </div>
+
+                  <h3
+                    className="text-center text-base sm:text-lg font-black text-green-700 px-2"
+                    style={{ fontFamily: "Comic Sans MS, cursive" }}
+                  >
+                    {t("myProgress.text")}
+                  </h3>
+                </div>
+              </div>
+
+            </div>
+          </div>
         </div>
+
+
+
       </div>
     </UnifiedLayout>
   );
