@@ -4,6 +4,10 @@ import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import TiptapUnderline from '@tiptap/extension-underline';
 import { TextStyle } from '@tiptap/extension-text-style';
+
+// ⭐ IMPORTAR EXTENSIONES PERSONALIZADAS
+import { FontSize, LineHeight, FontFamily } from './tiptap-extensions';
+
 import {
     Bold, Italic, Underline as UnderlineIcon, Strikethrough,
     AlignLeft, AlignCenter, AlignRight, AlignJustify,
@@ -24,9 +28,10 @@ export const RichTitleEditor: React.FC<RichTitleEditorProps> = ({
     const [stats, setStats] = useState({ words: 0, characters: 0 });
     const [fontSize, setFontSize] = useState('16');
     const [lineHeight, setLineHeight] = useState('1.5');
+    const [fontFamily, setFontFamily] = useState('Arial, sans-serif');
 
     const editor = useEditor({
-        immediatelyRender: false, // ✅ Fix para SSR en Next.js
+        immediatelyRender: false,
         extensions: [
             StarterKit.configure({
                 heading: false,
@@ -39,6 +44,13 @@ export const RichTitleEditor: React.FC<RichTitleEditorProps> = ({
             }),
             TiptapUnderline,
             TextStyle,
+            // ⭐ EXTENSIONES PERSONALIZADAS
+            FontSize,
+            LineHeight.configure({
+                types: ['paragraph'],
+                defaultLineHeight: '1.5',
+            }),
+            FontFamily,
         ],
         content: value,
         onUpdate: ({ editor }) => {
@@ -48,7 +60,6 @@ export const RichTitleEditor: React.FC<RichTitleEditorProps> = ({
         editorProps: {
             attributes: {
                 class: 'prose prose-sm focus:outline-none min-h-[60px] p-3',
-                style: `font-size: ${fontSize}px; line-height: ${lineHeight};`,
             },
         },
     });
@@ -69,20 +80,25 @@ export const RichTitleEditor: React.FC<RichTitleEditorProps> = ({
         setStats({ words, characters });
     }, [value, editor]);
 
-    // Aplicar tamaño de fuente y interlineado
-    useEffect(() => {
-        if (editor) {
-            const view = editor.view;
-            if (view?.dom) {
-                view.dom.style.fontSize = `${fontSize}px`;
-                view.dom.style.lineHeight = lineHeight;
-            }
-        }
-    }, [fontSize, lineHeight, editor]);
-
     if (!editor) {
         return <div className="p-4 bg-gray-100 rounded-lg animate-pulse">Cargando editor...</div>;
     }
+
+    // ⭐ FUNCIONES ACTUALIZADAS PARA APLICAR ESTILOS AL CONTENIDO
+    const handleFontSizeChange = (newSize: string) => {
+        setFontSize(newSize);
+        editor.chain().focus().selectAll().setFontSize(`${newSize}px`).run();
+    };
+
+    const handleLineHeightChange = (newHeight: string) => {
+        setLineHeight(newHeight);
+        editor.chain().focus().setLineHeight(newHeight).run();
+    };
+
+    const handleFontFamilyChange = (newFamily: string) => {
+        setFontFamily(newFamily);
+        editor.chain().focus().selectAll().setFontFamily(newFamily).run();
+    };
 
     const fontFamilies = [
         { label: 'Arial', value: 'Arial, sans-serif' },
@@ -91,13 +107,6 @@ export const RichTitleEditor: React.FC<RichTitleEditorProps> = ({
         { label: 'Courier New', value: 'Courier New, monospace' },
         { label: 'Verdana', value: 'Verdana, sans-serif' },
     ];
-
-    const applyFontFamily = (fontFamily: string) => {
-        const view = editor.view;
-        if (view?.dom) {
-            view.dom.style.fontFamily = fontFamily;
-        }
-    };
 
     return (
         <div className="mb-6 p-4 bg-purple-50 rounded-lg">
@@ -135,9 +144,10 @@ export const RichTitleEditor: React.FC<RichTitleEditorProps> = ({
 
                 <div className="w-px h-6 bg-gray-300" />
 
-                {/* Fuente */}
+                {/* ⭐ FUENTE - ACTUALIZADO */}
                 <select
-                    onChange={(e) => applyFontFamily(e.target.value)}
+                    value={fontFamily}
+                    onChange={(e) => handleFontFamilyChange(e.target.value)}
                     className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500"
                     title="Familia de fuente"
                 >
@@ -146,12 +156,12 @@ export const RichTitleEditor: React.FC<RichTitleEditorProps> = ({
                     ))}
                 </select>
 
-                {/* Tamaño de fuente */}
+                {/* ⭐ TAMAÑO DE FUENTE - ACTUALIZADO */}
                 <div className="flex items-center gap-1">
                     <Type size={14} className="text-gray-600" />
                     <select
                         value={fontSize}
-                        onChange={(e) => setFontSize(e.target.value)}
+                        onChange={(e) => handleFontSizeChange(e.target.value)}
                         className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500"
                         title="Tamaño de fuente"
                     >
@@ -161,12 +171,12 @@ export const RichTitleEditor: React.FC<RichTitleEditorProps> = ({
                     </select>
                 </div>
 
-                {/* Interlineado */}
+                {/* ⭐ INTERLINEADO - ACTUALIZADO */}
                 <div className="flex items-center gap-1">
                     <span className="text-xs text-gray-600 font-medium">Interlineado:</span>
                     <select
                         value={lineHeight}
-                        onChange={(e) => setLineHeight(e.target.value)}
+                        onChange={(e) => handleLineHeightChange(e.target.value)}
                         className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500"
                         title="Interlineado"
                     >

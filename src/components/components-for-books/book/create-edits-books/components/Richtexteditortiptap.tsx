@@ -6,18 +6,14 @@ import Underline from '@tiptap/extension-underline';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
-import Link from '@tiptap/extension-link';
-import { Table } from '@tiptap/extension-table';
-import { TableRow } from '@tiptap/extension-table-row';
-import { TableCell } from '@tiptap/extension-table-cell';
-import { TableHeader } from '@tiptap/extension-table-header';
-import Image from '@tiptap/extension-image';
+
+// ⭐ IMPORTAR EXTENSIONES PERSONALIZADAS
+import { FontSize, LineHeight, FontFamily } from './tiptap-extensions';
 
 import { 
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
   List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  Quote, Undo, Redo, Link2, Table as TableIcon, Image as ImageIcon,
-  Heading1, Heading2, Heading3, Trash2, Type
+  Quote, Undo, Redo, Trash2, Type
 } from 'lucide-react';
 
 interface RichTextEditorProps {
@@ -32,9 +28,9 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   pageNumber 
 }) => {
 
-  // ➤ NUEVO
   const [fontSize, setFontSize] = useState("16");
   const [lineHeight, setLineHeight] = useState("1.5");
+  const [fontFamily, setFontFamily] = useState("Arial, sans-serif");
   const [stats, setStats] = useState({ words: 0, characters: 0 });
 
   const editor = useEditor({
@@ -50,25 +46,19 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       TextStyle,
       Color,
       Highlight.configure({ multicolor: true }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: { class: 'text-blue-600 underline' },
+      // ⭐ EXTENSIONES PERSONALIZADAS
+      FontSize,
+      LineHeight.configure({
+        types: ['paragraph', 'heading'],
+        defaultLineHeight: '1.5',
       }),
-      Table.configure({ resizable: true }),
-      TableRow,
-      TableHeader,
-      TableCell,
-      Image.configure({
-        inline: true,
-        allowBase64: true,
-      }),
+      FontFamily,
     ],
     content: value,
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
     editorProps: {
       attributes: {
         class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none min-h-[200px] p-4',
-        style: `font-size:${fontSize}px; line-height:${lineHeight};`,
       },
     },
   });
@@ -79,14 +69,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       editor.commands.setContent(value);
     }
   }, [value, editor]);
-
-  // ➤ NUEVO: aplicar fontSize + lineHeight directo al DOM
-  useEffect(() => {
-    if (editor?.view?.dom) {
-      editor.view.dom.style.fontSize = `${fontSize}px`;
-      editor.view.dom.style.lineHeight = lineHeight;
-    }
-  }, [fontSize, lineHeight, editor]);
 
   // Stats
   useEffect(() => {
@@ -99,34 +81,32 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   if (!editor) return <div className="p-4 bg-gray-100 rounded-lg animate-pulse">Cargando editor...</div>;
 
-  // Insertar elementos
-  const addLink = () => {
-    const url = window.prompt('URL del enlace:');
-    if (url) editor.chain().focus().setLink({ href: url }).run();
+  // ⭐ FUNCIONES PARA APLICAR ESTILOS AL CONTENIDO
+  const handleFontSizeChange = (newSize: string) => {
+    setFontSize(newSize);
+    editor.chain().focus().selectAll().setFontSize(`${newSize}px`).run();
   };
 
-  const addImage = () => {
-    const url = window.prompt('URL de la imagen:');
-    if (url) editor.chain().focus().setImage({ src: url }).run();
+  const handleLineHeightChange = (newHeight: string) => {
+    setLineHeight(newHeight);
+    editor.chain().focus().setLineHeight(newHeight).run();
   };
 
-  const addTable = () =>
-    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+  const handleFontFamilyChange = (newFamily: string) => {
+    setFontFamily(newFamily);
+    editor.chain().focus().selectAll().setFontFamily(newFamily).run();
+  };
 
-  // Fuentes
+  // Fuentes disponibles
   const fonts = [
     { label: 'Arial', value: 'Arial, sans-serif' },
     { label: 'Times New Roman', value: '"Times New Roman", serif' },
     { label: 'Georgia', value: 'Georgia, serif' },
     { label: 'Courier New', value: '"Courier New", monospace' },
     { label: 'Verdana', value: 'Verdana, sans-serif' },
+    { label: 'Comic Sans', value: '"Comic Sans MS", cursive' },
+    { label: 'Impact', value: 'Impact, fantasy' },
   ];
-
-  const applyFontFamily = (font: string) => {
-    if (editor?.view?.dom) {
-      editor.view.dom.style.fontFamily = font;
-    }
-  };
 
   return (
     <div className="mb-6 p-4 bg-blue-50 rounded-lg">
@@ -140,19 +120,21 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         </div>
       </div>
 
-      {/* Toolbar */}
+      {/* Toolbar SIMPLIFICADO */}
       <div className="bg-white border border-gray-300 rounded-t-lg p-2 flex flex-wrap gap-1">
 
         {/* Undo / Redo */}
         <button onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().undo()}
-          className="p-2 hover:bg-gray-100 rounded disabled:opacity-30">
+          className="p-2 hover:bg-gray-100 rounded disabled:opacity-30"
+          title="Deshacer">
           <Undo size={18} />
         </button>
 
         <button onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.can().redo()}
-          className="p-2 hover:bg-gray-100 rounded disabled:opacity-30">
+          className="p-2 hover:bg-gray-100 rounded disabled:opacity-30"
+          title="Rehacer">
           <Redo size={18} />
         </button>
 
@@ -160,8 +142,10 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
         {/* Fuente */}
         <select
-          onChange={(e) => applyFontFamily(e.target.value)}
-          className="text-xs border border-gray-300 rounded px-2 py-1">
+          value={fontFamily}
+          onChange={(e) => handleFontFamilyChange(e.target.value)}
+          className="text-xs border border-gray-300 rounded px-2 py-1"
+          title="Tipo de fuente">
           {fonts.map(f => (
             <option key={f.value} value={f.value}>{f.label}</option>
           ))}
@@ -172,8 +156,9 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           <Type size={14} className="text-gray-600" />
           <select
             value={fontSize}
-            onChange={(e) => setFontSize(e.target.value)}
-            className="text-xs border border-gray-300 rounded px-2 py-1">
+            onChange={(e) => handleFontSizeChange(e.target.value)}
+            className="text-xs border border-gray-300 rounded px-2 py-1"
+            title="Tamaño">
             {[10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48].map(size => (
               <option key={size} value={size}>{size}px</option>
             ))}
@@ -185,8 +170,9 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           <span className="text-xs text-gray-600 font-medium">Interlineado:</span>
           <select
             value={lineHeight}
-            onChange={(e) => setLineHeight(e.target.value)}
-            className="text-xs border border-gray-300 rounded px-2 py-1">
+            onChange={(e) => handleLineHeightChange(e.target.value)}
+            className="text-xs border border-gray-300 rounded px-2 py-1"
+            title="Espaciado entre líneas">
             <option value="1">1.0</option>
             <option value="1.15">1.15</option>
             <option value="1.5">1.5</option>
@@ -198,24 +184,28 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
         <div className="w-px h-6 bg-gray-300 mx-1" />
 
-        {/* Formato */}
+        {/* Formato básico */}
         <button onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("bold") ? "bg-blue-100" : ""}`}>
+          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("bold") ? "bg-blue-100" : ""}`}
+          title="Negrita">
           <Bold size={18} />
         </button>
 
         <button onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("italic") ? "bg-blue-100" : ""}`}>
+          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("italic") ? "bg-blue-100" : ""}`}
+          title="Cursiva">
           <Italic size={18} />
         </button>
 
         <button onClick={() => editor.chain().focus().toggleUnderline().run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("underline") ? "bg-blue-100" : ""}`}>
+          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("underline") ? "bg-blue-100" : ""}`}
+          title="Subrayado">
           <UnderlineIcon size={18} />
         </button>
 
         <button onClick={() => editor.chain().focus().toggleStrike().run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("strike") ? "bg-blue-100" : ""}`}>
+          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("strike") ? "bg-blue-100" : ""}`}
+          title="Tachado">
           <Strikethrough size={18} />
         </button>
 
@@ -223,12 +213,14 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
         {/* Listas */}
         <button onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("bulletList") ? "bg-blue-100" : ""}`}>
+          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("bulletList") ? "bg-blue-100" : ""}`}
+          title="Lista con viñetas">
           <List size={18} />
         </button>
 
         <button onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("orderedList") ? "bg-blue-100" : ""}`}>
+          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("orderedList") ? "bg-blue-100" : ""}`}
+          title="Lista numerada">
           <ListOrdered size={18} />
         </button>
 
@@ -236,47 +228,42 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
         {/* Alineación */}
         <button onClick={() => editor.chain().focus().setTextAlign("left").run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "left" }) ? "bg-blue-100" : ""}`}>
+          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "left" }) ? "bg-blue-100" : ""}`}
+          title="Alinear izquierda">
           <AlignLeft size={18} />
         </button>
 
         <button onClick={() => editor.chain().focus().setTextAlign("center").run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "center" }) ? "bg-blue-100" : ""}`}>
+          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "center" }) ? "bg-blue-100" : ""}`}
+          title="Centrar">
           <AlignCenter size={18} />
         </button>
 
         <button onClick={() => editor.chain().focus().setTextAlign("right").run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "right" }) ? "bg-blue-100" : ""}`}>
+          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "right" }) ? "bg-blue-100" : ""}`}
+          title="Alinear derecha">
           <AlignRight size={18} />
         </button>
 
         <button onClick={() => editor.chain().focus().setTextAlign("justify").run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "justify" }) ? "bg-blue-100" : ""}`}>
+          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "justify" }) ? "bg-blue-100" : ""}`}
+          title="Justificar">
           <AlignJustify size={18} />
         </button>
 
         <div className="w-px h-6 bg-gray-300 mx-1" />
 
-        {/* Extras */}
+        {/* Cita */}
         <button onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("blockquote") ? "bg-blue-100" : ""}`}>
+          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("blockquote") ? "bg-blue-100" : ""}`}
+          title="Cita">
           <Quote size={18} />
         </button>
 
-        <button onClick={addLink} className="p-2 hover:bg-gray-100 rounded">
-          <Link2 size={18} />
-        </button>
-
-        <button onClick={addTable} className="p-2 hover:bg-gray-100 rounded">
-          <TableIcon size={18} />
-        </button>
-
-        <button onClick={addImage} className="p-2 hover:bg-gray-100 rounded">
-          <ImageIcon size={18} />
-        </button>
-
+        {/* Limpiar formato */}
         <button onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
-          className="p-2 hover:bg-gray-100 rounded text-red-600">
+          className="p-2 hover:bg-gray-100 rounded text-red-600"
+          title="Limpiar formato">
           <Trash2 size={18} />
         </button>
       </div>
@@ -292,6 +279,11 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           ⚠️ Texto muy largo — Considera dividirlo en varias páginas.
         </div>
       )}
+
+      {/* Ayuda rápida */}
+      <div className="mt-2 text-xs text-gray-500">
+        💡 <strong>Tip:</strong> Usa las imágenes desde el panel "Imagen" para agregar fotos a tu libro.
+      </div>
 
     </div>
   );
