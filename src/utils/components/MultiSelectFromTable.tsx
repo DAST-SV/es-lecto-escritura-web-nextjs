@@ -10,6 +10,7 @@ interface MultiSelectFromTableProps<T extends Record<string, any>> {
   values: (number | string)[];
   placeholder?: string;
   onChange: (values: (number | string)[]) => void;
+  onLabelsChange?: (labels: string[]) => void; // ⭐ NUEVO: Para exponer los nombres
   maxItems?: number;
 }
 
@@ -21,6 +22,7 @@ export default function MultiSelectFromTable<T extends Record<string, any>>({
   values,
   placeholder = 'Selecciona...',
   onChange,
+  onLabelsChange, // ⭐ NUEVO
   maxItems = 5,
 }: MultiSelectFromTableProps<T>) {
   const supabase = createClient();
@@ -43,6 +45,14 @@ export default function MultiSelectFromTable<T extends Record<string, any>>({
       setSelectedOptions([]);
     }
   }, [values]);
+
+  // ⭐ NUEVO: Notificar cambios en los labels
+  useEffect(() => {
+    if (onLabelsChange) {
+      const labels = selectedOptions.map(opt => opt.label);
+      onLabelsChange(labels);
+    }
+  }, [selectedOptions, onLabelsChange]);
 
   const loadOptions = async (inputValue: string) => {
     try {
@@ -90,8 +100,16 @@ export default function MultiSelectFromTable<T extends Record<string, any>>({
   };
 
   const handleChange = (selected: any) => {
-    const selectedValues = (selected || []).map((opt: any) => opt.value);
-    setSelectedOptions(selected || []);
+    const newSelected = selected || [];
+    
+    // 🔥 Validar que no se exceda el límite
+    if (newSelected.length > maxItems) {
+      // Si intenta agregar más del límite, no hacer nada
+      return;
+    }
+    
+    const selectedValues = newSelected.map((opt: any) => opt.value);
+    setSelectedOptions(newSelected);
     onChange(selectedValues);
   };
 
@@ -99,59 +117,36 @@ export default function MultiSelectFromTable<T extends Record<string, any>>({
 
   return (
     <div className="multi-select-container">
-      {/* Selector */}
-      {!isMaxReached && (
-        <AsyncSelect
-          instanceId={instanceId} // 🔥 FIX: ID estable
-          isMulti
-          cacheOptions
-          defaultOptions
-          loadOptions={loadOptions}
-          value={selectedOptions}
-          onChange={handleChange}
-          placeholder={placeholder}
-          noOptionsMessage={() => 'No hay opciones'}
-          loadingMessage={() => 'Cargando...'}
-          styles={{
-            control: (base) => ({
-              ...base,
-              borderRadius: '8px',
-              borderColor: '#d1d5db',
-              '&:hover': { borderColor: '#9ca3af' },
-            }),
-          }}
-        />
-      )}
-
-      {/* Mensaje de límite alcanzado */}
+      {/* Mensaje de límite alcanzado - ANTES del selector */}
       {isMaxReached && (
-        <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
-          ⚠️ Has alcanzado el máximo de {maxItems} elementos
+        <div className="mb-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800 flex items-center gap-2">
+          <span>⚠️</span>
+          <span>Máximo de {maxItems} elementos alcanzado. <strong>Quita elementos usando la × para agregar otros.</strong></span>
         </div>
       )}
 
-      {/* Lista de seleccionados */}
-      {selectedOptions.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {selectedOptions.map((option) => (
-            <div
-              key={option.value}
-              className="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
-            >
-              <span>{option.label}</span>
-              <button
-                onClick={() => {
-                  const newSelected = selectedOptions.filter((o) => o.value !== option.value);
-                  handleChange(newSelected);
-                }}
-                className="hover:text-red-600 font-bold"
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Selector - SIEMPRE habilitado para poder quitar elementos */}
+      <AsyncSelect
+        instanceId={instanceId}
+        isMulti
+        cacheOptions
+        defaultOptions
+        loadOptions={loadOptions}
+        value={selectedOptions}
+        onChange={handleChange}
+        placeholder={isMaxReached ? "Quita elementos para agregar otros" : placeholder}
+        noOptionsMessage={() => isMaxReached ? 'Límite alcanzado - quita elementos primero' : 'No hay opciones'}
+        loadingMessage={() => 'Cargando...'}
+        styles={{
+          control: (base) => ({
+            ...base,
+            borderRadius: '8px',
+            borderColor: isMaxReached ? '#fbbf24' : '#d1d5db',
+            backgroundColor: isMaxReached ? '#fef3c7' : 'white',
+            '&:hover': { borderColor: isMaxReached ? '#f59e0b' : '#9ca3af' },
+          }),
+        }}
+      />
     </div>
   );
 }

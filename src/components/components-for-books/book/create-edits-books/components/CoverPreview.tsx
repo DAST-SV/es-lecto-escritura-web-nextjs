@@ -7,8 +7,11 @@ interface CoverPreviewProps {
   titulo: string;
   autor: string;
   descripcion: string;
+  // Ahora recibimos arrays de strings (nombres) en lugar de IDs
   categorias?: string[];
   generos?: string[];
+  etiquetas?: string[];
+  valores?: string[];
   nivel?: string | null;
 }
 
@@ -20,15 +23,12 @@ export const CoverPreview: React.FC<CoverPreviewProps> = ({
   descripcion,
   categorias = [],
   generos = [],
+  etiquetas = [],
+  valores = [],
   nivel
 }) => {
-  // Obtener URL de la imagen
-  const imageUrl = React.useMemo(() => {
-    if (portada) {
-      return URL.createObjectURL(portada);
-    }
-    return portadaUrl;
-  }, [portada, portadaUrl]);
+  // Usar directamente la URL que nos pasan (ya gestionada por el padre)
+  const imageUrl = portadaUrl;
 
   // Función para truncar texto
   const truncateText = (text: string, maxLength: number) => {
@@ -43,19 +43,12 @@ export const CoverPreview: React.FC<CoverPreviewProps> = ({
     return list.slice(0, maxItems);
   };
 
-  // Limpiar URL al desmontar
-  React.useEffect(() => {
-    return () => {
-      if (portada && imageUrl) {
-        URL.revokeObjectURL(imageUrl);
-      }
-    };
-  }, [portada, imageUrl]);
-
   const hasMoreAutor = autor && autor.split(' ').length > 3;
   const hasMoreDescripcion = descripcion && descripcion.length > 200;
   const hasMoreCategorias = categorias.length > 3;
   const hasMoreGeneros = generos.length > 3;
+  const hasMoreEtiquetas = etiquetas.length > 3;
+  const hasMoreValores = valores.length > 3;
 
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden border-2 border-gray-200 hover:shadow-xl transition-shadow">
@@ -127,7 +120,7 @@ export const CoverPreview: React.FC<CoverPreviewProps> = ({
               <div className="flex items-start gap-2">
                 <FileText size={16} className="text-gray-500 flex-shrink-0 mt-1" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-600 leading-relaxed">
+                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap break-words">
                     {truncateText(descripcion, 200)}
                     {hasMoreDescripcion && (
                       <span className="text-indigo-600 font-medium cursor-pointer ml-1" title={descripcion}>
@@ -152,7 +145,7 @@ export const CoverPreview: React.FC<CoverPreviewProps> = ({
                       key={idx}
                       className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-medium"
                     >
-                      {cat}
+                      {cat || 'Sin nombre'}
                     </span>
                   ))}
                   {hasMoreCategorias && (
@@ -183,6 +176,56 @@ export const CoverPreview: React.FC<CoverPreviewProps> = ({
                   {hasMoreGeneros && (
                     <span className="text-xs text-purple-600 font-medium px-2 py-0.5">
                       +{generos.length - 3} más
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Valores */}
+            {valores.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <Award size={14} className="text-green-600" />
+                  <span className="text-xs font-semibold text-gray-700">Valores:</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 ml-6">
+                  {truncateList(valores, 3).map((val, idx) => (
+                    <span 
+                      key={idx}
+                      className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium"
+                    >
+                      {val}
+                    </span>
+                  ))}
+                  {hasMoreValores && (
+                    <span className="text-xs text-green-600 font-medium px-2 py-0.5">
+                      +{valores.length - 3} más
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Etiquetas */}
+            {etiquetas.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <Tag size={14} className="text-pink-600" />
+                  <span className="text-xs font-semibold text-gray-700">Etiquetas:</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 ml-6">
+                  {truncateList(etiquetas, 3).map((tag, idx) => (
+                    <span 
+                      key={idx}
+                      className="text-xs bg-pink-100 text-pink-800 px-2 py-0.5 rounded-full font-medium"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                  {hasMoreEtiquetas && (
+                    <span className="text-xs text-pink-600 font-medium px-2 py-0.5">
+                      +{etiquetas.length - 3} más
                     </span>
                   )}
                 </div>

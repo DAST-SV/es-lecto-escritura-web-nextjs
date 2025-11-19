@@ -20,6 +20,13 @@ interface BookMetadataFormProps {
   onDescripcionChange: (value: string) => void;
   onTituloChange: (value: string) => void;
   onSave: () => void;
+  
+  // ⭐ NUEVO: Callbacks para obtener los nombres/labels
+  onCategoriasLabelsChange?: (labels: string[]) => void;
+  onGenerosLabelsChange?: (labels: string[]) => void;
+  onEtiquetasLabelsChange?: (labels: string[]) => void;
+  onValoresLabelsChange?: (labels: string[]) => void;
+  onNivelLabelChange?: (label: string | null) => void;
 }
 
 export const BookMetadataForm: React.FC<BookMetadataFormProps> = ({
@@ -39,7 +46,12 @@ export const BookMetadataForm: React.FC<BookMetadataFormProps> = ({
   onAutorChange,
   onDescripcionChange,
   onTituloChange,
-  onSave
+  onSave,
+  onCategoriasLabelsChange,
+  onGenerosLabelsChange,
+  onEtiquetasLabelsChange,
+  onValoresLabelsChange,
+  onNivelLabelChange
 }) => {
   return (
     <>
@@ -63,8 +75,6 @@ export const BookMetadataForm: React.FC<BookMetadataFormProps> = ({
           }}
         />
       </div>
-
-      
 
       {/* Campo de autor */}
       <div className="mb-6 p-4 bg-green-50 rounded-lg">
@@ -114,6 +124,7 @@ export const BookMetadataForm: React.FC<BookMetadataFormProps> = ({
           values={selectedCategorias}
           placeholder="Selecciona categorías..."
           onChange={onCategoriasChange}
+          onLabelsChange={onCategoriasLabelsChange}
           maxItems={1}
         />
       </div>
@@ -131,11 +142,12 @@ export const BookMetadataForm: React.FC<BookMetadataFormProps> = ({
           values={selectedGeneros}
           placeholder="Selecciona géneros..."
           onChange={onGenerosChange}
+          onLabelsChange={onGenerosLabelsChange}
           maxItems={2}
         />
       </div>
 
-      {/* Selector múltiple de géneros */}
+      {/* Selector múltiple de valores */}
       <div className="mb-6 p-4 bg-cyan-50 rounded-lg">
         <label className="block text-sm font-bold text-gray-700 mb-3">
           🎭 Valores (máximo 2):
@@ -146,8 +158,9 @@ export const BookMetadataForm: React.FC<BookMetadataFormProps> = ({
           labelField="nombre"
           filterField="nombre"
           values={selectedValores}
-          placeholder="Selecciona géneros..."
+          placeholder="Selecciona valores..."
           onChange={onValoresChange}
+          onLabelsChange={onValoresLabelsChange}
           maxItems={2}
         />
       </div>
@@ -165,6 +178,7 @@ export const BookMetadataForm: React.FC<BookMetadataFormProps> = ({
           values={selectedEtiquetas}
           placeholder="Selecciona etiquetas..."
           onChange={onEtiquetasChange}
+          onLabelsChange={onEtiquetasLabelsChange}
           maxItems={5}
         />
       </div>
@@ -182,6 +196,7 @@ export const BookMetadataForm: React.FC<BookMetadataFormProps> = ({
           value={selectedNivel}
           placeholder="Selecciona un nivel..."
           onChange={(value) => onNivelChange(value as number)}
+          onLabelChange={onNivelLabelChange}
         />
       </div>
     </>

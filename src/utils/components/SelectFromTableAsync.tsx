@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import Select from 'react-select';
+import React, { useEffect, useState } from 'react';
+import AsyncSelect from 'react-select/async';
 import { createClient } from '@/src/utils/supabase/client';
 
 interface SelectFromTableAsyncProps<T extends Record<string, any>> {
@@ -10,6 +10,7 @@ interface SelectFromTableAsyncProps<T extends Record<string, any>> {
   value: number | string | null;
   placeholder?: string;
   onChange: (value: number | string | null) => void;
+  onLabelChange?: (label: string | null) => void; // ⭐ NUEVO
 }
 
 export default function SelectFromTableAsync<T extends Record<string, any>>({
@@ -20,52 +21,50 @@ export default function SelectFromTableAsync<T extends Record<string, any>>({
   value,
   placeholder = 'Selecciona...',
   onChange,
+  onLabelChange, // ⭐ NUEVO
 }: SelectFromTableAsyncProps<T>) {
   const supabase = createClient();
-  const [options, setOptions] = useState<{ value: number | string; label: string }[]>([]);
   const [selectedOption, setSelectedOption] = useState<{ value: number | string; label: string } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // 🔥 FIX: Generar instanceId único y estable
-  const instanceId = useMemo(() => {
-    return `select-single-${table}-${String(valueField)}`;
-  }, [table, valueField]);
 
   useEffect(() => {
-    loadOptions();
-  }, [table]);
-
-  useEffect(() => {
-    if (value !== null && value !== undefined) {
+    if (value) {
       loadSelectedOption();
     } else {
       setSelectedOption(null);
+      if (onLabelChange) onLabelChange(null);
     }
-  }, [value, options]);
+  }, [value]);
 
-  const loadOptions = async () => {
+  // ⭐ NUEVO: Notificar cambios en el label
+  useEffect(() => {
+    if (onLabelChange && selectedOption) {
+      onLabelChange(selectedOption.label);
+    }
+  }, [selectedOption, onLabelChange]);
+
+  const loadOptions = async (inputValue: string) => {
     try {
-      setIsLoading(true);
-      const { data, error } = await supabase.from(table).select('*');
+      let query = supabase.from(table).select('*');
+      
+      if (inputValue) {
+        query = query.ilike(String(filterField), `%${inputValue}%`);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
-      const formattedOptions = (data || []).map((item: T) => ({
+      return (data || []).map((item: T) => ({
         value: item[valueField] as number | string,
         label: String(item[labelField]),
       }));
-
-      setOptions(formattedOptions);
     } catch (error) {
       console.error('Error cargando opciones:', error);
-    } finally {
-      setIsLoading(false);
+      return [];
     }
   };
 
   const loadSelectedOption = async () => {
-    if (!value) return;
-
     try {
       const { data, error } = await supabase
         .from(table)
@@ -76,10 +75,11 @@ export default function SelectFromTableAsync<T extends Record<string, any>>({
       if (error) throw error;
 
       if (data) {
-        setSelectedOption({
+        const option = {
           value: data[valueField] as number | string,
           label: String(data[labelField]),
-        });
+        };
+        setSelectedOption(option);
       }
     } catch (error) {
       console.error('Error cargando valor seleccionado:', error);
@@ -92,31 +92,25 @@ export default function SelectFromTableAsync<T extends Record<string, any>>({
   };
 
   return (
-    <div style={{ padding: '12px' }}>
-      <Select
-        instanceId={instanceId} // 🔥 FIX: ID estable
-        value={selectedOption}
-        onChange={handleChange}
-        options={options}
-        placeholder={placeholder}
-        isClearable
-        isLoading={isLoading}
-        noOptionsMessage={() => 'No hay opciones'}
-        loadingMessage={() => 'Cargando...'}
-        styles={{
-          control: (base) => ({
-            ...base,
-            borderRadius: '8px',
-            borderColor: '#d1d5db',
-            minHeight: '42px',
-            '&:hover': { borderColor: '#9ca3af' },
-          }),
-          placeholder: (base) => ({
-            ...base,
-            color: '#9ca3af',
-          }),
-        }}
-      />
-    </div>
+    <AsyncSelect
+      instanceId={`select-single-${table}-${String(valueField)}`}
+      cacheOptions
+      defaultOptions
+      loadOptions={loadOptions}
+      value={selectedOption}
+      onChange={handleChange}
+      placeholder={placeholder}
+      isClearable
+      noOptionsMessage={() => 'No hay opciones'}
+      loadingMessage={() => 'Cargando...'}
+      styles={{
+        control: (base) => ({
+          ...base,
+          borderRadius: '8px',
+          borderColor: '#d1d5db',
+          '&:hover': { borderColor: '#9ca3af' },
+        }),
+      }}
+    />
   );
 }
