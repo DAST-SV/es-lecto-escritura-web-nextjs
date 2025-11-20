@@ -35,8 +35,8 @@ interface LibroUI {
 const transformPageData = (page: any, index: number): page => ({
   id: `page-${index + 1}`,
   layout: page.layout || 'CoverLayout',
-  title: page.title || "Mi Libro Interactivo",
-  text: page.text || "Una historia maravillosa comienza aquí...",
+  title: page.title || "",
+  text: page.text || "",
   image: page.image || null,
   background: page.background || 'Gradiente Azul',
 });

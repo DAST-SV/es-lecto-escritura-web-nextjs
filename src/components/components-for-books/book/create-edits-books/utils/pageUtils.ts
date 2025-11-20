@@ -7,19 +7,19 @@ export const createDefaultPages = (title?: string): page[] => [
   {
     id: 'page-1',
     layout: 'CoverLayout',
-    title: title || "Mi Libro Interactivo",
-    text: "Una historia maravillosa comienza aquí...",
+    title: title || "",
+    text: "",
     image: null,
     background: null,
   },
-  {
-    id: 'page-2',
-    layout: 'TextLeftImageRightLayout',
-    title: "Capítulo 1",
-    text: "Érase una vez en un reino muy lejano, donde las historias cobran vida...",
-    image: null,
-    background: null,
-  },
+  // {
+  //   id: 'page-2',
+  //   layout: 'TextLeftImageRightLayout',
+  //   title: "Capítulo 1",
+  //   text: "Érase una vez en un reino muy lejano, donde las historias cobran vida...",
+  //   image: null,
+  //   background: null,
+  // },
 ];
 
 /**
