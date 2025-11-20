@@ -100,7 +100,8 @@ const MyBooks: React.FC = () => {
             selectedEtiquetas: libro.etiquetas?.map((e: any) => e.id_etiqueta) || [],
             selectedValores: libro.valores?.map((v: any) => v.id_valor) || [],
             selectedNivel: libro.nivel || null,
-            autor: libro.autor || "",
+            autores: libro.autores || "",
+            personajes: libro.personajes || "",
             descripcion: libro.descripcion || "",
             titulo: libro.titulo || selectedBook.caption,
             portada: libro.portada || null

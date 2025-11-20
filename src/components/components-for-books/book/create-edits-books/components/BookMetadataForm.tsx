@@ -1,6 +1,8 @@
 import React from 'react';
 import MultiSelectFromTable from '@/src/utils/components/MultiSelectFromTable';
 import SelectFromTableAsync from '@/src/utils/components/SelectFromTableAsync';
+import MultiAuthorInput from '@/src/components/components-for-books/book/create-edits-books/components/MultiAuthorInput'
+import MultiPersonajeInput from '@/src/components/components-for-books/book/create-edits-books/components/MultiPersonajeInput'
 
 interface BookMetadataFormProps {
   selectedCategorias: (number | string)[];
@@ -8,7 +10,8 @@ interface BookMetadataFormProps {
   selectedEtiquetas: (number | string)[];
   selectedValores: (number | string)[];
   selectedNivel: number | null;
-  autor: string;
+  autores: string[];
+  personajes: string[];
   descripcion: string;
   titulo: string;
   onCategoriasChange: (values: (number | string)[]) => void;
@@ -16,11 +19,12 @@ interface BookMetadataFormProps {
   onEtiquetasChange: (values: (number | string)[]) => void;
   onValoresChange: (values: (number | string)[]) => void;
   onNivelChange: (value: number | null) => void;
-  onAutorChange: (value: string) => void;
+  onAutoresChange: (value: string[]) => void;
+  onPersonajesChange: (value: string[]) => void;
   onDescripcionChange: (value: string) => void;
   onTituloChange: (value: string) => void;
   onSave: () => void;
-  
+
   // ⭐ NUEVO: Callbacks para obtener los nombres/labels
   onCategoriasLabelsChange?: (labels: string[]) => void;
   onGenerosLabelsChange?: (labels: string[]) => void;
@@ -35,7 +39,8 @@ export const BookMetadataForm: React.FC<BookMetadataFormProps> = ({
   selectedEtiquetas,
   selectedValores,
   selectedNivel,
-  autor,
+  autores,
+  personajes,
   descripcion,
   titulo,
   onCategoriasChange,
@@ -43,7 +48,8 @@ export const BookMetadataForm: React.FC<BookMetadataFormProps> = ({
   onEtiquetasChange,
   onValoresChange,
   onNivelChange,
-  onAutorChange,
+  onAutoresChange,
+  onPersonajesChange,
   onDescripcionChange,
   onTituloChange,
   onSave,
@@ -79,24 +85,25 @@ export const BookMetadataForm: React.FC<BookMetadataFormProps> = ({
       {/* Campo de autor */}
       <div className="mb-6 p-4 bg-green-50 rounded-lg">
         <label className="block text-sm font-bold text-gray-700 mb-3">
-          👤 Autor del libro:
+          👤 Autores del libro:
         </label>
-        <input
-          type="text"
-          value={autor}
-          onChange={(e) => onAutorChange(e.target.value)}
-          placeholder="Nombre del autor..."
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-500"
-          style={{
-            backgroundColor: "#fff3cd",
-            borderColor: "#ffcc80",
-            borderRadius: "12px",
-            fontSize: "16px",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.15)"
-          }}
+        <MultiAuthorInput
+          authors={autores}
+          onChange={onAutoresChange}
+          maxAuthors={5}
+          placeholder="Escribe el nombre del autor y presiona Enter..."
         />
       </div>
-
+      <div className="mb-6 p-4 bg-purple-50 rounded-lg">
+        <label className="block text-sm font-bold text-gray-700 mb-3">
+          🎭 Personajes del libro:
+        </label>
+        <MultiPersonajeInput
+          personajes={personajes}
+          onChange={onPersonajesChange}
+          maxPersonajes={10}
+        />
+      </div>
       {/* Campo de descripción */}
       <div className="mb-6 p-4 bg-pink-50 rounded-lg">
         <label className="block text-sm font-bold text-gray-700 mb-3">

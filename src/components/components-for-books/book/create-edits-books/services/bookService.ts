@@ -26,13 +26,13 @@ export interface BookMetadata {
   selectedEtiquetas: (number | string)[];
   selectedValores: (number | string)[];
   selectedNivel: number | null;
-  autor: string;
+  autores: string[];
+  personajes: string[]; // 🔥 NUEVO
   descripcion: string;
   titulo: string;
-  portada: File | null;         // 👈 Nuevo archivo a subir
-  portadaUrl?: string | null;   // 👈 URL existente de la BD
+  portada: File | null;
+  portadaUrl?: string | null;
 }
-
 /**
  * Convierte una página del editor a formato de persistencia
  */
@@ -80,7 +80,7 @@ function validateBookMetadata(metadata: BookMetadata): string | null {
   }
 
   // Autor obligatorio
-  if (!metadata.autor || metadata.autor.trim() === "") {
+  if (metadata.autores.length === 0) {
     return "Por favor ingresa un autor";
   }
 
@@ -116,7 +116,8 @@ async function createNewBook(
       genero: metadata.selectedGeneros,
       etiquetas: metadata.selectedEtiquetas,
       valores: metadata.selectedValores,
-      autor: metadata.autor,
+      autores: metadata.autores,
+      personajes : metadata.personajes,
       nivel: metadata.selectedNivel,
       descripcion: metadata.descripcion.trim(),
     }),
@@ -266,7 +267,8 @@ async function updateExistingBook(
       genero: metadata.selectedGeneros,
       etiquetas: metadata.selectedEtiquetas,
       valores: metadata.selectedValores,
-      autor: metadata.autor,
+      autores: metadata.autores,
+      personajes: metadata.personajes,
       descripcion: metadata.descripcion.trim(),
       titulo: metadata.titulo.trim(),
       nivel: metadata.selectedNivel,

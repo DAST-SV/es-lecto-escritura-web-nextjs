@@ -28,7 +28,7 @@ interface EditorSidebarProps {
   selectedEtiquetas: (number | string)[];
   selectedValores: (number | string)[];
   selectedNivel: number | null;
-  autor: string;
+  autores : string[];
   descripcion: string;
   titulo: string;
   portada: File | null;
@@ -40,7 +40,7 @@ interface EditorSidebarProps {
   onEtiquetasChange: (values: (number | string)[]) => void;
   onValoresChange: (values: (number | string)[]) => void;
   onNivelChange: (value: number | null) => void;
-  onAutorChange: (value: string) => void;
+  onAutoresChange: (value: (string[])) => void;
   onDescripcionChange: (value: string) => void;
   onTituloChange: (value: string) => void;
   onPortadaChange: (value: File | null) => void;
@@ -62,7 +62,7 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
   selectedEtiquetas,
   selectedValores,
   selectedNivel,
-  autor,
+  autores,
   descripcion,
   titulo,
   portada,
@@ -72,7 +72,7 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
   onEtiquetasChange,
   onValoresChange,
   onNivelChange,
-  onAutorChange,
+  onAutoresChange,
   onDescripcionChange,
   onTituloChange,
   onPortadaChange,

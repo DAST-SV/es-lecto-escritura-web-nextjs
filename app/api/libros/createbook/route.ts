@@ -1,24 +1,37 @@
-// src/app/api/libros/route.ts
+// src/app/api/libros/createbook/route.ts
 import { NextResponse } from "next/server";
-import { crearLibroCompleto } from "@/src/DAL/Libros/librosDAL"; // tu DAL
-import { noSSR } from "next/dynamic";
+import { crearLibroCompleto } from "@/src/DAL/Libros/librosDAL";
 
 export async function POST(req: Request) {
   try {
     // 🔹 Parsear JSON del request
-    const { userId, title,categoria,genero,descripcion,portada,etiquetas,autor,nivel,valores } = (await req.json()) as {
+    const {
+      userId,
+      title,
+      categoria,
+      genero,
+      descripcion,
+      portada,
+      etiquetas,
+      autores, // 🔥 Ahora es array de strings
+      nivel,
+      valores,
+      personajes, // 🔥 NUEVO
+    } = (await req.json()) as {
       userId: string;
       title: string;
-      nivel : number;
-      categoria? : number[];
-      genero? : number[];
-      descripcion? : string;
-      autor : string;
-      etiquetas? : number[];
-      valores? : number[];
-      portada? : string;
+      nivel: number;
+      categoria?: number[];
+      genero?: number[];
+      descripcion?: string;
+      autores: string[]; // 🔥 CAMBIO: array en lugar de string
+      etiquetas?: number[];
+      valores?: number[];
+      portada?: string;
+      personajes?: string[]; // 🔥 NUEVO
     };
 
+    // 🔹 Validaciones
     if (!userId || !title) {
       return NextResponse.json(
         { ok: false, error: "Faltan userId o title" },
@@ -26,8 +39,27 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔹 Llamar a la DAL para crear libro (con background)
-    const libroId = await crearLibroCompleto(userId, title,nivel,autor,categoria,genero,descripcion,etiquetas,portada,valores);
+    if (!autores || !Array.isArray(autores) || autores.length === 0) {
+      return NextResponse.json(
+        { ok: false, error: "Debe proporcionar al menos un autor" },
+        { status: 400 }
+      );
+    }
+
+    // 🔹 Llamar a la DAL para crear libro con múltiples autores
+    const libroId = await crearLibroCompleto(
+      userId,
+      title,
+      nivel,
+      autores, // 🔥 Pasar array de autores
+      personajes,
+      categoria,
+      genero,
+      descripcion,
+      etiquetas,
+      portada,
+      valores
+    );
 
     return NextResponse.json({ ok: true, libroId });
   } catch (error: any) {

@@ -35,7 +35,8 @@ interface BookProps {
     selectedEtiquetas?: (number | string)[];
     selectedValores?: (number | string)[];
     selectedNivel?: number | null;
-    autor?: string;
+     autores? : string[];
+     personajes? : string[];
     descripcion?: string;
     titulo?: string;
     portada?: File | string | null;
@@ -62,10 +63,15 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
   const [selectedValores, setSelectedValores] = useState<(number | string)[]>(
     initialMetadata?.selectedValores || []
   );
+
   const [selectedNivel, setSelectedNivel] = useState<number | null>(
     initialMetadata?.selectedNivel || null
   );
-  const [autor, setAutor] = useState<string>(initialMetadata?.autor || "");
+
+  const [autores, setAutores] = useState<string[]>(initialMetadata?.autores || []);
+
+  const [personajes, setPersonajes] = useState<string[]>(initialMetadata?.personajes || []);
+
   const [descripcion, setDescripcion] = useState<string>(initialMetadata?.descripcion || "");
   const [titulo, setTitulo] = useState<string>(initialMetadata?.titulo || "");
   
@@ -116,7 +122,8 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
       selectedEtiquetas,
       selectedValores,
       selectedNivel,
-      autor,
+      autores,
+      personajes,
       descripcion,
       titulo,
       portada,
@@ -139,7 +146,7 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
     selectedEtiquetas, 
     selectedValores,
     selectedNivel,
-    autor, 
+    autores, 
     descripcion, 
     titulo, 
     portada,
@@ -327,9 +334,10 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
                     portada={portada}
                     portadaUrl={portada ? portadaUrlRef.current : portadaUrl}
                     titulo={titulo || 'Sin título'}
-                    autor={autor || 'Autor desconocido'}
+                    autores={autores || 'Autor desconocido'}
                     descripcion={descripcion || 'Sin descripción'}
                     categorias={categoriasLabels}
+                    personajes={personajes}
                     generos={generosLabels}
                     etiquetas={etiquetasLabels}
                     valores={valoresLabels}
@@ -426,7 +434,8 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
                         selectedEtiquetas={selectedEtiquetas}
                         selectedValores={selectedValores}
                         selectedNivel={selectedNivel}
-                        autor={autor}
+                        autores={autores}
+                        personajes={personajes}
                         descripcion={descripcion}
                         titulo={titulo}
                         onCategoriasChange={setSelectedCategorias}
@@ -434,7 +443,8 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
                         onEtiquetasChange={setSelectedEtiquetas}
                         onValoresChange={setSelectedValores}
                         onNivelChange={setSelectedNivel}
-                        onAutorChange={setAutor}
+                        onAutoresChange={setAutores}
+                        onPersonajesChange={setPersonajes}
                         onDescripcionChange={setDescripcion}
                         onTituloChange={setTitulo}
                         onSave={async () => {}}
@@ -461,7 +471,7 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
                 selectedEtiquetas={selectedEtiquetas}
                 selectedValores={selectedValores}
                 selectedNivel={selectedNivel}
-                autor={autor}
+                autores={autores}
                 descripcion={descripcion}
                 titulo={titulo}
                 portada={portada}
@@ -471,7 +481,7 @@ export function Book({ initialPages, title, IdLibro, initialMetadata }: BookProp
                 onEtiquetasChange={setSelectedEtiquetas}
                 onValoresChange={setSelectedValores}
                 onNivelChange={setSelectedNivel}
-                onAutorChange={setAutor}
+                onAutoresChange={setAutores}
                 onDescripcionChange={setDescripcion}
                 onTituloChange={setTitulo}
                 onPortadaChange={handlePortadaChange}

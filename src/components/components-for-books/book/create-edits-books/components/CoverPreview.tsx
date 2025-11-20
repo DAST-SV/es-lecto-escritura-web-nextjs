@@ -5,7 +5,8 @@ interface CoverPreviewProps {
   portada: File | null;
   portadaUrl?: string | null;
   titulo: string;
-  autor: string;
+  autores: string[];
+  personajes: string[];
   descripcion: string;
   // Ahora recibimos arrays de strings (nombres) en lugar de IDs
   categorias?: string[];
@@ -19,7 +20,8 @@ export const CoverPreview: React.FC<CoverPreviewProps> = ({
   portada,
   portadaUrl,
   titulo,
-  autor,
+  autores,
+  personajes,
   descripcion,
   categorias = [],
   generos = [],
@@ -43,7 +45,7 @@ export const CoverPreview: React.FC<CoverPreviewProps> = ({
     return list.slice(0, maxItems);
   };
 
-  const hasMoreAutor = autor && autor.split(' ').length > 3;
+  const hasMoreAutor = autores.length > 0;
   const hasMoreDescripcion = descripcion && descripcion.length > 200;
   const hasMoreCategorias = categorias.length > 3;
   const hasMoreGeneros = generos.length > 3;
@@ -67,8 +69,8 @@ export const CoverPreview: React.FC<CoverPreviewProps> = ({
           <div className="flex flex-col items-center">
             <div className="w-full max-w-[280px] aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg shadow-md overflow-hidden border-2 border-gray-300">
               {imageUrl ? (
-                <img 
-                  src={imageUrl} 
+                <img
+                  src={imageUrl}
                   alt="Portada del libro"
                   className="w-full h-full object-cover"
                 />
@@ -91,17 +93,20 @@ export const CoverPreview: React.FC<CoverPreviewProps> = ({
             </div>
 
             {/* Autor */}
-            {autor && (
+            {autores?.length > 0 && (
               <div className="flex items-start gap-2">
                 <User size={16} className="text-indigo-600 flex-shrink-0 mt-1" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-700">
-                    {truncateText(autor, 50)}
-                    {hasMoreAutor && (
-                      <span className="text-indigo-600 ml-1" title={autor}>...</span>
-                    )}
-                  </p>
-                </div>
+
+                {autores.map((autor, index) => (
+                  <div key={index} className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-700">
+                      {truncateText(autor, 50)}
+                      {hasMoreAutor && (
+                        <span className="text-indigo-600 ml-1" title={autor}>...</span>
+                      )}
+                    </p>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -131,6 +136,33 @@ export const CoverPreview: React.FC<CoverPreviewProps> = ({
                 </div>
               </div>
             )}
+            
+            {/* Personajes */}
+            {personajes.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <User size={14} className="text-orange-600" />
+                  <span className="text-xs font-semibold text-gray-700">Personajes:</span>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 ml-6">
+                  {truncateList(personajes, 3).map((per, idx) => (
+                    <span
+                      key={idx}
+                      className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full font-medium"
+                    >
+                      {per}
+                    </span>
+                  ))}
+
+                  {personajes.length > 3 && (
+                    <span className="text-xs text-orange-600 font-medium px-2 py-0.5">
+                      +{personajes.length - 3} más
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Categorías */}
             {categorias.length > 0 && (
@@ -141,7 +173,7 @@ export const CoverPreview: React.FC<CoverPreviewProps> = ({
                 </div>
                 <div className="flex flex-wrap gap-1.5 ml-6">
                   {truncateList(categorias, 3).map((cat, idx) => (
-                    <span 
+                    <span
                       key={idx}
                       className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-medium"
                     >
@@ -166,7 +198,7 @@ export const CoverPreview: React.FC<CoverPreviewProps> = ({
                 </div>
                 <div className="flex flex-wrap gap-1.5 ml-6">
                   {truncateList(generos, 3).map((gen, idx) => (
-                    <span 
+                    <span
                       key={idx}
                       className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full font-medium"
                     >
@@ -191,7 +223,7 @@ export const CoverPreview: React.FC<CoverPreviewProps> = ({
                 </div>
                 <div className="flex flex-wrap gap-1.5 ml-6">
                   {truncateList(valores, 3).map((val, idx) => (
-                    <span 
+                    <span
                       key={idx}
                       className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium"
                     >
@@ -216,7 +248,7 @@ export const CoverPreview: React.FC<CoverPreviewProps> = ({
                 </div>
                 <div className="flex flex-wrap gap-1.5 ml-6">
                   {truncateList(etiquetas, 3).map((tag, idx) => (
-                    <span 
+                    <span
                       key={idx}
                       className="text-xs bg-pink-100 text-pink-800 px-2 py-0.5 rounded-full font-medium"
                     >

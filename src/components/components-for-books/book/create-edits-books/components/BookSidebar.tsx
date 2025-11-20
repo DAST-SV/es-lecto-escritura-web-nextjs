@@ -48,7 +48,7 @@ interface BookSidebarProps {
   selectedValores: (number | string)[];
   selectedEtiquetas: (number | string)[];
   selectedNivel: number | null;
-  autor: string;
+  autores: string[];
   descripcion: string;
   titulo: string;
   portada: File | null;
@@ -58,7 +58,7 @@ interface BookSidebarProps {
   onEtiquetasChange: (values: (number | string)[]) => void;
   onValoresChange: (values: (number | string)[]) => void;
   onNivelChange: (value: number | null) => void;
-  onAutorChange: (value: string) => void;
+  onAutoresChange: (value: string[]) => void;
   onDescripcionChange: (value: string) => void;
   onTituloChange: (value: string) => void;
   onPortadaChange: (value: File | null) => void;
@@ -85,7 +85,7 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
   selectedValores,
   selectedEtiquetas,
   selectedNivel,
-  autor,
+  autores,
   descripcion,
   titulo,
   portada,
@@ -95,7 +95,7 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
   onValoresChange,
   onEtiquetasChange,
   onNivelChange,
-  onAutorChange,
+  onAutoresChange,
   onDescripcionChange,
   onTituloChange,
   onPortadaChange,
@@ -730,7 +730,7 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
                 selectedEtiquetas={selectedEtiquetas}
                 selectedValores={selectedValores}
                 selectedNivel={selectedNivel}
-                autor={autor}
+                autores={autores}
                 descripcion={descripcion}
                 titulo={titulo}
                 onCategoriasChange={onCategoriasChange}
@@ -738,7 +738,7 @@ export const BookSidebar: React.FC<BookSidebarProps> = ({
                 onEtiquetasChange={onEtiquetasChange}
                 onValoresChange={onValoresChange}
                 onNivelChange={onNivelChange}
-                onAutorChange={onAutorChange}
+                onAutoresChange={onAutoresChange}
                 onDescripcionChange={onDescripcionChange}
                 onTituloChange={onTituloChange}
                 onSave={handleSave}
