@@ -1,10 +1,7 @@
-'use client';
-
 import React, { useState, useRef } from 'react';
 import { EditorContent } from '@tiptap/react';
 import { 
-  BookOpen, Eye, FileText, Save, ChevronLeft, ChevronRight,
-  Image as ImageIcon, Palette, Info, Settings
+  Image as ImageIcon, Palette, Settings, ChevronDown
 } from 'lucide-react';
 import { WordToolbar } from './WordToolbar';
 import { useWordEditor } from '../hooks/useWordEditor';
@@ -14,16 +11,15 @@ interface WordEditorProps {
   bookTitle?: string;
   onSave?: (pages: any[]) => Promise<void>;
   onPreview?: () => void;
+  onPageChange?: (pageIndex: number) => void;
+  hideHeader?: boolean;
 }
 
 export const WordEditor: React.FC<WordEditorProps> = ({
   initialPages = [],
-  bookTitle = 'Mi Libro',
-  onSave,
-  onPreview
+  onPageChange,
+  hideHeader = false
 }) => {
-  const [showStats, setShowStats] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [showImagePanel, setShowImagePanel] = useState(false);
   const [showBackgroundPanel, setShowBackgroundPanel] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -34,37 +30,23 @@ export const WordEditor: React.FC<WordEditorProps> = ({
     pages,
     currentPage,
     totalPages,
-    isProcessing,
     goToPage,
-    nextPage,
-    prevPage,
     addPage,
     deletePage,
     addImage,
     removeImage,
     setBackground,
-    getPageStats,
     exportToFlipBook
   } = useWordEditor({
-    initialPages,
-    maxCharsPerPage: 650
+    initialPages
   });
 
-  const stats = getPageStats(currentPage);
-
-  const handleSave = async () => {
-    if (!onSave) return;
-    
-    setIsSaving(true);
-    try {
-      const flipbookPages = exportToFlipBook();
-      await onSave(flipbookPages);
-    } catch (error) {
-      console.error('Error al guardar:', error);
-    } finally {
-      setIsSaving(false);
+  // Notificar cambios de página al padre
+  React.useEffect(() => {
+    if (onPageChange) {
+      onPageChange(currentPage);
     }
-  };
+  }, [currentPage, onPageChange]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -92,63 +74,20 @@ export const WordEditor: React.FC<WordEditorProps> = ({
 
   const currentPageData = pages[currentPage];
 
-  return (
-    <div className="h-screen flex flex-col bg-gray-50">
-      
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-3 shadow-md flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <BookOpen size={24} />
-          <div>
-            <h1 className="text-lg font-bold">{bookTitle}</h1>
-            <p className="text-xs opacity-90">Editor tipo Word</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {/* Navegación de páginas */}
-          <div className="flex items-center gap-2 bg-white/20 rounded-lg px-3 py-2">
-            <button
-              onClick={prevPage}
-              disabled={currentPage === 0}
-              className="p-1 hover:bg-white/20 rounded disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <span className="text-sm font-medium px-2">
-              Página {currentPage + 1} de {totalPages}
-            </span>
-            <button
-              onClick={nextPage}
-              disabled={currentPage === totalPages - 1}
-              className="p-1 hover:bg-white/20 rounded disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-
-          {/* Botones de acción */}
-          <button
-            onClick={onPreview}
-            className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
-          >
-            <Eye size={18} />
-            <span className="text-sm font-medium">Vista Previa</span>
-          </button>
-
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition-colors disabled:opacity-50"
-          >
-            <Save size={18} />
-            <span className="text-sm font-medium">
-              {isSaving ? 'Guardando...' : 'Guardar'}
-            </span>
-          </button>
+  if (!editor) {
+    return (
+      <div className="h-full flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando editor...</p>
         </div>
       </div>
+    );
+  }
 
+  return (
+    <div className="h-full flex flex-col bg-gray-50">
+      
       {/* Toolbar de formato */}
       <WordToolbar 
         editor={editor} 
@@ -159,71 +98,68 @@ export const WordEditor: React.FC<WordEditorProps> = ({
       <div className="flex-1 flex overflow-hidden">
         
         {/* Panel lateral izquierdo: Páginas */}
-        <div className="w-48 bg-white border-r border-gray-200 overflow-y-auto">
-          <div className="p-3 border-b border-gray-200">
+        <div className="w-40 bg-white border-r border-gray-200 overflow-y-auto">
+          <div className="p-2 border-b border-gray-200">
             <button
               onClick={addPage}
-              className="w-full py-2 px-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm font-medium"
+              className="w-full py-1.5 px-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs font-medium"
             >
-              + Nueva Página
+              + Página
             </button>
           </div>
 
-          <div className="p-2 space-y-2">
+          <div className="p-1.5 space-y-1.5">
             {pages.map((page, index) => (
               <button
                 key={page.id}
                 onClick={() => goToPage(index)}
-                className={`w-full p-3 rounded-lg text-left transition-colors ${
+                className={`w-full p-2 rounded text-left transition-colors ${
                   index === currentPage
                     ? 'bg-blue-100 border-2 border-blue-500'
                     : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className={`text-sm font-bold ${index === currentPage ? 'text-blue-700' : 'text-gray-700'}`}>
-                    Página {index + 1}
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className={`text-xs font-bold ${index === currentPage ? 'text-blue-700' : 'text-gray-700'}`}>
+                    Pág. {index + 1}
                   </span>
-                  {page.image && <ImageIcon size={12} className="text-green-600" />}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {getPageStats(index).chars} caracteres
+                  {page.image && <ImageIcon size={10} className="text-green-600" />}
                 </div>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Área del editor - simulando hoja de papel */}
-        <div className="flex-1 overflow-auto bg-gray-100 p-8">
+        {/* Área del editor */}
+        <div className="flex-1 overflow-auto bg-gray-100 p-6">
           <div className="max-w-4xl mx-auto">
             
-            {/* Imagen de la página (si existe) */}
+            {/* Imagen de la página */}
             {currentPageData?.image && (
-              <div className="bg-white mb-4 rounded-lg shadow-lg overflow-hidden">
+              <div className="bg-white mb-3 rounded-lg shadow-lg overflow-hidden">
                 <div className="relative">
                   <img
                     src={currentPageData.image}
                     alt="Imagen de página"
-                    className="w-full h-auto max-h-96 object-contain"
+                    className="w-full h-auto max-h-64 object-contain"
                   />
                   <button
                     onClick={() => removeImage(currentPage)}
-                    className="absolute top-2 right-2 px-3 py-1 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600"
+                    className="absolute top-2 right-2 px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600"
                   >
-                    Quitar imagen
+                    Quitar
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Hoja de papel con el editor */}
+            {/* Hoja de papel */}
             <div 
               className="bg-white shadow-2xl rounded-lg overflow-hidden"
               style={{
-                minHeight: '29.7cm', // A4
+                minHeight: '29.7cm',
                 width: '21cm',
-                padding: '2.54cm', // Márgenes de 1 pulgada
+                padding: '2.54cm',
                 ...(currentPageData?.background && {
                   backgroundImage: `url(${currentPageData.background})`,
                   backgroundSize: 'cover',
@@ -240,59 +176,23 @@ export const WordEditor: React.FC<WordEditorProps> = ({
         </div>
 
         {/* Panel lateral derecho: Herramientas */}
-        <div className="w-64 bg-white border-l border-gray-200 overflow-y-auto">
+        <div className="w-52 bg-white border-l border-gray-200 overflow-y-auto">
           
-          {/* Estadísticas */}
-          <div className="p-4 border-b border-gray-200">
-            <button
-              onClick={() => setShowStats(!showStats)}
-              className="flex items-center justify-between w-full mb-3"
-            >
-              <div className="flex items-center gap-2">
-                <Info size={18} className="text-blue-600" />
-                <span className="font-semibold text-gray-700">Estadísticas</span>
-              </div>
-              <ChevronRight size={16} className={`transform transition-transform ${showStats ? 'rotate-90' : ''}`} />
-            </button>
-            
-            {showStats && (
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Caracteres:</span>
-                  <span className="font-medium">{stats.chars}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Palabras:</span>
-                  <span className="font-medium">{stats.words}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Páginas:</span>
-                  <span className="font-medium">{totalPages}</span>
-                </div>
-                {isProcessing && (
-                  <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
-                    ⚙️ Procesando paginación...
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Imagen de página */}
-          <div className="p-4 border-b border-gray-200">
+          {/* Imagen */}
+          <div className="p-3 border-b border-gray-200">
             <button
               onClick={() => setShowImagePanel(!showImagePanel)}
-              className="flex items-center justify-between w-full mb-3"
+              className="flex items-center justify-between w-full mb-2"
             >
-              <div className="flex items-center gap-2">
-                <ImageIcon size={18} className="text-green-600" />
-                <span className="font-semibold text-gray-700">Imagen</span>
+              <div className="flex items-center gap-1.5">
+                <ImageIcon size={14} className="text-green-600" />
+                <span className="font-semibold text-xs text-gray-700">Imagen</span>
               </div>
-              <ChevronRight size={16} className={`transform transition-transform ${showImagePanel ? 'rotate-90' : ''}`} />
+              <ChevronDown size={12} className={`transform transition-transform ${showImagePanel ? 'rotate-180' : ''}`} />
             </button>
 
             {showImagePanel && (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -302,40 +202,37 @@ export const WordEditor: React.FC<WordEditorProps> = ({
                 />
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full py-2 px-3 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm"
+                  className="w-full py-1.5 px-2 bg-green-500 text-white rounded hover:bg-green-600 text-xs"
                 >
-                  {currentPageData?.image ? 'Cambiar imagen' : 'Agregar imagen'}
+                  {currentPageData?.image ? 'Cambiar' : 'Agregar'}
                 </button>
                 {currentPageData?.image && (
                   <button
                     onClick={() => removeImage(currentPage)}
-                    className="w-full py-2 px-3 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm"
+                    className="w-full py-1.5 px-2 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
                   >
-                    Quitar imagen
+                    Quitar
                   </button>
                 )}
-                <p className="text-xs text-gray-500">
-                  La imagen aparecerá sobre el texto de la página
-                </p>
               </div>
             )}
           </div>
 
-          {/* Fondo de página */}
-          <div className="p-4 border-b border-gray-200">
+          {/* Fondo */}
+          <div className="p-3 border-b border-gray-200">
             <button
               onClick={() => setShowBackgroundPanel(!showBackgroundPanel)}
-              className="flex items-center justify-between w-full mb-3"
+              className="flex items-center justify-between w-full mb-2"
             >
-              <div className="flex items-center gap-2">
-                <Palette size={18} className="text-purple-600" />
-                <span className="font-semibold text-gray-700">Fondo</span>
+              <div className="flex items-center gap-1.5">
+                <Palette size={14} className="text-purple-600" />
+                <span className="font-semibold text-xs text-gray-700">Fondo</span>
               </div>
-              <ChevronRight size={16} className={`transform transition-transform ${showBackgroundPanel ? 'rotate-90' : ''}`} />
+              <ChevronDown size={12} className={`transform transition-transform ${showBackgroundPanel ? 'rotate-180' : ''}`} />
             </button>
 
             {showBackgroundPanel && (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <input
                   ref={backgroundInputRef}
                   type="file"
@@ -345,30 +242,27 @@ export const WordEditor: React.FC<WordEditorProps> = ({
                 />
                 <button
                   onClick={() => backgroundInputRef.current?.click()}
-                  className="w-full py-2 px-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 text-sm"
+                  className="w-full py-1.5 px-2 bg-purple-500 text-white rounded hover:bg-purple-600 text-xs"
                 >
-                  {currentPageData?.background ? 'Cambiar fondo' : 'Agregar fondo'}
+                  {currentPageData?.background ? 'Cambiar' : 'Agregar'}
                 </button>
                 {currentPageData?.background && (
                   <button
                     onClick={() => setBackground(currentPage, '')}
-                    className="w-full py-2 px-3 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm"
+                    className="w-full py-1.5 px-2 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
                   >
-                    Quitar fondo
+                    Quitar
                   </button>
                 )}
-                <p className="text-xs text-gray-500">
-                  El fondo aparece detrás del texto
-                </p>
               </div>
             )}
           </div>
 
-          {/* Opciones de página */}
-          <div className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Settings size={18} className="text-gray-600" />
-              <span className="font-semibold text-gray-700">Opciones</span>
+          {/* Opciones */}
+          <div className="p-3">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Settings size={14} className="text-gray-600" />
+              <span className="font-semibold text-xs text-gray-700">Opciones</span>
             </div>
             
             <button
@@ -378,7 +272,7 @@ export const WordEditor: React.FC<WordEditorProps> = ({
                 }
               }}
               disabled={totalPages === 1}
-              className="w-full py-2 px-3 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              className="w-full py-1.5 px-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
             >
               Eliminar página
             </button>
@@ -386,7 +280,7 @@ export const WordEditor: React.FC<WordEditorProps> = ({
         </div>
       </div>
 
-      {/* Estilos personalizados */}
+      {/* Estilos */}
       <style jsx global>{`
         .word-editor-wrapper {
           font-family: 'Times New Roman', serif;

@@ -1,213 +1,359 @@
-'use client';
-
 import React, { useState, useRef } from 'react';
-import { BookOpen, FileEdit, Eye, Save } from 'lucide-react';
-import WordEditor from './WordEditor';
-import FlipBook from '@/src/components/components-for-books/book/utils/FlipBook';
-import UnifiedLayout from '@/src/components/nav/UnifiedLayout';
-import { Toaster } from 'react-hot-toast';
-import toast from 'react-hot-toast';
+import { EditorContent } from '@tiptap/react';
+import { 
+  Image as ImageIcon, Palette, Settings, ChevronDown
+} from 'lucide-react';
+import { WordToolbar } from './WordToolbar';
+import { useWordEditor } from '../hooks/useWordEditor';
 
-interface Page {
-  layout: string;
-  title: string;
-  text: string;
-  image?: string | null;
-  background?: string | null;
-  id?: string;
-}
-
-interface BookEditorWithPreviewProps {
-  initialPages?: Page[];
+interface WordEditorProps {
+  initialPages?: any[];
   bookTitle?: string;
-  IdLibro?: string;
-  onSave?: (pages: Page[]) => Promise<void>;
+  onSave?: (pages: any[]) => Promise<void>;
+  onPreview?: () => void;
+  onPageChange?: (pageIndex: number) => void;
+  hideHeader?: boolean;
 }
 
-export const BookEditorWithPreview: React.FC<BookEditorWithPreviewProps> = ({
+export const WordEditor: React.FC<WordEditorProps> = ({
   initialPages = [],
-  bookTitle = 'Mi Libro',
-  IdLibro,
-  onSave
+  onPageChange,
+  hideHeader = false
 }) => {
-  const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
-  const [pages, setPages] = useState<Page[]>(initialPages);
-  const [isSaving, setIsSaving] = useState(false);
+  const [showImagePanel, setShowImagePanel] = useState(false);
+  const [showBackgroundPanel, setShowBackgroundPanel] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const backgroundInputRef = useRef<HTMLInputElement>(null);
 
-  const handlePagesUpdate = (updatedPages: Page[]) => {
-    setPages(updatedPages);
-  };
+  const {
+    editor,
+    pages,
+    currentPage,
+    totalPages,
+    goToPage,
+    addPage,
+    deletePage,
+    addImage,
+    removeImage,
+    setBackground,
+    exportToFlipBook
+  } = useWordEditor({
+    initialPages
+  });
 
-  const handleSave = async (editorPages: Page[]) => {
-    setIsSaving(true);
-    
-    try {
-      // Actualizar estado local
-      setPages(editorPages);
-      
-      // Llamar callback de guardado si existe
-      if (onSave) {
-        await onSave(editorPages);
-      } else {
-        // Guardado por defecto
-        const response = await fetch('/api/libros/updatebook/', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            idLibro: IdLibro,
-            pages: editorPages
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error('Error al guardar');
-        }
-      }
-      
-      toast.success('📚 Libro guardado correctamente');
-    } catch (error) {
-      console.error('Error al guardar:', error);
-      toast.error('❌ Error al guardar el libro');
-    } finally {
-      setIsSaving(false);
+  // Notificar cambios de página al padre
+  React.useEffect(() => {
+    if (onPageChange) {
+      onPageChange(currentPage);
     }
+  }, [currentPage, onPageChange]);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const imageUrl = event.target?.result as string;
+      addImage(currentPage, imageUrl);
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handlePreview = () => {
-    setActiveTab('preview');
+  const handleBackgroundUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const bgUrl = event.target?.result as string;
+      setBackground(currentPage, bgUrl);
+    };
+    reader.readAsDataURL(file);
   };
+
+  const currentPageData = pages[currentPage];
+
+  if (!editor) {
+    return (
+      <div className="h-full flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando editor...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <UnifiedLayout mainClassName="pt-0">
-      <div className="h-screen flex flex-col bg-gray-50">
-        <Toaster position="bottom-center" />
+    <div className="h-full flex flex-col bg-gray-50">
+      
+      {/* Toolbar de formato */}
+      <WordToolbar 
+        editor={editor} 
+        onImageUpload={() => setShowImagePanel(!showImagePanel)}
+      />
 
-        {/* Header con tabs */}
-        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-lg">
-          <div className="px-6 py-4 flex items-center justify-between">
-            {/* Logo y título */}
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                <BookOpen size={28} />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold tracking-tight">{bookTitle}</h1>
-                <p className="text-sm opacity-90">Editor profesional tipo Word</p>
-              </div>
-            </div>
+      {/* Área principal */}
+      <div className="flex-1 flex overflow-hidden">
+        
+        {/* Panel lateral izquierdo: Páginas */}
+        <div className="w-40 bg-white border-r border-gray-200 overflow-y-auto">
+          <div className="p-2 border-b border-gray-200">
+            <button
+              onClick={addPage}
+              className="w-full py-1.5 px-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs font-medium"
+            >
+              + Página
+            </button>
+          </div>
 
-            {/* Tabs */}
-            <div className="flex items-center gap-2 bg-white/10 rounded-lg p-1 backdrop-blur-sm">
+          <div className="p-1.5 space-y-1.5">
+            {pages.map((page, index) => (
               <button
-                onClick={() => setActiveTab('editor')}
-                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
-                  activeTab === 'editor'
-                    ? 'bg-white text-blue-600 shadow-lg scale-105'
-                    : 'text-white hover:bg-white/10'
+                key={page.id}
+                onClick={() => goToPage(index)}
+                className={`w-full p-2 rounded text-left transition-colors ${
+                  index === currentPage
+                    ? 'bg-blue-100 border-2 border-blue-500'
+                    : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
                 }`}
               >
-                <FileEdit size={20} />
-                <span>Editor</span>
-              </button>
-              
-              <button
-                onClick={() => setActiveTab('preview')}
-                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
-                  activeTab === 'preview'
-                    ? 'bg-white text-purple-600 shadow-lg scale-105'
-                    : 'text-white hover:bg-white/10'
-                }`}
-              >
-                <Eye size={20} />
-                <span>Vista Previa</span>
-              </button>
-            </div>
-
-            {/* Info adicional */}
-            <div className="flex items-center gap-4 bg-white/10 rounded-lg px-4 py-2 backdrop-blur-sm">
-              <div className="text-center">
-                <div className="text-xs opacity-80">Total páginas</div>
-                <div className="text-2xl font-bold">{pages.length}</div>
-              </div>
-              {isSaving && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Save size={16} className="animate-pulse" />
-                  <span>Guardando...</span>
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className={`text-xs font-bold ${index === currentPage ? 'text-blue-700' : 'text-gray-700'}`}>
+                    Pág. {index + 1}
+                  </span>
+                  {page.image && <ImageIcon size={10} className="text-green-600" />}
                 </div>
-              )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Área del editor */}
+        <div className="flex-1 overflow-auto bg-gray-100 p-6">
+          <div className="max-w-4xl mx-auto">
+            
+            {/* Imagen de la página */}
+            {currentPageData?.image && (
+              <div className="bg-white mb-3 rounded-lg shadow-lg overflow-hidden">
+                <div className="relative">
+                  <img
+                    src={currentPageData.image}
+                    alt="Imagen de página"
+                    className="w-full h-auto max-h-64 object-contain"
+                  />
+                  <button
+                    onClick={() => removeImage(currentPage)}
+                    className="absolute top-2 right-2 px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600"
+                  >
+                    Quitar
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Hoja de papel */}
+            <div 
+              className="bg-white shadow-2xl rounded-lg overflow-hidden"
+              style={{
+                minHeight: '29.7cm',
+                width: '21cm',
+                padding: '2.54cm',
+                ...(currentPageData?.background && {
+                  backgroundImage: `url(${currentPageData.background})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                })
+              }}
+            >
+              <EditorContent 
+                editor={editor}
+                className="word-editor-wrapper"
+              />
             </div>
           </div>
         </div>
 
-        {/* Contenido principal */}
-        <div className="flex-1 overflow-hidden">
-          {activeTab === 'editor' ? (
-            <WordEditor
-              initialPages={pages}
-              bookTitle={bookTitle}
-              onSave={handleSave}
-              onPreview={handlePreview}
-            />
-          ) : (
-            <div className="h-full w-full relative">
-              {/* Botón para volver al editor */}
-              <div className="absolute top-4 right-4 z-50">
-                <button
-                  onClick={() => setActiveTab('editor')}
-                  className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-lg hover:shadow-xl transition-all border-2 border-blue-500 text-blue-600 font-medium"
-                >
-                  <FileEdit size={18} />
-                  <span>Volver al Editor</span>
-                </button>
+        {/* Panel lateral derecho: Herramientas */}
+        <div className="w-52 bg-white border-l border-gray-200 overflow-y-auto">
+          
+          {/* Imagen */}
+          <div className="p-3 border-b border-gray-200">
+            <button
+              onClick={() => setShowImagePanel(!showImagePanel)}
+              className="flex items-center justify-between w-full mb-2"
+            >
+              <div className="flex items-center gap-1.5">
+                <ImageIcon size={14} className="text-green-600" />
+                <span className="font-semibold text-xs text-gray-700">Imagen</span>
               </div>
+              <ChevronDown size={12} className={`transform transition-transform ${showImagePanel ? 'rotate-180' : ''}`} />
+            </button>
 
-              {/* Vista previa con FlipBook */}
-              {pages.length > 0 ? (
-                <FlipBook 
-                  pages={pages as any}
-                  width={600}
-                  height={700}
+            {showImagePanel && (
+              <div className="space-y-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
                 />
-              ) : (
-                <div className="h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                  <div className="text-center p-8 bg-white rounded-xl shadow-lg">
-                    <BookOpen size={64} className="mx-auto mb-4 text-gray-400" />
-                    <h3 className="text-xl font-bold text-gray-700 mb-2">
-                      No hay contenido para previsualizar
-                    </h3>
-                    <p className="text-gray-500 mb-4">
-                      Escribe algo en el editor para ver la vista previa
-                    </p>
-                    <button
-                      onClick={() => setActiveTab('editor')}
-                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Ir al Editor
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Footer con ayuda */}
-        <div className="bg-gray-800 text-white px-6 py-2 text-xs flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <span>💡 <strong>Tip:</strong> El texto se pagina automáticamente como en Word</span>
-            <span>⌨️ <strong>Ctrl+B:</strong> Negrita</span>
-            <span>⌨️ <strong>Ctrl+I:</strong> Cursiva</span>
-            <span>⌨️ <strong>Ctrl+U:</strong> Subrayado</span>
-            <span>⌨️ <strong>Ctrl+Z:</strong> Deshacer</span>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full py-1.5 px-2 bg-green-500 text-white rounded hover:bg-green-600 text-xs"
+                >
+                  {currentPageData?.image ? 'Cambiar' : 'Agregar'}
+                </button>
+                {currentPageData?.image && (
+                  <button
+                    onClick={() => removeImage(currentPage)}
+                    className="w-full py-1.5 px-2 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
+                  >
+                    Quitar
+                  </button>
+                )}
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-2">
-            <span className="opacity-70">Modo:</span>
-            <span className="font-bold">
-              {activeTab === 'editor' ? '📝 Editando' : '👀 Previsualizando'}
-            </span>
+
+          {/* Fondo */}
+          <div className="p-3 border-b border-gray-200">
+            <button
+              onClick={() => setShowBackgroundPanel(!showBackgroundPanel)}
+              className="flex items-center justify-between w-full mb-2"
+            >
+              <div className="flex items-center gap-1.5">
+                <Palette size={14} className="text-purple-600" />
+                <span className="font-semibold text-xs text-gray-700">Fondo</span>
+              </div>
+              <ChevronDown size={12} className={`transform transition-transform ${showBackgroundPanel ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showBackgroundPanel && (
+              <div className="space-y-2">
+                <input
+                  ref={backgroundInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleBackgroundUpload}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => backgroundInputRef.current?.click()}
+                  className="w-full py-1.5 px-2 bg-purple-500 text-white rounded hover:bg-purple-600 text-xs"
+                >
+                  {currentPageData?.background ? 'Cambiar' : 'Agregar'}
+                </button>
+                {currentPageData?.background && (
+                  <button
+                    onClick={() => setBackground(currentPage, '')}
+                    className="w-full py-1.5 px-2 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
+                  >
+                    Quitar
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Opciones */}
+          <div className="p-3">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Settings size={14} className="text-gray-600" />
+              <span className="font-semibold text-xs text-gray-700">Opciones</span>
+            </div>
+            
+            <button
+              onClick={() => {
+                if (confirm('¿Eliminar esta página?')) {
+                  deletePage(currentPage);
+                }
+              }}
+              disabled={totalPages === 1}
+              className="w-full py-1.5 px-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+            >
+              Eliminar página
+            </button>
           </div>
         </div>
       </div>
-    </UnifiedLayout>
+
+      {/* Estilos */}
+      <style jsx global>{`
+        .word-editor-wrapper {
+          font-family: 'Times New Roman', serif;
+          font-size: 16px;
+          line-height: 1.5;
+        }
+
+        .word-editor-content {
+          outline: none;
+        }
+
+        .word-editor-content p {
+          margin-bottom: 0.5em;
+        }
+
+        .word-editor-content h1 {
+          font-size: 2em;
+          font-weight: bold;
+          margin-top: 0.5em;
+          margin-bottom: 0.5em;
+        }
+
+        .word-editor-content h2 {
+          font-size: 1.5em;
+          font-weight: bold;
+          margin-top: 0.5em;
+          margin-bottom: 0.5em;
+        }
+
+        .word-editor-content h3 {
+          font-size: 1.17em;
+          font-weight: bold;
+          margin-top: 0.5em;
+          margin-bottom: 0.5em;
+        }
+
+        .word-editor-content ul,
+        .word-editor-content ol {
+          padding-left: 1.5em;
+          margin-bottom: 0.5em;
+        }
+
+        .word-editor-content blockquote {
+          border-left: 4px solid #ddd;
+          padding-left: 1em;
+          margin-left: 0;
+          color: #666;
+          font-style: italic;
+        }
+
+        .word-editor-content code {
+          background-color: #f5f5f5;
+          padding: 0.2em 0.4em;
+          border-radius: 3px;
+          font-family: 'Courier New', monospace;
+        }
+
+        .word-editor-content pre {
+          background-color: #f5f5f5;
+          padding: 1em;
+          border-radius: 5px;
+          overflow-x: auto;
+        }
+
+        .editor-image {
+          max-width: 100%;
+          height: auto;
+          border-radius: 8px;
+          margin: 1em 0;
+        }
+      `}</style>
+    </div>
   );
 };
+
+export default WordEditor;
