@@ -12,12 +12,14 @@ interface WordEditorProps {
   onSave?: (pages: any[]) => Promise<void>;
   onPreview?: () => void;
   onPageChange?: (pageIndex: number) => void;
+  onPagesUpdate?: (pages: any[]) => void; // ⭐ NUEVO
   hideHeader?: boolean;
 }
 
 export const WordEditor: React.FC<WordEditorProps> = ({
   initialPages = [],
   onPageChange,
+  onPagesUpdate, // ⭐ NUEVO
   hideHeader = false
 }) => {
   const [showImagePanel, setShowImagePanel] = useState(false);
@@ -38,7 +40,8 @@ export const WordEditor: React.FC<WordEditorProps> = ({
     setBackground,
     exportToFlipBook
   } = useWordEditor({
-    initialPages
+    initialPages,
+    onPagesChange: onPagesUpdate // ⭐ Pasar el callback
   });
 
   // Notificar cambios de página al padre
@@ -109,24 +112,37 @@ export const WordEditor: React.FC<WordEditorProps> = ({
           </div>
 
           <div className="p-1.5 space-y-1.5">
-            {pages.map((page, index) => (
-              <button
-                key={page.id}
-                onClick={() => goToPage(index)}
-                className={`w-full p-2 rounded text-left transition-colors ${
-                  index === currentPage
-                    ? 'bg-blue-100 border-2 border-blue-500'
-                    : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className={`text-xs font-bold ${index === currentPage ? 'text-blue-700' : 'text-gray-700'}`}>
-                    Pág. {index + 1}
-                  </span>
-                  {page.image && <ImageIcon size={10} className="text-green-600" />}
-                </div>
-              </button>
-            ))}
+            {pages.map((page, index) => {
+              // Determinar si es portada o contraportada
+              const isFirstPage = index === 0;
+              const isLastPage = index === pages.length - 1;
+              
+              return (
+                <button
+                  key={page.id}
+                  onClick={() => goToPage(index)}
+                  className={`w-full p-2 rounded text-left transition-colors ${
+                    index === currentPage
+                      ? 'bg-blue-100 border-2 border-blue-500'
+                      : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-0.5">
+                    <div className="flex flex-col">
+                      <span className={`text-xs font-bold ${index === currentPage ? 'text-blue-700' : 'text-gray-700'}`}>
+                        {isFirstPage ? '📖 Portada' : isLastPage ? '📕 Contraportada' : `Pág. ${index + 1}`}
+                      </span>
+                      {(isFirstPage || isLastPage) && (
+                        <span className="text-[10px] text-gray-500 mt-0.5">
+                          Doble cara
+                        </span>
+                      )}
+                    </div>
+                    {page.image && <ImageIcon size={10} className="text-green-600" />}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -134,6 +150,18 @@ export const WordEditor: React.FC<WordEditorProps> = ({
         <div className="flex-1 overflow-auto bg-gray-100 p-6">
           <div className="max-w-4xl mx-auto">
             
+            {/* Indicador de tipo de página */}
+            {(currentPage === 0 || currentPage === pages.length - 1) && (
+              <div className="mb-4 p-3 bg-purple-100 border-l-4 border-purple-500 rounded">
+                <p className="text-sm font-semibold text-purple-800">
+                  {currentPage === 0 ? '📖 Página de Portada (Doble cara)' : '📕 Página de Contraportada (Doble cara)'}
+                </p>
+                <p className="text-xs text-purple-600 mt-1">
+                  Esta página se mostrará en ambos lados en el libro. El frente tendrá fondo degradado automáticamente.
+                </p>
+              </div>
+            )}
+
             {/* Imagen de la página */}
             {currentPageData?.image && (
               <div className="bg-white mb-3 rounded-lg shadow-lg overflow-hidden">
@@ -155,7 +183,11 @@ export const WordEditor: React.FC<WordEditorProps> = ({
 
             {/* Hoja de papel */}
             <div 
-              className="bg-white shadow-2xl rounded-lg overflow-hidden"
+              className={`bg-white shadow-2xl rounded-lg overflow-hidden ${
+                currentPage === 0 || currentPage === pages.length - 1 
+                  ? 'border-4 border-purple-300' 
+                  : ''
+              }`}
               style={{
                 minHeight: '29.7cm',
                 width: '21cm',
@@ -265,17 +297,45 @@ export const WordEditor: React.FC<WordEditorProps> = ({
               <span className="font-semibold text-xs text-gray-700">Opciones</span>
             </div>
             
+            {/* Info de portadas */}
+            {(currentPage === 0 || currentPage === pages.length - 1) && (
+              <div className="mb-3 p-2 bg-purple-50 rounded text-xs">
+                <p className="text-purple-700 font-semibold mb-1">
+                  ℹ️ Página especial
+                </p>
+                <p className="text-purple-600">
+                  {currentPage === 0 
+                    ? 'La portada aparecerá en el frente con fondo degradado morado.' 
+                    : 'La contraportada aparecerá en la parte trasera con fondo degradado.'}
+                </p>
+              </div>
+            )}
+            
             <button
               onClick={() => {
+                if (currentPage === 0) {
+                  alert('⚠️ No puedes eliminar la portada. Es la primera página del libro.');
+                  return;
+                }
+                if (currentPage === pages.length - 1 && pages.length > 1) {
+                  alert('⚠️ No puedes eliminar la contraportada. Elimina otras páginas primero.');
+                  return;
+                }
                 if (confirm('¿Eliminar esta página?')) {
                   deletePage(currentPage);
                 }
               }}
-              disabled={totalPages === 1}
+              disabled={totalPages <= 2}
               className="w-full py-1.5 px-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
             >
               Eliminar página
             </button>
+            
+            {totalPages <= 2 && (
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                Mínimo 2 páginas (portada y contraportada)
+              </p>
+            )}
           </div>
         </div>
       </div>
