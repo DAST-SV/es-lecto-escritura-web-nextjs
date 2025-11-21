@@ -79,13 +79,10 @@ export const WordEditor: React.FC<WordEditorProps> = ({
   return (
     <div className="h-full flex flex-col bg-gray-50">
       
-      {/* Toolbar de formato */}
       <WordToolbar editor={editor} />
 
-      {/* Área principal */}
       <div className="flex-1 flex overflow-hidden">
         
-        {/* Panel lateral izquierdo: Hojas */}
         <div className="w-48 bg-white border-r border-gray-200 overflow-y-auto flex flex-col">
           
           <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200">
@@ -117,8 +114,6 @@ export const WordEditor: React.FC<WordEditorProps> = ({
             {Array.from({ length: totalSheets }, (_, sheetIndex) => {
               const frontPageIndex = sheetIndex * 2;
               const backPageIndex = sheetIndex * 2 + 1;
-              const frontPage = pages[frontPageIndex];
-              const backPage = pages[backPageIndex];
               const isCurrentSheet = Math.floor(currentPage / 2) === sheetIndex;
               
               return (
@@ -186,7 +181,6 @@ export const WordEditor: React.FC<WordEditorProps> = ({
           </div>
         </div>
 
-        {/* Área del editor */}
         <div className="flex-1 overflow-auto bg-gray-100 p-6">
           <div className="max-w-4xl mx-auto">
             
@@ -230,7 +224,6 @@ export const WordEditor: React.FC<WordEditorProps> = ({
               </div>
             )}
 
-            {/* ⭐ HOJA DE PAPEL - TODO EN PORCENTAJES */}
             <div 
               className="page-editor-container"
               style={{
@@ -249,7 +242,6 @@ export const WordEditor: React.FC<WordEditorProps> = ({
           </div>
         </div>
 
-        {/* Panel lateral derecho: Herramientas */}
         <div className="w-56 bg-white border-l border-gray-200 overflow-y-auto">
           
           <div className="p-3 bg-gradient-to-br from-blue-50 to-purple-50 border-b border-gray-200">
@@ -266,7 +258,6 @@ export const WordEditor: React.FC<WordEditorProps> = ({
             </div>
           </div>
 
-          {/* Fondo */}
           <div className="p-3 border-b border-gray-200">
             <button
               onClick={() => setShowBackgroundPanel(!showBackgroundPanel)}
@@ -306,7 +297,6 @@ export const WordEditor: React.FC<WordEditorProps> = ({
             )}
           </div>
 
-          {/* Opciones de hoja */}
           <div className="p-3">
             <div className="flex items-center gap-2 mb-3">
               <Settings size={16} className="text-gray-600" />
@@ -346,160 +336,74 @@ export const WordEditor: React.FC<WordEditorProps> = ({
         </div>
       </div>
 
-      {/* ⭐ ESTILOS CON PORCENTAJES */}
+      {/* ⭐ EDITOR: TEXTO MÁS GRANDE (3%) Y ALINEADO IZQUIERDA ⭐ */}
       <style jsx global>{`
-        /* ===========================
-           CONTENEDOR DE PÁGINA - PORCENTAJES
-           =========================== */
         .page-editor-container {
           background: white;
           box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
           border-radius: 8px;
           overflow: hidden;
-          
-          /* ⭐ Dimensiones en proporción A4 con porcentajes */
           width: 100%;
           max-width: 21cm;
-          aspect-ratio: 210 / 297; /* Ratio A4 exacto */
-          
-          /* ⭐ Padding en porcentaje (12% = ~2.54cm en A4) */
+          aspect-ratio: 210 / 297;
           padding: 12% 12%;
-          
           box-sizing: border-box;
           margin: 0 auto;
         }
 
-        /* ===========================
-           CONTENIDO DEL EDITOR
-           =========================== */
         .page-editor-content {
           width: 100%;
           height: 100%;
           overflow: hidden;
         }
 
+        /* ⭐ EDITOR: TEXTO GRANDE (3%) ⭐ */
         .page-editor-content .ProseMirror {
           outline: none;
           width: 100%;
           height: 100%;
           overflow-y: auto;
           
-          /* ⭐ Tipografía base */
           font-family: 'Times New Roman', serif;
-          font-size: 1rem; /* Base relativo */
+          font-size: 3%;  /* ⭐ MÁS GRANDE para editar */
           line-height: 1.5;
           color: #000;
+          
+          text-align: left !important;  /* ⭐ FORZAR IZQUIERDA */
         }
 
-        /* ===========================
-           TIPOGRAFÍA - EM RELATIVO
-           =========================== */
-        .page-editor-content p {
-          margin-bottom: 0.5em;
-          margin-top: 0;
+        /* ⭐ FORZAR TODOS LOS ELEMENTOS A LA IZQUIERDA ⭐ */
+        .page-editor-content .ProseMirror * {
+          text-align: inherit !important;
         }
 
-        .page-editor-content h1 {
-          font-size: 2em;
-          font-weight: bold;
-          margin-top: 0.67em;
-          margin-bottom: 0.67em;
-          line-height: 1.2;
-        }
-
-        .page-editor-content h2 {
-          font-size: 1.5em;
-          font-weight: bold;
-          margin-top: 0.83em;
-          margin-bottom: 0.83em;
-          line-height: 1.2;
-        }
-
-        .page-editor-content h3 {
-          font-size: 1.17em;
-          font-weight: bold;
-          margin-top: 1em;
-          margin-bottom: 1em;
-          line-height: 1.2;
-        }
-
-        /* ===========================
-           LISTAS
-           =========================== */
-        .page-editor-content ul,
-        .page-editor-content ol {
-          padding-left: 1.5em;
-          margin-bottom: 0.5em;
-          margin-top: 0.5em;
-        }
-
-        .page-editor-content ul {
-          list-style-type: disc;
-        }
-
-        .page-editor-content ul ul {
-          list-style-type: circle;
-        }
-
-        .page-editor-content ol {
-          list-style-type: decimal;
-        }
-
-        .page-editor-content li {
-          margin-bottom: 0.25em;
-        }
-
-        /* ===========================
-           FORMATO
-           =========================== */
-        .page-editor-content strong,
-        .page-editor-content b {
-          font-weight: bold;
-        }
-
-        .page-editor-content em,
-        .page-editor-content i {
-          font-style: italic;
-        }
-
-        .page-editor-content u {
-          text-decoration: underline;
-        }
-
-        .page-editor-content s {
-          text-decoration: line-through;
-        }
-
-        .page-editor-content blockquote {
-          border-left: 4px solid #ddd;
-          padding-left: 1em;
-          margin-left: 0;
-          color: #666;
-          font-style: italic;
-          margin-top: 1em;
-          margin-bottom: 1em;
-        }
-
-        .page-editor-content code {
-          background-color: #f5f5f5;
-          padding: 0.2em 0.4em;
-          border-radius: 3px;
-          font-family: 'Courier New', monospace;
-        }
-
-        .page-editor-content pre {
-          background-color: #f5f5f5;
-          padding: 1em;
-          border-radius: 5px;
-          overflow-x: auto;
-          margin: 1em 0;
-        }
-
-        .page-editor-content hr {
-          border: none;
-          border-top: 2px solid #ddd;
-          margin: 2em 0;
-        }
+        .page-editor-content p { margin-bottom: 0.5em; margin-top: 0; }
+        .page-editor-content h1 { font-size: 2em; font-weight: bold; margin-top: 0.67em; margin-bottom: 0.67em; line-height: 1.2; }
+        .page-editor-content h2 { font-size: 1.5em; font-weight: bold; margin-top: 0.83em; margin-bottom: 0.83em; line-height: 1.2; }
+        .page-editor-content h3 { font-size: 1.17em; font-weight: bold; margin-top: 1em; margin-bottom: 1em; line-height: 1.2; }
+        .page-editor-content h4 { font-size: 1em; font-weight: bold; margin-top: 1.33em; margin-bottom: 1.33em; }
+        .page-editor-content h5 { font-size: 0.83em; font-weight: bold; margin-top: 1.67em; margin-bottom: 1.67em; }
+        .page-editor-content h6 { font-size: 0.67em; font-weight: bold; margin-top: 2.33em; margin-bottom: 2.33em; }
+        .page-editor-content ul, .page-editor-content ol { padding-left: 1.5em; margin-bottom: 0.5em; margin-top: 0.5em; }
+        .page-editor-content ul { list-style-type: disc; }
+        .page-editor-content ul ul { list-style-type: circle; }
+        .page-editor-content ul ul ul { list-style-type: square; }
+        .page-editor-content ol { list-style-type: decimal; }
+        .page-editor-content ol ol { list-style-type: lower-alpha; }
+        .page-editor-content ol ol ol { list-style-type: lower-roman; }
+        .page-editor-content li { margin-bottom: 0.25em; }
+        .page-editor-content li > p { margin: 0; }
+        .page-editor-content strong, .page-editor-content b { font-weight: bold; }
+        .page-editor-content em, .page-editor-content i { font-style: italic; }
+        .page-editor-content u { text-decoration: underline; }
+        .page-editor-content s, .page-editor-content strike { text-decoration: line-through; }
+        .page-editor-content mark { background-color: #ffff00; padding: 0.1em 0.2em; border-radius: 2px; }
+        .page-editor-content blockquote { border-left: 4px solid #ddd; padding-left: 1em; margin-left: 0; margin-right: 0; color: #666; font-style: italic; margin-top: 1em; margin-bottom: 1em; }
+        .page-editor-content code { background-color: #f5f5f5; padding: 0.2em 0.4em; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 0.9em; color: #c7254e; }
+        .page-editor-content pre { background-color: #f5f5f5; padding: 1em; border-radius: 5px; overflow-x: auto; margin-top: 1em; margin-bottom: 1em; border: 1px solid #ddd; }
+        .page-editor-content pre code { background: none; padding: 0; color: inherit; }
+        .page-editor-content hr { border: none; border-top: 2px solid #ddd; margin: 2em 0; }
+        .page-editor-content img { max-width: 100%; height: auto; border-radius: 8px; margin: 1em 0; display: block; }
       `}</style>
     </div>
   );

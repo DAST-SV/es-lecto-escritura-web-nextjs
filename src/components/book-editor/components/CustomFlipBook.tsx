@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import HTMLFlipBook from 'react-pageflip';
-import { ChevronLeft, ChevronRight, X, Home } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Minimize2 } from 'lucide-react';
 
 interface Page {
   id: string;
@@ -30,7 +30,6 @@ const PageContent = React.forwardRef<HTMLDivElement, {
   return (
     <div ref={ref} className={`flip-page-wrapper ${isFirstPage ? 'first-page' : ''} ${isLastPage ? 'last-page' : ''}`}>
       
-      {/* Fondo */}
       {page.background && !isFirstPage && !isLastPage && (
         <div 
           className="flip-page-background"
@@ -38,7 +37,6 @@ const PageContent = React.forwardRef<HTMLDivElement, {
         />
       )}
 
-      {/* ⭐ CONTENEDOR INTERNO */}
       <div className="flip-page-inner">
         <div 
           className="flip-page-content"
@@ -46,7 +44,6 @@ const PageContent = React.forwardRef<HTMLDivElement, {
         />
       </div>
 
-      {/* Número de página */}
       {pageNumber !== undefined && !isFirstPage && !isLastPage && (
         <div className="flip-page-number">{pageNumber}</div>
       )}
@@ -71,8 +68,8 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
   }, [pages.length]);
 
   const getBookSize = () => {
-    const width = Math.min(window.innerWidth * 0.4, 600);
-    const height = width * 1.414;
+    const height = window.innerHeight * 0.90; // 90% de altura (5% arriba y 5% abajo)
+    const width = height * 0.707; // Proporción A4
     return { width, height };
   };
 
@@ -86,50 +83,30 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
     bookRef.current?.pageFlip()?.flipNext();
   }, []);
 
-  const goToFirstPage = useCallback(() => {
-    bookRef.current?.pageFlip()?.flip(0);
-  }, []);
-
   const handleFlip = useCallback((e: any) => {
     setCurrentPage(e.data);
   }, []);
 
   return (
     <div className="flipbook-container">
-      <div className="flipbook-header">
-        <div className="header-content">
-          <div className="header-left">
-            <h2 className="book-title-display">{bookTitle}</h2>
-            <span className="page-indicator">
-              {currentPage + 1} / {totalPages}
-            </span>
-          </div>
-
-          <div className="header-right">
-            <button onClick={goToFirstPage} className="control-btn" title="Ir al inicio">
-              <Home size={18} />
-            </button>
-            {onClose && (
-              <button onClick={onClose} className="control-btn close-btn" title="Cerrar">
-                <X size={18} />
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Botón minimalista para salir de pantalla completa */}
+      {onClose && (
+        <button onClick={onClose} className="floating-close-btn" title="Salir de modo lectura">
+          <Minimize2 size={20} />
+        </button>
+      )}
 
       <div className="flipbook-content">
         <div className="flipbook-wrapper">
-          {/* @ts-ignore */}
           <HTMLFlipBook
             ref={bookRef}
             width={width}
             height={height}
             size="stretch"
-            minWidth={300}
-            maxWidth={800}
-            minHeight={400}
-            maxHeight={1200}
+            minWidth={400}
+            maxWidth={2000}
+            minHeight={600}
+            maxHeight={4000}
             maxShadowOpacity={0.5}
             showCover={true}
             mobileScrollSupport={true}
@@ -144,6 +121,9 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
             swipeDistance={50}
             showPageCorners={true}
             disableFlipByClick={false}
+            style={{}}
+            startPage={0}
+            drawShadow={true}
           >
             {pages.map((page, index) => (
               <PageContent
@@ -181,85 +161,49 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
           position: fixed;
           inset: 0;
           z-index: 9999;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          display: flex;
-          flex-direction: column;
-        }
-
-        .flipbook-header {
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(10px);
-          border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .header-content {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 1rem 1.5rem;
-        }
-
-        .header-left {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-
-        .book-title-display {
-          font-size: 1.25rem;
-          font-weight: 700;
-          color: #1f2937;
-          margin: 0;
-        }
-
-        .page-indicator {
-          font-size: 0.875rem;
-          color: #6b7280;
-          padding: 0.25rem 0.75rem;
-          background: #f3f4f6;
-          border-radius: 9999px;
-        }
-
-        .header-right {
-          display: flex;
-          gap: 0.5rem;
-        }
-
-        .control-btn {
+          background: #f5f1e8;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 0.5rem;
-          background: #f3f4f6;
-          border: none;
-          border-radius: 0.5rem;
+          padding: 0;
+          margin: 0;
+          overflow: hidden;
+        }
+
+        .floating-close-btn {
+          position: fixed;
+          top: 1rem;
+          right: 1rem;
+          z-index: 10000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 2.5rem;
+          height: 2.5rem;
+          background: rgba(0, 0, 0, 0.03);
+          border: 1px solid rgba(0, 0, 0, 0.05);
+          border-radius: 0.375rem;
           cursor: pointer;
           transition: all 0.2s;
-          color: #374151;
+          color: rgba(0, 0, 0, 0.3);
+          backdrop-filter: blur(4px);
         }
 
-        .control-btn:hover {
-          background: #e5e7eb;
-          transform: translateY(-1px);
-        }
-
-        .close-btn {
-          background: #fee2e2;
-          color: #dc2626;
-        }
-
-        .close-btn:hover {
-          background: #fecaca;
+        .floating-close-btn:hover {
+          background: rgba(0, 0, 0, 0.08);
+          color: rgba(0, 0, 0, 0.6);
+          border-color: rgba(0, 0, 0, 0.1);
         }
 
         .flipbook-content {
-          flex: 1;
+          width: 100%;
+          height: 100vh;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 2rem;
           overflow: hidden;
+          padding: 0;
+          margin: 0;
         }
 
         .flipbook-wrapper {
@@ -267,15 +211,17 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
           display: flex;
           align-items: center;
           justify-content: center;
+          height: 100vh;
+          width: 100%;
         }
 
         .nav-btn {
           position: absolute;
           top: 50%;
           transform: translateY(-50%);
-          background: rgba(255, 255, 255, 0.95);
-          border: none;
-          border-radius: 50%;
+          background: rgba(0, 0, 0, 0.03);
+          border: 1px solid rgba(0, 0, 0, 0.05);
+          border-radius: 0.375rem;
           width: 3rem;
           height: 3rem;
           display: flex;
@@ -283,55 +229,68 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
           justify-content: center;
           cursor: pointer;
           transition: all 0.2s;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
           z-index: 10;
+          color: rgba(0, 0, 0, 0.4);
+          backdrop-filter: blur(4px);
         }
 
         .nav-btn:hover:not(:disabled) {
-          background: white;
-          transform: translateY(-50%) scale(1.1);
-          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+          background: rgba(0, 0, 0, 0.08);
+          color: rgba(0, 0, 0, 0.7);
+          transform: translateY(-50%);
+          border-color: rgba(0, 0, 0, 0.1);
         }
 
         .nav-btn:disabled {
-          opacity: 0.3;
+          opacity: 0.2;
           cursor: not-allowed;
         }
 
         .nav-prev {
-          left: -4rem;
+          left: 2rem;
         }
 
         .nav-next {
-          right: -4rem;
+          right: 2rem;
         }
 
         @media (max-width: 768px) {
+          .floating-close-btn {
+            top: 0.75rem;
+            right: 0.75rem;
+            width: 2.25rem;
+            height: 2.25rem;
+          }
+
+          .nav-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+          }
+
           .nav-prev {
-            left: 0.5rem;
+            left: 0.75rem;
           }
           .nav-next {
-            right: 0.5rem;
+            right: 0.75rem;
           }
         }
       `}</style>
 
-      {/* ⭐ ESTILOS CON PORCENTAJES - FONT-SIZE BASADO EN ALTURA */}
+      {/* Estilos globales para páginas */}
       <style jsx global>{`
-        /* PÁGINA BASE */
         .flip-page-wrapper {
-          background: white;
-          box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+          background: #fefdfb;
+          box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
           position: relative;
           overflow: hidden;
         }
 
         .flip-page-wrapper.first-page {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #8b7355 0%, #6b5744 100%);
         }
 
         .flip-page-wrapper.last-page {
-          background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+          background: linear-gradient(135deg, #6b5744 0%, #8b7355 100%);
         }
 
         .flip-page-background {
@@ -342,39 +301,38 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
           opacity: 0.3;
         }
 
-        /* ⭐ CONTENEDOR INTERNO - 100% WIDTH Y HEIGHT */
         .flip-page-inner {
           width: 100%;
           height: 100%;
-          padding: 12% 12%;
+          padding: 8% 10%;
           box-sizing: border-box;
           display: block;
           overflow: hidden;
         }
 
-        /* ⭐ CONTENIDO - 100% WIDTH Y HEIGHT */
+        /* ⭐ TEXTO OPTIMIZADO PARA LECTURA ⭐ */
         .flip-page-content {
-          /* ⭐ 100% width y height */
           width: 100%;
           height: 100%;
           
-          /* ⭐ Font-size basado en ALTURA (viewport height units) */
-          font-size: 1.8vh;  /* ⭐ 1.8% de la altura del viewport */
+          font-family: 'Georgia', 'Times New Roman', serif;
+          font-size: 2.2vh;
+          line-height: 1.6;
+          color: #2d2d2d;
           
-          font-family: 'Times New Roman', serif;
-          line-height: 1.5;
-          color: #000;
+          text-align: left !important;
           
-          /* NO CENTRAR */
-          text-align: left;
-          
-          /* Overflow */
           overflow: auto;
           word-wrap: break-word;
           overflow-wrap: break-word;
         }
 
-        /* ⭐ PORTADAS - SÍ CENTRADAS */
+        /* ⭐ FORZAR TODOS LOS ELEMENTOS A LA IZQUIERDA ⭐ */
+        .flip-page-content * {
+          text-align: inherit !important;
+        }
+
+        /* PORTADAS - SÍ CENTRADAS */
         .flip-page-wrapper.first-page .flip-page-inner,
         .flip-page-wrapper.last-page .flip-page-inner {
           display: flex;
@@ -385,17 +343,18 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
         .flip-page-wrapper.first-page .flip-page-content,
         .flip-page-wrapper.last-page .flip-page-content {
           color: white;
-          text-align: center;
+          text-align: center !important;
           overflow: visible;
         }
 
         .flip-page-wrapper.first-page .flip-page-content *,
         .flip-page-wrapper.last-page .flip-page-content * {
           color: white !important;
+          text-align: center !important;
           text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
-        /* ⭐ TIPOGRAFÍA - EM RELATIVO AL FONT-SIZE BASE */
+        /* TIPOGRAFÍA */
         .flip-page-content p {
           margin-bottom: 0.5em;
           margin-top: 0;
@@ -446,7 +405,6 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
           margin-bottom: 2.33em;
         }
 
-        /* LISTAS */
         .flip-page-content ul,
         .flip-page-content ol {
           padding-left: 1.5em;
@@ -486,7 +444,6 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
           margin: 0;
         }
 
-        /* FORMATO */
         .flip-page-content strong,
         .flip-page-content b {
           font-weight: bold;
@@ -512,7 +469,6 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
           border-radius: 2px;
         }
 
-        /* BLOCKQUOTE Y CODE */
         .flip-page-content blockquote {
           border-left: 4px solid #ddd;
           padding-left: 1em;
@@ -555,7 +511,6 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
           margin: 2em 0;
         }
 
-        /* IMÁGENES */
         .flip-page-content img {
           max-width: 100%;
           height: auto;
@@ -564,38 +519,18 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
           display: block;
         }
 
-        /* NÚMERO DE PÁGINA */
         .flip-page-number {
           position: absolute;
-          bottom: 8%;
+          bottom: 5%;
           right: 10%;
-          font-size: 1.2vh;
-          color: #9ca3af;
+          font-size: 1.8vh;
+          color: #a0a0a0;
           font-family: Georgia, serif;
         }
 
         .flip-page-wrapper.first-page .flip-page-number,
         .flip-page-wrapper.last-page .flip-page-number {
           color: rgba(255, 255, 255, 0.7);
-        }
-
-        /* ⭐ RESPONSIVE - Ajustar font-size según tamaño */
-        @media (max-height: 600px) {
-          .flip-page-content {
-            font-size: 1.5vh;
-          }
-          .flip-page-number {
-            font-size: 1vh;
-          }
-        }
-
-        @media (min-height: 900px) {
-          .flip-page-content {
-            font-size: 2vh;
-          }
-          .flip-page-number {
-            font-size: 1.4vh;
-          }
         }
       `}</style>
     </div>

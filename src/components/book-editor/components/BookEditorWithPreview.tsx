@@ -95,7 +95,7 @@ export const BookEditorWithPreview: React.FC<BookEditorWithPreviewProps> = ({
     );
   }
 
-  // Vista de preview (FlipBook)
+  // Vista de preview (FlipBook) - ⭐ CORREGIDO: usa 'pages' no 'initialPages'
   return (
     <CustomFlipBook
       pages={pages}
