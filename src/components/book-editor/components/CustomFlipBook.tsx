@@ -18,9 +18,6 @@ interface CustomFlipBookProps {
   showCover?: boolean;
 }
 
-// ===========================
-// COMPONENTE DE PÁGINA
-// ===========================
 const PageContent = React.forwardRef<HTMLDivElement, { 
   page?: Page; 
   pageNumber?: number;
@@ -28,52 +25,37 @@ const PageContent = React.forwardRef<HTMLDivElement, {
   isLastPage?: boolean;
 }>(({ page, pageNumber, isFirstPage, isLastPage }, ref) => {
   
-  // Página vacía
-  if (!page) return <div ref={ref} className="page-wrapper"></div>;
+  if (!page) return <div ref={ref} className="flip-page-wrapper"></div>;
 
   return (
-    <div ref={ref} className={`page-wrapper ${isFirstPage ? 'first-page' : ''} ${isLastPage ? 'last-page' : ''}`}>
+    <div ref={ref} className={`flip-page-wrapper ${isFirstPage ? 'first-page' : ''} ${isLastPage ? 'last-page' : ''}`}>
+      
       {/* Fondo */}
-      {page.background && (
+      {page.background && !isFirstPage && !isLastPage && (
         <div 
-          className="page-background"
+          className="flip-page-background"
           style={{ backgroundImage: `url(${page.background})` }}
         />
       )}
 
-      {/* Contenido */}
-      <div className="page-content">
-        {/* Imagen */}
-        {page.image && (
-          <div className="page-image-container">
-            <img
-              src={page.image}
-              alt="Ilustración"
-              className="page-image"
-            />
-          </div>
-        )}
-
-        {/* Texto */}
+      {/* ⭐ CONTENEDOR INTERNO */}
+      <div className="flip-page-inner">
         <div 
-          className="page-text"
+          className="flip-page-content"
           dangerouslySetInnerHTML={{ __html: page.content || '<p></p>' }}
         />
-
-        {/* Número de página (no mostrar en primera y última) */}
-        {pageNumber !== undefined && !isFirstPage && !isLastPage && (
-          <div className="page-number">{pageNumber}</div>
-        )}
       </div>
+
+      {/* Número de página */}
+      {pageNumber !== undefined && !isFirstPage && !isLastPage && (
+        <div className="flip-page-number">{pageNumber}</div>
+      )}
     </div>
   );
 });
 
 PageContent.displayName = 'PageContent';
 
-// ===========================
-// COMPONENTE PRINCIPAL
-// ===========================
 export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
   pages,
   bookTitle = 'Mi Libro',
@@ -84,22 +66,18 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
-  // Calcular total de páginas
   useEffect(() => {
-    // Total de páginas = todas las que vienen del editor
     setTotalPages(pages.length);
   }, [pages.length]);
 
-  // Calcular dimensiones para 2 páginas
   const getBookSize = () => {
     const width = Math.min(window.innerWidth * 0.4, 600);
-    const height = width * 1.414; // Ratio A4
+    const height = width * 1.414;
     return { width, height };
   };
 
   const { width, height } = getBookSize();
 
-  // Handlers
   const goToPrevPage = useCallback(() => {
     bookRef.current?.pageFlip()?.flipPrev();
   }, []);
@@ -118,7 +96,6 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
 
   return (
     <div className="flipbook-container">
-      {/* Header */}
       <div className="flipbook-header">
         <div className="header-content">
           <div className="header-left">
@@ -129,20 +106,11 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
           </div>
 
           <div className="header-right">
-            <button
-              onClick={goToFirstPage}
-              className="control-btn"
-              title="Ir al inicio"
-            >
+            <button onClick={goToFirstPage} className="control-btn" title="Ir al inicio">
               <Home size={18} />
             </button>
-
             {onClose && (
-              <button
-                onClick={onClose}
-                className="control-btn close-btn"
-                title="Cerrar"
-              >
+              <button onClick={onClose} className="control-btn close-btn" title="Cerrar">
                 <X size={18} />
               </button>
             )}
@@ -150,7 +118,6 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
         </div>
       </div>
 
-      {/* FlipBook */}
       <div className="flipbook-content">
         <div className="flipbook-wrapper">
           {/* @ts-ignore */}
@@ -178,7 +145,6 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
             showPageCorners={true}
             disableFlipByClick={false}
           >
-            {/* Todas las páginas vienen del WordEditor */}
             {pages.map((page, index) => (
               <PageContent
                 key={page.id}
@@ -190,7 +156,6 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
             ))}
           </HTMLFlipBook>
 
-          {/* Botones de navegación */}
           <button
             onClick={goToPrevPage}
             disabled={currentPage === 0}
@@ -211,7 +176,6 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
         </div>
       </div>
 
-      {/* Estilos */}
       <style jsx>{`
         .flipbook-container {
           position: fixed;
@@ -280,10 +244,6 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
           transform: translateY(-1px);
         }
 
-        .control-btn:active {
-          transform: translateY(0);
-        }
-
         .close-btn {
           background: #fee2e2;
           color: #dc2626;
@@ -350,77 +310,31 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
           .nav-prev {
             left: 0.5rem;
           }
-
           .nav-next {
             right: 0.5rem;
-          }
-
-          .book-title-display {
-            font-size: 1rem;
           }
         }
       `}</style>
 
-      {/* Estilos globales para las páginas */}
+      {/* ⭐ ESTILOS CON PORCENTAJES - FONT-SIZE BASADO EN ALTURA */}
       <style jsx global>{`
-        .page-wrapper {
+        /* PÁGINA BASE */
+        .flip-page-wrapper {
           background: white;
           box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
           position: relative;
           overflow: hidden;
         }
 
-        /* Estilos especiales para primera página (portada) */
-        .page-wrapper.first-page {
+        .flip-page-wrapper.first-page {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
-        .page-wrapper.first-page .page-content {
-          color: white;
-        }
-
-        .page-wrapper.first-page .page-text {
-          color: white;
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-        }
-
-        .page-wrapper.first-page .page-text h1,
-        .page-wrapper.first-page .page-text h2,
-        .page-wrapper.first-page .page-text h3 {
-          color: white;
-          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Estilos especiales para última página (contraportada) */
-        .page-wrapper.last-page {
+        .flip-page-wrapper.last-page {
           background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
         }
 
-        .page-wrapper.last-page .page-content {
-          color: white;
-        }
-
-        .page-wrapper.last-page .page-text {
-          color: white;
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-        }
-
-        .page-wrapper.last-page .page-text h1,
-        .page-wrapper.last-page .page-text h2,
-        .page-wrapper.last-page .page-text h3 {
-          color: white;
-          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .page-background {
+        .flip-page-background {
           position: absolute;
           inset: 0;
           background-size: cover;
@@ -428,227 +342,259 @@ export const CustomFlipBook: React.FC<CustomFlipBookProps> = ({
           opacity: 0.3;
         }
 
-        .page-content {
-          position: relative;
+        /* ⭐ CONTENEDOR INTERNO - 100% WIDTH Y HEIGHT */
+        .flip-page-inner {
+          width: 100%;
           height: 100%;
-          padding: 3rem 2.5rem;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .page-image-container {
-          margin-bottom: 1.5rem;
-          text-align: center;
-        }
-
-        .page-image {
-          max-width: 100%;
-          max-height: 250px;
-          object-fit: contain;
-          border-radius: 0.5rem;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .page-text {
-          flex: 1;
-          font-family: 'Times New Roman', serif;
-          font-size: 16px;
-          line-height: 1.6;
-          color: #1f2937;
+          padding: 12% 12%;
+          box-sizing: border-box;
+          display: block;
           overflow: hidden;
         }
 
-        .page-text p {
-          margin-bottom: 0.75em;
+        /* ⭐ CONTENIDO - 100% WIDTH Y HEIGHT */
+        .flip-page-content {
+          /* ⭐ 100% width y height */
+          width: 100%;
+          height: 100%;
+          
+          /* ⭐ Font-size basado en ALTURA (viewport height units) */
+          font-size: 1.8vh;  /* ⭐ 1.8% de la altura del viewport */
+          
+          font-family: 'Times New Roman', serif;
+          line-height: 1.5;
+          color: #000;
+          
+          /* NO CENTRAR */
+          text-align: left;
+          
+          /* Overflow */
+          overflow: auto;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
         }
 
-        .page-text h1 {
+        /* ⭐ PORTADAS - SÍ CENTRADAS */
+        .flip-page-wrapper.first-page .flip-page-inner,
+        .flip-page-wrapper.last-page .flip-page-inner {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .flip-page-wrapper.first-page .flip-page-content,
+        .flip-page-wrapper.last-page .flip-page-content {
+          color: white;
+          text-align: center;
+          overflow: visible;
+        }
+
+        .flip-page-wrapper.first-page .flip-page-content *,
+        .flip-page-wrapper.last-page .flip-page-content * {
+          color: white !important;
+          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* ⭐ TIPOGRAFÍA - EM RELATIVO AL FONT-SIZE BASE */
+        .flip-page-content p {
+          margin-bottom: 0.5em;
+          margin-top: 0;
+        }
+
+        .flip-page-content h1 {
           font-size: 2em;
           font-weight: bold;
-          margin: 0.5em 0;
-          color: #111827;
+          margin-top: 0.67em;
+          margin-bottom: 0.67em;
+          line-height: 1.2;
         }
 
-        .page-text h2 {
+        .flip-page-content h2 {
           font-size: 1.5em;
           font-weight: bold;
-          margin: 0.5em 0;
-          color: #1f2937;
+          margin-top: 0.83em;
+          margin-bottom: 0.83em;
+          line-height: 1.2;
         }
 
-        .page-text h3 {
+        .flip-page-content h3 {
           font-size: 1.17em;
           font-weight: bold;
-          margin: 0.5em 0;
-          color: #374151;
+          margin-top: 1em;
+          margin-bottom: 1em;
+          line-height: 1.2;
         }
 
-        .page-text ul,
-        .page-text ol {
+        .flip-page-content h4 {
+          font-size: 1em;
+          font-weight: bold;
+          margin-top: 1.33em;
+          margin-bottom: 1.33em;
+        }
+
+        .flip-page-content h5 {
+          font-size: 0.83em;
+          font-weight: bold;
+          margin-top: 1.67em;
+          margin-bottom: 1.67em;
+        }
+
+        .flip-page-content h6 {
+          font-size: 0.67em;
+          font-weight: bold;
+          margin-top: 2.33em;
+          margin-bottom: 2.33em;
+        }
+
+        /* LISTAS */
+        .flip-page-content ul,
+        .flip-page-content ol {
           padding-left: 1.5em;
-          margin-bottom: 0.75em;
+          margin-bottom: 0.5em;
+          margin-top: 0.5em;
         }
 
-        .page-text strong {
+        .flip-page-content ul {
+          list-style-type: disc;
+        }
+
+        .flip-page-content ul ul {
+          list-style-type: circle;
+        }
+
+        .flip-page-content ul ul ul {
+          list-style-type: square;
+        }
+
+        .flip-page-content ol {
+          list-style-type: decimal;
+        }
+
+        .flip-page-content ol ol {
+          list-style-type: lower-alpha;
+        }
+
+        .flip-page-content ol ol ol {
+          list-style-type: lower-roman;
+        }
+
+        .flip-page-content li {
+          margin-bottom: 0.25em;
+        }
+
+        .flip-page-content li > p {
+          margin: 0;
+        }
+
+        /* FORMATO */
+        .flip-page-content strong,
+        .flip-page-content b {
           font-weight: bold;
         }
 
-        .page-text em {
+        .flip-page-content em,
+        .flip-page-content i {
           font-style: italic;
         }
 
-        .page-text u {
+        .flip-page-content u {
           text-decoration: underline;
         }
 
-        .page-text blockquote {
-          border-left: 4px solid #9ca3af;
-          padding-left: 1em;
-          margin: 1em 0;
-          color: #6b7280;
-          font-style: italic;
+        .flip-page-content s,
+        .flip-page-content strike {
+          text-decoration: line-through;
         }
 
-        .page-number {
+        .flip-page-content mark {
+          background-color: #ffff00;
+          padding: 0.1em 0.2em;
+          border-radius: 2px;
+        }
+
+        /* BLOCKQUOTE Y CODE */
+        .flip-page-content blockquote {
+          border-left: 4px solid #ddd;
+          padding-left: 1em;
+          margin-left: 0;
+          margin-right: 0;
+          color: #666;
+          font-style: italic;
+          margin-top: 1em;
+          margin-bottom: 1em;
+        }
+
+        .flip-page-content code {
+          background-color: #f5f5f5;
+          padding: 0.2em 0.4em;
+          border-radius: 3px;
+          font-family: 'Courier New', monospace;
+          font-size: 0.9em;
+          color: #c7254e;
+        }
+
+        .flip-page-content pre {
+          background-color: #f5f5f5;
+          padding: 1em;
+          border-radius: 5px;
+          overflow-x: auto;
+          margin-top: 1em;
+          margin-bottom: 1em;
+          border: 1px solid #ddd;
+        }
+
+        .flip-page-content pre code {
+          background: none;
+          padding: 0;
+          color: inherit;
+        }
+
+        .flip-page-content hr {
+          border: none;
+          border-top: 2px solid #ddd;
+          margin: 2em 0;
+        }
+
+        /* IMÁGENES */
+        .flip-page-content img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 8px;
+          margin: 1em 0;
+          display: block;
+        }
+
+        /* NÚMERO DE PÁGINA */
+        .flip-page-number {
           position: absolute;
-          bottom: 1.5rem;
-          right: 2.5rem;
-          font-size: 0.875rem;
+          bottom: 8%;
+          right: 10%;
+          font-size: 1.2vh;
           color: #9ca3af;
           font-family: Georgia, serif;
         }
 
-        /* Portada */
-        .page-cover {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .flip-page-wrapper.first-page .flip-page-number,
+        .flip-page-wrapper.last-page .flip-page-number {
+          color: rgba(255, 255, 255, 0.7);
         }
 
-        /* Reverso de la portada */
-        .page-cover-back {
-          background: #ffffff;
-          border-left: 2px solid #e5e7eb;
-        }
-
-        .cover-back-content {
-          height: 100%;
-          padding: 3rem 2.5rem;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-        }
-
-        .cover-back-title {
-          font-size: 1.75rem;
-          font-weight: bold;
-          color: #1f2937;
-          margin-bottom: 1.5rem;
-          text-align: center;
-        }
-
-        .cover-back-text {
-          font-family: 'Times New Roman', serif;
-          font-size: 1.125rem;
-          line-height: 1.8;
-          color: #4b5563;
-          text-align: center;
-        }
-
-        .cover-back-text p {
-          margin-bottom: 1rem;
-        }
-
-        /* Contraportada interior */
-        .page-back-cover {
-          background: #ffffff;
-        }
-
-        .back-cover-content {
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 3rem;
-        }
-
-        .back-cover-text {
-          font-size: 2.5rem;
-          color: #6b7280;
-          font-family: Georgia, serif;
-          font-style: italic;
-        }
-
-        /* Contraportada trasera */
-        .page-back-cover-back {
-          background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-        }
-
-        .back-cover-back-ornament {
-          font-size: 3rem;
-          margin-bottom: 1.5rem;
-          opacity: 0.7;
-        }
-
-        .back-cover-back-title {
-          font-size: 1.5rem;
-          font-weight: 600;
-          opacity: 0.9;
-        }
-
-        .cover-content {
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          text-align: center;
-          color: white;
-          padding: 3rem;
-        }
-
-        .cover-title {
-          font-size: 3rem;
-          font-weight: bold;
-          margin-bottom: 2rem;
-          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-          line-height: 1.2;
-        }
-
-        .cover-decoration {
-          width: 100px;
-          height: 4px;
-          background: white;
-          margin: 1rem 0;
-          border-radius: 2px;
-        }
-
-        .cover-subtitle {
-          font-size: 1.25rem;
-          opacity: 0.9;
-          margin-top: 2rem;
-        }
-
-        .back-text {
-          font-size: 2rem;
-          opacity: 0.8;
-        }
-
-        /* Estilos comunes de portadas */
-        .page-cover .cover-content,
-        .page-back-cover-back .cover-content {
-          color: white;
-        }
-
-        @media (max-width: 768px) {
-          .page-content {
-            padding: 2rem 1.5rem;
+        /* ⭐ RESPONSIVE - Ajustar font-size según tamaño */
+        @media (max-height: 600px) {
+          .flip-page-content {
+            font-size: 1.5vh;
           }
-
-          .page-text {
-            font-size: 14px;
+          .flip-page-number {
+            font-size: 1vh;
           }
+        }
 
-          .cover-title {
-            font-size: 2rem;
+        @media (min-height: 900px) {
+          .flip-page-content {
+            font-size: 2vh;
+          }
+          .flip-page-number {
+            font-size: 1.4vh;
           }
         }
       `}</style>

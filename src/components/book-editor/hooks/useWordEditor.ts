@@ -39,7 +39,9 @@ interface UseWordEditorReturn {
   
   // Gestión de páginas
   addPage: () => void;
+  addSheet: () => void; // ⭐ NUEVO: Agregar hoja completa (2 páginas)
   deletePage: (pageIndex: number) => void;
+  deleteSheet: (sheetIndex: number) => void; // ⭐ NUEVO: Eliminar hoja completa
   
   // Imágenes y fondos
   addImage: (pageIndex: number, imageUrl: string) => void;
@@ -48,6 +50,13 @@ interface UseWordEditorReturn {
   
   // Exportar
   exportToFlipBook: () => any[];
+  
+  // Info de páginas
+  getCurrentSheet: () => number;
+  getTotalSheets: () => number;
+  isFirstPage: () => boolean;
+  isLastPage: () => boolean;
+  getPageSide: () => 'front' | 'back';
 }
 
 export const useWordEditor = ({
@@ -55,28 +64,66 @@ export const useWordEditor = ({
   onPagesChange
 }: UseWordEditorProps): UseWordEditorReturn => {
   
-  // Estado de páginas - SIN auto-paginación
+  // ============================================================
+  // ESTADO DE PÁGINAS - SIEMPRE EN PARES (múltiplos de 2)
+  // ============================================================
   const [pages, setPages] = useState<Page[]>(() => {
     if (initialPages.length > 0) {
-      return initialPages.map(page => ({
+      const normalized = initialPages.map(page => ({
         id: page.id || `page-${Date.now()}-${Math.random()}`,
         content: page.content || '<p></p>',
         image: page.image || null,
         background: page.background || null
       }));
+      
+      // Asegurar que siempre sea par (mínimo 2 páginas: portada frente/reverso)
+      if (normalized.length % 2 !== 0) {
+        normalized.push({
+          id: `page-${Date.now()}-${Math.random()}`,
+          content: '<p></p>',
+          image: null,
+          background: null
+        });
+      }
+      
+      return normalized.length >= 2 ? normalized : [
+        {
+          id: `page-${Date.now()}-1`,
+          content: '<p></p>',
+          image: null,
+          background: null
+        },
+        {
+          id: `page-${Date.now()}-2`,
+          content: '<p></p>',
+          image: null,
+          background: null
+        }
+      ];
     }
     
-    return [{
-      id: `page-${Date.now()}`,
-      content: '<p></p>',
-      image: null,
-      background: null
-    }];
+    // Libro nuevo: mínimo 2 páginas (portada frente y reverso)
+    return [
+      {
+        id: `page-${Date.now()}-1`,
+        content: '<p></p>',
+        image: null,
+        background: null
+      },
+      {
+        id: `page-${Date.now()}-2`,
+        content: '<p></p>',
+        image: null,
+        background: null
+      }
+    ];
   });
   
   const [currentPage, setCurrentPage] = useState(0);
   
-  // Editor TipTap
+  // ============================================================
+  // EDITOR TIPTAP
+  // ============================================================
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -133,7 +180,6 @@ export const useWordEditor = ({
       const currentContent = pages[currentPage].content;
       const editorContent = editor.getHTML();
       
-      // ✅ Solo actualizar si el contenido es diferente - SIN segundo parámetro
       if (editorContent !== currentContent) {
         editor.commands.setContent(currentContent);
       }
@@ -147,9 +193,34 @@ export const useWordEditor = ({
     }
   }, [pages, onPagesChange]);
   
-  /**
-   * Navegación entre páginas
-   */
+  // ============================================================
+  // FUNCIONES AUXILIARES - INFO DE PÁGINAS
+  // ============================================================
+  
+  const getCurrentSheet = useCallback(() => {
+    return Math.floor(currentPage / 2) + 1;
+  }, [currentPage]);
+  
+  const getTotalSheets = useCallback(() => {
+    return Math.floor(pages.length / 2);
+  }, [pages.length]);
+  
+  const isFirstPage = useCallback(() => {
+    return currentPage === 0;
+  }, [currentPage]);
+  
+  const isLastPage = useCallback(() => {
+    return currentPage === pages.length - 1;
+  }, [currentPage, pages.length]);
+  
+  const getPageSide = useCallback((): 'front' | 'back' => {
+    return currentPage % 2 === 0 ? 'front' : 'back';
+  }, [currentPage]);
+  
+  // ============================================================
+  // NAVEGACIÓN ENTRE PÁGINAS
+  // ============================================================
+  
   const goToPage = useCallback((pageIndex: number) => {
     if (pageIndex >= 0 && pageIndex < pages.length) {
       setCurrentPage(pageIndex);
@@ -168,46 +239,146 @@ export const useWordEditor = ({
     }
   }, [currentPage]);
   
+  // ============================================================
+  // GESTIÓN DE PÁGINAS - MODO LIBRO REAL
+  // ============================================================
+  
   /**
-   * Gestión de páginas
+   * Agregar una página individual (manteniendo pares)
+   * Si agregamos una página impar, automáticamente se agrega otra
    */
   const addPage = useCallback(() => {
-    const newPage: Page = {
-      id: `page-${Date.now()}-${Math.random()}`,
-      content: '<p></p>',
-      image: null,
-      background: null
-    };
+    const timestamp = Date.now();
+    const newPages: Page[] = [
+      {
+        id: `page-${timestamp}-${Math.random()}`,
+        content: '<p></p>',
+        image: null,
+        background: null
+      }
+    ];
     
-    setPages(prev => [...prev, newPage]);
+    // Si el total quedaría impar, agregar otra página automáticamente
+    if ((pages.length + 1) % 2 !== 0) {
+      newPages.push({
+        id: `page-${timestamp}-${Math.random()}-2`,
+        content: '<p></p>',
+        image: null,
+        background: null
+      });
+    }
     
-    // Ir automáticamente a la nueva página
+    setPages(prev => [...prev, ...newPages]);
+    
+    // Ir a la primera página nueva
     setTimeout(() => {
       setCurrentPage(pages.length);
     }, 0);
   }, [pages.length]);
   
+  /**
+   * ⭐ NUEVO: Agregar hoja completa (2 páginas: frente y reverso)
+   */
+  const addSheet = useCallback(() => {
+    const timestamp = Date.now();
+    const newSheet: Page[] = [
+      // Frente de la hoja
+      {
+        id: `page-${timestamp}-front`,
+        content: '<p></p>',
+        image: null,
+        background: null
+      },
+      // Reverso de la hoja
+      {
+        id: `page-${timestamp}-back`,
+        content: '<p></p>',
+        image: null,
+        background: null
+      }
+    ];
+    
+    setPages(prev => [...prev, ...newSheet]);
+    
+    // Ir al frente de la nueva hoja
+    setTimeout(() => {
+      setCurrentPage(pages.length);
+    }, 0);
+  }, [pages.length]);
+  
+  /**
+   * Eliminar una página (manteniendo pares)
+   * Si eliminamos una página, también eliminamos su par
+   */
   const deletePage = useCallback((pageIndex: number) => {
-    // NO permitir eliminar si solo hay 1 página
-    if (pages.length <= 1) {
+    // NO permitir eliminar si solo hay 2 páginas (mínimo del libro)
+    if (pages.length <= 2) {
+      alert('⚠️ No puedes eliminar más páginas. Un libro debe tener al menos 2 páginas (portada frente y reverso).');
       return;
     }
     
-    if (pageIndex >= 0 && pageIndex < pages.length) {
-      setPages(prev => prev.filter((_, i) => i !== pageIndex));
-      
-      // Ajustar página actual si es necesario
-      if (currentPage >= pageIndex && currentPage > 0) {
-        setCurrentPage(prev => prev - 1);
-      } else if (currentPage >= pages.length - 1) {
-        setCurrentPage(pages.length - 2);
-      }
+    if (pageIndex < 0 || pageIndex >= pages.length) return;
+    
+    // Determinar cuál es la página par que se debe eliminar también
+    const sheetIndex = Math.floor(pageIndex / 2);
+    const firstPageOfSheet = sheetIndex * 2;
+    
+    // Confirmar eliminación de la hoja completa
+    const sheetNumber = sheetIndex + 1;
+    if (!confirm(`¿Eliminar la hoja ${sheetNumber} completa (frente y reverso)?`)) {
+      return;
+    }
+    
+    // Eliminar ambas páginas de la hoja
+    setPages(prev => {
+      const updated = [...prev];
+      updated.splice(firstPageOfSheet, 2); // Eliminar 2 páginas
+      return updated;
+    });
+    
+    // Ajustar página actual
+    if (currentPage >= firstPageOfSheet) {
+      setCurrentPage(Math.max(0, firstPageOfSheet - 1));
     }
   }, [pages.length, currentPage]);
   
   /**
-   * Gestión de imágenes - FIXED
+   * ⭐ NUEVO: Eliminar hoja completa (frente y reverso)
    */
+  const deleteSheet = useCallback((sheetIndex: number) => {
+    const totalSheets = Math.floor(pages.length / 2);
+    
+    // NO permitir eliminar si solo hay 1 hoja
+    if (totalSheets <= 1) {
+      alert('⚠️ No puedes eliminar la única hoja del libro.');
+      return;
+    }
+    
+    if (sheetIndex < 0 || sheetIndex >= totalSheets) return;
+    
+    const sheetNumber = sheetIndex + 1;
+    if (!confirm(`¿Eliminar la hoja ${sheetNumber} completa (frente y reverso)?`)) {
+      return;
+    }
+    
+    const firstPageOfSheet = sheetIndex * 2;
+    
+    setPages(prev => {
+      const updated = [...prev];
+      updated.splice(firstPageOfSheet, 2);
+      return updated;
+    });
+    
+    // Ajustar página actual
+    if (currentPage >= firstPageOfSheet) {
+      setCurrentPage(Math.max(0, firstPageOfSheet - 1));
+    }
+  }, [pages.length, currentPage]);
+  
+  // ============================================================
+  // GESTIÓN DE IMÁGENES Y FONDOS
+  // ============================================================
+  
   const addImage = useCallback((pageIndex: number, imageUrl: string) => {
     setPages(prev => {
       const updated = [...prev];
@@ -234,9 +405,6 @@ export const useWordEditor = ({
     });
   }, []);
   
-  /**
-   * Gestión de fondos
-   */
   const setBackground = useCallback((pageIndex: number, background: string) => {
     setPages(prev => {
       const updated = [...prev];
@@ -250,9 +418,10 @@ export const useWordEditor = ({
     });
   }, []);
   
-  /**
-   * Exportar al formato FlipBook - FIXED
-   */
+  // ============================================================
+  // EXPORTAR
+  // ============================================================
+  
   const exportToFlipBook = useCallback(() => {
     return pages.map((page) => ({
       layout: 'TextCenterLayout',
@@ -273,10 +442,17 @@ export const useWordEditor = ({
     nextPage,
     prevPage,
     addPage,
+    addSheet,
     deletePage,
+    deleteSheet,
     addImage,
     removeImage,
     setBackground,
-    exportToFlipBook
+    exportToFlipBook,
+    getCurrentSheet,
+    getTotalSheets,
+    isFirstPage,
+    isLastPage,
+    getPageSide
   };
 };

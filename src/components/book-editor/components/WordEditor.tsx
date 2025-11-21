@@ -1,8 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { EditorContent } from '@tiptap/react';
-import { 
-  Image as ImageIcon, Palette, Settings, ChevronDown
-} from 'lucide-react';
+import { Palette, Settings, ChevronDown, Layers, FileText } from 'lucide-react';
 import { WordToolbar } from './WordToolbar';
 import { useWordEditor } from '../hooks/useWordEditor';
 
@@ -12,19 +10,17 @@ interface WordEditorProps {
   onSave?: (pages: any[]) => Promise<void>;
   onPreview?: () => void;
   onPageChange?: (pageIndex: number) => void;
-  onPagesUpdate?: (pages: any[]) => void; // ⭐ NUEVO
+  onPagesUpdate?: (pages: any[]) => void;
   hideHeader?: boolean;
 }
 
 export const WordEditor: React.FC<WordEditorProps> = ({
   initialPages = [],
   onPageChange,
-  onPagesUpdate, // ⭐ NUEVO
+  onPagesUpdate,
   hideHeader = false
 }) => {
-  const [showImagePanel, setShowImagePanel] = useState(false);
   const [showBackgroundPanel, setShowBackgroundPanel] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const backgroundInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -33,35 +29,24 @@ export const WordEditor: React.FC<WordEditorProps> = ({
     currentPage,
     totalPages,
     goToPage,
-    addPage,
-    deletePage,
-    addImage,
-    removeImage,
+    addSheet,
+    deleteSheet,
     setBackground,
-    exportToFlipBook
+    getCurrentSheet,
+    getTotalSheets,
+    isFirstPage,
+    isLastPage,
+    getPageSide
   } = useWordEditor({
     initialPages,
-    onPagesChange: onPagesUpdate // ⭐ Pasar el callback
+    onPagesChange: onPagesUpdate
   });
 
-  // Notificar cambios de página al padre
   React.useEffect(() => {
     if (onPageChange) {
       onPageChange(currentPage);
     }
   }, [currentPage, onPageChange]);
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const imageUrl = event.target?.result as string;
-      addImage(currentPage, imageUrl);
-    };
-    reader.readAsDataURL(file);
-  };
 
   const handleBackgroundUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -76,6 +61,9 @@ export const WordEditor: React.FC<WordEditorProps> = ({
   };
 
   const currentPageData = pages[currentPage];
+  const currentSheetNumber = getCurrentSheet();
+  const totalSheets = getTotalSheets();
+  const pageSide = getPageSide();
 
   if (!editor) {
     return (
@@ -92,55 +80,107 @@ export const WordEditor: React.FC<WordEditorProps> = ({
     <div className="h-full flex flex-col bg-gray-50">
       
       {/* Toolbar de formato */}
-      <WordToolbar 
-        editor={editor} 
-        onImageUpload={() => setShowImagePanel(!showImagePanel)}
-      />
+      <WordToolbar editor={editor} />
 
       {/* Área principal */}
       <div className="flex-1 flex overflow-hidden">
         
-        {/* Panel lateral izquierdo: Páginas */}
-        <div className="w-40 bg-white border-r border-gray-200 overflow-y-auto">
-          <div className="p-2 border-b border-gray-200">
-            <button
-              onClick={addPage}
-              className="w-full py-1.5 px-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs font-medium"
-            >
-              + Página
-            </button>
+        {/* Panel lateral izquierdo: Hojas */}
+        <div className="w-48 bg-white border-r border-gray-200 overflow-y-auto flex flex-col">
+          
+          <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200">
+            <div className="flex items-center gap-2 mb-2">
+              <Layers size={16} className="text-blue-600" />
+              <span className="text-xs font-bold text-gray-700">
+                Libro: {totalSheets} {totalSheets === 1 ? 'Hoja' : 'Hojas'}
+              </span>
+            </div>
+            <div className="text-xs text-gray-600">
+              {totalPages} páginas ({totalPages / 2} hojas)
+            </div>
           </div>
 
-          <div className="p-1.5 space-y-1.5">
-            {pages.map((page, index) => {
-              // Determinar si es portada o contraportada
-              const isFirstPage = index === 0;
-              const isLastPage = index === pages.length - 1;
+          <div className="p-2 border-b border-gray-200">
+            <button
+              onClick={addSheet}
+              className="w-full py-2 px-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 text-xs font-medium flex items-center justify-center gap-2 shadow-sm transition-all"
+            >
+              <Layers size={14} />
+              + Agregar Hoja
+            </button>
+            <p className="text-[10px] text-gray-500 mt-1 text-center">
+              Agrega 2 páginas (frente + reverso)
+            </p>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-2 space-y-3">
+            {Array.from({ length: totalSheets }, (_, sheetIndex) => {
+              const frontPageIndex = sheetIndex * 2;
+              const backPageIndex = sheetIndex * 2 + 1;
+              const frontPage = pages[frontPageIndex];
+              const backPage = pages[backPageIndex];
+              const isCurrentSheet = Math.floor(currentPage / 2) === sheetIndex;
               
               return (
-                <button
-                  key={page.id}
-                  onClick={() => goToPage(index)}
-                  className={`w-full p-2 rounded text-left transition-colors ${
-                    index === currentPage
-                      ? 'bg-blue-100 border-2 border-blue-500'
-                      : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
+                <div
+                  key={`sheet-${sheetIndex}`}
+                  className={`border-2 rounded-lg overflow-hidden transition-all ${
+                    isCurrentSheet
+                      ? 'border-blue-500 shadow-lg'
+                      : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-0.5">
-                    <div className="flex flex-col">
-                      <span className={`text-xs font-bold ${index === currentPage ? 'text-blue-700' : 'text-gray-700'}`}>
-                        {isFirstPage ? '📖 Portada' : isLastPage ? '📕 Contraportada' : `Pág. ${index + 1}`}
-                      </span>
-                      {(isFirstPage || isLastPage) && (
-                        <span className="text-[10px] text-gray-500 mt-0.5">
-                          Doble cara
-                        </span>
-                      )}
+                  <div className={`px-2 py-1.5 text-xs font-bold flex items-center justify-between ${
+                    isCurrentSheet
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'bg-gray-50 text-gray-600'
+                  }`}>
+                    <div className="flex items-center gap-1">
+                      <FileText size={12} />
+                      <span>Hoja {sheetIndex + 1}</span>
                     </div>
-                    {page.image && <ImageIcon size={10} className="text-green-600" />}
                   </div>
-                </button>
+
+                  <button
+                    onClick={() => goToPage(frontPageIndex)}
+                    className={`w-full p-2 text-left transition-colors border-b ${
+                      currentPage === frontPageIndex
+                        ? 'bg-blue-50 border-blue-200'
+                        : 'bg-white hover:bg-gray-50 border-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className={`text-xs font-semibold ${
+                        currentPage === frontPageIndex ? 'text-blue-700' : 'text-gray-700'
+                      }`}>
+                        {frontPageIndex === 0 ? '📖 Portada' : `Pág. ${frontPageIndex + 1}`}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-gray-500">
+                      Frente {frontPageIndex === 0 ? '(Exterior)' : ''}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => goToPage(backPageIndex)}
+                    className={`w-full p-2 text-left transition-colors ${
+                      currentPage === backPageIndex
+                        ? 'bg-blue-50'
+                        : 'bg-white hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className={`text-xs font-semibold ${
+                        currentPage === backPageIndex ? 'text-blue-700' : 'text-gray-700'
+                      }`}>
+                        {backPageIndex === pages.length - 1 ? '📕 Contraportada' : `Pág. ${backPageIndex + 1}`}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-gray-500">
+                      Reverso {backPageIndex === pages.length - 1 ? '(Exterior)' : ''}
+                    </span>
+                  </button>
+                </div>
               );
             })}
           </div>
@@ -150,48 +190,50 @@ export const WordEditor: React.FC<WordEditorProps> = ({
         <div className="flex-1 overflow-auto bg-gray-100 p-6">
           <div className="max-w-4xl mx-auto">
             
-            {/* Indicador de tipo de página */}
-            {(currentPage === 0 || currentPage === pages.length - 1) && (
-              <div className="mb-4 p-3 bg-purple-100 border-l-4 border-purple-500 rounded">
-                <p className="text-sm font-semibold text-purple-800">
-                  {currentPage === 0 ? '📖 Página de Portada (Doble cara)' : '📕 Página de Contraportada (Doble cara)'}
-                </p>
-                <p className="text-xs text-purple-600 mt-1">
-                  Esta página se mostrará en ambos lados en el libro. El frente tendrá fondo degradado automáticamente.
-                </p>
-              </div>
-            )}
-
-            {/* Imagen de la página */}
-            {currentPageData?.image && (
-              <div className="bg-white mb-3 rounded-lg shadow-lg overflow-hidden">
-                <div className="relative">
-                  <img
-                    src={currentPageData.image}
-                    alt="Imagen de página"
-                    className="w-full h-auto max-h-64 object-contain"
-                  />
-                  <button
-                    onClick={() => removeImage(currentPage)}
-                    className="absolute top-2 right-2 px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600"
-                  >
-                    Quitar
-                  </button>
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200">
+                  <span className="text-sm font-semibold text-gray-700">
+                    Hoja {currentSheetNumber} / {totalSheets}
+                  </span>
+                  <span className="text-xs text-gray-500 ml-2">
+                    ({pageSide === 'front' ? 'Frente' : 'Reverso'})
+                  </span>
                 </div>
+
+                {isFirstPage() && (
+                  <div className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
+                    📖 Portada Exterior
+                  </div>
+                )}
+                {isLastPage() && (
+                  <div className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
+                    📕 Contraportada Exterior
+                  </div>
+                )}
+              </div>
+
+              <div className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium">
+                Página {currentPage + 1} de {totalPages}
+              </div>
+            </div>
+
+            {(isFirstPage() || isLastPage()) && (
+              <div className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500 rounded-lg">
+                <p className="text-sm font-bold text-purple-800 mb-1">
+                  {isFirstPage() ? '📖 Página de Portada (Cara Exterior)' : '📕 Contraportada (Cara Exterior)'}
+                </p>
+                <p className="text-xs text-purple-600">
+                  Esta es la cara {isFirstPage() ? 'frontal' : 'trasera'} exterior del libro. 
+                  En el modo vista previa, se mostrará con un fondo degradado automáticamente.
+                </p>
               </div>
             )}
 
-            {/* Hoja de papel */}
+            {/* ⭐ HOJA DE PAPEL - TODO EN PORCENTAJES */}
             <div 
-              className={`bg-white shadow-2xl rounded-lg overflow-hidden ${
-                currentPage === 0 || currentPage === pages.length - 1 
-                  ? 'border-4 border-purple-300' 
-                  : ''
-              }`}
+              className="page-editor-container"
               style={{
-                minHeight: '29.7cm',
-                width: '21cm',
-                padding: '2.54cm',
                 ...(currentPageData?.background && {
                   backgroundImage: `url(${currentPageData.background})`,
                   backgroundSize: 'cover',
@@ -201,53 +243,27 @@ export const WordEditor: React.FC<WordEditorProps> = ({
             >
               <EditorContent 
                 editor={editor}
-                className="word-editor-wrapper"
+                className="page-editor-content"
               />
             </div>
           </div>
         </div>
 
         {/* Panel lateral derecho: Herramientas */}
-        <div className="w-52 bg-white border-l border-gray-200 overflow-y-auto">
+        <div className="w-56 bg-white border-l border-gray-200 overflow-y-auto">
           
-          {/* Imagen */}
-          <div className="p-3 border-b border-gray-200">
-            <button
-              onClick={() => setShowImagePanel(!showImagePanel)}
-              className="flex items-center justify-between w-full mb-2"
-            >
-              <div className="flex items-center gap-1.5">
-                <ImageIcon size={14} className="text-green-600" />
-                <span className="font-semibold text-xs text-gray-700">Imagen</span>
+          <div className="p-3 bg-gradient-to-br from-blue-50 to-purple-50 border-b border-gray-200">
+            <div className="text-center mb-2">
+              <div className="text-2xl mb-1">
+                {pageSide === 'front' ? '📄' : '📃'}
               </div>
-              <ChevronDown size={12} className={`transform transition-transform ${showImagePanel ? 'rotate-180' : ''}`} />
-            </button>
-
-            {showImagePanel && (
-              <div className="space-y-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full py-1.5 px-2 bg-green-500 text-white rounded hover:bg-green-600 text-xs"
-                >
-                  {currentPageData?.image ? 'Cambiar' : 'Agregar'}
-                </button>
-                {currentPageData?.image && (
-                  <button
-                    onClick={() => removeImage(currentPage)}
-                    className="w-full py-1.5 px-2 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
-                  >
-                    Quitar
-                  </button>
-                )}
+              <div className="text-xs font-bold text-gray-700">
+                {pageSide === 'front' ? 'FRENTE' : 'REVERSO'}
               </div>
-            )}
+              <div className="text-[10px] text-gray-500 mt-1">
+                Hoja {currentSheetNumber} de {totalSheets}
+              </div>
+            </div>
           </div>
 
           {/* Fondo */}
@@ -256,11 +272,11 @@ export const WordEditor: React.FC<WordEditorProps> = ({
               onClick={() => setShowBackgroundPanel(!showBackgroundPanel)}
               className="flex items-center justify-between w-full mb-2"
             >
-              <div className="flex items-center gap-1.5">
-                <Palette size={14} className="text-purple-600" />
-                <span className="font-semibold text-xs text-gray-700">Fondo</span>
+              <div className="flex items-center gap-2">
+                <Palette size={16} className="text-purple-600" />
+                <span className="font-semibold text-sm text-gray-700">Fondo</span>
               </div>
-              <ChevronDown size={12} className={`transform transition-transform ${showBackgroundPanel ? 'rotate-180' : ''}`} />
+              <ChevronDown size={14} className={`transform transition-transform ${showBackgroundPanel ? 'rotate-180' : ''}`} />
             </button>
 
             {showBackgroundPanel && (
@@ -274,142 +290,215 @@ export const WordEditor: React.FC<WordEditorProps> = ({
                 />
                 <button
                   onClick={() => backgroundInputRef.current?.click()}
-                  className="w-full py-1.5 px-2 bg-purple-500 text-white rounded hover:bg-purple-600 text-xs"
+                  className="w-full py-2 px-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 text-xs font-medium transition-colors"
                 >
-                  {currentPageData?.background ? 'Cambiar' : 'Agregar'}
+                  {currentPageData?.background ? '🔄 Cambiar' : '➕ Agregar'}
                 </button>
                 {currentPageData?.background && (
                   <button
                     onClick={() => setBackground(currentPage, '')}
-                    className="w-full py-1.5 px-2 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
+                    className="w-full py-2 px-3 bg-red-500 text-white rounded-lg hover:bg-red-600 text-xs font-medium transition-colors"
                   >
-                    Quitar
+                    🗑️ Quitar
                   </button>
                 )}
               </div>
             )}
           </div>
 
-          {/* Opciones */}
+          {/* Opciones de hoja */}
           <div className="p-3">
-            <div className="flex items-center gap-1.5 mb-2">
-              <Settings size={14} className="text-gray-600" />
-              <span className="font-semibold text-xs text-gray-700">Opciones</span>
+            <div className="flex items-center gap-2 mb-3">
+              <Settings size={16} className="text-gray-600" />
+              <span className="font-semibold text-sm text-gray-700">Opciones de Hoja</span>
             </div>
             
-            {/* Info de portadas */}
-            {(currentPage === 0 || currentPage === pages.length - 1) && (
-              <div className="mb-3 p-2 bg-purple-50 rounded text-xs">
+            {(isFirstPage() || isLastPage()) && (
+              <div className="mb-3 p-2 bg-purple-50 border border-purple-200 rounded text-xs">
                 <p className="text-purple-700 font-semibold mb-1">
                   ℹ️ Página especial
                 </p>
                 <p className="text-purple-600">
-                  {currentPage === 0 
-                    ? 'La portada aparecerá en el frente con fondo degradado morado.' 
-                    : 'La contraportada aparecerá en la parte trasera con fondo degradado.'}
+                  {isFirstPage() 
+                    ? 'Esta es la portada exterior del libro.' 
+                    : 'Esta es la contraportada exterior.'}
                 </p>
               </div>
             )}
             
             <button
               onClick={() => {
-                if (currentPage === 0) {
-                  alert('⚠️ No puedes eliminar la portada. Es la primera página del libro.');
-                  return;
-                }
-                if (currentPage === pages.length - 1 && pages.length > 1) {
-                  alert('⚠️ No puedes eliminar la contraportada. Elimina otras páginas primero.');
-                  return;
-                }
-                if (confirm('¿Eliminar esta página?')) {
-                  deletePage(currentPage);
-                }
+                const sheetIndex = Math.floor(currentPage / 2);
+                deleteSheet(sheetIndex);
               }}
-              disabled={totalPages <= 2}
-              className="w-full py-1.5 px-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+              disabled={totalSheets <= 1}
+              className="w-full py-2 px-3 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium transition-colors"
             >
-              Eliminar página
+              🗑️ Eliminar Hoja Completa
             </button>
             
-            {totalPages <= 2 && (
+            {totalSheets <= 1 && (
               <p className="text-xs text-gray-500 mt-2 text-center">
-                Mínimo 2 páginas (portada y contraportada)
+                Mínimo 1 hoja (2 páginas)
               </p>
             )}
           </div>
         </div>
       </div>
 
-      {/* Estilos */}
+      {/* ⭐ ESTILOS CON PORCENTAJES */}
       <style jsx global>{`
-        .word-editor-wrapper {
-          font-family: 'Times New Roman', serif;
-          font-size: 16px;
-          line-height: 1.5;
+        /* ===========================
+           CONTENEDOR DE PÁGINA - PORCENTAJES
+           =========================== */
+        .page-editor-container {
+          background: white;
+          box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+          border-radius: 8px;
+          overflow: hidden;
+          
+          /* ⭐ Dimensiones en proporción A4 con porcentajes */
+          width: 100%;
+          max-width: 21cm;
+          aspect-ratio: 210 / 297; /* Ratio A4 exacto */
+          
+          /* ⭐ Padding en porcentaje (12% = ~2.54cm en A4) */
+          padding: 12% 12%;
+          
+          box-sizing: border-box;
+          margin: 0 auto;
         }
 
-        .word-editor-content {
+        /* ===========================
+           CONTENIDO DEL EDITOR
+           =========================== */
+        .page-editor-content {
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+        }
+
+        .page-editor-content .ProseMirror {
           outline: none;
+          width: 100%;
+          height: 100%;
+          overflow-y: auto;
+          
+          /* ⭐ Tipografía base */
+          font-family: 'Times New Roman', serif;
+          font-size: 1rem; /* Base relativo */
+          line-height: 1.5;
+          color: #000;
         }
 
-        .word-editor-content p {
+        /* ===========================
+           TIPOGRAFÍA - EM RELATIVO
+           =========================== */
+        .page-editor-content p {
           margin-bottom: 0.5em;
+          margin-top: 0;
         }
 
-        .word-editor-content h1 {
+        .page-editor-content h1 {
           font-size: 2em;
           font-weight: bold;
-          margin-top: 0.5em;
-          margin-bottom: 0.5em;
+          margin-top: 0.67em;
+          margin-bottom: 0.67em;
+          line-height: 1.2;
         }
 
-        .word-editor-content h2 {
+        .page-editor-content h2 {
           font-size: 1.5em;
           font-weight: bold;
-          margin-top: 0.5em;
-          margin-bottom: 0.5em;
+          margin-top: 0.83em;
+          margin-bottom: 0.83em;
+          line-height: 1.2;
         }
 
-        .word-editor-content h3 {
+        .page-editor-content h3 {
           font-size: 1.17em;
           font-weight: bold;
-          margin-top: 0.5em;
-          margin-bottom: 0.5em;
+          margin-top: 1em;
+          margin-bottom: 1em;
+          line-height: 1.2;
         }
 
-        .word-editor-content ul,
-        .word-editor-content ol {
+        /* ===========================
+           LISTAS
+           =========================== */
+        .page-editor-content ul,
+        .page-editor-content ol {
           padding-left: 1.5em;
           margin-bottom: 0.5em;
+          margin-top: 0.5em;
         }
 
-        .word-editor-content blockquote {
+        .page-editor-content ul {
+          list-style-type: disc;
+        }
+
+        .page-editor-content ul ul {
+          list-style-type: circle;
+        }
+
+        .page-editor-content ol {
+          list-style-type: decimal;
+        }
+
+        .page-editor-content li {
+          margin-bottom: 0.25em;
+        }
+
+        /* ===========================
+           FORMATO
+           =========================== */
+        .page-editor-content strong,
+        .page-editor-content b {
+          font-weight: bold;
+        }
+
+        .page-editor-content em,
+        .page-editor-content i {
+          font-style: italic;
+        }
+
+        .page-editor-content u {
+          text-decoration: underline;
+        }
+
+        .page-editor-content s {
+          text-decoration: line-through;
+        }
+
+        .page-editor-content blockquote {
           border-left: 4px solid #ddd;
           padding-left: 1em;
           margin-left: 0;
           color: #666;
           font-style: italic;
+          margin-top: 1em;
+          margin-bottom: 1em;
         }
 
-        .word-editor-content code {
+        .page-editor-content code {
           background-color: #f5f5f5;
           padding: 0.2em 0.4em;
           border-radius: 3px;
           font-family: 'Courier New', monospace;
         }
 
-        .word-editor-content pre {
+        .page-editor-content pre {
           background-color: #f5f5f5;
           padding: 1em;
           border-radius: 5px;
           overflow-x: auto;
+          margin: 1em 0;
         }
 
-        .editor-image {
-          max-width: 100%;
-          height: auto;
-          border-radius: 8px;
-          margin: 1em 0;
+        .page-editor-content hr {
+          border: none;
+          border-top: 2px solid #ddd;
+          margin: 2em 0;
         }
       `}</style>
     </div>
