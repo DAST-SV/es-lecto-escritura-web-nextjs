@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookEditor/BookEditor.tsx
- * CORREGIDO: Endpoints correctos de tu API
+ * ACTUALIZADO: Con callbacks separados para IDs y Labels
  */
 
 "use client";
@@ -61,7 +61,7 @@ export function BookEditor({
 
   const [viewMode, setViewMode] = useState<'pages' | 'card'>('pages');
 
-  // Estados de metadatos
+  // Estados de metadatos (IDs para BD)
   const [selectedCategorias, setSelectedCategorias] = useState<(number | string)[]>(
     initialMetadata?.selectedCategorias || []
   );
@@ -77,6 +77,14 @@ export function BookEditor({
   const [selectedNivel, setSelectedNivel] = useState<number | null>(
     initialMetadata?.selectedNivel || null
   );
+
+  // Estados de labels (para mostrar en UI)
+  const [categoriasLabels, setCategoriasLabels] = useState<string[]>([]);
+  const [generosLabels, setGenerosLabels] = useState<string[]>([]);
+  const [valoresLabels, setValoresLabels] = useState<string[]>([]);
+  const [nivelLabel, setNivelLabel] = useState<string | null>(null);
+
+  // Otros metadatos
   const [autores, setAutores] = useState<string[]>(initialMetadata?.autores || []);
   const [personajes, setPersonajes] = useState<string[]>(initialMetadata?.personajes || []);
   const [descripcion, setDescripcion] = useState<string>(initialMetadata?.descripcion || "");
@@ -99,12 +107,6 @@ export function BookEditor({
     initialMetadata?.cardBackgroundUrl || null
   );
 
-  // Labels para la preview
-  const [categoriasLabels, setCategoriasLabels] = useState<string[]>([]);
-  const [generosLabels, setGenerosLabels] = useState<string[]>([]);
-  const [valoresLabels, setValoresLabels] = useState<string[]>([]);
-  const [nivelLabel, setNivelLabel] = useState<string | null>(null);
-
   const [isSaving, setIsSaving] = useState(false);
 
   // Hooks personalizados
@@ -123,37 +125,41 @@ export function BookEditor({
     bookRef
   });
 
-  // SOLUCIÓN: Usar componente MultiSelectFromTable que ya maneja los labels internamente
-  // En lugar de hacer fetch manual, pasar callbacks para recibir los labels seleccionados
-  
-  const handleCategoriasChange = useCallback((values: (number | string)[], labels?: string[]) => {
+  // Handlers para IDs (se guardan en BD)
+  const handleCategoriasChange = useCallback((values: (number | string)[]) => {
     setSelectedCategorias(values);
-    if (labels) {
-      setCategoriasLabels(labels);
-    }
   }, []);
 
-  const handleGenerosChange = useCallback((values: (number | string)[], labels?: string[]) => {
+  const handleGenerosChange = useCallback((values: (number | string)[]) => {
     setSelectedGeneros(values);
-    if (labels) {
-      setGenerosLabels(labels);
-    }
   }, []);
 
-  const handleValoresChange = useCallback((values: (number | string)[], labels?: string[]) => {
+  const handleValoresChange = useCallback((values: (number | string)[]) => {
     setSelectedValores(values);
-    if (labels) {
-      setValoresLabels(labels);
-    }
   }, []);
 
-  const handleNivelChange = useCallback((value: number | null, label?: string) => {
+  const handleNivelChange = useCallback((value: number | null) => {
     setSelectedNivel(value);
-    if (label) {
-      setNivelLabel(label);
-    }
   }, []);
 
+  // Handlers para Labels (se muestran en UI)
+  const handleCategoriasLabelsChange = useCallback((labels: string[]) => {
+    setCategoriasLabels(labels);
+  }, []);
+
+  const handleGenerosLabelsChange = useCallback((labels: string[]) => {
+    setGenerosLabels(labels);
+  }, []);
+
+  const handleValoresLabelsChange = useCallback((labels: string[]) => {
+    setValoresLabels(labels);
+  }, []);
+
+  const handleNivelLabelChange = useCallback((label: string | null) => {
+    setNivelLabel(label);
+  }, []);
+
+  // Handler para guardar
   const handleSave = useCallback(async () => {
     const metadata: BookMetadata = {
       selectedCategorias,
@@ -398,10 +404,14 @@ export function BookEditor({
               onPortadaChange={handlePortadaChange}
               onCardBackgroundChange={handleCardBackgroundChange}
               onCategoriasChange={handleCategoriasChange}
+              onCategoriasLabelsChange={handleCategoriasLabelsChange}
               onGenerosChange={handleGenerosChange}
+              onGenerosLabelsChange={handleGenerosLabelsChange}
               onEtiquetasChange={setSelectedEtiquetas}
               onValoresChange={handleValoresChange}
+              onValoresLabelsChange={handleValoresLabelsChange}
               onNivelChange={handleNivelChange}
+              onNivelLabelChange={handleNivelLabelChange}
             />
           )}
         </div>
@@ -426,6 +436,7 @@ export function BookEditor({
                 backgroundUrl={cardBackgroundUrl || portadaUrl}
                 titulo={titulo}
                 autores={autores}
+                personajes={personajes}
                 descripcion={descripcion}
                 categorias={categoriasLabels}
                 generos={generosLabels}

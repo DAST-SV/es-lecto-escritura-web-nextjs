@@ -1,8 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookEditor/LiteraryMetadataForm.tsx
- * 
- * Formulario profesional para editar metadatos del libro
- * CORREGIDO: Sin portada en imágenes, solo fondo de ficha
+ * ACTUALIZADO: Con callbacks para IDs y Labels
  */
 
 'use client';
@@ -28,17 +26,26 @@ interface LiteraryMetadataFormProps {
   selectedEtiquetas: (number | string)[];
   selectedValores: (number | string)[];
   selectedNivel: number | null;
+  
   onTituloChange: (value: string) => void;
   onDescripcionChange: (value: string) => void;
   onAutoresChange: (values: string[]) => void;
   onPersonajesChange: (values: string[]) => void;
   onPortadaChange: (value: File | null) => void;
   onCardBackgroundChange: (file: File | null) => void;
+  
+  // Callbacks para IDs
   onCategoriasChange: (values: (number | string)[]) => void;
   onGenerosChange: (values: (number | string)[]) => void;
   onEtiquetasChange: (values: (number | string)[]) => void;
   onValoresChange: (values: (number | string)[]) => void;
   onNivelChange: (value: number | null) => void;
+  
+  // Callbacks para Labels
+  onCategoriasLabelsChange: (labels: string[]) => void;
+  onGenerosLabelsChange: (labels: string[]) => void;
+  onValoresLabelsChange: (labels: string[]) => void;
+  onNivelLabelChange: (label: string | null) => void;
 }
 
 export function LiteraryMetadataForm({
@@ -59,10 +66,14 @@ export function LiteraryMetadataForm({
   onPersonajesChange,
   onCardBackgroundChange,
   onCategoriasChange,
+  onCategoriasLabelsChange,
   onGenerosChange,
+  onGenerosLabelsChange,
   onEtiquetasChange,
   onValoresChange,
+  onValoresLabelsChange,
   onNivelChange,
+  onNivelLabelChange,
 }: LiteraryMetadataFormProps) {
 
   const [activeTab, setActiveTab] = useState<'basic' | 'classification' | 'image'>('basic');
@@ -133,6 +144,7 @@ export function LiteraryMetadataForm({
               </label>
               <textarea
                 value={descripcion}
+                maxLength={800}
                 onChange={(e) => onDescripcionChange(e.target.value)}
                 className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none text-gray-900 transition-all"
                 rows={4}
@@ -183,6 +195,7 @@ export function LiteraryMetadataForm({
                 values={selectedCategorias}
                 placeholder="Selecciona una categoría..."
                 onChange={onCategoriasChange}
+                onLabelsChange={onCategoriasLabelsChange}
                 maxItems={1}
               />
             </div>
@@ -200,6 +213,7 @@ export function LiteraryMetadataForm({
                 values={selectedGeneros}
                 placeholder="Hasta 2 géneros..."
                 onChange={onGenerosChange}
+                onLabelsChange={onGenerosLabelsChange}
                 maxItems={2}
               />
             </div>
@@ -217,6 +231,7 @@ export function LiteraryMetadataForm({
                 value={selectedNivel}
                 placeholder="Selecciona un nivel..."
                 onChange={(value) => onNivelChange(value as number)}
+                onLabelChange={onNivelLabelChange}
               />
             </div>
 
@@ -233,6 +248,7 @@ export function LiteraryMetadataForm({
                 values={selectedValores}
                 placeholder="Hasta 5 valores..."
                 onChange={onValoresChange}
+                onLabelsChange={onValoresLabelsChange}
                 maxItems={5}
               />
             </div>
@@ -256,10 +272,9 @@ export function LiteraryMetadataForm({
           </div>
         )}
 
-        {/* TAB: Imagen (solo fondo de ficha) */}
+        {/* TAB: Imagen */}
         {activeTab === 'image' && (
           <div className="space-y-4">
-            {/* Imagen de fondo de ficha */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Imagen de Fondo de la Ficha

@@ -10,7 +10,7 @@ interface SelectFromTableAsyncProps<T extends Record<string, any>> {
   value: number | string | null;
   placeholder?: string;
   onChange: (value: number | string | null) => void;
-  onLabelChange?: (label: string | null) => void; // ⭐ NUEVO
+  onLabelChange?: (label: string | null) => void; // ⭐ YA LO TIENES
 }
 
 export default function SelectFromTableAsync<T extends Record<string, any>>({
@@ -21,7 +21,7 @@ export default function SelectFromTableAsync<T extends Record<string, any>>({
   value,
   placeholder = 'Selecciona...',
   onChange,
-  onLabelChange, // ⭐ NUEVO
+  onLabelChange, // ⭐ YA LO TIENES
 }: SelectFromTableAsyncProps<T>) {
   const supabase = createClient();
   const [selectedOption, setSelectedOption] = useState<{ value: number | string; label: string } | null>(null);
@@ -31,16 +31,12 @@ export default function SelectFromTableAsync<T extends Record<string, any>>({
       loadSelectedOption();
     } else {
       setSelectedOption(null);
-      if (onLabelChange) onLabelChange(null);
+      // ⭐ MEJORADO: Notificar null inmediatamente
+      if (onLabelChange) {
+        onLabelChange(null);
+      }
     }
-  }, [value]);
-
-  // ⭐ NUEVO: Notificar cambios en el label
-  useEffect(() => {
-    if (onLabelChange && selectedOption) {
-      onLabelChange(selectedOption.label);
-    }
-  }, [selectedOption, onLabelChange]);
+  }, [value]); // ⚠️ No incluir onLabelChange aquí para evitar loops
 
   const loadOptions = async (inputValue: string) => {
     try {
@@ -80,15 +76,29 @@ export default function SelectFromTableAsync<T extends Record<string, any>>({
           label: String(data[labelField]),
         };
         setSelectedOption(option);
+        
+        // ⭐ MEJORADO: Notificar label aquí, justo después de cargarlo
+        if (onLabelChange) {
+          onLabelChange(option.label);
+        }
       }
     } catch (error) {
       console.error('Error cargando valor seleccionado:', error);
+      setSelectedOption(null);
+      if (onLabelChange) {
+        onLabelChange(null);
+      }
     }
   };
 
   const handleChange = (selected: any) => {
     setSelectedOption(selected);
     onChange(selected ? selected.value : null);
+    
+    // ⭐ MEJORADO: Notificar label aquí también cuando el usuario cambia la selección
+    if (onLabelChange) {
+      onLabelChange(selected ? selected.label : null);
+    }
   };
 
   return (
