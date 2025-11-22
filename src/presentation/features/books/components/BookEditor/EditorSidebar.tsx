@@ -32,7 +32,7 @@ interface EditorSidebarProps {
   setCurrentPage: (page: number) => void;
   imageHandler: UseImageHandlerReturn;
   navigation: UseBookNavigationReturn;
-  
+
   // Metadatos (no se usan aquí, pero se pasan al padre)
   selectedCategorias: (number | string)[];
   selectedGeneros: (number | string)[];
@@ -45,7 +45,7 @@ interface EditorSidebarProps {
   titulo: string;
   portada: File | null;
   portadaUrl?: string | null;
-  
+
   // Handlers
   onCategoriasChange: (values: (number | string)[]) => void;
   onGenerosChange: (values: (number | string)[]) => void;
@@ -96,7 +96,7 @@ export function EditorSidebar({
   onAddPage,
   onDeletePage,
 }: EditorSidebarProps) {
-  
+
   const currentPageData = pages[currentPage];
   const [activeTab, setActiveTab] = useState<string>('content');
   const isFirstPage = currentPage === 0;
@@ -108,7 +108,7 @@ export function EditorSidebar({
         { id: 'background', icon: Paintbrush, label: 'Fondo' }
       ];
     }
-    
+
     return [
       { id: 'content', icon: FileText, label: 'Contenido' },
       { id: 'design', icon: Layout, label: 'Diseño' },
@@ -126,15 +126,15 @@ export function EditorSidebar({
           {tabs.map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
-            
+
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`
                   flex-1 flex flex-col items-center gap-1 py-2 text-xs font-medium transition-colors
-                  ${isActive 
-                    ? 'bg-white text-indigo-600 border-b-2 border-indigo-600' 
+                  ${isActive
+                    ? 'bg-white text-indigo-600 border-b-2 border-indigo-600'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }
                 `}
@@ -190,6 +190,18 @@ export function EditorSidebar({
               pageNumber={currentPage + 1}
               onImageChange={imageHandler.handleImageChange}
               onRemoveImage={imageHandler.removeImage}
+              currentImage={currentPageData.image}
+              imagePosition={currentPageData.imagePosition || 'center'}
+              onPositionChange={(position) => {
+                setPages(prev => {
+                  const newPages = [...prev];
+                  newPages[currentPage] = {
+                    ...newPages[currentPage],
+                    imagePosition: position
+                  };
+                  return newPages;
+                });
+              }}
             />
 
             <BackgroundControls
@@ -223,7 +235,7 @@ export function EditorSidebar({
             onPersonajesChange={onPersonajesChange}
             onDescripcionChange={onDescripcionChange}
             onTituloChange={onTituloChange}
-            onSave={async () => {}}
+            onSave={async () => { }}
           />
         )}
 

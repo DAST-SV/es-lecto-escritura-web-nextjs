@@ -1,6 +1,3 @@
-import React from 'react';
-import { layouts } from '@/src/components/components-for-books/layouts';
-
 interface PageLayoutSelectorProps {
   currentLayout: string;
   pageNumber: number;
@@ -22,13 +19,9 @@ export function PageLayoutSelector({
         onChange={(e) => onLayoutChange(e.target.value)}
         className="w-full p-2 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
       >
-        {Object.keys(layouts).map(layoutName => (
+        {Object.keys(layoutRegistry).map(layoutName => (
           <option key={layoutName} value={layoutName}>
-            {layoutName
-              .replace(/Layout$/, '')
-              .replace(/([A-Z])/g, ' $1')
-              .trim()
-            }
+            {layoutLabels[layoutName as LayoutType]}
           </option>
         ))}
       </select>

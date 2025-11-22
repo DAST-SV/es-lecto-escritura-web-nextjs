@@ -1,23 +1,35 @@
-// src/types/index.ts
-import { layouts } from "@/src/components/components-for-books/layouts";
-import  {backgrounds } from "./backgrounds"; 
-import  {borders} from "./borders"
+// src/typings/types-page-book/index.ts
+import { layoutRegistry } from "@/src/presentation/features/layouts/registry"; // ✅ NUEVO
+import { backgrounds } from "./backgrounds"; 
+import { borders } from "./borders"
 
-export type LayoutType = keyof typeof layouts;
+export type LayoutType = keyof typeof layoutRegistry; // ✅ CORREGIDO
 export type borderstype = keyof typeof borders;
 export type backgroundstype = keyof typeof backgrounds;
 
+// ⭐ NUEVO: Tipo para posición de imagen
+export type ImagePosition = 
+  | 'top-left' 
+  | 'top-center' 
+  | 'top-right'
+  | 'center-left' 
+  | 'center' 
+  | 'center-right'
+  | 'bottom-left' 
+  | 'bottom-center' 
+  | 'bottom-right'
+  | 'full';
 
 ////
-//Este tipo se usa para la construccion del json para visualizar el libro
+// Este tipo se usa para la construcción del JSON para visualizar el libro
 ////
-// Tipo de cada página individual
 export interface Page {
   layout: LayoutType;
   animation?: string;
   title?: string;
   text?: string;
   image?: string;
+  imagePosition?: ImagePosition; // ⭐ NUEVO
   audio?: string;
   interactiveGame?: string;
   items?: string[];
@@ -26,17 +38,18 @@ export interface Page {
 }
 
 ////
-//Este tipo se usa para la creacion y editado de los libros
+// Este tipo se usa para la creación y editado de los libros
 ////
 export interface page {
-    id: string;
-    layout: string;
-    title?: string;
-    text?: string;
-    image?: string | null;         // URL para mostrar en la UI
-    file?: Blob | File | null;     // Archivo real para subir
-    background?: string | null;    // color o URL para mostrar
-    backgroundFile?: Blob | File | null; // Archivo real del background
+  id: string;
+  layout: string;
+  title?: string;
+  text?: string;
+  image?: string | null;         // URL para mostrar en la UI
+  file?: Blob | File | null;     // Archivo real para subir
+  imagePosition?: ImagePosition; // ⭐ NUEVO
+  background?: string | null;    // color o URL para mostrar
+  backgroundFile?: Blob | File | null; // Archivo real del background
 }
 
 export interface LibroUI {
@@ -45,7 +58,6 @@ export interface LibroUI {
   caption: string;
   description?: string;
 }
-
 
 // Tipo del libro completo
 export interface Story {

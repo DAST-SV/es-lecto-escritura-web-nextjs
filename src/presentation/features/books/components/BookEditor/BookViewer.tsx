@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import type { page, Page } from '@/src/typings/types-page-book/index';
-import { PageRenderer } from "@/src/components/components-for-books/book/utils/PageRenderer";
+import { PageRenderer } from "@/src/presentation/features/layouts/components/PageRenderer";
 import type { LayoutType, backgroundstype } from '@/src/typings/types-page-book/index';
 
 interface PageRendererIndexProps {
