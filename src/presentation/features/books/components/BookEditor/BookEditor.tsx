@@ -20,12 +20,12 @@ import { useBookNavigation } from "../../hooks/useBookNavigation";
 // Componentes
 import { BookViewer } from "./BookViewer";
 import { EditorSidebar } from "./EditorSidebar";
-import { LiteraryCardView } from "./LiteraryCardView";
-import { LiteraryMetadataForm } from "./LiteraryMetadataForm";
 
 // Servicios
 import { saveBookJson, BookMetadata } from "@/src/infrastructure/services/bookService";
 import type { page } from "@/src/typings/types-page-book/index";
+import LiteraryCardView from "./LiteraryCardView";
+import { LiteraryMetadataForm } from "./LiteraryMetadataForm";
 
 interface BookEditorProps {
   initialPages?: page[];
