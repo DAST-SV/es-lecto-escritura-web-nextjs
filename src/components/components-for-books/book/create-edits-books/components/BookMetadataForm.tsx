@@ -121,7 +121,7 @@ export const BookMetadataForm: React.FC<BookMetadataFormProps> = ({
       {/* Selector múltiple de categorías */}
       <div className="mb-6 p-4 bg-teal-50 rounded-lg">
         <label className="block text-sm font-bold text-gray-700 mb-3">
-          📚 Tipo de Lectura (máximo 1):
+          📚 Tipo de Lectura (máximo 3):
         </label>
         <MultiSelectFromTable<{ id_categoria: number; nombre: string }>
           table="categorias"
@@ -157,7 +157,7 @@ export const BookMetadataForm: React.FC<BookMetadataFormProps> = ({
       {/* Selector múltiple de valores */}
       <div className="mb-6 p-4 bg-cyan-50 rounded-lg">
         <label className="block text-sm font-bold text-gray-700 mb-3">
-          🎭 Valores (máximo 5):
+          🎭 Valores (máximo 2):
         </label>
         <MultiSelectFromTable<{ id_valor: number; nombre: string }>
           table="valores"
@@ -168,7 +168,7 @@ export const BookMetadataForm: React.FC<BookMetadataFormProps> = ({
           placeholder="Selecciona valores..."
           onChange={onValoresChange}
           onLabelsChange={onValoresLabelsChange}
-          maxItems={5}
+          maxItems={2}
         />
       </div>
 

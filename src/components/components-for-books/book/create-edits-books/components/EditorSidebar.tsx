@@ -1,15 +1,12 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
-  Heading, FileText, Layout, Image, Paintbrush, X, AlertCircle
+  Eye, FileText, Heading, Layout, Image, Paintbrush, Plus, Trash2, X
 } from 'lucide-react';
 
 // Tipos
 import type { page } from '@/src/typings/types-page-book/index';
 import type { UseImageHandlerReturn } from '../hooks/useImageHandler';
 import type { UseBookNavigationReturn } from '../hooks/useBookNavigation';
-
-// 🔥 NUEVO: Hook de paginación tipo Word
-import { useWordLikePagination } from '../hooks/useWordLikePagination';
 
 // Componentes de edición
 import { PageLayoutSelector } from './PageLayoutSelector';
@@ -22,7 +19,6 @@ interface EditorSidebarProps {
   pages: page[];
   currentPage: number;
   setPages: React.Dispatch<React.SetStateAction<page[]>>;
-  setCurrentPage: (page: number) => void; // 🔥 NUEVA PROP
   imageHandler: UseImageHandlerReturn;
   navigation: UseBookNavigationReturn;
   
@@ -32,8 +28,7 @@ interface EditorSidebarProps {
   selectedEtiquetas: (number | string)[];
   selectedValores: (number | string)[];
   selectedNivel: number | null;
-  autores: string[]; // 🔥 CAMBIADO de autor a autores
-  personajes: string[]; // 🔥 NUEVO
+  autores : string[];
   descripcion: string;
   titulo: string;
   portada: File | null;
@@ -45,8 +40,7 @@ interface EditorSidebarProps {
   onEtiquetasChange: (values: (number | string)[]) => void;
   onValoresChange: (values: (number | string)[]) => void;
   onNivelChange: (value: number | null) => void;
-  onAutoresChange: (values: string[]) => void; // 🔥 CAMBIADO
-  onPersonajesChange: (values: string[]) => void; // 🔥 NUEVO
+  onAutoresChange: (value: (string[])) => void;
   onDescripcionChange: (value: string) => void;
   onTituloChange: (value: string) => void;
   onPortadaChange: (value: File | null) => void;
@@ -61,7 +55,6 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
   pages,
   currentPage,
   setPages,
-  setCurrentPage, // 🔥 NUEVO
   imageHandler,
   navigation,
   selectedCategorias,
@@ -69,8 +62,7 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
   selectedEtiquetas,
   selectedValores,
   selectedNivel,
-  autores, // 🔥 CAMBIADO
-  personajes, // 🔥 NUEVO
+  autores,
   descripcion,
   titulo,
   portada,
@@ -80,8 +72,7 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
   onEtiquetasChange,
   onValoresChange,
   onNivelChange,
-  onAutoresChange, // 🔥 CAMBIADO
-  onPersonajesChange, // 🔥 NUEVO
+  onAutoresChange,
   onDescripcionChange,
   onTituloChange,
   onPortadaChange,
@@ -93,137 +84,52 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
 }) => {
   const currentPageData = pages[currentPage];
   const [activeTab, setActiveTab] = useState<string>('title');
-  const [autoPaginationEnabled, setAutoPaginationEnabled] = useState(true);
-  const [maxCharsPerPage, setMaxCharsPerPage] = useState(650);
 
   // Detectar tipo de página
   const isFirstPage = currentPage === 0;
+  const isLastPage = currentPage === pages.length - 1;
+  const canDeletePage = pages.length > 2;
 
-  // 🔥 IMPORTANTE: Definir todos los hooks ANTES de cualquier return condicional
+  // Tabs contextuales según la página - SIN portada ni metadata
   const tabs = useMemo(() => {
-    return [
-      { id: 'title', icon: Heading, label: 'Título' },
-      { id: 'text', icon: FileText, label: 'Texto' },
-      { id: 'layout', icon: Layout, label: 'Diseño' },
-      { id: 'images', icon: Image, label: 'Imagen' },
-      { id: 'background', icon: Paintbrush, label: 'Fondo' }
+    const allTabs = [
+      { id: 'title', icon: Heading, label: 'Título', show: true },
+      { id: 'text', icon: FileText, label: 'Texto', show: true },
+      { id: 'layout', icon: Layout, label: 'Diseño', show: true },
+      { id: 'images', icon: Image, label: 'Imagen', show: true },
+      { id: 'background', icon: Paintbrush, label: 'Fondo', show: true }
     ];
+
+    return allTabs.filter(tab => tab.show);
   }, []);
 
-  // 🔥 NUEVO: Hook de paginación tipo Word (bidireccional)
-  const { handleTextChange: handleWordTextChange, isProcessing } = useWordLikePagination({
-    pages,
-    currentPage,
-    setPages,
-    setCurrentPage,
-    enabled: autoPaginationEnabled,
-    maxCharsPerPage
-  });
-
-  // Validar que el tab activo sea válido
+  // Verificar que activeTab sea válido
   React.useEffect(() => {
     const validTabs = tabs.map(t => t.id);
     if (!validTabs.includes(activeTab)) {
-      setActiveTab('title');
+      setActiveTab(tabs[0]?.id || 'title');
     }
   }, [tabs, activeTab]);
 
-  // Validar que existe currentPageData
+  const currentTab = tabs.find(t => t.id === activeTab);
+
   if (!currentPageData) return null;
-
-  // 🔥 SI ES PÁGINA 1: Solo mostrar fondo
-  if (isFirstPage) {
-    return (
-      <div className="h-full flex flex-col bg-white">
-        <div className="lg:hidden flex-shrink-0 bg-purple-600 text-white px-3 py-2 flex items-center justify-between">
-          <h2 className="font-semibold text-sm">🎨 Portada</h2>
-          <button
-            onClick={onCloseSidebar}
-            className="p-1 hover:bg-white/20 rounded transition-colors"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
-            <p className="text-sm text-purple-900 font-medium">
-              📄 Página 1 - Portada
-            </p>
-            <p className="text-xs text-purple-700 mt-1">
-              Solo puedes editar el fondo de esta página
-            </p>
-          </div>
-
-          <BackgroundControls
-            currentBackground={currentPageData.background}
-            hasBackground={!!currentPageData.background}
-            pageNumber={currentPage + 1}
-            onBackgroundChange={onBackgroundChange}
-            onBackgroundFileChange={imageHandler.handleBackgroundFile}
-            onRemoveBackground={imageHandler.removeBackground}
-          />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="h-full flex flex-col bg-white">
-      {/* Header móvil */}
+      {/* Header compacto (móvil) */}
       <div className="lg:hidden flex-shrink-0 bg-indigo-600 text-white px-3 py-2 flex items-center justify-between">
         <h2 className="font-semibold text-sm">🛠️ Editor</h2>
         <button
           onClick={onCloseSidebar}
           className="p-1 hover:bg-white/20 rounded transition-colors"
+          aria-label="Cerrar panel"
         >
           <X size={20} />
         </button>
       </div>
 
-      {/* Toggle Auto-Paginación */}
-      <div className="flex-shrink-0 bg-blue-50 border-b border-blue-200 px-3 py-2">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={autoPaginationEnabled}
-            onChange={(e) => setAutoPaginationEnabled(e.target.checked)}
-            className="w-4 h-4 text-blue-600 rounded"
-          />
-          <span className="text-xs font-medium text-blue-900">
-            📄 Auto-paginación tipo Word
-          </span>
-        </label>
-        {autoPaginationEnabled && (
-          <div className="mt-2 ml-6">
-            <div className="flex items-center justify-between text-[10px] text-blue-700 mb-1">
-              <span>Caracteres por página:</span>
-              <span className="font-bold">{maxCharsPerPage}</span>
-            </div>
-            <input
-              type="range"
-              min="400"
-              max="900"
-              step="50"
-              value={maxCharsPerPage}
-              onChange={(e) => setMaxCharsPerPage(Number(e.target.value))}
-              className="w-full h-1 bg-blue-200 rounded-lg appearance-none cursor-pointer"
-            />
-            <div className="flex justify-between text-[9px] text-blue-600 mt-1">
-              <span>Menos</span>
-              <span>Más</span>
-            </div>
-          </div>
-        )}
-        {autoPaginationEnabled && (
-          <p className="text-[10px] text-blue-700 mt-2">
-            <AlertCircle size={10} className="inline mr-1" />
-            {isProcessing ? '⚙️ Procesando...' : '✅ Escribe y borra libremente'}
-          </p>
-        )}
-      </div>
-
-      {/* Tabs horizontales */}
+      {/* Tabs - UNA SOLA FILA HORIZONTAL */}
       <div className="flex-shrink-0 border-b border-gray-200 bg-white overflow-x-auto">
         <div className="flex gap-1 p-1.5 min-w-max">
           {tabs.map(tab => {
@@ -251,57 +157,100 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
         </div>
       </div>
 
-      {/* Contenido del tab activo */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {activeTab === 'title' && (
-          <RichTitleEditor
-            value={currentPageData.title || ''}
-            onChange={(html) => {
-              setPages(prev => {
-                const newPages = [...prev];
-                newPages[currentPage] = { ...newPages[currentPage], title: html };
-                return newPages;
-              });
-            }}
-            pageNumber={currentPage + 1}
-          />
-        )}
+      {/* Contenido del tab activo - MÁS COMPACTO */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-3 max-w-4xl mx-auto">
+          {/* TÍTULO */}
+          {activeTab === 'title' && (
+            <div className="space-y-2">
+              <div className="bg-blue-50 border-l-4 border-blue-500 p-2 rounded">
+                <h3 className="font-semibold text-blue-900 text-sm">✏️ Título</h3>
+                <p className="text-xs text-blue-700">Escribe un título llamativo</p>
+              </div>
+              <RichTitleEditor
+                value={currentPageData.title || ''}
+                onChange={(html) => {
+                  setPages(prev => {
+                    const newPages = [...prev];
+                    newPages[currentPage] = { ...newPages[currentPage], title: html };
+                    return newPages;
+                  });
+                }}
+                pageNumber={currentPage + 1}
+              />
+            </div>
+          )}
 
-        {activeTab === 'text' && (
-          <RichTextEditor
-            value={currentPageData.text || ''}
-            onChange={handleWordTextChange}
-            pageNumber={currentPage + 1}
-          />
-        )}
+          {/* TEXTO */}
+          {activeTab === 'text' && (
+            <div className="space-y-2">
+              <div className="bg-cyan-50 border-l-4 border-cyan-500 p-2 rounded">
+                <h3 className="font-semibold text-cyan-900 text-sm">📝 Contenido</h3>
+                <p className="text-xs text-cyan-700">Escribe la historia</p>
+              </div>
+              <RichTextEditor
+                value={currentPageData.text || ''}
+                onChange={(html) => {
+                  setPages(prev => {
+                    const newPages = [...prev];
+                    newPages[currentPage] = { ...newPages[currentPage], text: html };
+                    return newPages;
+                  });
+                }}
+                pageNumber={currentPage + 1}
+              />
+            </div>
+          )}
 
-        {activeTab === 'layout' && (
-          <PageLayoutSelector
-            currentLayout={currentPageData.layout}
-            pageNumber={currentPage + 1}
-            onLayoutChange={onLayoutChange}
-          />
-        )}
+          {/* DISEÑO */}
+          {activeTab === 'layout' && (
+            <div className="space-y-2">
+              <div className="bg-purple-50 border-l-4 border-purple-500 p-2 rounded">
+                <h3 className="font-semibold text-purple-900 text-sm">🎨 Diseño</h3>
+                <p className="text-xs text-purple-700">Elige la distribución</p>
+              </div>
+              <PageLayoutSelector
+                currentLayout={currentPageData.layout}
+                pageNumber={currentPage + 1}
+                onLayoutChange={onLayoutChange}
+              />
+            </div>
+          )}
 
-        {activeTab === 'images' && (
-          <ImageControls
-            hasImage={!!currentPageData.image}
-            pageNumber={currentPage + 1}
-            onImageChange={imageHandler.handleImageChange}
-            onRemoveImage={imageHandler.removeImage}
-          />
-        )}
+          {/* IMAGEN */}
+          {activeTab === 'images' && (
+            <div className="space-y-2">
+              <div className="bg-green-50 border-l-4 border-green-500 p-2 rounded">
+                <h3 className="font-semibold text-green-900 text-sm">🖼️ Imagen</h3>
+                <p className="text-xs text-green-700">Sube una imagen</p>
+              </div>
+              <ImageControls
+                hasImage={!!currentPageData.image}
+                pageNumber={currentPage + 1}
+                onImageChange={imageHandler.handleImageChange}
+                onRemoveImage={imageHandler.removeImage}
+              />
+            </div>
+          )}
 
-        {activeTab === 'background' && (
-          <BackgroundControls
-            currentBackground={currentPageData.background}
-            hasBackground={!!currentPageData.background}
-            pageNumber={currentPage + 1}
-            onBackgroundChange={onBackgroundChange}
-            onBackgroundFileChange={imageHandler.handleBackgroundFile}
-            onRemoveBackground={imageHandler.removeBackground}
-          />
-        )}
+          {/* FONDO */}
+          {activeTab === 'background' && (
+            <div className="space-y-2">
+              <div className="bg-teal-50 border-l-4 border-teal-500 p-2 rounded">
+                <h3 className="font-semibold text-teal-900 text-sm">🎨 Fondo</h3>
+                <p className="text-xs text-teal-700">Elige un fondo decorativo</p>
+              </div>
+              <BackgroundControls
+                currentBackground={currentPageData.background}
+                hasBackground={!!currentPageData.background}
+                pageNumber={currentPage + 1}
+                onBackgroundChange={onBackgroundChange}
+                onBackgroundFileChange={imageHandler.handleBackgroundFile}
+                onRemoveBackground={imageHandler.removeBackground}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

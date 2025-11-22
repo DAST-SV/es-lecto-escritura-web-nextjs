@@ -6,7 +6,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'; // Funcion
 import { Metadata } from 'next'; // Tipo para la metadata de la página
 import { ReactNode, Suspense } from 'react'; // Componentes de React para manejar la carga y los hijos
 import "../globals.css"; // Estilos globales de la aplicación
-import NavBar from '@/src/components/nav/NavBar'; // Barra de navegación de la aplicación
+
 import Loading from './loading';
 
 // Definición de las propiedades que recibe el layout
