@@ -1,3 +1,17 @@
+/**
+ * UBICACIÓN: src/presentation/features/editor/components/LayoutSelector/PageLayoutSelector.tsx
+ */
+
+import React from 'react';
+import { layoutRegistry, type LayoutType } from '@/src/presentation/features/layouts/registry';
+import { LAYOUT_DEFINITIONS } from '@/src/presentation/features/layouts/layoutDefinitions';
+
+// Mapeo de IDs a nombres legibles
+const layoutLabels: Record<string, string> = {};
+LAYOUT_DEFINITIONS.forEach(def => {
+  layoutLabels[def.id] = def.name;
+});
+
 interface PageLayoutSelectorProps {
   currentLayout: string;
   pageNumber: number;
@@ -21,7 +35,7 @@ export function PageLayoutSelector({
       >
         {Object.keys(layoutRegistry).map(layoutName => (
           <option key={layoutName} value={layoutName}>
-            {layoutLabels[layoutName as LayoutType]}
+            {layoutLabels[layoutName as LayoutType] || layoutName}
           </option>
         ))}
       </select>

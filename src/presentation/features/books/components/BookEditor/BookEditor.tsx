@@ -1,16 +1,15 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookEditor/BookEditor.tsx
- * DISEÑO: Ultra profesional, sin scroll, validaciones en lista
- * NUEVA FUNCIONALIDAD: Ficha Literaria separada del contenido de las páginas
+ * CORREGIDO: Endpoints correctos de tu API
  */
 
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import { 
   Save, ChevronLeft, ChevronRight, BookOpen, Plus, Trash2, 
-  AlertCircle, CheckCircle2, Loader2
+  FileText, ArrowLeft, Loader2
 } from "lucide-react";
 
 // Hooks
@@ -21,7 +20,8 @@ import { useBookNavigation } from "../../hooks/useBookNavigation";
 // Componentes
 import { BookViewer } from "./BookViewer";
 import { EditorSidebar } from "./EditorSidebar";
-import { ValidationPanel } from "./ValidationPanel";
+import { LiteraryCardView } from "./LiteraryCardView";
+import { LiteraryMetadataForm } from "./LiteraryMetadataForm";
 
 // Servicios
 import { saveBookJson, BookMetadata } from "@/src/infrastructure/services/bookService";
@@ -43,15 +43,9 @@ interface BookEditorProps {
     titulo?: string;
     portada?: File | string | null;
     portadaUrl?: string | null;
-    // NUEVO: Imagen de fondo de la Ficha Literaria
     cardBackgroundImage?: File | null;
     cardBackgroundUrl?: string | null;
   };
-}
-
-interface ValidationError {
-  field: string;
-  message: string;
 }
 
 export function BookEditor({ 
@@ -65,9 +59,9 @@ export function BookEditor({
   const portadaUrlRef = useRef<string | null>(null);
   const cardBackgroundUrlRef = useRef<string | null>(null);
 
-  // ============================================
-  // ESTADOS DE METADATOS DEL LIBRO
-  // ============================================
+  const [viewMode, setViewMode] = useState<'pages' | 'card'>('pages');
+
+  // Estados de metadatos
   const [selectedCategorias, setSelectedCategorias] = useState<(number | string)[]>(
     initialMetadata?.selectedCategorias || []
   );
@@ -88,7 +82,6 @@ export function BookEditor({
   const [descripcion, setDescripcion] = useState<string>(initialMetadata?.descripcion || "");
   const [titulo, setTitulo] = useState<string>(initialMetadata?.titulo || "");
   
-  // Portada del libro (página 1)
   const [portada, setPortada] = useState<File | null>(
     initialMetadata?.portada instanceof File ? initialMetadata.portada : null
   );
@@ -98,11 +91,6 @@ export function BookEditor({
     (typeof initialMetadata?.portada === 'string' ? initialMetadata.portada : null)
   );
 
-  // ============================================
-  // NUEVO: ESTADOS PARA FICHA LITERARIA
-  // ============================================
-  
-  // Imagen de fondo de la FICHA LITERARIA (separada de la portada)
   const [cardBackgroundImage, setCardBackgroundImage] = useState<File | null>(
     initialMetadata?.cardBackgroundImage || null
   );
@@ -111,23 +99,15 @@ export function BookEditor({
     initialMetadata?.cardBackgroundUrl || null
   );
 
-  // Labels legibles (nombres) para mostrar en la ficha
+  // Labels para la preview
   const [categoriasLabels, setCategoriasLabels] = useState<string[]>([]);
   const [generosLabels, setGenerosLabels] = useState<string[]>([]);
-  const [etiquetasLabels, setEtiquetasLabels] = useState<string[]>([]);
   const [valoresLabels, setValoresLabels] = useState<string[]>([]);
   const [nivelLabel, setNivelLabel] = useState<string | null>(null);
 
-  // ============================================
-  // ESTADOS DE UI
-  // ============================================
   const [isSaving, setIsSaving] = useState(false);
-  const [showValidation, setShowValidation] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
 
-  // ============================================
-  // HOOKS PERSONALIZADOS
-  // ============================================
+  // Hooks personalizados
   const bookState = useBookState({ initialPages, title });
   const imageHandler = useImageHandler({
     pages: bookState.pages,
@@ -143,61 +123,38 @@ export function BookEditor({
     bookRef
   });
 
-  // ============================================
-  // VALIDACIÓN
-  // ============================================
-  const validateBook = useCallback((): ValidationError[] => {
-    const errors: ValidationError[] = [];
-
-    if (!titulo.trim()) {
-      errors.push({ field: 'Título', message: 'El título es obligatorio' });
-    }
-
-    if (autores.length === 0) {
-      errors.push({ field: 'Autores', message: 'Debe haber al menos un autor' });
-    }
-
-    if (!descripcion.trim()) {
-      errors.push({ field: 'Descripción', message: 'La descripción es obligatoria' });
-    }
-
-    if (selectedCategorias.length === 0) {
-      errors.push({ field: 'Categorías', message: 'Selecciona al menos una categoría' });
-    }
-
-    if (selectedGeneros.length === 0) {
-      errors.push({ field: 'Géneros', message: 'Selecciona al menos un género' });
-    }
-
-    if (!portada && !portadaUrl) {
-      errors.push({ field: 'Portada', message: 'Selecciona una imagen de portada' });
-    }
-
-    // NUEVO: Validación de ficha literaria (opcional pero recomendado)
-    if (!cardBackgroundImage && !cardBackgroundUrl) {
-      errors.push({ 
-        field: 'Ficha Literaria', 
-        message: 'Recomendado: Agrega una imagen para la ficha literaria' 
-      });
-    }
-
-    return errors;
-  }, [titulo, autores, descripcion, selectedCategorias, selectedGeneros, portada, portadaUrl, cardBackgroundImage, cardBackgroundUrl]);
-
-  // ============================================
-  // HANDLERS
-  // ============================================
+  // SOLUCIÓN: Usar componente MultiSelectFromTable que ya maneja los labels internamente
+  // En lugar de hacer fetch manual, pasar callbacks para recibir los labels seleccionados
   
-  const handleSave = useCallback(async () => {
-    // Validar
-    const errors = validateBook();
-    
-    if (errors.length > 0) {
-      setValidationErrors(errors);
-      setShowValidation(true);
-      return;
+  const handleCategoriasChange = useCallback((values: (number | string)[], labels?: string[]) => {
+    setSelectedCategorias(values);
+    if (labels) {
+      setCategoriasLabels(labels);
     }
+  }, []);
 
+  const handleGenerosChange = useCallback((values: (number | string)[], labels?: string[]) => {
+    setSelectedGeneros(values);
+    if (labels) {
+      setGenerosLabels(labels);
+    }
+  }, []);
+
+  const handleValoresChange = useCallback((values: (number | string)[], labels?: string[]) => {
+    setSelectedValores(values);
+    if (labels) {
+      setValoresLabels(labels);
+    }
+  }, []);
+
+  const handleNivelChange = useCallback((value: number | null, label?: string) => {
+    setSelectedNivel(value);
+    if (label) {
+      setNivelLabel(label);
+    }
+  }, []);
+
+  const handleSave = useCallback(async () => {
     const metadata: BookMetadata = {
       selectedCategorias,
       selectedGeneros,
@@ -210,7 +167,6 @@ export function BookEditor({
       titulo,
       portada,
       portadaUrl,
-      // NUEVO: Imagen de fondo de la ficha literaria
       cardBackgroundImage,
       cardBackgroundUrl,
     };
@@ -219,8 +175,6 @@ export function BookEditor({
     try {
       await saveBookJson(bookState.pages, metadata, IdLibro);
       toast.success('✅ Libro guardado correctamente');
-      setValidationErrors([]);
-      setShowValidation(false);
     } catch (error) {
       console.error("❌ Error en handleSave:", error);
       toast.error('❌ Error al guardar el libro');
@@ -242,8 +196,7 @@ export function BookEditor({
     portadaUrl,
     cardBackgroundImage,
     cardBackgroundUrl,
-    IdLibro,
-    validateBook
+    IdLibro
   ]);
 
   const handlePortadaChange = useCallback((file: File | null) => {
@@ -254,28 +207,26 @@ export function BookEditor({
         URL.revokeObjectURL(portadaUrlRef.current);
       }
       portadaUrlRef.current = URL.createObjectURL(file);
+      setPortadaUrl(portadaUrlRef.current);
     } else {
       if (portadaUrlRef.current) {
         URL.revokeObjectURL(portadaUrlRef.current);
         portadaUrlRef.current = null;
       }
+      setPortadaUrl(null);
     }
   }, []);
 
-  // NUEVO: Handler para imagen de fondo de la ficha literaria
   const handleCardBackgroundChange = useCallback((file: File | null) => {
     setCardBackgroundImage(file);
     
     if (file) {
-      // Limpiar URL anterior si existe
       if (cardBackgroundUrlRef.current) {
         URL.revokeObjectURL(cardBackgroundUrlRef.current);
       }
-      // Crear nueva URL temporal
       cardBackgroundUrlRef.current = URL.createObjectURL(file);
       setCardBackgroundUrl(cardBackgroundUrlRef.current);
     } else {
-      // Limpiar URL si se quita la imagen
       if (cardBackgroundUrlRef.current) {
         URL.revokeObjectURL(cardBackgroundUrlRef.current);
         cardBackgroundUrlRef.current = null;
@@ -284,7 +235,6 @@ export function BookEditor({
     }
   }, []);
 
-  // Cleanup de URLs al desmontar
   React.useEffect(() => {
     return () => {
       if (portadaUrlRef.current) {
@@ -300,40 +250,87 @@ export function BookEditor({
     <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
       <Toaster position="top-right" />
 
-      {/* Header - Ultra compacto */}
+      {/* Header */}
       <div className="flex-shrink-0 bg-white border-b border-slate-200 shadow-sm">
         <div className="px-4 py-2 flex items-center justify-between">
-          {/* Left: Info */}
-          <div className="flex items-center gap-3">
-            <BookOpen className="text-indigo-600" size={20} />
-            <div>
-              <h1 className="text-sm font-semibold text-slate-900 leading-none">
-                {titulo || 'Nuevo Libro'}
-              </h1>
-              <p className="text-xs text-slate-500">
-                Página {bookState.currentPage + 1}/{bookState.pages.length}
-              </p>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <BookOpen className="text-indigo-600" size={20} />
+              <div>
+                <h1 className="text-sm font-semibold text-slate-900 leading-none">
+                  {titulo || 'Nuevo Libro'}
+                </h1>
+                {viewMode === 'pages' && (
+                  <p className="text-xs text-slate-500">
+                    Página {bookState.currentPage + 1}/{bookState.pages.length}
+                  </p>
+                )}
+              </div>
             </div>
+
+            {viewMode === 'pages' && (
+              <div className="flex items-center gap-1 border-l border-slate-200 pl-4">
+                <button
+                  onClick={navigation.prevPage}
+                  disabled={!navigation.canGoPrev}
+                  className="p-1.5 text-slate-600 hover:bg-slate-100 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                
+                <button
+                  onClick={navigation.nextPage}
+                  disabled={!navigation.canGoNext}
+                  className="p-1.5 text-slate-600 hover:bg-slate-100 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight size={18} />
+                </button>
+
+                <div className="w-px h-6 bg-slate-200 mx-1" />
+
+                <button
+                  onClick={bookState.addPage}
+                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded"
+                >
+                  <Plus size={14} />
+                  Nueva
+                </button>
+                
+                {bookState.pages.length > 2 && (
+                  <button
+                    onClick={bookState.deletePage}
+                    className="p-1 text-red-600 hover:bg-red-50 rounded"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Right: Actions */}
           <div className="flex items-center gap-2">
-            {/* Validación status */}
-            {validationErrors.length > 0 && (
+            {viewMode === 'pages' ? (
               <button
-                onClick={() => setShowValidation(!showValidation)}
-                className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded border border-amber-200 transition-colors"
+                onClick={() => setViewMode('card')}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white text-sm font-medium rounded hover:bg-purple-700"
               >
-                <AlertCircle size={14} />
-                {validationErrors.length} pendiente{validationErrors.length > 1 ? 's' : ''}
+                <FileText size={16} />
+                Ver Ficha
+              </button>
+            ) : (
+              <button
+                onClick={() => setViewMode('pages')}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-600 text-white text-sm font-medium rounded hover:bg-slate-700"
+              >
+                <ArrowLeft size={16} />
+                Volver
               </button>
             )}
 
-            {/* Save button */}
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? (
                 <>
@@ -351,108 +348,93 @@ export function BookEditor({
         </div>
       </div>
 
-      {/* Main Content - Sin padding/margin innecesario */}
+      {/* Main Content */}
       <div className="flex-1 flex overflow-hidden min-h-0">
         
-        {/* Sidebar - Ancho fijo, scroll interno */}
+        {/* Sidebar */}
         <div className="w-80 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col overflow-hidden">
-          <EditorSidebar
-            pages={bookState.pages}
-            currentPage={bookState.currentPage}
-            setPages={bookState.setPages}
-            setCurrentPage={bookState.setCurrentPage}
-            imageHandler={imageHandler}
-            navigation={navigation}
-            
-            // Datos del libro para la ficha literaria
-            titulo={titulo}
-            autores={autores}
-            descripcion={descripcion}
-            
-            // Labels legibles para la ficha
-            categoriasLabels={categoriasLabels}
-            generosLabels={generosLabels}
-            valoresLabels={valoresLabels}
-            nivelLabel={nivelLabel}
-            
-            // NUEVO: Imagen de fondo de la ficha literaria
-            cardBackgroundImage={cardBackgroundImage}
-            cardBackgroundUrl={cardBackgroundUrl}
-            onCardBackgroundChange={handleCardBackgroundChange}
-            
-            // Handlers de páginas
-            onLayoutChange={bookState.handleLayoutChange}
-            onBackgroundChange={bookState.handleBackgroundChange}
-            onAddPage={bookState.addPage}
-            onDeletePage={bookState.deletePage}
-          />
-        </div>
-
-        {/* Viewer - Flex-1, sin scroll */}
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-          {/* Mini toolbar */}
-          <div className="flex-shrink-0 bg-white border-b border-slate-200 px-3 py-1.5 flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={navigation.prevPage}
-                disabled={!navigation.canGoPrev}
-                className="p-1.5 text-slate-600 hover:bg-slate-100 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                title="Página anterior"
-              >
-                <ChevronLeft size={18} />
-              </button>
-              
-              <button
-                onClick={navigation.nextPage}
-                disabled={!navigation.canGoNext}
-                className="p-1.5 text-slate-600 hover:bg-slate-100 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                title="Página siguiente"
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={bookState.addPage}
-                className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded transition-colors"
-              >
-                <Plus size={14} />
-                Nueva
-              </button>
-              
-              {bookState.pages.length > 2 && (
-                <button
-                  onClick={bookState.deletePage}
-                  className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
-                  title="Eliminar página"
-                >
-                  <Trash2 size={14} />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Viewer */}
-          <div className="flex-1 overflow-hidden">
-            <BookViewer
-              bookRef={bookRef}
+          {viewMode === 'pages' ? (
+            <EditorSidebar
               pages={bookState.pages}
               currentPage={bookState.currentPage}
-              isFlipping={bookState.isFlipping}
-              bookKey={bookState.bookKey}
-              onFlip={navigation.onFlip}
-              onPageClick={navigation.goToPage}
+              setPages={bookState.setPages}
+              setCurrentPage={bookState.setCurrentPage}
+              imageHandler={imageHandler}
+              navigation={navigation}
+              titulo={titulo}
+              autores={autores}
+              descripcion={descripcion}
+              categoriasLabels={categoriasLabels}
+              generosLabels={generosLabels}
+              valoresLabels={valoresLabels}
+              nivelLabel={nivelLabel}
+              cardBackgroundImage={cardBackgroundImage}
+              cardBackgroundUrl={cardBackgroundUrl}
+              onCardBackgroundChange={handleCardBackgroundChange}
+              onLayoutChange={bookState.handleLayoutChange}
+              onBackgroundChange={bookState.handleBackgroundChange}
+              onAddPage={bookState.addPage}
+              onDeletePage={bookState.deletePage}
             />
-          </div>
+          ) : (
+            <LiteraryMetadataForm
+              titulo={titulo}
+              descripcion={descripcion}
+              autores={autores}
+              personajes={personajes}
+              portada={portada}
+              portadaUrl={portadaUrl}
+              cardBackgroundImage={cardBackgroundImage}
+              cardBackgroundUrl={cardBackgroundUrl}
+              selectedCategorias={selectedCategorias}
+              selectedGeneros={selectedGeneros}
+              selectedEtiquetas={selectedEtiquetas}
+              selectedValores={selectedValores}
+              selectedNivel={selectedNivel}
+              onTituloChange={setTitulo}
+              onDescripcionChange={setDescripcion}
+              onAutoresChange={setAutores}
+              onPersonajesChange={setPersonajes}
+              onPortadaChange={handlePortadaChange}
+              onCardBackgroundChange={handleCardBackgroundChange}
+              onCategoriasChange={handleCategoriasChange}
+              onGenerosChange={handleGenerosChange}
+              onEtiquetasChange={setSelectedEtiquetas}
+              onValoresChange={handleValoresChange}
+              onNivelChange={handleNivelChange}
+            />
+          )}
         </div>
 
-        {/* Validation Panel - Slide-in desde la derecha */}
-        <ValidationPanel
-          isOpen={showValidation}
-          errors={validationErrors}
-          onClose={() => setShowValidation(false)}
-        />
+        {/* Área Central */}
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          {viewMode === 'pages' ? (
+            <div className="flex-1 overflow-hidden">
+              <BookViewer
+                bookRef={bookRef}
+                pages={bookState.pages}
+                currentPage={bookState.currentPage}
+                isFlipping={bookState.isFlipping}
+                bookKey={bookState.bookKey}
+                onFlip={navigation.onFlip}
+                onPageClick={navigation.goToPage}
+              />
+            </div>
+          ) : (
+            <div className="flex-1 overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+              <LiteraryCardView
+                backgroundUrl={cardBackgroundUrl || portadaUrl}
+                titulo={titulo}
+                autores={autores}
+                descripcion={descripcion}
+                categorias={categoriasLabels}
+                generos={generosLabels}
+                valores={valoresLabels}
+                nivel={nivelLabel}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

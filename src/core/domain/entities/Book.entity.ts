@@ -17,6 +17,10 @@ export interface BookMetadata {
   selectedEtiquetas: (number | string)[];
   selectedValores: (number | string)[];
   selectedNivel: number | null;
+  
+  // NUEVO: Campos para la Ficha Literaria (tarjeta pública)
+  cardBackgroundImage?: File | null;
+  cardBackgroundUrl?: string | null;
 }
 
 export class Book {

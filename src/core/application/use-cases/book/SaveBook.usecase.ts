@@ -41,7 +41,7 @@ export class SaveBookUseCase {
       }
 
       // 3. Subir portada si es necesario
-      let portadaUrl: string | null = dto.book.metadata.portadaUrl ?? null; // 🔥 FIX: ?? null
+      let portadaUrl: string | null = dto.book.metadata.portadaUrl ?? null;
       
       if (dto.book.metadata.portada instanceof File) {
         const bookId = dto.bookId || `temp-${Date.now()}`;
@@ -59,7 +59,26 @@ export class SaveBookUseCase {
         );
       }
 
-      // 4. Subir imágenes de páginas
+      // 4. NUEVO: Subir imagen de fondo de ficha literaria si existe
+      let cardBackgroundUrl: string | null = dto.book.metadata.cardBackgroundUrl ?? null;
+      
+      if (dto.book.metadata.cardBackgroundImage instanceof File) {
+        const bookId = dto.bookId || `temp-${Date.now()}`;
+        const ext = this.getFileExtension(dto.book.metadata.cardBackgroundImage);
+        const cardBgPath = this.storageService.generateFilePath(
+          dto.userId,
+          bookId,
+          `card_background.${ext}`
+        );
+        
+        cardBackgroundUrl = await this.storageService.uploadFile(
+          dto.book.metadata.cardBackgroundImage,
+          'ImgLibros',
+          cardBgPath
+        );
+      }
+
+      // 5. Subir imágenes de páginas
       for (let i = 0; i < dto.book.pages.length; i++) {
         const page = dto.book.pages[i];
         const bookId = dto.bookId || `temp-${Date.now()}`;
@@ -79,7 +98,6 @@ export class SaveBookUseCase {
             imagePath
           );
           
-          // Actualizar la página con la URL
           page.content.image = imageUrl;
         }
 
@@ -102,10 +120,10 @@ export class SaveBookUseCase {
         }
       }
 
-      // 5. Guardar o actualizar en base de datos
+      // 6. Guardar o actualizar en base de datos
       const bookId = dto.bookId 
-        ? await this.updateBook(dto.book, portadaUrl) // ✅ Ahora portadaUrl es string | null
-        : await this.createBook(dto.book, portadaUrl); // ✅ Ahora portadaUrl es string | null
+        ? await this.updateBook(dto.book, portadaUrl, cardBackgroundUrl)
+        : await this.createBook(dto.book, portadaUrl, cardBackgroundUrl);
 
       return {
         success: true,
@@ -121,11 +139,20 @@ export class SaveBookUseCase {
     }
   }
 
-  private async createBook(book: Book, portadaUrl: string | null): Promise<string> {
-    // Actualizar metadata con la URL de portada
+  private async createBook(
+    book: Book, 
+    portadaUrl: string | null,
+    cardBackgroundUrl: string | null
+  ): Promise<string> {
     const updatedBook = new Book(
       null,
-      { ...book.metadata, portadaUrl, portada: null },
+      { 
+        ...book.metadata, 
+        portadaUrl, 
+        portada: null,
+        cardBackgroundUrl,
+        cardBackgroundImage: null
+      },
       book.pages,
       book.userId
     );
@@ -133,10 +160,20 @@ export class SaveBookUseCase {
     return await this.bookRepository.save(updatedBook);
   }
 
-  private async updateBook(book: Book, portadaUrl: string | null): Promise<string> {
+  private async updateBook(
+    book: Book, 
+    portadaUrl: string | null,
+    cardBackgroundUrl: string | null
+  ): Promise<string> {
     const updatedBook = new Book(
       book.id,
-      { ...book.metadata, portadaUrl, portada: null },
+      { 
+        ...book.metadata, 
+        portadaUrl, 
+        portada: null,
+        cardBackgroundUrl,
+        cardBackgroundImage: null
+      },
       book.pages,
       book.userId,
       book.createdAt,
