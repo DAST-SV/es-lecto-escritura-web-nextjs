@@ -9,6 +9,7 @@ interface LiteraryCardViewProps {
     descripcion: string;
     categorias: string[];
     generos: string[];
+    etiquetas: string[]; // ✅ AÑADIDO
     valores: string[];
     nivel: string | null;
 }
@@ -21,6 +22,7 @@ export default function LiteraryCardView({
     descripcion = "Un viaje filosófico a través de diferentes planetas donde un pequeño príncipe aprende valiosas lecciones sobre la vida, el amor y la amistad. Una obra atemporal que nos recuerda la importancia de ver con el corazón.",
     categorias = ["Ficción", "Filosofía"],
     generos = ["Fábula", "Aventura"],
+    etiquetas = [], // ✅ AÑADIDO
     valores = ["Amistad", "Amor", "Responsabilidad"],
     nivel = "Infantil 8-12 años"
 }: LiteraryCardViewProps) {
@@ -34,7 +36,7 @@ export default function LiteraryCardView({
 
     return (
         <div className="w-full h-full flex items-center justify-center p-6 bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
-            <div className="w-full max-w-4xl h-[85vh] max-h-[650px]">
+            <div className="w-full max-w-3xl h-[70vh] max-h-[550px]">
                 {/* Card Container - SIN SCROLL */}
                 <div className="bg-white rounded-xl shadow-2xl overflow-hidden border-2 border-gray-200 h-full">
                     <div className="grid grid-cols-2 h-full">
@@ -89,14 +91,14 @@ export default function LiteraryCardView({
                             {/* Descripción - Scroll Interno si es necesario */}
                             {descripcion && (
                                 <div className="flex-shrink-0 mb-3">
-                                    <p className="text-[11px] text-gray-600 leading-relaxed line-clamp-4">
-                                        {truncateWords(descripcion, 280)}
+                                    <p className="text-[11px] text-gray-600 leading-relaxed line-clamp-800">
+                                        {truncateWords(descripcion, 800)}
                                     </p>
                                 </div>
                             )}
 
                             {/* Tags Section - COMPACTO Y HORIZONTAL */}
-                            <div className="flex-1 flex flex-col gap-2 min-h-0">
+                            <div className="flex-1 flex flex-col gap-2 min-h-0 overflow-y-auto">
                                 
                                 {/* Categorías - HORIZONTAL */}
                                 {categorias.length > 0 && (
@@ -167,6 +169,31 @@ export default function LiteraryCardView({
                                             {personajes.length > 3 && (
                                                 <span className="text-[9px] text-orange-600 font-medium">
                                                     +{personajes.length - 3}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* ✅ ETIQUETAS - HORIZONTAL */}
+                                {etiquetas.length > 0 && (
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-1 flex-shrink-0">
+                                            <Tag size={11} className="text-pink-600" />
+                                            <span className="text-[9px] font-semibold text-gray-700">Etiquetas:</span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1 flex-1 min-w-0">
+                                            {etiquetas.slice(0, 3).map((etiq, idx) => (
+                                                <span
+                                                    key={`etiq-${idx}`}
+                                                    className="text-[9px] bg-pink-100 text-pink-800 px-2 py-0.5 rounded-full font-medium whitespace-nowrap"
+                                                >
+                                                    {etiq}
+                                                </span>
+                                            ))}
+                                            {etiquetas.length > 3 && (
+                                                <span className="text-[9px] text-pink-600 font-medium">
+                                                    +{etiquetas.length - 3}
                                                 </span>
                                             )}
                                         </div>

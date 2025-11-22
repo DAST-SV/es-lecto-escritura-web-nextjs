@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookEditor/LiteraryMetadataForm.tsx
- * ACTUALIZADO: Con callbacks para IDs y Labels
+ * ACTUALIZADO: Con callbacks para IDs y Labels + Etiquetas corregidas
  */
 
 'use client';
@@ -44,6 +44,7 @@ interface LiteraryMetadataFormProps {
   // Callbacks para Labels
   onCategoriasLabelsChange: (labels: string[]) => void;
   onGenerosLabelsChange: (labels: string[]) => void;
+  onEtiquetasLabelsChange: (labels: string[]) => void; // ✅ AÑADIDO
   onValoresLabelsChange: (labels: string[]) => void;
   onNivelLabelChange: (label: string | null) => void;
 }
@@ -70,6 +71,7 @@ export function LiteraryMetadataForm({
   onGenerosChange,
   onGenerosLabelsChange,
   onEtiquetasChange,
+  onEtiquetasLabelsChange, // ✅ AÑADIDO
   onValoresChange,
   onValoresLabelsChange,
   onNivelChange,
@@ -77,6 +79,12 @@ export function LiteraryMetadataForm({
 }: LiteraryMetadataFormProps) {
 
   const [activeTab, setActiveTab] = useState<'basic' | 'classification' | 'image'>('basic');
+
+  // Contador de caracteres para descripción
+  const descripcionLength = descripcion.length;
+  const descripcionLimit = 800;
+  const descripcionNearLimit = descripcionLength > descripcionLimit * 0.8;
+  const descripcionOverLimit = descripcionLength > descripcionLimit;
 
   const tabs = [
     { id: 'basic', icon: BookOpen, label: 'Básico', color: 'indigo' },
@@ -139,17 +147,54 @@ export function LiteraryMetadataForm({
 
             {/* Descripción */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Descripción <span className="text-red-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-semibold text-gray-900">
+                  Descripción <span className="text-red-500">*</span>
+                </label>
+                <span className={`text-xs font-medium ${
+                  descripcionOverLimit 
+                    ? 'text-red-600' 
+                    : descripcionNearLimit 
+                      ? 'text-orange-600' 
+                      : 'text-gray-500'
+                }`}>
+                  {descripcionLength}/{descripcionLimit} caracteres
+                </span>
+              </div>
+              
               <textarea
                 value={descripcion}
-                maxLength={800}
+                maxLength={descripcionLimit}
                 onChange={(e) => onDescripcionChange(e.target.value)}
-                className="w-full px-3 py-2.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none text-gray-900 transition-all"
-                rows={4}
-                placeholder="Describe de qué trata el libro..."
+                className={`w-full px-3 py-2.5 text-sm border-2 rounded-lg focus:ring-2 resize-none text-gray-900 transition-all ${
+                  descripcionOverLimit
+                    ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                    : descripcionNearLimit
+                      ? 'border-orange-300 focus:ring-orange-500 focus:border-orange-500'
+                      : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                }`}
+                rows={6}
+                placeholder="Describe de qué trata el libro... (máximo 800 caracteres)"
               />
+              
+              {/* Alertas de límite */}
+              {descripcionOverLimit && (
+                <div className="mt-2 p-2 bg-red-50 border-l-4 border-red-500 text-red-700 text-xs">
+                  ❌ Has excedido el límite de {descripcionLimit} caracteres
+                </div>
+              )}
+              
+              {descripcionNearLimit && !descripcionOverLimit && (
+                <div className="mt-2 p-2 bg-orange-50 border-l-4 border-orange-500 text-orange-700 text-xs">
+                  ⚠️ Te quedan {descripcionLimit - descripcionLength} caracteres
+                </div>
+              )}
+              
+              {!descripcionNearLimit && (
+                <p className="mt-2 text-xs text-gray-500">
+                  💡 Una buena descripción ayuda a los lectores a descubrir tu libro
+                </p>
+              )}
             </div>
 
             {/* Autores */}
@@ -253,7 +298,7 @@ export function LiteraryMetadataForm({
               />
             </div>
 
-            {/* Etiquetas */}
+            {/* Etiquetas - CORREGIDO: Ahora CON onLabelsChange */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Etiquetas Adicionales
@@ -266,8 +311,12 @@ export function LiteraryMetadataForm({
                 values={selectedEtiquetas}
                 placeholder="Hasta 5 etiquetas..."
                 onChange={onEtiquetasChange}
+                onLabelsChange={onEtiquetasLabelsChange}
                 maxItems={5}
               />
+              <p className="mt-2 text-xs text-gray-500">
+                💡 Las etiquetas ayudan a categorizar y buscar tu libro
+              </p>
             </div>
           </div>
         )}
@@ -279,7 +328,9 @@ export function LiteraryMetadataForm({
               <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Imagen de Fondo de la Ficha
               </label>
+              
               <div className="space-y-3">
+                {/* Botón de subir/cambiar */}
                 <label className="block cursor-pointer">
                   <div className="flex items-center justify-center w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
                     📤 {cardBackgroundImage || cardBackgroundUrl ? 'Cambiar Imagen' : 'Subir Imagen'}
@@ -295,19 +346,46 @@ export function LiteraryMetadataForm({
                   />
                 </label>
 
+                {/* Estado de la imagen */}
                 {(cardBackgroundImage || cardBackgroundUrl) && (
-                  <button
-                    onClick={() => onCardBackgroundChange(null)}
-                    className="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
-                  >
-                    🗑️ Quitar Imagen
-                  </button>
+                  <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-sm">✓</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-green-900">
+                          Imagen cargada correctamente
+                        </p>
+                        <p className="text-xs text-green-600">
+                          Visible en la vista de ficha
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => onCardBackgroundChange(null)}
+                      className="px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-xs font-medium"
+                    >
+                      🗑️ Quitar
+                    </button>
+                  </div>
+                )}
+
+                {/* Mensaje cuando no hay imagen */}
+                {!cardBackgroundImage && !cardBackgroundUrl && (
+                  <div className="p-3 bg-gray-100 border border-gray-300 rounded-lg">
+                    <p className="text-xs text-gray-600 text-center">
+                      📌 No hay imagen de fondo asignada
+                    </p>
+                  </div>
                 )}
               </div>
               
               <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-xs text-blue-800">
-                  💡 Esta imagen será el fondo de la tarjeta pública del libro
+                  💡 <strong>Tip:</strong> Esta imagen será el fondo de la tarjeta pública del libro. 
+                  Podrás verla en la vista "Ver Ficha".
                 </p>
               </div>
             </div>

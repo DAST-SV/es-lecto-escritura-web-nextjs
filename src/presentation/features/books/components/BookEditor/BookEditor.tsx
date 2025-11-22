@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookEditor/BookEditor.tsx
- * ACTUALIZADO: Con callbacks separados para IDs y Labels
+ * ACTUALIZADO: Con soporte completo para etiquetas labels
  */
 
 "use client";
@@ -20,6 +20,7 @@ import { useBookNavigation } from "../../hooks/useBookNavigation";
 // Componentes
 import { BookViewer } from "./BookViewer";
 import { EditorSidebar } from "./EditorSidebar";
+import { ValidationPanel } from "./ValidationPanel";
 
 // Servicios
 import { saveBookJson, BookMetadata } from "@/src/infrastructure/services/bookService";
@@ -81,6 +82,7 @@ export function BookEditor({
   // Estados de labels (para mostrar en UI)
   const [categoriasLabels, setCategoriasLabels] = useState<string[]>([]);
   const [generosLabels, setGenerosLabels] = useState<string[]>([]);
+  const [etiquetasLabels, setEtiquetasLabels] = useState<string[]>([]); // ✅ AÑADIDO
   const [valoresLabels, setValoresLabels] = useState<string[]>([]);
   const [nivelLabel, setNivelLabel] = useState<string | null>(null);
 
@@ -108,6 +110,7 @@ export function BookEditor({
   );
 
   const [isSaving, setIsSaving] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
 
   // Hooks personalizados
   const bookState = useBookState({ initialPages, title });
@@ -134,6 +137,11 @@ export function BookEditor({
     setSelectedGeneros(values);
   }, []);
 
+  const handleEtiquetasChange = useCallback((values: (number | string)[]) => {
+    setSelectedEtiquetas(values);
+    console.log('Etiquetas IDs actualizados:', values); // Debug
+  }, []);
+
   const handleValoresChange = useCallback((values: (number | string)[]) => {
     setSelectedValores(values);
   }, []);
@@ -151,6 +159,12 @@ export function BookEditor({
     setGenerosLabels(labels);
   }, []);
 
+  // ✅ AÑADIDO: Handler para etiquetas labels
+  const handleEtiquetasLabelsChange = useCallback((labels: string[]) => {
+    setEtiquetasLabels(labels);
+    console.log('Etiquetas Labels actualizados:', labels); // Debug
+  }, []);
+
   const handleValoresLabelsChange = useCallback((labels: string[]) => {
     setValoresLabels(labels);
   }, []);
@@ -161,6 +175,14 @@ export function BookEditor({
 
   // Handler para guardar
   const handleSave = useCallback(async () => {
+    // Validar campos requeridos
+    const errors = validateBook();
+    
+    if (errors.length > 0) {
+      setShowValidation(true);
+      return;
+    }
+
     const metadata: BookMetadata = {
       selectedCategorias,
       selectedGeneros,
@@ -204,6 +226,37 @@ export function BookEditor({
     cardBackgroundUrl,
     IdLibro
   ]);
+
+  // Función de validación
+  const validateBook = useCallback(() => {
+    const errors: Array<{ field: string; message: string }> = [];
+
+    if (!titulo.trim()) {
+      errors.push({ field: 'Título', message: 'El título es obligatorio' });
+    }
+
+    if (!descripcion.trim()) {
+      errors.push({ field: 'Descripción', message: 'La descripción es obligatoria' });
+    }
+
+    if (autores.length === 0) {
+      errors.push({ field: 'Autores', message: 'Debe haber al menos un autor' });
+    }
+
+    if (selectedCategorias.length === 0) {
+      errors.push({ field: 'Tipo de Lectura', message: 'Selecciona al menos una categoría' });
+    }
+
+    if (selectedGeneros.length === 0) {
+      errors.push({ field: 'Géneros', message: 'Selecciona al menos un género' });
+    }
+
+    if (!portada && !portadaUrl) {
+      errors.push({ field: 'Portada', message: 'Sube una imagen de portada' });
+    }
+
+    return errors;
+  }, [titulo, descripcion, autores, selectedCategorias, selectedGeneros, portada, portadaUrl]);
 
   const handlePortadaChange = useCallback((file: File | null) => {
     setPortada(file);
@@ -407,7 +460,8 @@ export function BookEditor({
               onCategoriasLabelsChange={handleCategoriasLabelsChange}
               onGenerosChange={handleGenerosChange}
               onGenerosLabelsChange={handleGenerosLabelsChange}
-              onEtiquetasChange={setSelectedEtiquetas}
+              onEtiquetasChange={handleEtiquetasChange}
+              onEtiquetasLabelsChange={handleEtiquetasLabelsChange}
               onValoresChange={handleValoresChange}
               onValoresLabelsChange={handleValoresLabelsChange}
               onNivelChange={handleNivelChange}
@@ -440,6 +494,7 @@ export function BookEditor({
                 descripcion={descripcion}
                 categorias={categoriasLabels}
                 generos={generosLabels}
+                etiquetas={etiquetasLabels}
                 valores={valoresLabels}
                 nivel={nivelLabel}
               />
@@ -447,6 +502,13 @@ export function BookEditor({
           )}
         </div>
       </div>
+
+      {/* Panel de Validación */}
+      <ValidationPanel
+        isOpen={showValidation}
+        errors={validateBook()}
+        onClose={() => setShowValidation(false)}
+      />
     </div>
   );
 }
