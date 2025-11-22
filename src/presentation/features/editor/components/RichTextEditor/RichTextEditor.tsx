@@ -25,7 +25,7 @@ import {
   List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify,
   Quote, Undo, Redo, Trash2, Type, Users
 } from 'lucide-react';
-import { LineHeightExtension } from '../../extensions/LineHeightExtension';
+import { LINE_HEIGHTS, LineHeightExtension } from '../../extensions/LineHeight.extension';
 import { FONT_SIZES, FontSizeExtension } from '../../extensions/FontSize.extension';
 
 export interface RichTextEditorProps {

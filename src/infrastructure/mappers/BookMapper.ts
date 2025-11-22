@@ -15,7 +15,7 @@ export interface BookDTO {
   id_usuario: string;
   titulo: string;
   descripcion: string;
-  portada: string | null;
+  portada: string | null | File;
   autores: string[];
   personajes: string[];
   paginas: any[];
@@ -67,7 +67,7 @@ export class BookMapper {
       personajes: dto.personajes || [],
       descripcion: dto.descripcion || '',
       portada: dto.portada,
-      portadaUrl: dto.portada,
+      portadaUrl: typeof dto.portada === 'string' ? dto.portada : null,
       selectedCategorias: dto.categorias || [],
       selectedGeneros: dto.generos || [],
       selectedEtiquetas: dto.etiquetas || [],

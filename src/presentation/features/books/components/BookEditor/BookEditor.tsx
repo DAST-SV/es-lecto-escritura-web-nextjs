@@ -25,10 +25,10 @@ import { BookMetadataForm } from "../BookMetadata/BookMetadataForm";
 import { CoverPreview } from "../CoverPreview/CoverPreview";
 
 // Servicios
-import { saveBookJson, type BookMetadata } from "../../../../infrastructure/services/bookService";
 
 // Tipos
 import type { page } from "@/src/typings/types-page-book/index";
+import { BookMetadata, saveBookJson } from "@/src/infrastructure/services/bookService";
 
 interface BookEditorProps {
   initialPages?: page[];
