@@ -11,9 +11,6 @@ import { BookEditor } from "../../features/books/components/BookEditor/BookEdito
 
 export function CreateBookPage() {
   return (
-    <div className="container mx-auto py-6">
-      <h1 className="text-2xl font-bold mb-6">Crear Nuevo Libro</h1>
-      <BookEditor />
-    </div>
+          <BookEditor />
   );
 }

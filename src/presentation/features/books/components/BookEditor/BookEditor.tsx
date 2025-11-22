@@ -1,16 +1,15 @@
 /**
- * UBICACIÓN: src/presentation/features/book/components/BookEditor/BookEditor.tsx
- * 
- * Editor PRINCIPAL de libro - Layout: Sidebar izquierda + Visualizador derecha
- * Incluye TODAS las funcionalidades de guardado, navegación, metadatos
+ * UBICACIÓN: src/presentation/features/books/components/BookEditor/BookEditor.tsx
+ * DISEÑO: Ultra profesional, sin scroll, validaciones en lista
  */
 
 "use client";
 
 import React, { useState, useRef, useCallback } from "react";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 import { 
-  Save, ChevronLeft, ChevronRight, BookOpen, Plus, Trash2
+  Save, ChevronLeft, ChevronRight, BookOpen, Plus, Trash2, 
+  AlertCircle, CheckCircle2, Loader2
 } from "lucide-react";
 
 // Hooks
@@ -21,14 +20,11 @@ import { useBookNavigation } from "../../hooks/useBookNavigation";
 // Componentes
 import { BookViewer } from "./BookViewer";
 import { EditorSidebar } from "./EditorSidebar";
-import { BookMetadataForm } from "../BookMetadata/BookMetadataForm";
-import { CoverPreview } from "../CoverPreview/CoverPreview";
+import { ValidationPanel } from "./ValidationPanel";
 
 // Servicios
-
-// Tipos
+import { saveBookJson, BookMetadata } from "@/src/infrastructure/services/bookService";
 import type { page } from "@/src/typings/types-page-book/index";
-import { BookMetadata, saveBookJson } from "@/src/infrastructure/services/bookService";
 
 interface BookEditorProps {
   initialPages?: page[];
@@ -47,6 +43,11 @@ interface BookEditorProps {
     portada?: File | string | null;
     portadaUrl?: string | null;
   };
+}
+
+interface ValidationError {
+  field: string;
+  message: string;
 }
 
 export function BookEditor({ 
@@ -89,26 +90,18 @@ export function BookEditor({
     (typeof initialMetadata?.portada === 'string' ? initialMetadata.portada : null)
   );
 
-  // Labels de metadatos
-  const [categoriasLabels, setCategoriasLabels] = useState<string[]>([]);
-  const [generosLabels, setGenerosLabels] = useState<string[]>([]);
-  const [etiquetasLabels, setEtiquetasLabels] = useState<string[]>([]);
-  const [valoresLabels, setValoresLabels] = useState<string[]>([]);
-  const [nivelLabel, setNivelLabel] = useState<string | null>(null);
-
   // Estados UI
   const [isSaving, setIsSaving] = useState(false);
-  const [showCoverMode, setShowCoverMode] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
 
   // Hooks personalizados
   const bookState = useBookState({ initialPages, title });
-
   const imageHandler = useImageHandler({
     pages: bookState.pages,
     currentPage: bookState.currentPage,
     setPages: bookState.setPages
   });
-
   const navigation = useBookNavigation({
     pages: bookState.pages,
     currentPage: bookState.currentPage,
@@ -118,8 +111,48 @@ export function BookEditor({
     bookRef
   });
 
+  // Validación
+  const validateBook = useCallback((): ValidationError[] => {
+    const errors: ValidationError[] = [];
+
+    if (!titulo.trim()) {
+      errors.push({ field: 'Título', message: 'El título es obligatorio' });
+    }
+
+    if (autores.length === 0) {
+      errors.push({ field: 'Autores', message: 'Debe haber al menos un autor' });
+    }
+
+    if (!descripcion.trim()) {
+      errors.push({ field: 'Descripción', message: 'La descripción es obligatoria' });
+    }
+
+    if (selectedCategorias.length === 0) {
+      errors.push({ field: 'Categorías', message: 'Selecciona al menos una categoría' });
+    }
+
+    if (selectedGeneros.length === 0) {
+      errors.push({ field: 'Géneros', message: 'Selecciona al menos un género' });
+    }
+
+    if (!portada && !portadaUrl) {
+      errors.push({ field: 'Portada', message: 'Selecciona una imagen de portada' });
+    }
+
+    return errors;
+  }, [titulo, autores, descripcion, selectedCategorias, selectedGeneros, portada, portadaUrl]);
+
   // Handler para guardar
   const handleSave = useCallback(async () => {
+    // Validar
+    const errors = validateBook();
+    
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      setShowValidation(true);
+      return;
+    }
+
     const metadata: BookMetadata = {
       selectedCategorias,
       selectedGeneros,
@@ -137,9 +170,12 @@ export function BookEditor({
     setIsSaving(true);
     try {
       await saveBookJson(bookState.pages, metadata, IdLibro);
-      console.log('✅ Guardado exitoso');
+      toast.success('✅ Libro guardado correctamente');
+      setValidationErrors([]);
+      setShowValidation(false);
     } catch (error) {
       console.error("❌ Error en handleSave:", error);
+      toast.error('❌ Error al guardar el libro');
     } finally {
       setIsSaving(false);
     }
@@ -156,7 +192,8 @@ export function BookEditor({
     titulo, 
     portada,
     portadaUrl,
-    IdLibro
+    IdLibro,
+    validateBook
   ]);
 
   const handlePortadaChange = useCallback((file: File | null) => {
@@ -184,149 +221,138 @@ export function BookEditor({
   }, []);
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
-      <Toaster position="bottom-center" />
+    <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
+      <Toaster position="top-right" />
 
-      {/* Header */}
-      <div className="flex-shrink-0 bg-white border-b border-gray-200 shadow-sm">
-        <div className="px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <BookOpen size={20} className="text-indigo-600 flex-shrink-0" />
-            <div className="min-w-0">
-              <h1 className="text-sm font-bold text-gray-900 truncate">Editor de Libros</h1>
-              <p className="text-xs text-gray-500 truncate">{titulo || 'Sin título'}</p>
+      {/* Header - Ultra compacto */}
+      <div className="flex-shrink-0 bg-white border-b border-slate-200 shadow-sm">
+        <div className="px-4 py-2 flex items-center justify-between">
+          {/* Left: Info */}
+          <div className="flex items-center gap-3">
+            <BookOpen className="text-indigo-600" size={20} />
+            <div>
+              <h1 className="text-sm font-semibold text-slate-900 leading-none">
+                {titulo || 'Nuevo Libro'}
+              </h1>
+              <p className="text-xs text-slate-500">
+                Página {bookState.currentPage + 1}/{bookState.pages.length}
+              </p>
             </div>
           </div>
 
+          {/* Right: Actions */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowCoverMode(!showCoverMode)}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-md font-medium transition-all text-xs ${
-                showCoverMode
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
-              }`}
-            >
-              <BookOpen size={14} />
-              <span>{showCoverMode ? 'EDITOR' : 'FICHA'}</span>
-            </button>
+            {/* Validación status */}
+            {validationErrors.length > 0 && (
+              <button
+                onClick={() => setShowValidation(!showValidation)}
+                className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded border border-amber-200 transition-colors"
+              >
+                <AlertCircle size={14} />
+                {validationErrors.length} pendiente{validationErrors.length > 1 ? 's' : ''}
+              </button>
+            )}
 
+            {/* Save button */}
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 shadow-sm transition-colors text-xs"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-colors"
             >
-              <Save size={16} />
-              <span>{isSaving ? 'Guardando...' : 'Guardar'}</span>
+              {isSaving ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                <>
+                  <Save size={16} />
+                  Guardar
+                </>
+              )}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Layout principal: Sidebar + Viewer */}
-      <div className="flex-1 flex overflow-hidden">
+      {/* Main Content - Sin padding/margin innecesario */}
+      <div className="flex-1 flex overflow-hidden min-h-0">
         
-        {/* SIDEBAR IZQUIERDA (300px fijo) */}
-        <div className="w-[350px] flex-shrink-0 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
-          {showCoverMode ? (
-            // Modo ficha literaria
-            <div className="flex-1 overflow-y-auto p-4">
-              <CoverPreview
-                portada={portada}
-                portadaUrl={portada ? portadaUrlRef.current : portadaUrl}
-                titulo={titulo || 'Sin título'}
-                autores={autores}
-                descripcion={descripcion || 'Sin descripción'}
-                categorias={categoriasLabels}
-                personajes={personajes}
-                generos={generosLabels}
-                etiquetas={etiquetasLabels}
-                valores={valoresLabels}
-                nivel={nivelLabel}
-              />
-            </div>
-          ) : (
-            // Modo editor normal
-            <EditorSidebar
-              pages={bookState.pages}
-              currentPage={bookState.currentPage}
-              setPages={bookState.setPages}
-              setCurrentPage={bookState.setCurrentPage}
-              imageHandler={imageHandler}
-              navigation={navigation}
-              selectedCategorias={selectedCategorias}
-              selectedGeneros={selectedGeneros}
-              selectedEtiquetas={selectedEtiquetas}
-              selectedValores={selectedValores}
-              selectedNivel={selectedNivel}
-              autores={autores}
-              personajes={personajes}
-              descripcion={descripcion}
-              titulo={titulo}
-              portada={portada}
-              portadaUrl={portadaUrl}
-              onCategoriasChange={setSelectedCategorias}
-              onGenerosChange={setSelectedGeneros}
-              onEtiquetasChange={setSelectedEtiquetas}
-              onValoresChange={setSelectedValores}
-              onNivelChange={setSelectedNivel}
-              onAutoresChange={setAutores}
-              onPersonajesChange={setPersonajes}
-              onDescripcionChange={setDescripcion}
-              onTituloChange={setTitulo}
-              onPortadaChange={handlePortadaChange}
-              onLayoutChange={bookState.handleLayoutChange}
-              onBackgroundChange={bookState.handleBackgroundChange}
-              onAddPage={bookState.addPage}
-              onDeletePage={bookState.deletePage}
-            />
-          )}
+        {/* Sidebar - Ancho fijo, scroll interno */}
+        <div className="w-80 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col overflow-hidden">
+          <EditorSidebar
+            pages={bookState.pages}
+            currentPage={bookState.currentPage}
+            setPages={bookState.setPages}
+            setCurrentPage={bookState.setCurrentPage}
+            imageHandler={imageHandler}
+            navigation={navigation}
+            selectedCategorias={selectedCategorias}
+            selectedGeneros={selectedGeneros}
+            selectedEtiquetas={selectedEtiquetas}
+            selectedValores={selectedValores}
+            selectedNivel={selectedNivel}
+            autores={autores}
+            personajes={personajes}
+            descripcion={descripcion}
+            titulo={titulo}
+            portada={portada}
+            portadaUrl={portadaUrl}
+            onCategoriasChange={setSelectedCategorias}
+            onGenerosChange={setSelectedGeneros}
+            onEtiquetasChange={setSelectedEtiquetas}
+            onValoresChange={setSelectedValores}
+            onNivelChange={setSelectedNivel}
+            onAutoresChange={setAutores}
+            onPersonajesChange={setPersonajes}
+            onDescripcionChange={setDescripcion}
+            onTituloChange={setTitulo}
+            onPortadaChange={handlePortadaChange}
+            onLayoutChange={bookState.handleLayoutChange}
+            onBackgroundChange={bookState.handleBackgroundChange}
+            onAddPage={bookState.addPage}
+            onDeletePage={bookState.deletePage}
+          />
         </div>
 
-        {/* VISUALIZADOR DERECHA (flex-1, ocupa todo el espacio restante) */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Controles de navegación */}
-          <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
-            <div className="flex items-center gap-2">
+        {/* Viewer - Flex-1, sin scroll */}
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          {/* Mini toolbar */}
+          <div className="flex-shrink-0 bg-white border-b border-slate-200 px-3 py-1.5 flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={navigation.prevPage}
                 disabled={!navigation.canGoPrev}
-                className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white rounded-lg disabled:opacity-50 font-medium text-xs"
+                className="p-1.5 text-slate-600 hover:bg-slate-100 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title="Página anterior"
               >
-                <ChevronLeft size={14} />
-                Anterior
+                <ChevronLeft size={18} />
               </button>
-              
-              <div className="text-center px-4">
-                <div className="text-xs text-gray-500">Página</div>
-                <div className="font-bold text-sm text-gray-900">
-                  {bookState.currentPage + 1} / {bookState.pages.length}
-                </div>
-              </div>
               
               <button
                 onClick={navigation.nextPage}
                 disabled={!navigation.canGoNext}
-                className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white rounded-lg disabled:opacity-50 font-medium text-xs"
+                className="p-1.5 text-slate-600 hover:bg-slate-100 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title="Página siguiente"
               >
-                Siguiente
-                <ChevronRight size={14} />
+                <ChevronRight size={18} />
               </button>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={bookState.addPage}
-                className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium transition-all text-xs"
+                className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded transition-colors"
               >
                 <Plus size={14} />
-                Nueva Página
+                Nueva
               </button>
               
               {bookState.pages.length > 2 && (
                 <button
                   onClick={bookState.deletePage}
-                  className="flex items-center justify-center p-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all"
+                  className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                  title="Eliminar página"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -334,7 +360,7 @@ export function BookEditor({
             </div>
           </div>
 
-          {/* Viewer del libro */}
+          {/* Viewer */}
           <div className="flex-1 overflow-hidden">
             <BookViewer
               bookRef={bookRef}
@@ -347,6 +373,13 @@ export function BookEditor({
             />
           </div>
         </div>
+
+        {/* Validation Panel - Slide-in desde la derecha */}
+        <ValidationPanel
+          isOpen={showValidation}
+          errors={validationErrors}
+          onClose={() => setShowValidation(false)}
+        />
       </div>
     </div>
   );

@@ -7,7 +7,9 @@
 
 import React, { useState, useMemo } from 'react';
 import {
-  Heading, FileText, Layout, Image, Paintbrush
+  Heading, FileText, Layout, Image, Paintbrush,
+  BookOpen,
+  FileCheck
 } from 'lucide-react';
 
 // Tipos
@@ -21,6 +23,7 @@ import { ImageControls } from '../../../editor/components/ImageControls/ImageCon
 import { BackgroundControls } from '../../../editor/components/BackgroundControls/BackgroundControls';
 import { RichTextEditor } from '../../../editor/components/RichTextEditor/RichTextEditor';
 import { TitleEditor } from '../../../editor/components/RichTextEditor/TitleEditor';
+import { BookMetadataForm } from '../BookMetadata/BookMetadataForm';
 
 interface EditorSidebarProps {
   pages: page[];
@@ -95,81 +98,31 @@ export function EditorSidebar({
 }: EditorSidebarProps) {
   
   const currentPageData = pages[currentPage];
-  const [activeTab, setActiveTab] = useState<string>('title');
-
-  // Detectar tipo de página
+  const [activeTab, setActiveTab] = useState<string>('content');
   const isFirstPage = currentPage === 0;
 
-  // Tabs disponibles según el tipo de página
   const tabs = useMemo(() => {
-    // Página 1 (Portada): solo fondo
     if (isFirstPage) {
       return [
+        { id: 'meta', icon: BookOpen, label: 'Libro' },
         { id: 'background', icon: Paintbrush, label: 'Fondo' }
       ];
     }
     
-    // Páginas normales: todos los controles
     return [
-      { id: 'title', icon: Heading, label: 'Título' },
-      { id: 'text', icon: FileText, label: 'Texto' },
-      { id: 'layout', icon: Layout, label: 'Diseño' },
-      { id: 'images', icon: Image, label: 'Imagen' },
-      { id: 'background', icon: Paintbrush, label: 'Fondo' }
+      { id: 'content', icon: FileText, label: 'Contenido' },
+      { id: 'design', icon: Layout, label: 'Diseño' },
+      { id: 'meta', icon: FileCheck, label: 'Libro' },
     ];
   }, [isFirstPage]);
 
-  // Validar que el tab activo sea válido
-  React.useEffect(() => {
-    const validTabs = tabs.map(t => t.id);
-    if (!validTabs.includes(activeTab)) {
-      setActiveTab(tabs[0].id);
-    }
-  }, [tabs, activeTab]);
-
   if (!currentPageData) return null;
 
-  // SI ES PÁGINA 1: Solo mostrar fondo
-  if (isFirstPage) {
-    return (
-      <div className="h-full flex flex-col bg-white">
-        <div className="flex-shrink-0 bg-purple-600 text-white px-3 py-2">
-          <h2 className="font-semibold text-sm">🎨 Portada - Solo Fondo</h2>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
-            <p className="text-sm text-purple-900 font-medium">
-              📄 Página 1 - Portada
-            </p>
-            <p className="text-xs text-purple-700 mt-1">
-              Solo puedes editar el fondo de esta página
-            </p>
-          </div>
-
-          <BackgroundControls
-            currentBackground={currentPageData.background}
-            hasBackground={!!currentPageData.background}
-            pageNumber={currentPage + 1}
-            onBackgroundChange={onBackgroundChange}
-            onBackgroundFileChange={imageHandler.handleBackgroundFile}
-            onRemoveBackground={imageHandler.removeBackground}
-          />
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="h-full flex flex-col bg-white">
-      {/* Header */}
-      <div className="flex-shrink-0 bg-indigo-600 text-white px-3 py-2">
-        <h2 className="font-semibold text-sm">🛠️ Editor de Página {currentPage + 1}</h2>
-      </div>
-
-      {/* Tabs horizontales */}
-      <div className="flex-shrink-0 border-b border-gray-200 bg-white overflow-x-auto">
-        <div className="flex gap-1 p-1.5 min-w-max">
+    <div className="h-full flex flex-col">
+      {/* Tabs - Ultra compactos */}
+      <div className="flex-shrink-0 bg-slate-50 border-b border-slate-200">
+        <div className="flex">
           {tabs.map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -179,11 +132,10 @@ export function EditorSidebar({
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`
-                  flex items-center gap-1.5 px-3 py-1.5 rounded-md whitespace-nowrap
-                  font-medium text-xs transition-all
+                  flex-1 flex flex-col items-center gap-1 py-2 text-xs font-medium transition-colors
                   ${isActive 
-                    ? 'bg-indigo-600 text-white shadow-md' 
-                    : 'text-gray-600 hover:bg-gray-100 bg-gray-50'
+                    ? 'bg-white text-indigo-600 border-b-2 border-indigo-600' 
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }
                 `}
               >
@@ -195,54 +147,87 @@ export function EditorSidebar({
         </div>
       </div>
 
-      {/* Contenido del tab activo */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {activeTab === 'title' && (
-          <TitleEditor
-            value={currentPageData.title || ''}
-            onChange={(html) => {
-              setPages(prev => {
-                const newPages = [...prev];
-                newPages[currentPage] = { ...newPages[currentPage], title: html };
-                return newPages;
-              });
-            }}
-            pageNumber={currentPage + 1}
+      {/* Content - Scroll interno */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        {activeTab === 'content' && !isFirstPage && (
+          <>
+            <TitleEditor
+              value={currentPageData.title || ''}
+              onChange={(html) => {
+                setPages(prev => {
+                  const newPages = [...prev];
+                  newPages[currentPage] = { ...newPages[currentPage], title: html };
+                  return newPages;
+                });
+              }}
+              pageNumber={currentPage + 1}
+            />
+
+            <RichTextEditor
+              value={currentPageData.text || ''}
+              onChange={(html) => {
+                setPages(prev => {
+                  const newPages = [...prev];
+                  newPages[currentPage] = { ...newPages[currentPage], text: html };
+                  return newPages;
+                });
+              }}
+              pageNumber={currentPage + 1}
+            />
+          </>
+        )}
+
+        {activeTab === 'design' && !isFirstPage && (
+          <>
+            <PageLayoutSelector
+              currentLayout={currentPageData.layout}
+              pageNumber={currentPage + 1}
+              onLayoutChange={onLayoutChange}
+            />
+
+            <ImageControls
+              hasImage={!!currentPageData.image}
+              pageNumber={currentPage + 1}
+              onImageChange={imageHandler.handleImageChange}
+              onRemoveImage={imageHandler.removeImage}
+            />
+
+            <BackgroundControls
+              currentBackground={currentPageData.background}
+              hasBackground={!!currentPageData.background}
+              pageNumber={currentPage + 1}
+              onBackgroundChange={onBackgroundChange}
+              onBackgroundFileChange={imageHandler.handleBackgroundFile}
+              onRemoveBackground={imageHandler.removeBackground}
+            />
+          </>
+        )}
+
+        {activeTab === 'meta' && (
+          <BookMetadataForm
+            selectedCategorias={selectedCategorias}
+            selectedGeneros={selectedGeneros}
+            selectedEtiquetas={selectedEtiquetas}
+            selectedValores={selectedValores}
+            selectedNivel={selectedNivel}
+            autores={autores}
+            personajes={personajes}
+            descripcion={descripcion}
+            titulo={titulo}
+            onCategoriasChange={onCategoriasChange}
+            onGenerosChange={onGenerosChange}
+            onEtiquetasChange={onEtiquetasChange}
+            onValoresChange={onValoresChange}
+            onNivelChange={onNivelChange}
+            onAutoresChange={onAutoresChange}
+            onPersonajesChange={onPersonajesChange}
+            onDescripcionChange={onDescripcionChange}
+            onTituloChange={onTituloChange}
+            onSave={async () => {}}
           />
         )}
 
-        {activeTab === 'text' && (
-          <RichTextEditor
-            value={currentPageData.text || ''}
-            onChange={(html) => {
-              setPages(prev => {
-                const newPages = [...prev];
-                newPages[currentPage] = { ...newPages[currentPage], text: html };
-                return newPages;
-              });
-            }}
-            pageNumber={currentPage + 1}
-          />
-        )}
-
-        {activeTab === 'layout' && (
-          <PageLayoutSelector
-            currentLayout={currentPageData.layout}
-            pageNumber={currentPage + 1}
-            onLayoutChange={onLayoutChange}
-          />
-        )}
-
-        {activeTab === 'images' && (
-          <ImageControls
-            hasImage={!!currentPageData.image}
-            pageNumber={currentPage + 1}
-            onImageChange={imageHandler.handleImageChange}
-            onRemoveImage={imageHandler.removeImage}
-          />
-        )}
-
-        {activeTab === 'background' && (
+        {activeTab === 'background' && isFirstPage && (
           <BackgroundControls
             currentBackground={currentPageData.background}
             hasBackground={!!currentPageData.background}

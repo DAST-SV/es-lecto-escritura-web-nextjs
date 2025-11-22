@@ -8,6 +8,7 @@ import { ReactNode, Suspense } from 'react'; // Componentes de React para maneja
 import "../globals.css"; // Estilos globales de la aplicación
 import NavBar from '@/src/components/nav/NavBar'; // Barra de navegación de la aplicación
 import Loading from './loading';
+import { DIProvider } from '@/src/infrastructure/di/providers';
 
 // Definición de las propiedades que recibe el layout
 interface LayoutProps {
@@ -79,7 +80,9 @@ export default async function RootLayout({
           {/* Suspense para manejar la carga de los datos */}
           <Suspense fallback={<Loading />}>
             {/* Contenido principal de la página */}
-            {children}
+            <DIProvider>
+              {children}
+            </DIProvider>
           </Suspense>
         </NextIntlClientProvider>
       </body>
