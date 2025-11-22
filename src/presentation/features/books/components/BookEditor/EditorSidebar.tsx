@@ -1,15 +1,15 @@
 /**
- * UBICACIÓN: src/presentation/features/book/components/BookEditor/EditorSidebar.tsx
+ * UBICACIÓN: src/presentation/features/books/components/BookEditor/EditorSidebar.tsx
  * 
- * Sidebar del editor con tabs para controlar cada aspecto de la página
- * SIN auto-paginación
+ * Sidebar del editor con pestañas:
+ * - Ficha Literaria (NUEVA - totalmente separada, para catálogos públicos)
+ * - Contenido (título y texto de páginas)
+ * - Diseño (layout, imagen, fondo de páginas)
  */
 
 import React, { useState, useMemo } from 'react';
 import {
-  Heading, FileText, Layout, Image, Paintbrush,
-  BookOpen,
-  FileCheck
+  Sparkles, FileText, Layout, Image, Paintbrush,
 } from 'lucide-react';
 
 // Tipos
@@ -23,7 +23,9 @@ import { ImageControls } from '../../../editor/components/ImageControls/ImageCon
 import { BackgroundControls } from '../../../editor/components/BackgroundControls/BackgroundControls';
 import { RichTextEditor } from '../../../editor/components/RichTextEditor/RichTextEditor';
 import { TitleEditor } from '../../../editor/components/RichTextEditor/TitleEditor';
-import { BookMetadataForm } from '../BookMetadata/BookMetadataForm';
+
+// NUEVO: Componente de Ficha Literaria
+import { LiteraryCardEditor } from '../LiteraryCard/LiteraryCardEditor';
 
 interface EditorSidebarProps {
   pages: page[];
@@ -33,30 +35,23 @@ interface EditorSidebarProps {
   imageHandler: UseImageHandlerReturn;
   navigation: UseBookNavigationReturn;
 
-  // Metadatos (no se usan aquí, pero se pasan al padre)
-  selectedCategorias: (number | string)[];
-  selectedGeneros: (number | string)[];
-  selectedEtiquetas: (number | string)[];
-  selectedValores: (number | string)[];
-  selectedNivel: number | null;
-  autores: string[];
-  personajes: string[];
-  descripcion: string;
+  // Datos del libro (para ficha literaria)
   titulo: string;
-  portada: File | null;
-  portadaUrl?: string | null;
+  autores: string[];
+  descripcion: string;
+  
+  // Clasificación (arrays de strings - nombres legibles)
+  categoriasLabels: string[];
+  generosLabels: string[];
+  valoresLabels: string[];
+  nivelLabel: string | null;
+  
+  // Imagen de fondo de la FICHA LITERARIA (NO la portada del libro)
+  cardBackgroundImage: File | null;
+  cardBackgroundUrl: string | null;
 
   // Handlers
-  onCategoriasChange: (values: (number | string)[]) => void;
-  onGenerosChange: (values: (number | string)[]) => void;
-  onEtiquetasChange: (values: (number | string)[]) => void;
-  onValoresChange: (values: (number | string)[]) => void;
-  onNivelChange: (value: number | null) => void;
-  onAutoresChange: (values: string[]) => void;
-  onPersonajesChange: (values: string[]) => void;
-  onDescripcionChange: (value: string) => void;
-  onTituloChange: (value: string) => void;
-  onPortadaChange: (value: File | null) => void;
+  onCardBackgroundChange: (file: File | null) => void;
   onLayoutChange: (layout: string) => void;
   onBackgroundChange: (value: string) => void;
   onAddPage: () => void;
@@ -70,27 +65,16 @@ export function EditorSidebar({
   setCurrentPage,
   imageHandler,
   navigation,
-  selectedCategorias,
-  selectedGeneros,
-  selectedEtiquetas,
-  selectedValores,
-  selectedNivel,
-  autores,
-  personajes,
-  descripcion,
   titulo,
-  portada,
-  portadaUrl,
-  onCategoriasChange,
-  onGenerosChange,
-  onEtiquetasChange,
-  onValoresChange,
-  onNivelChange,
-  onAutoresChange,
-  onPersonajesChange,
-  onDescripcionChange,
-  onTituloChange,
-  onPortadaChange,
+  autores,
+  descripcion,
+  categoriasLabels,
+  generosLabels,
+  valoresLabels,
+  nivelLabel,
+  cardBackgroundImage,
+  cardBackgroundUrl,
+  onCardBackgroundChange,
   onLayoutChange,
   onBackgroundChange,
   onAddPage,
@@ -101,18 +85,23 @@ export function EditorSidebar({
   const [activeTab, setActiveTab] = useState<string>('content');
   const isFirstPage = currentPage === 0;
 
+  /**
+   * Definición de pestañas
+   */
   const tabs = useMemo(() => {
     if (isFirstPage) {
+      // Primera página: Solo Ficha Literaria y Fondo de portada
       return [
-        { id: 'meta', icon: BookOpen, label: 'Libro' },
-        { id: 'background', icon: Paintbrush, label: 'Fondo' }
+        { id: 'card', icon: Sparkles, label: 'Ficha Literaria', color: 'purple' },
+        { id: 'background', icon: Paintbrush, label: 'Fondo Portada', color: 'indigo' }
       ];
     }
 
+    // Resto de páginas: Contenido, Diseño, Ficha Literaria
     return [
-      { id: 'content', icon: FileText, label: 'Contenido' },
-      { id: 'design', icon: Layout, label: 'Diseño' },
-      { id: 'meta', icon: FileCheck, label: 'Libro' },
+      { id: 'content', icon: FileText, label: 'Contenido', color: 'blue' },
+      { id: 'design', icon: Layout, label: 'Diseño', color: 'green' },
+      { id: 'card', icon: Sparkles, label: 'Ficha Literaria', color: 'purple' },
     ];
   }, [isFirstPage]);
 
@@ -120,27 +109,42 @@ export function EditorSidebar({
 
   return (
     <div className="h-full flex flex-col">
-      {/* Tabs - Ultra compactos */}
+      {/* Tabs - Ultra compactos con colores distintivos */}
       <div className="flex-shrink-0 bg-slate-50 border-b border-slate-200">
         <div className="flex">
           {tabs.map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
+            
+            // Colores por pestaña
+            const colorClasses = {
+              purple: isActive 
+                ? 'bg-purple-600 text-white border-purple-600' 
+                : 'text-purple-600 hover:bg-purple-50',
+              indigo: isActive 
+                ? 'bg-indigo-600 text-white border-indigo-600' 
+                : 'text-indigo-600 hover:bg-indigo-50',
+              blue: isActive 
+                ? 'bg-blue-600 text-white border-blue-600' 
+                : 'text-blue-600 hover:bg-blue-50',
+              green: isActive 
+                ? 'bg-green-600 text-white border-green-600' 
+                : 'text-green-600 hover:bg-green-50',
+            };
 
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`
-                  flex-1 flex flex-col items-center gap-1 py-2 text-xs font-medium transition-colors
-                  ${isActive
-                    ? 'bg-white text-indigo-600 border-b-2 border-indigo-600'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }
+                  flex-1 flex flex-col items-center gap-1 py-2 text-xs font-medium transition-all
+                  ${isActive ? 'border-b-2' : ''}
+                  ${colorClasses[tab.color as keyof typeof colorClasses]}
                 `}
               >
                 <Icon size={16} />
                 <span>{tab.label}</span>
+                {tab.id === 'card' && <span className="text-[9px] opacity-75">(Pública)</span>}
               </button>
             );
           })}
@@ -148,7 +152,27 @@ export function EditorSidebar({
       </div>
 
       {/* Content - Scroll interno */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+      <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-50">
+        
+        {/* PESTAÑA: Ficha Literaria (NUEVA) */}
+        {activeTab === 'card' && (
+          <div>
+            <LiteraryCardEditor
+              titulo={titulo}
+              autores={autores}
+              descripcion={descripcion}
+              categorias={categoriasLabels}
+              generos={generosLabels}
+              valores={valoresLabels}
+              nivel={nivelLabel}
+              cardBackgroundImage={cardBackgroundImage}
+              cardBackgroundUrl={cardBackgroundUrl}
+              onCardBackgroundChange={onCardBackgroundChange}
+            />
+          </div>
+        )}
+
+        {/* PESTAÑA: Contenido (páginas normales) */}
         {activeTab === 'content' && !isFirstPage && (
           <>
             <TitleEditor
@@ -177,6 +201,7 @@ export function EditorSidebar({
           </>
         )}
 
+        {/* PESTAÑA: Diseño (páginas normales) */}
         {activeTab === 'design' && !isFirstPage && (
           <>
             <PageLayoutSelector
@@ -215,39 +240,28 @@ export function EditorSidebar({
           </>
         )}
 
-        {activeTab === 'meta' && (
-          <BookMetadataForm
-            selectedCategorias={selectedCategorias}
-            selectedGeneros={selectedGeneros}
-            selectedEtiquetas={selectedEtiquetas}
-            selectedValores={selectedValores}
-            selectedNivel={selectedNivel}
-            autores={autores}
-            personajes={personajes}
-            descripcion={descripcion}
-            titulo={titulo}
-            onCategoriasChange={onCategoriasChange}
-            onGenerosChange={onGenerosChange}
-            onEtiquetasChange={onEtiquetasChange}
-            onValoresChange={onValoresChange}
-            onNivelChange={onNivelChange}
-            onAutoresChange={onAutoresChange}
-            onPersonajesChange={onPersonajesChange}
-            onDescripcionChange={onDescripcionChange}
-            onTituloChange={onTituloChange}
-            onSave={async () => { }}
-          />
-        )}
-
+        {/* PESTAÑA: Fondo de Portada (solo primera página) */}
         {activeTab === 'background' && isFirstPage && (
-          <BackgroundControls
-            currentBackground={currentPageData.background}
-            hasBackground={!!currentPageData.background}
-            pageNumber={currentPage + 1}
-            onBackgroundChange={onBackgroundChange}
-            onBackgroundFileChange={imageHandler.handleBackgroundFile}
-            onRemoveBackground={imageHandler.removeBackground}
-          />
+          <div>
+            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 mb-4">
+              <p className="text-sm font-medium text-indigo-900">
+                📄 Fondo de la Portada (Página 1)
+              </p>
+              <p className="text-xs text-indigo-700 mt-1">
+                Este es el fondo de la primera página de tu libro (la portada interna), 
+                diferente de la Ficha Literaria.
+              </p>
+            </div>
+
+            <BackgroundControls
+              currentBackground={currentPageData.background}
+              hasBackground={!!currentPageData.background}
+              pageNumber={currentPage + 1}
+              onBackgroundChange={onBackgroundChange}
+              onBackgroundFileChange={imageHandler.handleBackgroundFile}
+              onRemoveBackground={imageHandler.removeBackground}
+            />
+          </div>
         )}
       </div>
     </div>

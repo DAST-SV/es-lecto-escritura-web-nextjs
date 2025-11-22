@@ -1,5 +1,6 @@
 /**
  * UBICACIÓN: src/infrastructure/services/bookService.ts
+ * ACTUALIZADO: Interface BookMetadata con campos de Ficha Literaria
  */
 
 import toast from "react-hot-toast";
@@ -8,6 +9,7 @@ import { Book, BookMetadata as DomainBookMetadata } from '../../core/domain/enti
 import { Page } from '../../core/domain/entities/Page.entity';
 import type { page } from '@/src/typings/types-page-book/index';
 
+// Interface actualizada con campos de Ficha Literaria
 export interface BookMetadata {
   selectedCategorias: (number | string)[];
   selectedGeneros: (number | string)[];
@@ -20,6 +22,10 @@ export interface BookMetadata {
   titulo: string;
   portada: File | null;
   portadaUrl?: string | null;
+  
+  // NUEVO: Campos para la Ficha Literaria
+  cardBackgroundImage?: File | null;
+  cardBackgroundUrl?: string | null;
 }
 
 /**
@@ -38,6 +44,9 @@ function toDomainMetadata(uiMetadata: BookMetadata): DomainBookMetadata {
     selectedEtiquetas: uiMetadata.selectedEtiquetas,
     selectedValores: uiMetadata.selectedValores,
     selectedNivel: uiMetadata.selectedNivel,
+    // NUEVO: Pasar campos de ficha literaria
+    cardBackgroundImage: uiMetadata.cardBackgroundImage,
+    cardBackgroundUrl: uiMetadata.cardBackgroundUrl,
   };
 }
 

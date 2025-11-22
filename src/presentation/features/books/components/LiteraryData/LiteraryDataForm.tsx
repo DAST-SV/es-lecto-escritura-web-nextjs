@@ -3,7 +3,6 @@
  * 
  * Formulario de Ficha Literaria del Libro
  * Contiene TODA la información descriptiva y de catalogación del libro
- * CORREGIDO: Sin conflictos de CSS (block vs flex)
  */
 
 import React from 'react';
@@ -90,7 +89,7 @@ export function LiteraryDataForm({
 
         {/* Título */}
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700">
             📖 Título del libro <span className="text-red-500">*</span>
           </label>
           <input
@@ -107,7 +106,7 @@ export function LiteraryDataForm({
 
         {/* Descripción */}
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700">
             📝 Descripción del libro <span className="text-red-500">*</span>
           </label>
           <textarea
@@ -124,7 +123,7 @@ export function LiteraryDataForm({
 
         {/* Portada */}
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
             <ImageIcon size={16} />
             Portada del libro <span className="text-red-500">*</span>
           </label>
@@ -145,7 +144,7 @@ export function LiteraryDataForm({
 
         {/* Autores */}
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
             <User size={16} />
             Autores del libro <span className="text-red-500">*</span>
           </label>
@@ -162,7 +161,7 @@ export function LiteraryDataForm({
 
         {/* Personajes */}
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
             <Sparkles size={16} />
             Personajes principales
           </label>
@@ -186,7 +185,7 @@ export function LiteraryDataForm({
 
         {/* Categorías */}
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
             <Tag size={16} />
             Tipo de Lectura <span className="text-red-500">*</span>
           </label>
@@ -207,7 +206,7 @@ export function LiteraryDataForm({
 
         {/* Géneros */}
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
             <Star size={16} />
             Géneros Literarios <span className="text-red-500">*</span>
           </label>
@@ -228,7 +227,7 @@ export function LiteraryDataForm({
 
         {/* Nivel */}
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
             <Award size={16} />
             Nivel de Lectura
           </label>
@@ -256,7 +255,7 @@ export function LiteraryDataForm({
 
         {/* Valores */}
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
             <Award size={16} />
             Valores que transmite
           </label>
@@ -277,7 +276,7 @@ export function LiteraryDataForm({
 
         {/* Etiquetas */}
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
             <Tag size={16} />
             Etiquetas adicionales
           </label>

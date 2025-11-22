@@ -1,6 +1,7 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookEditor/BookEditor.tsx
  * DISEÑO: Ultra profesional, sin scroll, validaciones en lista
+ * NUEVA FUNCIONALIDAD: Ficha Literaria separada del contenido de las páginas
  */
 
 "use client";
@@ -42,6 +43,9 @@ interface BookEditorProps {
     titulo?: string;
     portada?: File | string | null;
     portadaUrl?: string | null;
+    // NUEVO: Imagen de fondo de la Ficha Literaria
+    cardBackgroundImage?: File | null;
+    cardBackgroundUrl?: string | null;
   };
 }
 
@@ -59,8 +63,11 @@ export function BookEditor({
   
   const bookRef = useRef<any>(null);
   const portadaUrlRef = useRef<string | null>(null);
+  const cardBackgroundUrlRef = useRef<string | null>(null);
 
-  // Estados de metadatos
+  // ============================================
+  // ESTADOS DE METADATOS DEL LIBRO
+  // ============================================
   const [selectedCategorias, setSelectedCategorias] = useState<(number | string)[]>(
     initialMetadata?.selectedCategorias || []
   );
@@ -81,6 +88,7 @@ export function BookEditor({
   const [descripcion, setDescripcion] = useState<string>(initialMetadata?.descripcion || "");
   const [titulo, setTitulo] = useState<string>(initialMetadata?.titulo || "");
   
+  // Portada del libro (página 1)
   const [portada, setPortada] = useState<File | null>(
     initialMetadata?.portada instanceof File ? initialMetadata.portada : null
   );
@@ -90,12 +98,36 @@ export function BookEditor({
     (typeof initialMetadata?.portada === 'string' ? initialMetadata.portada : null)
   );
 
-  // Estados UI
+  // ============================================
+  // NUEVO: ESTADOS PARA FICHA LITERARIA
+  // ============================================
+  
+  // Imagen de fondo de la FICHA LITERARIA (separada de la portada)
+  const [cardBackgroundImage, setCardBackgroundImage] = useState<File | null>(
+    initialMetadata?.cardBackgroundImage || null
+  );
+  
+  const [cardBackgroundUrl, setCardBackgroundUrl] = useState<string | null>(
+    initialMetadata?.cardBackgroundUrl || null
+  );
+
+  // Labels legibles (nombres) para mostrar en la ficha
+  const [categoriasLabels, setCategoriasLabels] = useState<string[]>([]);
+  const [generosLabels, setGenerosLabels] = useState<string[]>([]);
+  const [etiquetasLabels, setEtiquetasLabels] = useState<string[]>([]);
+  const [valoresLabels, setValoresLabels] = useState<string[]>([]);
+  const [nivelLabel, setNivelLabel] = useState<string | null>(null);
+
+  // ============================================
+  // ESTADOS DE UI
+  // ============================================
   const [isSaving, setIsSaving] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
 
-  // Hooks personalizados
+  // ============================================
+  // HOOKS PERSONALIZADOS
+  // ============================================
   const bookState = useBookState({ initialPages, title });
   const imageHandler = useImageHandler({
     pages: bookState.pages,
@@ -111,7 +143,9 @@ export function BookEditor({
     bookRef
   });
 
-  // Validación
+  // ============================================
+  // VALIDACIÓN
+  // ============================================
   const validateBook = useCallback((): ValidationError[] => {
     const errors: ValidationError[] = [];
 
@@ -139,10 +173,21 @@ export function BookEditor({
       errors.push({ field: 'Portada', message: 'Selecciona una imagen de portada' });
     }
 
-    return errors;
-  }, [titulo, autores, descripcion, selectedCategorias, selectedGeneros, portada, portadaUrl]);
+    // NUEVO: Validación de ficha literaria (opcional pero recomendado)
+    if (!cardBackgroundImage && !cardBackgroundUrl) {
+      errors.push({ 
+        field: 'Ficha Literaria', 
+        message: 'Recomendado: Agrega una imagen para la ficha literaria' 
+      });
+    }
 
-  // Handler para guardar
+    return errors;
+  }, [titulo, autores, descripcion, selectedCategorias, selectedGeneros, portada, portadaUrl, cardBackgroundImage, cardBackgroundUrl]);
+
+  // ============================================
+  // HANDLERS
+  // ============================================
+  
   const handleSave = useCallback(async () => {
     // Validar
     const errors = validateBook();
@@ -165,6 +210,9 @@ export function BookEditor({
       titulo,
       portada,
       portadaUrl,
+      // NUEVO: Imagen de fondo de la ficha literaria
+      cardBackgroundImage,
+      cardBackgroundUrl,
     };
 
     setIsSaving(true);
@@ -192,6 +240,8 @@ export function BookEditor({
     titulo, 
     portada,
     portadaUrl,
+    cardBackgroundImage,
+    cardBackgroundUrl,
     IdLibro,
     validateBook
   ]);
@@ -212,10 +262,36 @@ export function BookEditor({
     }
   }, []);
 
+  // NUEVO: Handler para imagen de fondo de la ficha literaria
+  const handleCardBackgroundChange = useCallback((file: File | null) => {
+    setCardBackgroundImage(file);
+    
+    if (file) {
+      // Limpiar URL anterior si existe
+      if (cardBackgroundUrlRef.current) {
+        URL.revokeObjectURL(cardBackgroundUrlRef.current);
+      }
+      // Crear nueva URL temporal
+      cardBackgroundUrlRef.current = URL.createObjectURL(file);
+      setCardBackgroundUrl(cardBackgroundUrlRef.current);
+    } else {
+      // Limpiar URL si se quita la imagen
+      if (cardBackgroundUrlRef.current) {
+        URL.revokeObjectURL(cardBackgroundUrlRef.current);
+        cardBackgroundUrlRef.current = null;
+      }
+      setCardBackgroundUrl(null);
+    }
+  }, []);
+
+  // Cleanup de URLs al desmontar
   React.useEffect(() => {
     return () => {
       if (portadaUrlRef.current) {
         URL.revokeObjectURL(portadaUrlRef.current);
+      }
+      if (cardBackgroundUrlRef.current) {
+        URL.revokeObjectURL(cardBackgroundUrlRef.current);
       }
     };
   }, []);
@@ -287,27 +363,24 @@ export function BookEditor({
             setCurrentPage={bookState.setCurrentPage}
             imageHandler={imageHandler}
             navigation={navigation}
-            selectedCategorias={selectedCategorias}
-            selectedGeneros={selectedGeneros}
-            selectedEtiquetas={selectedEtiquetas}
-            selectedValores={selectedValores}
-            selectedNivel={selectedNivel}
-            autores={autores}
-            personajes={personajes}
-            descripcion={descripcion}
+            
+            // Datos del libro para la ficha literaria
             titulo={titulo}
-            portada={portada}
-            portadaUrl={portadaUrl}
-            onCategoriasChange={setSelectedCategorias}
-            onGenerosChange={setSelectedGeneros}
-            onEtiquetasChange={setSelectedEtiquetas}
-            onValoresChange={setSelectedValores}
-            onNivelChange={setSelectedNivel}
-            onAutoresChange={setAutores}
-            onPersonajesChange={setPersonajes}
-            onDescripcionChange={setDescripcion}
-            onTituloChange={setTitulo}
-            onPortadaChange={handlePortadaChange}
+            autores={autores}
+            descripcion={descripcion}
+            
+            // Labels legibles para la ficha
+            categoriasLabels={categoriasLabels}
+            generosLabels={generosLabels}
+            valoresLabels={valoresLabels}
+            nivelLabel={nivelLabel}
+            
+            // NUEVO: Imagen de fondo de la ficha literaria
+            cardBackgroundImage={cardBackgroundImage}
+            cardBackgroundUrl={cardBackgroundUrl}
+            onCardBackgroundChange={handleCardBackgroundChange}
+            
+            // Handlers de páginas
             onLayoutChange={bookState.handleLayoutChange}
             onBackgroundChange={bookState.handleBackgroundChange}
             onAddPage={bookState.addPage}
