@@ -1,12 +1,9 @@
-// app/[locale]/book/create/page.tsx
+"use client";
 
-import CreateBookPageWrapper from "@/src/components/book-editor/components/CreateBookPageWrapper";
+import { Book } from "@/src/components/components-for-books/book/create-edits-books/components/Book";
 
-export default function CreateBookPage() {
-  return (
-    <CreateBookPageWrapper
-      bookTitle="Mi Nuevo Libro"
-      initialPages={[]}
-    />
-  );
+const CreateBook: React.FC = () => {
+ return <Book/>
 }
+
+export default CreateBook;
