@@ -33,6 +33,7 @@ export function RichTextEditor({
   const [characterCount, setCharacterCount] = useState(0);
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: false,

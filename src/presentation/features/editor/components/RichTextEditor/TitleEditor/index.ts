@@ -4,5 +4,5 @@
  * Barrel export para RichTextEditor
  */
 
-export { RichTextEditor } from './RichTextEditor';
-export type { RichTextEditorProps } from './RichTextEditor';
+export { TitleEditor } from './TitleEditor';
+export type { TitleEditorProps } from './TitleEditor';

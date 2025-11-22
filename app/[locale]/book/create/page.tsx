@@ -1,9 +1,13 @@
-"use client";
+/**
+ * UBICACIÓN: app/(dashboard)/libros/nuevo/page.tsx
+ * 
+ * Ruta: /libros/nuevo
+ * Responsabilidad: Solo routing - Renderiza el componente de página
+ */
 
-import { Book } from "@/src/components/components-for-books/book/create-edits-books/components/Book";
+import { CreateBookPage } from "@/src/presentation/pages/books/CreateBookPage";
 
-const CreateBook: React.FC = () => {
- return <Book/>
+
+export default function NuevoLibroPage() {
+  return <CreateBookPage />;
 }
-
-export default CreateBook;
