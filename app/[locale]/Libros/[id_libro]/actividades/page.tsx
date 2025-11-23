@@ -1,3 +1,8 @@
+import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
+const Page: React.FC = () => {
+    return <UnifiedLayout><></></UnifiedLayout>;
+}
+export default Page;
 // 'use client';
 
 // import { useActividadesLibro } from '@/src/components/components-for-books/book/books/hooks/useActividadesLibro';

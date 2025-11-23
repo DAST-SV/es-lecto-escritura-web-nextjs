@@ -5,6 +5,12 @@
 // import ImageGrid, { ImageItem } from "@/src/utils/imagenes/ImageGrid";
 // import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
 
+import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
+const Page: React.FC = () => {
+    return <UnifiedLayout><></></UnifiedLayout>;
+}
+export default Page;
+
 // // 🔹 Imports de imágenes
 // import Caracoles from "@/public/Imagenes/explore-content/top10/04e5ba5c-10d1-4f6d-ac86-82b8a0ba59fc.jpg";
 // import Hamster from "@/public/Imagenes/explore-content/top10/52063d7e-8fd6-4f18-9ce2-d05abbb78fbb.jpg";

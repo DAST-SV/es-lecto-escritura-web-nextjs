@@ -226,3 +226,8 @@
 // };
 
 // export default Page;
+import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
+const Page: React.FC = () => {
+    return <UnifiedLayout><></></UnifiedLayout>;
+}
+export default Page;
