@@ -17,35 +17,52 @@ export function PageRenderer({ page, isActive }: Props) {
 
   const getBorderRadius = page.border ? borders[page.border] : borders.cuadrado;
 
-  const getBackground =
-    page.background && page.background in backgrounds
-      ? backgrounds[page.background as keyof typeof backgrounds]
-      : typeof page.background === "string"
-        ? /^(https?:\/\/|localhost|blob:)/.test(page.background)
-          ? `url(${page.background}) center/cover no-repeat`
-          : backgrounds.blanco
-        : backgrounds.blanco;
+  /**
+   * ✅ Mejorar detección de fondo
+   */
+  const getBackgroundStyle = (): React.CSSProperties => {
+    if (!page.background) {
+      return { background: backgrounds.blanco };
+    }
 
+    const bg = page.background;
+
+    // Si es URL (imagen de fondo)
+    if (typeof bg === 'string' && /^(https?:\/\/|blob:)/.test(bg)) {
+      return {
+        backgroundImage: `url(${bg})`,
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: 'auto 100%', // ✅ AJUSTAR AL ALTO
+      };
+    }
+
+    // Si es color hex
+    if (typeof bg === 'string' && bg.startsWith('#')) {
+      return { background: bg };
+    }
+
+    // Si está en los presets
+    if (bg in backgrounds) {
+      return { background: backgrounds[bg as keyof typeof backgrounds] };
+    }
+
+    return { background: backgrounds.blanco };
+  };
+
+  const backgroundStyle = getBackgroundStyle();
   const animation = page.animation ? getAnimation(page.animation) : null;
 
-  // 🔍 DEBUG: Ver qué está pasando
   const hasCustomBackground = 
     page.background && 
     page.background !== 'blanco' && 
     page.background !== '';
 
-  console.log('🎨 PageRenderer:', {
-    background: page.background,
-    hasCustomBackground,
-    willAddPadding: !hasCustomBackground,
-    className: `flipbook-page-content${!hasCustomBackground ? ' with-padding' : ''}`
-  });
-
   const content = (
     <div
       className="flipbook-page"
       style={{
-        background: getBackground,
+        ...backgroundStyle,
         borderRadius: getBorderRadius,
         width: "100%",
         height: "100%",
@@ -53,9 +70,6 @@ export function PageRenderer({ page, isActive }: Props) {
         margin: 0,
         position: 'relative',
         overflow: 'hidden',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
       }}
     >
       <div 

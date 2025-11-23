@@ -1,8 +1,6 @@
 /**
- * UBICACIÓN: src/presentation/features/books/components/BookEditor/BookEditor.tsx
- * ACTUALIZADO: Con soporte completo para etiquetas labels y altura ajustada
+ * BookEditor - Sidebar más ancho (400px)
  */
-
 "use client";
 
 import React, { useState, useRef, useCallback } from "react";
@@ -12,16 +10,13 @@ import {
   FileText, ArrowLeft, Loader2
 } from "lucide-react";
 
-// Hooks
 import { useBookState } from "../../hooks/useBookState";
 import { useImageHandler } from "../../hooks/useImageHandler";
 import { useBookNavigation } from "../../hooks/useBookNavigation";
 
-// Componentes
 import { EditorSidebar } from "./EditorSidebar";
 import { ValidationPanel } from "./ValidationPanel";
 
-// Servicios
 import { saveBookJson, BookMetadata } from "@/src/infrastructure/services/bookService";
 import type { page } from "@/src/typings/types-page-book/index";
 import LiteraryCardView from "./LiteraryCardView";
@@ -61,8 +56,8 @@ export function BookEditor({
   const cardBackgroundUrlRef = useRef<string | null>(null);
 
   const [viewMode, setViewMode] = useState<'pages' | 'card'>('pages');
+  const [pageInput, setPageInput] = useState('1');
 
-  // Estados de metadatos (IDs para BD)
   const [selectedCategorias, setSelectedCategorias] = useState<(number | string)[]>(
     initialMetadata?.selectedCategorias || []
   );
@@ -79,14 +74,12 @@ export function BookEditor({
     initialMetadata?.selectedNivel || null
   );
 
-  // Estados de labels (para mostrar en UI)
   const [categoriasLabels, setCategoriasLabels] = useState<string[]>([]);
   const [generosLabels, setGenerosLabels] = useState<string[]>([]);
   const [etiquetasLabels, setEtiquetasLabels] = useState<string[]>([]);
   const [valoresLabels, setValoresLabels] = useState<string[]>([]);
   const [nivelLabel, setNivelLabel] = useState<string | null>(null);
 
-  // Otros metadatos
   const [autores, setAutores] = useState<string[]>(initialMetadata?.autores || []);
   const [personajes, setPersonajes] = useState<string[]>(initialMetadata?.personajes || []);
   const [descripcion, setDescripcion] = useState<string>(initialMetadata?.descripcion || "");
@@ -112,12 +105,9 @@ export function BookEditor({
   const [isSaving, setIsSaving] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
 
-  // Hooks personalizados
   const bookState = useBookState({ initialPages, title });
 
-  // ✅ AGREGAR CALLBACK PARA NOTIFICAR CAMBIOS DE FONDO
   const handleBackgroundChanged = useCallback(() => {
-    // Incrementar bookKey para forzar re-render del flipbook
     bookState.setBookKey?.(prev => prev + 1);
   }, []);
 
@@ -125,8 +115,9 @@ export function BookEditor({
     pages: bookState.pages,
     currentPage: bookState.currentPage,
     setPages: bookState.setPages,
-    onBackgroundChange: handleBackgroundChanged // ✅ Pasar callback
+    onBackgroundChange: handleBackgroundChanged
   });
+
   const navigation = useBookNavigation({
     pages: bookState.pages,
     currentPage: bookState.currentPage,
@@ -136,7 +127,28 @@ export function BookEditor({
     bookRef
   });
 
-  // Handlers para IDs (se guardan en BD)
+  React.useEffect(() => {
+    setPageInput((bookState.currentPage + 1).toString());
+  }, [bookState.currentPage]);
+
+  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '' || /^\d+$/.test(value)) {
+      setPageInput(value);
+    }
+  };
+
+  const handlePageInputSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const pageNum = parseInt(pageInput);
+    
+    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= bookState.pages.length) {
+      navigation.goToPage(pageNum - 1);
+    } else {
+      setPageInput((bookState.currentPage + 1).toString());
+    }
+  };
+
   const handleCategoriasChange = useCallback((values: (number | string)[]) => {
     setSelectedCategorias(values);
   }, []);
@@ -157,7 +169,6 @@ export function BookEditor({
     setSelectedNivel(value);
   }, []);
 
-  // Handlers para Labels (se muestran en UI)
   const handleCategoriasLabelsChange = useCallback((labels: string[]) => {
     setCategoriasLabels(labels);
   }, []);
@@ -178,7 +189,6 @@ export function BookEditor({
     setNivelLabel(label);
   }, []);
 
-  // Handler para guardar
   const handleSave = useCallback(async () => {
     const errors = validateBook();
 
@@ -231,7 +241,6 @@ export function BookEditor({
     IdLibro
   ]);
 
-  // Función de validación
   const validateBook = useCallback(() => {
     const errors: Array<{ field: string; message: string }> = [];
 
@@ -323,28 +332,37 @@ export function BookEditor({
                 <h1 className="text-sm font-semibold text-slate-900 leading-none">
                   {titulo || 'Nuevo Libro'}
                 </h1>
-                {viewMode === 'pages' && (
-                  <p className="text-xs text-slate-500">
-                    Página {bookState.currentPage + 1}/{bookState.pages.length}
-                  </p>
-                )}
               </div>
             </div>
 
             {viewMode === 'pages' && (
-              <div className="flex items-center gap-1 border-l border-slate-200 pl-4">
+              <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
                 <button
                   onClick={navigation.prevPage}
                   disabled={!navigation.canGoPrev}
                   className="p-1.5 text-slate-600 hover:bg-slate-100 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="Página anterior"
                 >
                   <ChevronLeft size={18} />
                 </button>
+
+                <form onSubmit={handlePageInputSubmit} className="flex items-center gap-1">
+                  <input
+                    type="text"
+                    value={pageInput}
+                    onChange={handlePageInputChange}
+                    onBlur={handlePageInputSubmit}
+                    disabled={bookState.isFlipping}
+                    className="w-10 text-center px-1 py-0.5 border border-slate-300 rounded text-xs font-semibold text-slate-800 focus:border-indigo-500 focus:outline-none disabled:opacity-50"
+                  />
+                  <span className="text-xs text-slate-600">/ {bookState.pages.length}</span>
+                </form>
 
                 <button
                   onClick={navigation.nextPage}
                   disabled={!navigation.canGoNext}
                   className="p-1.5 text-slate-600 hover:bg-slate-100 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="Página siguiente"
                 >
                   <ChevronRight size={18} />
                 </button>
@@ -414,8 +432,8 @@ export function BookEditor({
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden min-h-0">
 
-        {/* Sidebar */}
-        <div className="w-80 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col overflow-hidden">
+        {/* ✅ Sidebar más ancho: 400px */}
+        <div className="w-96 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col overflow-hidden">
           {viewMode === 'pages' ? (
             <EditorSidebar
               pages={bookState.pages}
@@ -508,7 +526,6 @@ export function BookEditor({
         </div>
       </div>
 
-      {/* Panel de Validación */}
       <ValidationPanel
         isOpen={showValidation}
         errors={validateBook()}

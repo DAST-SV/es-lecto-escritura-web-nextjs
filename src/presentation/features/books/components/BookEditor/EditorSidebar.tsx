@@ -1,27 +1,17 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookEditor/EditorSidebar.tsx
- * 
- * Sidebar del editor con 2 pestañas:
- * - Contenido (título y texto de páginas)
- * - Diseño (layout, imagen, fondo de páginas)
- * 
- * ACTUALIZADO:
- * - Primera página: NO mostrar selector de posición (solo fondo)
- * - Color picker mejorado
- * - Validaciones de imagen/color
+ * COMPLETO: Imagen de contenido en pestaña Posiciones
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
-  FileText, Layout
+  FileText, Layout, Paintbrush
 } from 'lucide-react';
 
-// Tipos
 import type { page } from '@/src/typings/types-page-book/index';
 import type { UseImageHandlerReturn } from '../../hooks/useImageHandler';
 import type { UseBookNavigationReturn } from '../../hooks/useBookNavigation';
 
-// Componentes de edición
 import { LayoutPositionSelector } from '../../../editor/components/LayoutSelector/LayoutPositionSelector';
 import { ImageControls } from '../../../editor/components/ImageControls/ImageControls';
 import { BackgroundControls } from '../../../editor/components/BackgroundControls/BackgroundControls';
@@ -35,8 +25,6 @@ interface EditorSidebarProps {
   setCurrentPage: (page: number) => void;
   imageHandler: UseImageHandlerReturn;
   navigation: UseBookNavigationReturn;
-
-  // Props sin usar (mantenidas para compatibilidad)
   titulo: string;
   autores: string[];
   descripcion: string;
@@ -47,8 +35,6 @@ interface EditorSidebarProps {
   cardBackgroundImage: File | null;
   cardBackgroundUrl: string | null;
   onCardBackgroundChange: (file: File | null) => void;
-
-  // Handlers
   onLayoutChange: (layout: string) => void;
   onBackgroundChange: (value: string) => void;
   onAddPage: () => void;
@@ -69,27 +55,52 @@ export function EditorSidebar({
   const isFirstPage = currentPage === 0;
 
   /**
-   * Definición de pestañas
+   * ✅ Limpiar imagen al cambiar a TextCenterLayout
+   */
+  const handleLayoutChangeWithCleanup = (newLayout: string) => {
+    const oldLayout = currentPageData.layout;
+    
+    if (newLayout === 'TextCenterLayout' && oldLayout !== 'TextCenterLayout') {
+      if (currentPageData.image) {
+        if (typeof currentPageData.image === 'string' && currentPageData.image.startsWith('blob:')) {
+          URL.revokeObjectURL(currentPageData.image);
+        }
+        
+        setPages(prev => {
+          const updated = [...prev];
+          updated[currentPage] = {
+            ...updated[currentPage],
+            image: null,
+            file: null
+          };
+          return updated;
+        });
+      }
+    }
+    
+    onLayoutChange(newLayout);
+  };
+
+  /**
+   * 3 PESTAÑAS
    */
   const tabs = useMemo(() => {
     if (isFirstPage) {
-      // Primera página: Solo Diseño (sin Contenido)
       return [
-        { id: 'design', icon: Layout, label: 'Diseño Portada', color: 'indigo' }
+        { id: 'backgrounds', icon: Paintbrush, label: 'Fondo Portada', color: 'purple' }
       ];
     }
 
-    // Resto de páginas: Contenido y Diseño
     return [
       { id: 'content', icon: FileText, label: 'Contenido', color: 'blue' },
-      { id: 'design', icon: Layout, label: 'Diseño', color: 'green' },
+      { id: 'positions', icon: Layout, label: 'Posiciones', color: 'green' },
+      { id: 'backgrounds', icon: Paintbrush, label: 'Fondos', color: 'purple' },
     ];
   }, [isFirstPage]);
 
-  // Si es primera página, forzar tab "design"
-  React.useEffect(() => {
-    if (isFirstPage && activeTab === 'content') {
-      setActiveTab('design');
+  useEffect(() => {
+    if (isFirstPage && activeTab !== 'backgrounds') {
+      setActiveTab('backgrounds');
     }
   }, [isFirstPage, activeTab]);
 
@@ -105,15 +116,15 @@ export function EditorSidebar({
             const isActive = activeTab === tab.id;
             
             const colorClasses = {
-              indigo: isActive 
-                ? 'bg-indigo-600 text-white border-indigo-600' 
-                : 'text-indigo-600 hover:bg-indigo-50',
               blue: isActive 
                 ? 'bg-blue-600 text-white border-blue-600' 
                 : 'text-blue-600 hover:bg-blue-50',
               green: isActive 
                 ? 'bg-green-600 text-white border-green-600' 
                 : 'text-green-600 hover:bg-green-50',
+              purple: isActive 
+                ? 'bg-purple-600 text-white border-purple-600' 
+                : 'text-purple-600 hover:bg-purple-50',
             };
 
             return (
@@ -134,10 +145,10 @@ export function EditorSidebar({
         </div>
       </div>
 
-      {/* Content - Scroll interno */}
+      {/* Content - SCROLL */}
       <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-50">
         
-        {/* PESTAÑA: Contenido (páginas normales) */}
+        {/* ✅ PESTAÑA 1: Contenido */}
         {activeTab === 'content' && !isFirstPage && (
           <>
             <TitleEditor
@@ -166,21 +177,19 @@ export function EditorSidebar({
           </>
         )}
 
-        {/* PESTAÑA: Diseño */}
-        {activeTab === 'design' && (
+        {/* ✅ PESTAÑA 2: Posiciones (CON imagen de contenido) */}
+        {activeTab === 'positions' && !isFirstPage && (
           <>
-            {/* Selector de Layout/Posición - SOLO si NO es primera página */}
-            {!isFirstPage && (
-              <LayoutPositionSelector
-                currentLayout={currentPageData.layout}
-                pageNumber={currentPage + 1}
-                onLayoutChange={onLayoutChange}
-                isFirstPage={isFirstPage}
-              />
-            )}
+            {/* ✅ 1. Selector de posiciones */}
+            <LayoutPositionSelector
+              currentLayout={currentPageData.layout}
+              pageNumber={currentPage + 1}
+              onLayoutChange={handleLayoutChangeWithCleanup}
+              isFirstPage={isFirstPage}
+            />
 
-            {/* Control de imagen - SOLO si NO es primera página */}
-            {!isFirstPage && (
+            {/* ✅ 2. Control de IMAGEN DE CONTENIDO (solo si NO es TextCenterLayout) */}
+            {currentPageData.layout !== 'TextCenterLayout' && (
               <ImageControls
                 hasImage={!!currentPageData.image}
                 pageNumber={currentPage + 1}
@@ -190,18 +199,20 @@ export function EditorSidebar({
                 currentLayout={currentPageData.layout}
               />
             )}
-
-            {/* Control de fondo - SIEMPRE visible */}
-            <BackgroundControls
-              currentBackground={currentPageData.background}
-              hasBackground={!!currentPageData.background}
-              pageNumber={currentPage + 1}
-              onBackgroundChange={onBackgroundChange}
-              onBackgroundFileChange={imageHandler.handleBackgroundFile}
-              onRemoveBackground={imageHandler.removeBackground}
-              isFirstPage={isFirstPage}
-            />
           </>
+        )}
+
+        {/* ✅ PESTAÑA 3: Fondos */}
+        {activeTab === 'backgrounds' && (
+          <BackgroundControls
+            currentBackground={currentPageData.background}
+            hasBackground={!!currentPageData.background}
+            pageNumber={currentPage + 1}
+            onBackgroundChange={onBackgroundChange}
+            onBackgroundFileChange={imageHandler.handleBackgroundFile}
+            onRemoveBackground={imageHandler.removeBackground}
+            isFirstPage={isFirstPage}
+          />
         )}
       </div>
     </div>

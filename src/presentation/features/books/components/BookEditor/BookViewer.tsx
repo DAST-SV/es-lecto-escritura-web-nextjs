@@ -12,7 +12,6 @@ interface PageRendererIndexProps {
   isActive?: boolean;
 }
 
-// Conversor de page a Page
 function convertPage(oldPage: page): Page {
   return {
     layout: oldPage.layout as LayoutType,
@@ -86,7 +85,8 @@ export function BookViewer({
 
       if (containerHeight <= 0 || containerWidth <= 0) return;
 
-      const reservedHeight = 120;
+      // ✅ Más espacio vertical (sin navegación inferior)
+      const reservedHeight = 40; // Reducido de 120
       const availableHeight = containerHeight - reservedHeight;
       const availableWidth = containerWidth - 100;
 
@@ -96,7 +96,7 @@ export function BookViewer({
       let bookHeight = 520;
 
       if (availableHeight > 0 && availableWidth > 0) {
-        bookHeight = Math.min(availableHeight, 600);
+        bookHeight = Math.min(availableHeight, 800); // Aumentado de 600
         bookWidth = bookHeight * aspectRatio;
 
         if (bookWidth > availableWidth) {
@@ -198,7 +198,8 @@ export function BookViewer({
     <div ref={containerRef} className="w-full h-full relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50" />
 
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-4">
+      {/* ✅ Libro centrado sin navegación inferior */}
+      <div className="absolute inset-0 flex items-center justify-center p-4">
         <div 
           className="flex-shrink-0 z-10"
           style={{
@@ -213,36 +214,6 @@ export function BookViewer({
           <div className="drop-shadow-2xl">
             <HTMLFlipBook {...flipBookProps} ref={bookRef} key={`single-${bookKey}`} />
           </div>
-        </div>
-
-        {/* Burbujas de navegación - Solo números en las primeras 4 */}
-        <div className="flex gap-2 flex-wrap justify-center max-w-2xl flex-shrink-0 z-20">
-          {pages.map((_, index) => {
-            const showNumber = index < 4; // Solo mostrar número en las primeras 4 páginas
-            
-            return (
-              <button
-                key={index}
-                onClick={() => onPageClick(index)}
-                disabled={isFlipping}
-                className={`
-                  relative h-2.5 rounded-full transition-all
-                  ${activePage === index
-                    ? 'bg-indigo-600 w-8'
-                    : 'bg-gray-300 hover:bg-gray-400 w-2.5'
-                  }
-                `}
-                title={`Ir a página ${index + 1}`}
-              >
-                {/* Mostrar número solo en las primeras 4 burbujas cuando está activa */}
-                {showNumber && activePage === index && (
-                  <span className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-bold text-indigo-600 whitespace-nowrap">
-                    {index + 1}
-                  </span>
-                )}
-              </button>
-            );
-          })}
         </div>
       </div>
 

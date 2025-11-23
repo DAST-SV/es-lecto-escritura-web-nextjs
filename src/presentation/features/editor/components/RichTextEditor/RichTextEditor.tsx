@@ -1,7 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/editor/components/RichTextEditor/RichTextEditor.tsx
- * 
- * Editor de texto rico MEJORADO - Sin pixeles, con REM, sin auto-paginación
+ * COMPACTO: Menos padding, toolbar más pequeño
  */
 
 'use client';
@@ -23,7 +22,7 @@ import { PasteHandlerExtension } from '../../extensions/PasteHandler.extension';
 import { 
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
   List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  Quote, Undo, Redo, Trash2, Type, Users
+  Quote, Undo, Redo, Trash2, Type
 } from 'lucide-react';
 import { LINE_HEIGHTS, LineHeightExtension } from '../../extensions/LineHeight.extension';
 import { FONT_SIZES, FontSizeExtension } from '../../extensions/FontSize.extension';
@@ -56,32 +55,29 @@ export function RichTextEditor({
       TextStyle,
       Color,
       Highlight.configure({ multicolor: true }),
-      // Extensiones personalizadas
       FontSizeExtension,
       LineHeightExtension.configure({
         types: ['paragraph', 'heading'],
         defaultLineHeight: '1.5',
       }),
       FontFamilyExtension,
-      PasteHandlerExtension, // ✅ Pegar SIN formato
+      PasteHandlerExtension,
     ],
     content: value,
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none min-h-[200px] p-4',
+        class: 'prose prose-sm focus:outline-none min-h-[150px] p-2',
       },
     },
   });
 
-  // Sync externo
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
       editor.commands.setContent(value);
     }
   }, [value, editor]);
 
-  // Stats
   useEffect(() => {
     if (!editor) return;
     const text = editor.getText();
@@ -91,56 +87,53 @@ export function RichTextEditor({
   }, [value, editor]);
 
   if (!editor) {
-    return <div className="p-4 bg-gray-100 rounded-lg animate-pulse">Cargando editor...</div>;
+    return <div className="p-3 bg-gray-100 rounded-lg animate-pulse">Cargando...</div>;
   }
 
   const isNearLimit = stats.characters > characterLimit * 0.8;
   const isOverLimit = stats.characters > characterLimit;
 
   return (
-    <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <label className="text-sm font-bold text-gray-700">
-          ✏️ Texto de página {pageNumber}:
+    <div className="space-y-2 p-2 bg-blue-50 rounded-lg">
+      {/* Header compacto */}
+      <div className="flex items-center justify-between">
+        <label className="text-xs font-bold text-gray-700">
+          ✏️ Texto p.{pageNumber}
         </label>
         <div className="text-xs text-gray-500">
-          {stats.words} palabras • {stats.characters} caracteres
+          {stats.characters}/{characterLimit}
         </div>
       </div>
 
-      {/* Toolbar */}
-      <div className="bg-white border border-gray-300 rounded-t-lg p-2 flex flex-wrap gap-1">
-        {/* Undo / Redo */}
+      {/* Toolbar compacto */}
+      <div className="bg-white border border-gray-300 rounded-t-lg p-1 flex flex-wrap gap-0.5">
         <button
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().undo()}
-          className="p-2 hover:bg-gray-100 rounded disabled:opacity-30"
+          className="p-1 hover:bg-gray-100 rounded disabled:opacity-30"
           title="Deshacer"
         >
-          <Undo size={18} />
+          <Undo size={14} />
         </button>
 
         <button
           onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.can().redo()}
-          className="p-2 hover:bg-gray-100 rounded disabled:opacity-30"
+          className="p-1 hover:bg-gray-100 rounded disabled:opacity-30"
           title="Rehacer"
         >
-          <Redo size={18} />
+          <Redo size={14} />
         </button>
 
-        <div className="w-px h-6 bg-gray-300 mx-1" />
+        <div className="w-px h-5 bg-gray-300 mx-0.5" />
 
-        {/* Fuente */}
         <select
           onChange={(e) => {
             if (e.target.value) {
               editor.chain().focus().selectAll().setFontFamily(e.target.value).run();
             }
           }}
-          className="text-xs border border-gray-300 rounded px-2 py-1"
-          title="Tipo de fuente"
+          className="text-xs border border-gray-300 rounded px-1 py-0.5"
         >
           <option value="">Fuente</option>
           {Object.entries(FONT_FAMILIES).map(([label, value]) => (
@@ -148,154 +141,128 @@ export function RichTextEditor({
           ))}
         </select>
 
-        {/* Tamaño de fuente (REM - responsive) */}
-        <div className="flex items-center gap-1">
-          <Type size={14} className="text-gray-600" />
-          <select
-            onChange={(e) => {
-              if (e.target.value) {
-                editor.chain().focus().selectAll().setFontSize(e.target.value).run();
-              }
-            }}
-            className="text-xs border border-gray-300 rounded px-2 py-1"
-            title="Tamaño"
-          >
-            <option value="">Tamaño</option>
-            {Object.entries(FONT_SIZES).map(([label, value]) => (
-              <option key={value} value={value}>
-                {label.replace('-', ' ')}
-              </option>
-            ))}
-          </select>
-        </div>
+        <select
+          onChange={(e) => {
+            if (e.target.value) {
+              editor.chain().focus().selectAll().setFontSize(e.target.value).run();
+            }
+          }}
+          className="text-xs border border-gray-300 rounded px-1 py-0.5"
+        >
+          <option value="">Tamaño</option>
+          {Object.entries(FONT_SIZES).map(([label, value]) => (
+            <option key={value} value={value}>
+              {label.replace('-', ' ')}
+            </option>
+          ))}
+        </select>
 
-        {/* Interlineado */}
-        <div className="flex items-center gap-1">
-          <span className="text-xs text-gray-600 font-medium">Interlineado:</span>
-          <select
-            onChange={(e) => {
-              if (e.target.value) {
-                editor.chain().focus().setLineHeight(e.target.value).run();
-              }
-            }}
-            className="text-xs border border-gray-300 rounded px-2 py-1"
-            title="Espaciado entre líneas"
-          >
-            {Object.entries(LINE_HEIGHTS).map(([label, value]) => (
-              <option key={value} value={value}>
-                {label.replace('-', ' ')}
-              </option>
-            ))}
-          </select>
-        </div>
+        <select
+          onChange={(e) => {
+            if (e.target.value) {
+              editor.chain().focus().setLineHeight(e.target.value).run();
+            }
+          }}
+          className="text-xs border border-gray-300 rounded px-1 py-0.5"
+        >
+          <option value="">Interlín</option>
+          {Object.entries(LINE_HEIGHTS).map(([label, value]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
 
-        <div className="w-px h-6 bg-gray-300 mx-1" />
+        <div className="w-px h-5 bg-gray-300 mx-0.5" />
 
-        {/* Formato básico */}
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("bold") ? "bg-blue-100" : ""}`}
-          title="Negrita"
+          className={`p-1 hover:bg-gray-100 rounded ${editor.isActive("bold") ? "bg-blue-100" : ""}`}
         >
-          <Bold size={18} />
+          <Bold size={14} />
         </button>
 
         <button
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("italic") ? "bg-blue-100" : ""}`}
-          title="Cursiva"
+          className={`p-1 hover:bg-gray-100 rounded ${editor.isActive("italic") ? "bg-blue-100" : ""}`}
         >
-          <Italic size={18} />
+          <Italic size={14} />
         </button>
 
         <button
           onClick={() => editor.chain().focus().toggleUnderline().run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("underline") ? "bg-blue-100" : ""}`}
-          title="Subrayado"
+          className={`p-1 hover:bg-gray-100 rounded ${editor.isActive("underline") ? "bg-blue-100" : ""}`}
         >
-          <UnderlineIcon size={18} />
+          <UnderlineIcon size={14} />
         </button>
 
         <button
           onClick={() => editor.chain().focus().toggleStrike().run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("strike") ? "bg-blue-100" : ""}`}
-          title="Tachado"
+          className={`p-1 hover:bg-gray-100 rounded ${editor.isActive("strike") ? "bg-blue-100" : ""}`}
         >
-          <Strikethrough size={18} />
+          <Strikethrough size={14} />
         </button>
 
-        <div className="w-px h-6 bg-gray-300 mx-1" />
+        <div className="w-px h-5 bg-gray-300 mx-0.5" />
 
-        {/* Listas */}
         <button
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("bulletList") ? "bg-blue-100" : ""}`}
-          title="Lista con viñetas"
+          className={`p-1 hover:bg-gray-100 rounded ${editor.isActive("bulletList") ? "bg-blue-100" : ""}`}
         >
-          <List size={18} />
+          <List size={14} />
         </button>
 
         <button
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("orderedList") ? "bg-blue-100" : ""}`}
-          title="Lista numerada"
+          className={`p-1 hover:bg-gray-100 rounded ${editor.isActive("orderedList") ? "bg-blue-100" : ""}`}
         >
-          <ListOrdered size={18} />
+          <ListOrdered size={14} />
         </button>
 
-        <div className="w-px h-6 bg-gray-300 mx-1" />
+        <div className="w-px h-5 bg-gray-300 mx-0.5" />
 
-        {/* Alineación */}
         <button
           onClick={() => editor.chain().focus().setTextAlign("left").run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "left" }) ? "bg-blue-100" : ""}`}
-          title="Alinear izquierda"
+          className={`p-1 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "left" }) ? "bg-blue-100" : ""}`}
         >
-          <AlignLeft size={18} />
+          <AlignLeft size={14} />
         </button>
 
         <button
           onClick={() => editor.chain().focus().setTextAlign("center").run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "center" }) ? "bg-blue-100" : ""}`}
-          title="Centrar"
+          className={`p-1 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "center" }) ? "bg-blue-100" : ""}`}
         >
-          <AlignCenter size={18} />
+          <AlignCenter size={14} />
         </button>
 
         <button
           onClick={() => editor.chain().focus().setTextAlign("right").run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "right" }) ? "bg-blue-100" : ""}`}
-          title="Alinear derecha"
+          className={`p-1 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "right" }) ? "bg-blue-100" : ""}`}
         >
-          <AlignRight size={18} />
+          <AlignRight size={14} />
         </button>
 
         <button
           onClick={() => editor.chain().focus().setTextAlign("justify").run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "justify" }) ? "bg-blue-100" : ""}`}
-          title="Justificar"
+          className={`p-1 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "justify" }) ? "bg-blue-100" : ""}`}
         >
-          <AlignJustify size={18} />
+          <AlignJustify size={14} />
         </button>
 
-        <div className="w-px h-6 bg-gray-300 mx-1" />
+        <div className="w-px h-5 bg-gray-300 mx-0.5" />
 
-        {/* Cita */}
         <button
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive("blockquote") ? "bg-blue-100" : ""}`}
-          title="Cita"
+          className={`p-1 hover:bg-gray-100 rounded ${editor.isActive("blockquote") ? "bg-blue-100" : ""}`}
         >
-          <Quote size={18} />
+          <Quote size={14} />
         </button>
 
-        {/* Limpiar formato */}
         <button
           onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
-          className="p-2 hover:bg-gray-100 rounded text-red-600"
-          title="Limpiar formato"
+          className="p-1 hover:bg-gray-100 rounded text-red-600"
         >
-          <Trash2 size={18} />
+          <Trash2 size={14} />
         </button>
       </div>
 
@@ -304,23 +271,18 @@ export function RichTextEditor({
         <EditorContent editor={editor} />
       </div>
 
-      {/* Alerta */}
+      {/* Alertas compactas */}
       {isOverLimit && (
-        <div className="mt-3 p-2 bg-red-100 border-l-4 border-red-500 text-red-700 text-sm">
-          ❌ Texto demasiado largo — Has excedido el límite de {characterLimit} caracteres
+        <div className="p-1.5 bg-red-100 border-l-2 border-red-500 text-red-700 text-xs">
+          ❌ Excede {characterLimit} caracteres
         </div>
       )}
 
       {isNearLimit && !isOverLimit && (
-        <div className="mt-3 p-2 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 text-sm">
-          ⚠️ Acercándote al límite — {characterLimit - stats.characters} caracteres restantes
+        <div className="p-1.5 bg-yellow-100 border-l-2 border-yellow-500 text-yellow-700 text-xs">
+          ⚠️ {characterLimit - stats.characters} restantes
         </div>
       )}
-
-      {/* Ayuda */}
-      <div className="mt-2 text-xs text-gray-500">
-        💡 <strong>Tip:</strong> Al pegar texto, se pegará automáticamente SIN formato (solo texto plano)
-      </div>
     </div>
   );
 }

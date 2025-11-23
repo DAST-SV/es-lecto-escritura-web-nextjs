@@ -1,7 +1,9 @@
 /**
- * UBICACIÓN: src/presentation/features/book/hooks/useImageHandler.ts
+ * UBICACIÓN: src/presentation/features/books/hooks/useImageHandler.ts
  * 
- * Hook para manejar imágenes (subir, redimensionar, eliminar)
+ * ACTUALIZADO:
+ * - Permitir imagen de contenido + imagen de fondo simultáneamente
+ * - No mezclar ambos tipos de imágenes
  */
 
 import { useCallback } from 'react';
@@ -12,6 +14,7 @@ interface UseImageHandlerProps {
   pages: page[];
   currentPage: number;
   setPages: React.Dispatch<React.SetStateAction<page[]>>;
+  onBackgroundChange?: () => void;
 }
 
 export interface UseImageHandlerReturn {
@@ -74,10 +77,13 @@ function resizeImage(file: File, maxWidth: number, maxHeight: number): Promise<B
 export const useImageHandler = ({
   pages,
   currentPage,
-  setPages
+  setPages,
+  onBackgroundChange
 }: UseImageHandlerProps): UseImageHandlerReturn => {
 
-  // Handler para cambio de imagen principal
+  /**
+   * ✅ Handler para IMAGEN DE CONTENIDO (va en el layout)
+   */
   const handleImageChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
@@ -91,11 +97,12 @@ export const useImageHandler = ({
           const updated = [...prev];
           const currentPageData = updated[currentPage];
 
-          // Liberar URL anterior si existe para evitar memory leaks
+          // Liberar URL anterior si existe
           if (currentPageData.image && currentPageData.image.startsWith('blob:')) {
             URL.revokeObjectURL(currentPageData.image);
           }
 
+          // ✅ Actualizar SOLO la imagen de contenido
           updated[currentPage] = {
             ...currentPageData,
             image: previewUrl,
@@ -104,16 +111,18 @@ export const useImageHandler = ({
           return updated;
         });
 
-        toast.success('Imagen cargada correctamente');
+        toast.success('✅ Imagen cargada correctamente');
       } catch (error) {
         console.error("Error al procesar la imagen:", error);
-        toast.error("Error al procesar la imagen");
+        toast.error("❌ Error al procesar la imagen");
       }
     },
     [currentPage, setPages]
   );
 
-  // Función para remover imagen
+  /**
+   * ✅ Remover IMAGEN DE CONTENIDO
+   */
   const removeImage = useCallback(() => {
     setPages(prev => {
       const updated = [...prev];
@@ -124,7 +133,7 @@ export const useImageHandler = ({
         URL.revokeObjectURL(currentPageData.image);
       }
 
-      // Limpiar tanto la URL como el archivo
+      // ✅ Limpiar SOLO imagen de contenido
       updated[currentPage] = {
         ...currentPageData,
         image: null,
@@ -134,10 +143,12 @@ export const useImageHandler = ({
       return updated;
     });
 
-    toast.success('Imagen eliminada');
+    toast.success('🗑️ Imagen eliminada');
   }, [currentPage, setPages]);
 
-  // Handler para archivo de fondo
+  /**
+   * ✅ Handler para IMAGEN DE FONDO (background)
+   */
   const handleBackgroundFile = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
@@ -151,13 +162,13 @@ export const useImageHandler = ({
           const updated = [...prev];
           const currentPageData = updated[currentPage];
 
-          // Liberar URL anterior si existe
-          if (currentPageData.background &&
-            typeof currentPageData.background === 'string' &&
-            currentPageData.background.startsWith('blob:')) {
-            URL.revokeObjectURL(currentPageData.background);
+          // Liberar URL anterior si existe Y es blob
+          const currentBg = currentPageData.background;
+          if (currentBg && typeof currentBg === 'string' && currentBg.startsWith('blob:')) {
+            URL.revokeObjectURL(currentBg);
           }
 
+          // ✅ Actualizar SOLO el fondo
           updated[currentPage] = {
             ...currentPageData,
             background: previewUrl,
@@ -166,40 +177,51 @@ export const useImageHandler = ({
           return updated;
         });
 
-        toast.success('Fondo cargado correctamente');
+        // Notificar cambio de fondo
+        if (onBackgroundChange) {
+          onBackgroundChange();
+        }
+
+        toast.success('✅ Fondo cargado correctamente');
       } catch (error) {
         console.error("Error al procesar la imagen de fondo:", error);
-        toast.error("Error al procesar la imagen de fondo");
+        toast.error("❌ Error al procesar la imagen de fondo");
       }
     },
-    [currentPage, setPages]
+    [currentPage, setPages, onBackgroundChange]
   );
 
-  // Función para quitar fondo
+  /**
+   * ✅ Quitar IMAGEN DE FONDO (background)
+   */
   const removeBackground = useCallback(() => {
     setPages(prev => {
       const updated = [...prev];
       const currentPageData = updated[currentPage];
 
       // Liberar memoria del blob URL si existe
-      if (currentPageData.background &&
-        typeof currentPageData.background === 'string' &&
-        currentPageData.background.startsWith('blob:')) {
-        URL.revokeObjectURL(currentPageData.background);
+      const currentBg = currentPageData.background;
+      if (currentBg && typeof currentBg === 'string' && currentBg.startsWith('blob:')) {
+        URL.revokeObjectURL(currentBg);
       }
 
-      // Limpiar tanto la URL como el archivo
+      // ✅ Limpiar SOLO el fondo
       updated[currentPage] = {
         ...currentPageData,
-        background: null,
+        background: 'blanco', // Resetear a blanco
         backgroundFile: null
       };
 
       return updated;
     });
 
-    toast.success('Fondo eliminado');
-  }, [currentPage, setPages]);
+    // Notificar cambio de fondo
+    if (onBackgroundChange) {
+      onBackgroundChange();
+    }
+
+    toast.success('🗑️ Fondo eliminado');
+  }, [currentPage, setPages, onBackgroundChange]);
 
   return {
     handleImageChange,

@@ -1,7 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/editor/components/RichTextEditor/TitleEditor.tsx
- * 
- * Editor de título - Sin Enter, sin listas, límite 150 caracteres
+ * COMPACTO: Menos padding
  */
 
 'use client';
@@ -52,20 +51,17 @@ export function TitleEditor({
       Underline,
       FontSizeExtension,
       FontFamilyExtension,
-      PasteHandlerExtension, // ✅ Pegar sin formato
+      PasteHandlerExtension,
     ],
     content: value,
     editorProps: {
       attributes: {
-        class: 'prose prose-lg focus:outline-none px-4 py-3',
+        class: 'prose prose-base focus:outline-none px-2 py-2',
       },
-      /**
-       * BLOQUEAR la tecla Enter para evitar saltos de línea
-       */
       handleKeyDown: (view, event) => {
         if (event.key === 'Enter') {
           event.preventDefault();
-          return true; // Evento manejado (bloqueado)
+          return true;
         }
         return false;
       },
@@ -79,7 +75,6 @@ export function TitleEditor({
         characters: text.length
       });
       
-      // No permitir exceder el límite
       if (text.length > characterLimit) {
         return;
       }
@@ -95,35 +90,33 @@ export function TitleEditor({
   }, [value, editor]);
 
   if (!editor) {
-    return <div className="p-4 bg-gray-100 rounded-lg animate-pulse">Cargando editor...</div>;
+    return <div className="p-3 bg-gray-100 rounded-lg animate-pulse">Cargando...</div>;
   }
 
   const isNearLimit = stats.characters > characterLimit * 0.8;
   const isOverLimit = stats.characters > characterLimit;
 
   return (
-    <div className="mb-6 p-4 bg-purple-50 rounded-lg">
-      {/* Header con stats */}
-      <div className="flex items-center justify-between mb-3">
-        <label className="text-sm font-bold text-gray-700">
-          📌 Título de página {pageNumber}:
+    <div className="space-y-2 p-2 bg-purple-50 rounded-lg">
+      {/* Header compacto */}
+      <div className="flex items-center justify-between">
+        <label className="text-xs font-bold text-gray-700">
+          📌 Título p.{pageNumber}
         </label>
         <div className="text-xs text-gray-500">
-          {stats.words} palabras • {stats.characters} caracteres
+          {stats.characters}/{characterLimit}
         </div>
       </div>
 
-      {/* Toolbar */}
-      <div className="bg-white border border-gray-300 rounded-t-lg p-2 flex gap-1">
-        {/* Fuente */}
+      {/* Toolbar compacto */}
+      <div className="bg-white border border-gray-300 rounded-t-lg p-1 flex gap-0.5">
         <select
           onChange={(e) => {
             if (e.target.value) {
               editor.chain().focus().selectAll().setFontFamily(e.target.value).run();
             }
           }}
-          className="text-xs border border-gray-300 rounded px-2 py-1"
-          title="Tipo de fuente"
+          className="text-xs border border-gray-300 rounded px-1 py-0.5"
         >
           <option value="">Fuente</option>
           {Object.entries(FONT_FAMILIES).map(([label, value]) => (
@@ -131,52 +124,43 @@ export function TitleEditor({
           ))}
         </select>
 
-        {/* Tamaño (REM) */}
-        <div className="flex items-center gap-1">
-          <Type size={14} className="text-gray-600" />
-          <select
-            onChange={(e) => {
-              if (e.target.value) {
-                editor.chain().focus().selectAll().setFontSize(e.target.value).run();
-              }
-            }}
-            className="text-xs border border-gray-300 rounded px-2 py-1"
-            title="Tamaño"
-          >
-            <option value="">Tamaño</option>
-            {Object.entries(FONT_SIZES).map(([label, value]) => (
-              <option key={value} value={value}>
-                {label.replace('-', ' ')}
-              </option>
-            ))}
-          </select>
-        </div>
+        <select
+          onChange={(e) => {
+            if (e.target.value) {
+              editor.chain().focus().selectAll().setFontSize(e.target.value).run();
+            }
+          }}
+          className="text-xs border border-gray-300 rounded px-1 py-0.5"
+        >
+          <option value="">Tamaño</option>
+          {Object.entries(FONT_SIZES).map(([label, value]) => (
+            <option key={value} value={value}>
+              {label.replace('-', ' ')}
+            </option>
+          ))}
+        </select>
 
-        <div className="w-px h-6 bg-gray-300 mx-1" />
+        <div className="w-px h-5 bg-gray-300 mx-0.5" />
 
-        {/* Formato */}
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive('bold') ? 'bg-purple-100' : ''}`}
-          title="Negrita"
+          className={`p-1 hover:bg-gray-100 rounded ${editor.isActive('bold') ? 'bg-purple-100' : ''}`}
         >
-          <BoldIcon size={16} />
+          <BoldIcon size={14} />
         </button>
 
         <button
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive('italic') ? 'bg-purple-100' : ''}`}
-          title="Cursiva"
+          className={`p-1 hover:bg-gray-100 rounded ${editor.isActive('italic') ? 'bg-purple-100' : ''}`}
         >
-          <ItalicIcon size={16} />
+          <ItalicIcon size={14} />
         </button>
 
         <button
           onClick={() => editor.chain().focus().toggleUnderline().run()}
-          className={`p-2 hover:bg-gray-100 rounded ${editor.isActive('underline') ? 'bg-purple-100' : ''}`}
-          title="Subrayado"
+          className={`p-1 hover:bg-gray-100 rounded ${editor.isActive('underline') ? 'bg-purple-100' : ''}`}
         >
-          <UnderlineIcon size={16} />
+          <UnderlineIcon size={14} />
         </button>
       </div>
 
@@ -187,20 +171,19 @@ export function TitleEditor({
 
       {/* Alertas */}
       {isOverLimit && (
-        <div className="mt-3 p-2 bg-red-100 border-l-4 border-red-500 text-red-700 text-sm">
-          ❌ Título demasiado largo — Has excedido el límite de {characterLimit} caracteres
+        <div className="p-1.5 bg-red-100 border-l-2 border-red-500 text-red-700 text-xs">
+          ❌ Excede {characterLimit} caracteres
         </div>
       )}
 
       {isNearLimit && !isOverLimit && (
-        <div className="mt-3 p-2 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 text-sm">
-          ⚠️ Acercándote al límite — {characterLimit - stats.characters} caracteres restantes
+        <div className="p-1.5 bg-yellow-100 border-l-2 border-yellow-500 text-yellow-700 text-xs">
+          ⚠️ {characterLimit - stats.characters} restantes
         </div>
       )}
 
-      {/* Ayuda */}
-      <div className="mt-2 text-xs text-gray-500">
-        💡 <strong>Nota:</strong> No puedes usar Enter en los títulos (solo una línea)
+      <div className="text-xs text-gray-500">
+        💡 No puedes usar Enter en títulos
       </div>
     </div>
   );

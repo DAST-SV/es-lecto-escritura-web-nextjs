@@ -1,118 +1,118 @@
 /**
  * UBICACIÓN: src/presentation/features/editor/components/LayoutSelector/LayoutPositionSelector.tsx
- * 
- * Selector visual de layouts/posiciones para páginas
- * Reemplaza el dropdown de layouts por un selector visual de grilla
+ * ✅ FINAL: Compacto + Validación simple
  */
 
 import React from 'react';
-import { Check } from 'lucide-react';
-import { LAYOUT_DEFINITIONS, type LayoutDefinition } from '@/src/presentation/features/layouts/layoutDefinitions';
+import { Check, Lock } from 'lucide-react';
+import { LAYOUT_DEFINITIONS } from '@/src/presentation/features/layouts/layoutDefinitions';
 
 interface LayoutPositionSelectorProps {
   currentLayout: string;
   pageNumber: number;
   onLayoutChange: (layout: string) => void;
   isFirstPage?: boolean;
+  currentImage?: string | null;
 }
 
 export function LayoutPositionSelector({
   currentLayout,
   pageNumber,
   onLayoutChange,
-  isFirstPage = false
+  isFirstPage = false,
+  currentImage
 }: LayoutPositionSelectorProps) {
   
-  // Filtrar layouts (excluir CoverLayout si no es primera página)
+  const hasImage = !!currentImage;
+  
   const availableLayouts = LAYOUT_DEFINITIONS.filter(layout => {
     if (!isFirstPage && layout.id === 'CoverLayout') return false;
     return true;
   });
 
+  const canSelectLayout = (layoutId: string): boolean => {
+    // Layouts que requieren imagen
+    const layoutsWithImage = [
+      'ImageLeftTextRightLayout',
+      'TextLeftImageRightLayout',
+      'SplitTopBottomLayout',
+      'ImageFullLayout',
+      'SplitLayout',
+      'CenterImageDownTextLayout',
+      'CoverLayout'
+    ];
+    
+    if (layoutsWithImage.includes(layoutId) && !hasImage) {
+      return false;
+    }
+    
+    return true;
+  };
+
   return (
-    <div className="space-y-3 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200">
-      {/* Header */}
+    <div className="space-y-3 p-4 bg-green-50 rounded-xl border border-green-200">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-          📐 Posición de la imagen
+        <h4 className="text-sm font-bold text-gray-700">
+          📐 Posición de imagen
         </h4>
-        <span className="text-xs text-gray-600">
-          Página {pageNumber}
+        <span className="text-xs text-gray-500">
+          Pág. {pageNumber}
         </span>
       </div>
 
-      <p className="text-xs text-gray-600">
-        Elige cómo quieres organizar la imagen y el texto
-      </p>
-
-      {/* Grid de layouts */}
-      <div className="grid grid-cols-3 gap-2 max-h-[400px] overflow-y-auto pr-1">
+      {/* Grid compacto */}
+      <div className="grid grid-cols-3 gap-2">
         {availableLayouts.map((layout) => {
           const isSelected = currentLayout === layout.id;
+          const canSelect = canSelectLayout(layout.id);
+          const isBlocked = !canSelect;
           
           return (
             <button
               key={layout.id}
-              onClick={() => onLayoutChange(layout.id)}
+              onClick={() => {
+                if (canSelect) {
+                  onLayoutChange(layout.id);
+                }
+              }}
+              disabled={isBlocked}
               className={`
                 relative group p-2 rounded-lg border-2 transition-all aspect-square
                 ${isSelected 
-                  ? 'border-green-600 bg-green-50 shadow-lg ring-2 ring-green-200' 
-                  : 'border-gray-200 bg-white hover:border-green-300 hover:shadow-md'
+                  ? 'border-green-600 bg-green-50 shadow-md' 
+                  : isBlocked
+                    ? 'border-gray-300 bg-gray-100 opacity-50 cursor-not-allowed'
+                    : 'border-gray-200 bg-white hover:border-green-300 hover:shadow-sm'
                 }
               `}
-              title={layout.description}
+              title={isBlocked ? '🔒 Sube imagen primero' : layout.description}
             >
-              {/* Preview visual del layout */}
-              <div className="w-full h-full flex items-center justify-center p-1">
-                <div 
-                  dangerouslySetInnerHTML={{ __html: layout.preview }}
-                  className="w-full h-full"
-                />
-              </div>
+              <div 
+                dangerouslySetInnerHTML={{ __html: layout.preview }}
+                className="w-full h-full"
+              />
 
-              {/* Check mark cuando está seleccionado */}
-              {isSelected && (
-                <div className="absolute -top-1 -right-1 bg-green-600 text-white rounded-full p-1 shadow-lg">
-                  <Check size={12} strokeWidth={3} />
+              {isSelected && !isBlocked && (
+                <div className="absolute -top-1 -right-1 bg-green-600 text-white rounded-full p-0.5 shadow-lg">
+                  <Check size={10} strokeWidth={3} />
                 </div>
               )}
 
-              {/* Badge especial para portada */}
-              {layout.id === 'CoverLayout' && (
-                <div className="absolute top-1 left-1 bg-amber-500 text-white rounded px-1.5 py-0.5 text-[10px] font-bold">
-                  Portada
+              {isBlocked && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-lg">
+                  <Lock size={16} className="text-gray-400" />
                 </div>
               )}
-
-              {/* Nombre del layout en hover */}
-              <div className="absolute inset-x-0 -bottom-8 text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                <div className="bg-gray-900 text-white text-[10px] px-2 py-1 rounded shadow-lg whitespace-nowrap">
-                  {layout.name}
-                </div>
-              </div>
             </button>
           );
         })}
       </div>
 
-      {/* Layout seleccionado actual */}
-      <div className="pt-3 border-t border-green-200">
-        <p className="text-xs text-gray-700">
-          <span className="font-semibold">Actual:</span>{' '}
-          <span className="text-green-700">
-            {LAYOUT_DEFINITIONS.find(l => l.id === currentLayout)?.name || 'Solo texto'}
-          </span>
-        </p>
-        <p className="text-[10px] text-gray-500 mt-1">
-          {LAYOUT_DEFINITIONS.find(l => l.id === currentLayout)?.description}
-        </p>
-      </div>
-
-      {/* Ayuda */}
-      <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-[10px] text-blue-800">
-          💡 <strong>Tip:</strong> Cada posición organiza tu contenido de forma diferente
+      {/* Info actual */}
+      <div className="pt-2 border-t border-green-200">
+        <p className="text-xs text-gray-600">
+          <strong>Actual:</strong>{' '}
+          {LAYOUT_DEFINITIONS.find(l => l.id === currentLayout)?.name || 'Solo texto'}
         </p>
       </div>
     </div>
