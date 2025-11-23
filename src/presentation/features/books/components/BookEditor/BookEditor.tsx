@@ -1,11 +1,11 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookEditor/BookEditor.tsx
- * ACTUALIZADO: Con soporte completo para etiquetas labels
+ * ACTUALIZADO: Con soporte completo para etiquetas labels y altura ajustada
  */
 
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import { 
   Save, ChevronLeft, ChevronRight, BookOpen, Plus, Trash2, 
@@ -82,7 +82,7 @@ export function BookEditor({
   // Estados de labels (para mostrar en UI)
   const [categoriasLabels, setCategoriasLabels] = useState<string[]>([]);
   const [generosLabels, setGenerosLabels] = useState<string[]>([]);
-  const [etiquetasLabels, setEtiquetasLabels] = useState<string[]>([]); // ✅ AÑADIDO
+  const [etiquetasLabels, setEtiquetasLabels] = useState<string[]>([]);
   const [valoresLabels, setValoresLabels] = useState<string[]>([]);
   const [nivelLabel, setNivelLabel] = useState<string | null>(null);
 
@@ -139,7 +139,6 @@ export function BookEditor({
 
   const handleEtiquetasChange = useCallback((values: (number | string)[]) => {
     setSelectedEtiquetas(values);
-    console.log('Etiquetas IDs actualizados:', values); // Debug
   }, []);
 
   const handleValoresChange = useCallback((values: (number | string)[]) => {
@@ -159,10 +158,8 @@ export function BookEditor({
     setGenerosLabels(labels);
   }, []);
 
-  // ✅ AÑADIDO: Handler para etiquetas labels
   const handleEtiquetasLabelsChange = useCallback((labels: string[]) => {
     setEtiquetasLabels(labels);
-    console.log('Etiquetas Labels actualizados:', labels); // Debug
   }, []);
 
   const handleValoresLabelsChange = useCallback((labels: string[]) => {
@@ -175,7 +172,6 @@ export function BookEditor({
 
   // Handler para guardar
   const handleSave = useCallback(async () => {
-    // Validar campos requeridos
     const errors = validateBook();
     
     if (errors.length > 0) {
@@ -306,7 +302,7 @@ export function BookEditor({
   }, []);
 
   return (
-    <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
+    <div className="h-full w-full flex flex-col overflow-hidden border border-slate-200 bg-white">
       <Toaster position="top-right" />
 
       {/* Header */}
@@ -497,6 +493,7 @@ export function BookEditor({
                 etiquetas={etiquetasLabels}
                 valores={valoresLabels}
                 nivel={nivelLabel}
+                onCardBackgroundChange={handleCardBackgroundChange}
               />
             </div>
           )}

@@ -1,5 +1,5 @@
-import React from 'react';
-import { BookOpen, User, Award, Tag, Star, Users } from 'lucide-react';
+import React, { useRef } from 'react';
+import { BookOpen, User, Award, Tag, Star, Users, Upload, X } from 'lucide-react';
 
 interface LiteraryCardViewProps {
     backgroundUrl: string | null;
@@ -9,9 +9,10 @@ interface LiteraryCardViewProps {
     descripcion: string;
     categorias: string[];
     generos: string[];
-    etiquetas: string[]; // ✅ AÑADIDO
+    etiquetas: string[];
     valores: string[];
     nivel: string | null;
+    onCardBackgroundChange?: (file: File | null) => void;
 }
 
 export default function LiteraryCardView({
@@ -22,10 +23,26 @@ export default function LiteraryCardView({
     descripcion = "Un viaje filosófico a través de diferentes planetas donde un pequeño príncipe aprende valiosas lecciones sobre la vida, el amor y la amistad. Una obra atemporal que nos recuerda la importancia de ver con el corazón.",
     categorias = ["Ficción", "Filosofía"],
     generos = ["Fábula", "Aventura"],
-    etiquetas = [], // ✅ AÑADIDO
+    etiquetas = [],
     valores = ["Amistad", "Amor", "Responsabilidad"],
-    nivel = "Infantil 8-12 años"
+    nivel = "Infantil 8-12 años",
+    onCardBackgroundChange
 }: LiteraryCardViewProps) {
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file && onCardBackgroundChange) {
+            onCardBackgroundChange(file);
+        }
+    };
+
+    const handleRemoveImage = () => {
+        if (onCardBackgroundChange) {
+            onCardBackgroundChange(null);
+        }
+    };
 
     const truncateWords = (text: string, maxChars: number) => {
         if (!text || text.length <= maxChars) return text;
@@ -42,7 +59,7 @@ export default function LiteraryCardView({
                     <div className="grid grid-cols-2 h-full">
 
                         {/* COLUMNA IZQUIERDA: Imagen (45%) */}
-                        <div className="bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                        <div className="bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center relative group">
                             {backgroundUrl ? (
                                 <img
                                     src={backgroundUrl}
@@ -55,6 +72,35 @@ export default function LiteraryCardView({
                                     <p className="text-sm font-medium text-center">
                                         Sin imagen de fondo
                                     </p>
+                                </div>
+                            )}
+
+                            {/* Controles de imagen en la esquina superior derecha */}
+                            {onCardBackgroundChange && (
+                                <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {/* Botón Agregar/Cambiar */}
+                                    <label className="cursor-pointer">
+                                        <div className="p-2 bg-white/90 hover:bg-white rounded-lg shadow-lg transition-all backdrop-blur-sm border border-gray-200">
+                                            <Upload size={18} className="text-indigo-600" />
+                                        </div>
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleFileChange}
+                                            className="hidden"
+                                        />
+                                    </label>
+
+                                    {/* Botón Eliminar (solo si hay imagen) */}
+                                    {backgroundUrl && (
+                                        <button
+                                            onClick={handleRemoveImage}
+                                            className="p-2 bg-white/90 hover:bg-white rounded-lg shadow-lg transition-all backdrop-blur-sm border border-gray-200"
+                                        >
+                                            <X size={18} className="text-red-600" />
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -175,7 +221,7 @@ export default function LiteraryCardView({
                                     </div>
                                 )}
 
-                                {/* ✅ ETIQUETAS - HORIZONTAL */}
+                                {/* Etiquetas - HORIZONTAL */}
                                 {etiquetas.length > 0 && (
                                     <div className="flex items-center gap-2">
                                         <div className="flex items-center gap-1 flex-shrink-0">
