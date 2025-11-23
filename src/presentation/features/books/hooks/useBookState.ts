@@ -1,5 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/books/hooks/useBookState.ts
+ * ACTUALIZADO: Con 3 páginas por defecto (Portada + Reverso + Contenido)
  */
 
 import { useState, useCallback, useEffect } from 'react';
@@ -25,10 +26,32 @@ interface UseBookStateReturn {
   forceRerender: () => void;
 }
 
+// ✅ Función actualizada: 3 páginas por defecto
 const createDefaultPages = (title?: string): page[] => [
-  { id: 'page-1', layout: 'CoverLayout', title: title || "", text: "", image: null, background: null },
-  { id: 'page-2', layout: 'TextCenterLayout', title: "", text: "", image: null, background: null },
-  { id: 'page-3', layout: 'TextCenterLayout', title: "", text: "", image: null, background: null },
+  { 
+    id: 'page-1', 
+    layout: 'CoverLayout', 
+    title: title || "", 
+    text: "", 
+    image: null, 
+    background: null 
+  },
+  { 
+    id: 'page-2', 
+    layout: 'TextCenterLayout', 
+    title: "Reverso de Portada", 
+    text: "Aquí puedes agregar información adicional o dejar en blanco", 
+    image: null, 
+    background: null 
+  },
+  { 
+    id: 'page-3', 
+    layout: 'TextCenterLayout', 
+    title: "Comienza tu historia...", 
+    text: "Escribe aquí el contenido de tu libro", 
+    image: null, 
+    background: null 
+  },
 ];
 
 export const useBookState = ({ initialPages, title }: UseBookStateProps = {}): UseBookStateReturn => {
@@ -51,24 +74,49 @@ export const useBookState = ({ initialPages, title }: UseBookStateProps = {}): U
     setBookKey(prev => prev + 1);
   }, []);
 
+  // ✅ Agregar SIEMPRE 2 páginas (como libro real)
   const addPage = useCallback(() => {
-    const newPageId = `page-${Date.now()}`;
-    setPages(prev => [...prev, {
-      id: newPageId,
-      layout: 'TextCenterLayout',
-      title: `Página ${prev.length + 1}`,
-      text: `Continúa tu historia aquí...`,
-      image: null,
-      background: null
-    }]);
+    const timestamp = Date.now();
+    setPages(prev => [
+      ...prev,
+      // Página impar (frente)
+      {
+        id: `page-${timestamp}-front`,
+        layout: 'TextCenterLayout',
+        title: `Página ${prev.length + 1}`,
+        text: `Continúa tu historia aquí...`,
+        image: null,
+        background: null
+      },
+      // Página par (reverso)
+      {
+        id: `page-${timestamp}-back`,
+        layout: 'TextCenterLayout',
+        title: `Página ${prev.length + 2}`,
+        text: `Reverso de página ${prev.length + 1}`,
+        image: null,
+        background: null
+      }
+    ]);
   }, []);
 
+  // ✅ Validación actualizada: no eliminar primeras 2 páginas
   const deletePage = useCallback(() => {
-    if (pages.length > 2) {
-      setPages(prev => prev.filter((_, index) => index !== currentPage));
-      if (currentPage > 0) setCurrentPage(currentPage - 1);
-      forceRerender();
+    // Bloquear si es página 0 (portada) o página 1 (reverso)
+    if (currentPage === 0 || currentPage === 1) {
+      console.warn('⚠️ No se puede eliminar la portada o el reverso');
+      return;
     }
+
+    // Bloquear si quedan 3 páginas o menos
+    if (pages.length <= 3) {
+      console.warn('⚠️ El libro debe tener al menos 3 páginas');
+      return;
+    }
+
+    setPages(prev => prev.filter((_, index) => index !== currentPage));
+    if (currentPage > 0) setCurrentPage(currentPage - 1);
+    forceRerender();
   }, [pages.length, currentPage, setCurrentPage, forceRerender]);
 
   const handleLayoutChange = useCallback((layout: string) => {

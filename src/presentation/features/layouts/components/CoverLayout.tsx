@@ -7,35 +7,31 @@ interface Props {
 
 export function CoverLayout({ page }: Props) {
   return (
-    <div className="w-full h-full relative flex items-center justify-center">
-      {/* Imagen de fondo */}
-      {page.image && (
+    <div className="w-full h-full relative m-0 p-0" style={{ margin: 0, padding: 0 }}>
+      {/* ✅ Imagen a pantalla completa SIN márgenes NI padding */}
+      {page.image ? (
         <img
           src={page.image}
-          alt={page.title || "Portada"}
-          className="absolute inset-0 w-full h-full object-cover"
+          alt="Portada"
+          className="w-full h-full object-cover m-0 p-0"
+          style={{ 
+            display: 'block',
+            margin: 0, 
+            padding: 0,
+            width: '100%',
+            height: '100%'
+          }}
         />
+      ) : (
+        // Placeholder si no hay imagen
+        <div className="w-full h-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center m-0 p-0">
+          <div className="text-center text-white p-8">
+            <p className="text-4xl mb-4">📖</p>
+            <p className="text-xl font-bold">Sube tu portada</p>
+            <p className="text-sm opacity-80 mt-2">La imagen cubrirá toda la página</p>
+          </div>
+        </div>
       )}
-
-      {/* Overlay semi-transparente */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/40" />
-
-      {/* Contenido centrado */}
-      <div className="relative z-10 text-center px-6 py-8 max-w-2xl">
-        {page.title && (
-          <div 
-            dangerouslySetInnerHTML={{ __html: page.title }} 
-            className="text-white drop-shadow-lg"
-          />
-        )}
-
-        {page.text && (
-          <div 
-            dangerouslySetInnerHTML={{ __html: page.text }}
-            className="text-white/90 mt-4 drop-shadow-md"
-          />
-        )}
-      </div>
     </div>
   );
 }
