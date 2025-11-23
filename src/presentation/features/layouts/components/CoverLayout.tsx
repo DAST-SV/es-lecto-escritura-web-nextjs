@@ -18,7 +18,7 @@ export function CoverLayout({ page }: Props) {
       )}
 
       {/* Overlay semi-transparente */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/40" />
+      <div className="absolute inset-0 bg-gradient-to-b bg-white" />
 
       {/* Contenido centrado */}
       <div className="relative z-10 text-center px-6 py-8 max-w-2xl">

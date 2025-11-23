@@ -5,9 +5,10 @@
  * - Contenido (título y texto de páginas)
  * - Diseño (layout, imagen, fondo de páginas)
  * 
- * MODIFICADO:
- * - Quitar control de posición en portada (debe ser pantalla completa)
- * - Quitar "Fondo de página 1:" en el selector de fondos
+ * ACTUALIZADO:
+ * - Primera página: NO mostrar selector de posición (solo fondo)
+ * - Color picker mejorado
+ * - Validaciones de imagen/color
  */
 
 import React, { useState, useMemo } from 'react';
@@ -68,11 +69,11 @@ export function EditorSidebar({
   const isFirstPage = currentPage === 0;
 
   /**
-   * Definición de pestañas (solo 2)
+   * Definición de pestañas
    */
   const tabs = useMemo(() => {
     if (isFirstPage) {
-      // Primera página: Solo Diseño
+      // Primera página: Solo Diseño (sin Contenido)
       return [
         { id: 'design', icon: Layout, label: 'Diseño Portada', color: 'indigo' }
       ];
@@ -84,6 +85,13 @@ export function EditorSidebar({
       { id: 'design', icon: Layout, label: 'Diseño', color: 'green' },
     ];
   }, [isFirstPage]);
+
+  // Si es primera página, forzar tab "design"
+  React.useEffect(() => {
+    if (isFirstPage && activeTab === 'content') {
+      setActiveTab('design');
+    }
+  }, [isFirstPage, activeTab]);
 
   if (!currentPageData) return null;
 
@@ -161,25 +169,29 @@ export function EditorSidebar({
         {/* PESTAÑA: Diseño */}
         {activeTab === 'design' && (
           <>
-            {/* Selector de Layout/Posición - Siempre visible */}
-            <LayoutPositionSelector
-              currentLayout={currentPageData.layout}
-              pageNumber={currentPage + 1}
-              onLayoutChange={onLayoutChange}
-              isFirstPage={isFirstPage}
-            />
+            {/* Selector de Layout/Posición - SOLO si NO es primera página */}
+            {!isFirstPage && (
+              <LayoutPositionSelector
+                currentLayout={currentPageData.layout}
+                pageNumber={currentPage + 1}
+                onLayoutChange={onLayoutChange}
+                isFirstPage={isFirstPage}
+              />
+            )}
 
-            {/* Control de imagen - SIN selector de posición (ahora está en LayoutPositionSelector) */}
-            <ImageControls
-              hasImage={!!currentPageData.image}
-              pageNumber={currentPage + 1}
-              onImageChange={imageHandler.handleImageChange}
-              onRemoveImage={imageHandler.removeImage}
-              currentImage={currentPageData.image}
-              imagePosition={currentPageData.imagePosition || 'center'}
-              // NO pasamos onPositionChange - la posición la controla el layout
-            />
+            {/* Control de imagen - SOLO si NO es primera página */}
+            {!isFirstPage && (
+              <ImageControls
+                hasImage={!!currentPageData.image}
+                pageNumber={currentPage + 1}
+                onImageChange={imageHandler.handleImageChange}
+                onRemoveImage={imageHandler.removeImage}
+                currentImage={currentPageData.image}
+                currentLayout={currentPageData.layout}
+              />
+            )}
 
+            {/* Control de fondo - SIEMPRE visible */}
             <BackgroundControls
               currentBackground={currentPageData.background}
               hasBackground={!!currentPageData.background}

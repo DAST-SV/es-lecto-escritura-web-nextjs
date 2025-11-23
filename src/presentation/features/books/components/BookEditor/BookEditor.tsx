@@ -7,8 +7,8 @@
 
 import React, { useState, useRef, useCallback } from "react";
 import { Toaster, toast } from "react-hot-toast";
-import { 
-  Save, ChevronLeft, ChevronRight, BookOpen, Plus, Trash2, 
+import {
+  Save, ChevronLeft, ChevronRight, BookOpen, Plus, Trash2,
   FileText, ArrowLeft, Loader2
 } from "lucide-react";
 
@@ -49,13 +49,13 @@ interface BookEditorProps {
   };
 }
 
-export function BookEditor({ 
-  initialPages, 
-  title, 
-  IdLibro, 
-  initialMetadata 
+export function BookEditor({
+  initialPages,
+  title,
+  IdLibro,
+  initialMetadata
 }: BookEditorProps = {}) {
-  
+
   const bookRef = useRef<any>(null);
   const portadaUrlRef = useRef<string | null>(null);
   const cardBackgroundUrlRef = useRef<string | null>(null);
@@ -91,20 +91,20 @@ export function BookEditor({
   const [personajes, setPersonajes] = useState<string[]>(initialMetadata?.personajes || []);
   const [descripcion, setDescripcion] = useState<string>(initialMetadata?.descripcion || "");
   const [titulo, setTitulo] = useState<string>(initialMetadata?.titulo || "");
-  
+
   const [portada, setPortada] = useState<File | null>(
     initialMetadata?.portada instanceof File ? initialMetadata.portada : null
   );
-  
+
   const [portadaUrl, setPortadaUrl] = useState<string | null>(
-    initialMetadata?.portadaUrl || 
+    initialMetadata?.portadaUrl ||
     (typeof initialMetadata?.portada === 'string' ? initialMetadata.portada : null)
   );
 
   const [cardBackgroundImage, setCardBackgroundImage] = useState<File | null>(
     initialMetadata?.cardBackgroundImage || null
   );
-  
+
   const [cardBackgroundUrl, setCardBackgroundUrl] = useState<string | null>(
     initialMetadata?.cardBackgroundUrl || null
   );
@@ -114,10 +114,18 @@ export function BookEditor({
 
   // Hooks personalizados
   const bookState = useBookState({ initialPages, title });
+
+  // ✅ AGREGAR CALLBACK PARA NOTIFICAR CAMBIOS DE FONDO
+  const handleBackgroundChanged = useCallback(() => {
+    // Incrementar bookKey para forzar re-render del flipbook
+    bookState.setBookKey?.(prev => prev + 1);
+  }, []);
+
   const imageHandler = useImageHandler({
     pages: bookState.pages,
     currentPage: bookState.currentPage,
-    setPages: bookState.setPages
+    setPages: bookState.setPages,
+    onBackgroundChange: handleBackgroundChanged // ✅ Pasar callback
   });
   const navigation = useBookNavigation({
     pages: bookState.pages,
@@ -173,7 +181,7 @@ export function BookEditor({
   // Handler para guardar
   const handleSave = useCallback(async () => {
     const errors = validateBook();
-    
+
     if (errors.length > 0) {
       setShowValidation(true);
       return;
@@ -206,16 +214,16 @@ export function BookEditor({
       setIsSaving(false);
     }
   }, [
-    bookState.pages, 
-    selectedCategorias, 
-    selectedGeneros, 
-    selectedEtiquetas, 
+    bookState.pages,
+    selectedCategorias,
+    selectedGeneros,
+    selectedEtiquetas,
     selectedValores,
     selectedNivel,
     autores,
     personajes,
-    descripcion, 
-    titulo, 
+    descripcion,
+    titulo,
     portada,
     portadaUrl,
     cardBackgroundImage,
@@ -274,7 +282,7 @@ export function BookEditor({
 
   const handleCardBackgroundChange = useCallback((file: File | null) => {
     setCardBackgroundImage(file);
-    
+
     if (file) {
       if (cardBackgroundUrlRef.current) {
         URL.revokeObjectURL(cardBackgroundUrlRef.current);
@@ -332,7 +340,7 @@ export function BookEditor({
                 >
                   <ChevronLeft size={18} />
                 </button>
-                
+
                 <button
                   onClick={navigation.nextPage}
                   disabled={!navigation.canGoNext}
@@ -350,7 +358,7 @@ export function BookEditor({
                   <Plus size={14} />
                   Nueva
                 </button>
-                
+
                 {bookState.pages.length > 2 && (
                   <button
                     onClick={bookState.deletePage}
@@ -405,7 +413,7 @@ export function BookEditor({
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden min-h-0">
-        
+
         {/* Sidebar */}
         <div className="w-80 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col overflow-hidden">
           {viewMode === 'pages' ? (

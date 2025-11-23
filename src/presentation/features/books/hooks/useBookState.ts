@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/books/hooks/useBookState.ts
- * Hook para manejar el estado del libro - MODIFICADO para agregar páginas de 2 en 2
+ * Hook para manejar el estado del libro - MODIFICADO para exponer setBookKey
  */
 
 import { useState, useCallback } from 'react';
@@ -122,6 +122,7 @@ export const useBookState = ({ initialPages, title }: UseBookStateProps = {}) =>
     isFlipping,
     setIsFlipping,
     bookKey,
+    setBookKey, // ✅ EXPONER setBookKey
     addPage,
     deletePage,
     handleLayoutChange,

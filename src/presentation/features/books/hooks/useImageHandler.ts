@@ -2,6 +2,7 @@
  * UBICACIÓN: src/presentation/features/books/hooks/useImageHandler.ts
  * 
  * Hook para manejar imágenes (subir, redimensionar, eliminar)
+ * FIX: Notificar cambios de fondo para forzar re-render
  */
 
 import { useCallback } from 'react';
@@ -12,6 +13,7 @@ interface UseImageHandlerProps {
   pages: page[];
   currentPage: number;
   setPages: React.Dispatch<React.SetStateAction<page[]>>;
+  onBackgroundChange?: () => void; // ✅ Callback para notificar cambios
 }
 
 export interface UseImageHandlerReturn {
@@ -74,7 +76,8 @@ function resizeImage(file: File, maxWidth: number, maxHeight: number): Promise<B
 export const useImageHandler = ({
   pages,
   currentPage,
-  setPages
+  setPages,
+  onBackgroundChange // ✅ Recibir callback
 }: UseImageHandlerProps): UseImageHandlerReturn => {
 
   // Handler para cambio de imagen principal
@@ -166,13 +169,18 @@ export const useImageHandler = ({
           return updated;
         });
 
+        // ✅ NOTIFICAR QUE EL FONDO CAMBIÓ
+        if (onBackgroundChange) {
+          onBackgroundChange();
+        }
+
         toast.success('Fondo cargado correctamente');
       } catch (error) {
         console.error("Error al procesar la imagen de fondo:", error);
         toast.error("Error al procesar la imagen de fondo");
       }
     },
-    [currentPage, setPages]
+    [currentPage, setPages, onBackgroundChange] // ✅ Agregar dependencia
   );
 
   // Función para quitar fondo
@@ -198,8 +206,13 @@ export const useImageHandler = ({
       return updated;
     });
 
+    // ✅ NOTIFICAR QUE EL FONDO CAMBIÓ
+    if (onBackgroundChange) {
+      onBackgroundChange();
+    }
+
     toast.success('Fondo eliminado');
-  }, [currentPage, setPages]);
+  }, [currentPage, setPages, onBackgroundChange]); // ✅ Agregar dependencia
 
   return {
     handleImageChange,

@@ -24,19 +24,19 @@
   box-sizing: border-box;
 }
 
-/* Contenido SIN scroll y SIN padding - para fondos de pantalla completa */
+/* Contenido SIN padding por defecto (para fondos de pantalla completa) */
 .flipbook-page-content {
   overflow: hidden;
   height: 100%;
   width: 100%;
-  padding: 0; /* ← Sin padding por defecto (para fondos) */
+  padding: 0;
   box-sizing: border-box;
   position: relative;
 }
 
-/* Padding solo cuando NO hay fondo */
+/* ✅ Padding FORZADO cuando NO hay fondo - usando !important */
 .flipbook-page-content.with-padding {
-  padding: 1rem; /* ← Padding solo cuando no hay fondo */
+  padding: 1rem !important;
 }
 
 /* Variante CON scroll para contenido muy largo (opcional) */

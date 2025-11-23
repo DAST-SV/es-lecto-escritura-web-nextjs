@@ -28,8 +28,18 @@ export function PageRenderer({ page, isActive }: Props) {
 
   const animation = page.animation ? getAnimation(page.animation) : null;
 
-  // Determinar si tiene fondo personalizado (no blanco)
-  const hasCustomBackground = page.background && page.background !== 'blanco';
+  // 🔍 DEBUG: Ver qué está pasando
+  const hasCustomBackground = 
+    page.background && 
+    page.background !== 'blanco' && 
+    page.background !== '';
+
+  console.log('🎨 PageRenderer:', {
+    background: page.background,
+    hasCustomBackground,
+    willAddPadding: !hasCustomBackground,
+    className: `flipbook-page-content${!hasCustomBackground ? ' with-padding' : ''}`
+  });
 
   const content = (
     <div
@@ -48,9 +58,8 @@ export function PageRenderer({ page, isActive }: Props) {
         backgroundRepeat: 'no-repeat',
       }}
     >
-      {/* Wrapper: SIN padding cuando hay fondo, CON padding cuando no hay fondo */}
       <div 
-        className={`flipbook-page-content ${hasCustomBackground ? '' : 'with-padding'}`}
+        className={`flipbook-page-content${!hasCustomBackground ? ' with-padding' : ''}`}
         style={{
           width: '100%',
           height: '100%',

@@ -1,6 +1,6 @@
 import React from 'react';
 import { DragDropImageZone } from '../LayoutSelector/DragDropImageZone';
-import { ImagePositionSelector, ImagePosition } from './ImagePositionSelector';
+import { AlertCircle } from 'lucide-react';
 
 interface ImageControlsProps {
   hasImage: boolean;
@@ -8,8 +8,7 @@ interface ImageControlsProps {
   onImageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveImage: () => void;
   currentImage?: string | null;
-  imagePosition?: ImagePosition;
-  onPositionChange?: (position: ImagePosition) => void;
+  currentLayout?: string; // Para validar si es TextCenterLayout
 }
 
 export function ImageControls({
@@ -18,8 +17,7 @@ export function ImageControls({
   onImageChange,
   onRemoveImage,
   currentImage,
-  imagePosition = 'center',
-  onPositionChange
+  currentLayout = ''
 }: ImageControlsProps) {
   
   const handleFileUpload = (file: File) => {
@@ -41,12 +39,33 @@ export function ImageControls({
     onImageChange(event as any);
   };
 
+  // Validar si el layout actual es "Solo texto"
+  const isTextOnlyLayout = currentLayout === 'TextCenterLayout';
+
   return (
     <div className="space-y-4 p-4 bg-green-50 rounded-xl border border-green-200">
       <div>
         <label className="block text-sm font-bold text-gray-700 mb-3">
           🖼 Imagen de página {pageNumber}
         </label>
+
+        {/* Alerta si es layout "Solo texto" */}
+        {isTextOnlyLayout && (
+          <div className="mb-3 p-3 bg-amber-50 border-l-4 border-amber-500 rounded-r-lg">
+            <div className="flex items-start gap-2">
+              <AlertCircle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-semibold text-amber-900 mb-1">
+                  ⚠️ Layout actual: "Solo Texto"
+                </p>
+                <p className="text-xs text-amber-800">
+                  Las imágenes no se mostrarán con este layout. 
+                  Cambia la <strong>Posición de la imagen</strong> arriba para ver la imagen.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <DragDropImageZone
           onImageUpload={handleFileUpload}
@@ -56,36 +75,21 @@ export function ImageControls({
         />
       </div>
 
-      {/* Selector de posición (solo si hay imagen Y se proporciona onPositionChange) */}
-      {onPositionChange && (
-        <div className="pt-4 border-t border-green-200">
-          <ImagePositionSelector
-            currentPosition={imagePosition}
-            onPositionChange={onPositionChange}
-            disabled={!hasImage}
-          />
-        </div>
-      )}
+      {/* Nota sobre posición */}
+      <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-xs text-blue-800">
+          💡 <strong>Nota:</strong> La posición de la imagen se controla desde el selector de "Posición de la imagen" arriba
+        </p>
+      </div>
 
-      {/* Nota: La posición la controla el layout seleccionado */}
-      {!onPositionChange && (
-        <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-xs text-blue-800">
-            ℹ️ <strong>Posición:</strong> La posición de la imagen se controla desde el selector de Layout/Posición arriba
-          </p>
-        </div>
-      )}
-
-      {/* Ayuda general */}
-      {onPositionChange && (
-        <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-xs text-blue-800">
-            💡 <strong>Tip:</strong> Las imágenes se optimizan automáticamente
+      {/* Ayuda adicional */}
+      {!isTextOnlyLayout && (
+        <div className="p-2 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-xs text-green-800">
+            ✓ Las imágenes se optimizan automáticamente para mejor rendimiento
           </p>
         </div>
       )}
     </div>
   );
 }
-
-export type { ImagePosition };
