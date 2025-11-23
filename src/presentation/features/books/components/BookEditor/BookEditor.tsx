@@ -18,7 +18,6 @@ import { useImageHandler } from "../../hooks/useImageHandler";
 import { useBookNavigation } from "../../hooks/useBookNavigation";
 
 // Componentes
-import { BookViewer } from "./BookViewer";
 import { EditorSidebar } from "./EditorSidebar";
 import { ValidationPanel } from "./ValidationPanel";
 
@@ -27,6 +26,7 @@ import { saveBookJson, BookMetadata } from "@/src/infrastructure/services/bookSe
 import type { page } from "@/src/typings/types-page-book/index";
 import LiteraryCardView from "./LiteraryCardView";
 import { LiteraryMetadataForm } from "./LiteraryMetadataForm";
+import { BookViewer } from "./BookViewer";
 
 interface BookEditorProps {
   initialPages?: page[];

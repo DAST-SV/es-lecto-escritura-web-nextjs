@@ -13,7 +13,6 @@ interface Props {
 }
 
 export function PageRenderer({ page, isActive }: Props) {
-  // ✅ Usar getLayout en vez de acceder directamente al registry
   const Layout = getLayout(page.layout);
 
   const getBorderRadius = page.border ? borders[page.border] : borders.cuadrado;
@@ -29,6 +28,9 @@ export function PageRenderer({ page, isActive }: Props) {
 
   const animation = page.animation ? getAnimation(page.animation) : null;
 
+  // Determinar si tiene fondo personalizado (no blanco)
+  const hasCustomBackground = page.background && page.background !== 'blanco';
+
   const content = (
     <div
       className="flipbook-page"
@@ -37,9 +39,25 @@ export function PageRenderer({ page, isActive }: Props) {
         borderRadius: getBorderRadius,
         width: "100%",
         height: "100%",
+        padding: 0,
+        margin: 0,
+        position: 'relative',
+        overflow: 'hidden',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
       }}
     >
-      <div className="flipbook-page-content">
+      {/* Wrapper: SIN padding cuando hay fondo, CON padding cuando no hay fondo */}
+      <div 
+        className={`flipbook-page-content ${hasCustomBackground ? '' : 'with-padding'}`}
+        style={{
+          width: '100%',
+          height: '100%',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
         <Layout page={page} />
       </div>
     </div>
@@ -52,6 +70,7 @@ export function PageRenderer({ page, isActive }: Props) {
         initial="hidden"
         animate={isActive ? "visible" : "hidden"}
         variants={animation}
+        style={{ margin: 0, padding: 0, overflow: 'hidden' }}
       >
         {content}
       </motion.div>
@@ -59,7 +78,7 @@ export function PageRenderer({ page, isActive }: Props) {
   }
 
   return (
-    <div className="w-full h-full rich-content flex box-border">
+    <div className="w-full h-full rich-content flex box-border" style={{ margin: 0, padding: 0, overflow: 'hidden' }}>
       {content}
     </div>
   );

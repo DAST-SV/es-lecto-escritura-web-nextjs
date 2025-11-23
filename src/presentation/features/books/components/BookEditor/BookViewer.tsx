@@ -43,10 +43,6 @@ const PageRendererIndex: React.FC<PageRendererIndexProps> = ({ page, pageNumber,
       <div className="relative z-10 w-full h-full" style={{ position: 'relative', width: '100%', height: '100%' }}>
         <PageRenderer page={Pagina} isActive={isActive} />
       </div>
-
-      <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs font-bold bg-black bg-opacity-70 text-white z-50">
-        {pageNumber}
-      </div>
     </div>
   );
 };
@@ -219,20 +215,34 @@ export function BookViewer({
           </div>
         </div>
 
+        {/* Burbujas de navegación - Solo números en las primeras 4 */}
         <div className="flex gap-2 flex-wrap justify-center max-w-2xl flex-shrink-0 z-20">
-          {pages.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => onPageClick(index)}
-              disabled={isFlipping}
-              className={`h-2.5 rounded-full transition-all ${
-                activePage === index
-                  ? 'bg-indigo-600 w-8'
-                  : 'bg-gray-300 hover:bg-gray-400 w-2.5'
-              }`}
-              title={`Ir a página ${index + 1}`}
-            />
-          ))}
+          {pages.map((_, index) => {
+            const showNumber = index < 4; // Solo mostrar número en las primeras 4 páginas
+            
+            return (
+              <button
+                key={index}
+                onClick={() => onPageClick(index)}
+                disabled={isFlipping}
+                className={`
+                  relative h-2.5 rounded-full transition-all
+                  ${activePage === index
+                    ? 'bg-indigo-600 w-8'
+                    : 'bg-gray-300 hover:bg-gray-400 w-2.5'
+                  }
+                `}
+                title={`Ir a página ${index + 1}`}
+              >
+                {/* Mostrar número solo en las primeras 4 burbujas cuando está activa */}
+                {showNumber && activePage === index && (
+                  <span className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-bold text-indigo-600 whitespace-nowrap">
+                    {index + 1}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 

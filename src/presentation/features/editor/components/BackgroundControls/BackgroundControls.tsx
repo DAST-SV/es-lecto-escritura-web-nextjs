@@ -8,6 +8,7 @@ interface BackgroundControlsProps {
   onBackgroundChange: (value: string) => void;
   onBackgroundFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveBackground: () => void;
+  isFirstPage?: boolean;
 }
 
 export function BackgroundControls({
@@ -16,12 +17,13 @@ export function BackgroundControls({
   pageNumber,
   onBackgroundChange,
   onBackgroundFileChange,
-  onRemoveBackground
+  onRemoveBackground,
+  isFirstPage = false
 }: BackgroundControlsProps) {
   return (
     <div className="mb-6 p-4 bg-purple-50 rounded-lg">
       <label className="block text-sm font-bold text-gray-700 mb-3">
-        🎨 Fondo de página {pageNumber}:
+        {isFirstPage ? '🎨 Fondo de portada:' : `🎨 Fondo de página ${pageNumber}:`}
       </label>
       
       <select

@@ -56,7 +56,7 @@ export function ImageControls({
         />
       </div>
 
-      {/* Selector de posición (solo si hay imagen) */}
+      {/* Selector de posición (solo si hay imagen Y se proporciona onPositionChange) */}
       {onPositionChange && (
         <div className="pt-4 border-t border-green-200">
           <ImagePositionSelector
@@ -67,12 +67,23 @@ export function ImageControls({
         </div>
       )}
 
-      {/* Ayuda */}
-      <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-xs text-blue-800">
-          💡 <strong>Tip:</strong> Las imágenes se optimizan automáticamente
-        </p>
-      </div>
+      {/* Nota: La posición la controla el layout seleccionado */}
+      {!onPositionChange && (
+        <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-xs text-blue-800">
+            ℹ️ <strong>Posición:</strong> La posición de la imagen se controla desde el selector de Layout/Posición arriba
+          </p>
+        </div>
+      )}
+
+      {/* Ayuda general */}
+      {onPositionChange && (
+        <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-xs text-blue-800">
+            💡 <strong>Tip:</strong> Las imágenes se optimizan automáticamente
+          </p>
+        </div>
+      )}
     </div>
   );
 }

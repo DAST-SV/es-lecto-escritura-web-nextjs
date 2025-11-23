@@ -17,40 +17,51 @@
 
 /* Estilos para páginas del flipbook */
 .flipbook-page {
-  overflow: hidden;
+  overflow: hidden; /* ← Evita scroll en la página */
   height: 100%;
   width: 100%;
   position: relative;
   box-sizing: border-box;
 }
 
-/* Contenido con scroll interno */
+/* Contenido SIN scroll y SIN padding - para fondos de pantalla completa */
 .flipbook-page-content {
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   height: 100%;
   width: 100%;
-  padding: 1rem;
+  padding: 0; /* ← Sin padding por defecto (para fondos) */
   box-sizing: border-box;
+  position: relative;
+}
+
+/* Padding solo cuando NO hay fondo */
+.flipbook-page-content.with-padding {
+  padding: 1rem; /* ← Padding solo cuando no hay fondo */
+}
+
+/* Variante CON scroll para contenido muy largo (opcional) */
+.flipbook-page-content.scrollable {
+  overflow-y: auto;
+  overflow-x: hidden;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 }
 
-/* Scrollbar personalizado para WebKit */
-.flipbook-page-content::-webkit-scrollbar {
+/* Scrollbar personalizado para WebKit (solo en modo scrollable) */
+.flipbook-page-content.scrollable::-webkit-scrollbar {
   width: 4px;
 }
 
-.flipbook-page-content::-webkit-scrollbar-track {
+.flipbook-page-content.scrollable::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.flipbook-page-content::-webkit-scrollbar-thumb {
+.flipbook-page-content.scrollable::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 2px;
 }
 
-.flipbook-page-content::-webkit-scrollbar-thumb:hover {
+.flipbook-page-content.scrollable::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.3);
 }
 

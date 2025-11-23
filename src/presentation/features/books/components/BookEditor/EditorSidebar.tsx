@@ -4,6 +4,10 @@
  * Sidebar del editor con 2 pestañas:
  * - Contenido (título y texto de páginas)
  * - Diseño (layout, imagen, fondo de páginas)
+ * 
+ * MODIFICADO:
+ * - Quitar control de posición en portada (debe ser pantalla completa)
+ * - Quitar "Fondo de página 1:" en el selector de fondos
  */
 
 import React, { useState, useMemo } from 'react';
@@ -17,7 +21,7 @@ import type { UseImageHandlerReturn } from '../../hooks/useImageHandler';
 import type { UseBookNavigationReturn } from '../../hooks/useBookNavigation';
 
 // Componentes de edición
-import { PageLayoutSelector } from '../../../editor/components/LayoutSelector/PageLayoutSelector';
+import { LayoutPositionSelector } from '../../../editor/components/LayoutSelector/LayoutPositionSelector';
 import { ImageControls } from '../../../editor/components/ImageControls/ImageControls';
 import { BackgroundControls } from '../../../editor/components/BackgroundControls/BackgroundControls';
 import { RichTextEditor } from '../../../editor/components/RichTextEditor/RichTextEditor';
@@ -157,14 +161,15 @@ export function EditorSidebar({
         {/* PESTAÑA: Diseño */}
         {activeTab === 'design' && (
           <>
-            {!isFirstPage && (
-              <PageLayoutSelector
-                currentLayout={currentPageData.layout}
-                pageNumber={currentPage + 1}
-                onLayoutChange={onLayoutChange}
-              />
-            )}
+            {/* Selector de Layout/Posición - Siempre visible */}
+            <LayoutPositionSelector
+              currentLayout={currentPageData.layout}
+              pageNumber={currentPage + 1}
+              onLayoutChange={onLayoutChange}
+              isFirstPage={isFirstPage}
+            />
 
+            {/* Control de imagen - SIN selector de posición (ahora está en LayoutPositionSelector) */}
             <ImageControls
               hasImage={!!currentPageData.image}
               pageNumber={currentPage + 1}
@@ -172,16 +177,7 @@ export function EditorSidebar({
               onRemoveImage={imageHandler.removeImage}
               currentImage={currentPageData.image}
               imagePosition={currentPageData.imagePosition || 'center'}
-              onPositionChange={(position) => {
-                setPages(prev => {
-                  const newPages = [...prev];
-                  newPages[currentPage] = {
-                    ...newPages[currentPage],
-                    imagePosition: position
-                  };
-                  return newPages;
-                });
-              }}
+              // NO pasamos onPositionChange - la posición la controla el layout
             />
 
             <BackgroundControls
@@ -191,6 +187,7 @@ export function EditorSidebar({
               onBackgroundChange={onBackgroundChange}
               onBackgroundFileChange={imageHandler.handleBackgroundFile}
               onRemoveBackground={imageHandler.removeBackground}
+              isFirstPage={isFirstPage}
             />
           </>
         )}
