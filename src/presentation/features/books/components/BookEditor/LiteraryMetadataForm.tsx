@@ -7,10 +7,10 @@
 
 import React, { useState } from 'react';
 import { BookOpen, Tag, Image as ImageIcon } from 'lucide-react';
-import MultiSelectFromTable from '@/src/utils/components/MultiSelectFromTable';
-import SelectFromTableAsync from '@/src/utils/components/SelectFromTableAsync';
 import { MultiAuthorInput } from '../BookMetadata/MultiAuthorInput';
 import { MultiPersonajeInput } from '../BookMetadata/MultiPersonajeInput';
+import { MultiSelectFromTable } from '../BookMetadata/MultiSelectFromTable';
+import { SelectFromTableAsync } from '../BookMetadata/SelectFromTableAsync';
 
 interface LiteraryMetadataFormProps {
   titulo: string;
@@ -178,7 +178,7 @@ export function LiteraryMetadataForm({
               />
               
               {/* Alertas de límite */}
-              {descripcionOverLimit && (
+              {/* {descripcionOverLimit && (
                 <div className="mt-2 p-2 bg-red-50 border-l-4 border-red-500 text-red-700 text-xs">
                   ❌ Has excedido el límite de {descripcionLimit} caracteres
                 </div>
@@ -194,7 +194,7 @@ export function LiteraryMetadataForm({
                 <p className="mt-2 text-xs text-gray-500">
                   💡 Una buena descripción ayuda a los lectores a descubrir tu libro
                 </p>
-              )}
+              )} */}
             </div>
 
             {/* Autores */}
