@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookEditor/BookEditor.tsx
- * ACTUALIZADO: Con portada trasera y bloqueo de eliminación de primeras 2 páginas
+ * ACTUALIZADO: Con soporte completo para etiquetas labels y altura ajustada
  */
 
 "use client";
@@ -9,7 +9,7 @@ import React, { useState, useRef, useCallback } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import { 
   Save, ChevronLeft, ChevronRight, BookOpen, Plus, Trash2, 
-  FileText, ArrowLeft, Loader2, Lock
+  FileText, ArrowLeft, Loader2
 } from "lucide-react";
 
 // Hooks
@@ -290,10 +290,6 @@ export function BookEditor({
     }
   }, []);
 
-  // ✅ Determinar si la página actual está bloqueada
-  const isLockedPage = bookState.currentPage === 0 || bookState.currentPage === 1;
-  const canDeleteCurrentPage = bookState.pages.length > 4 && !isLockedPage;
-
   React.useEffect(() => {
     return () => {
       if (portadaUrlRef.current) {
@@ -320,8 +316,8 @@ export function BookEditor({
                   {titulo || 'Nuevo Libro'}
                 </h1>
                 {viewMode === 'pages' && (
-                  <p className="text-xs text-slate-500 mt-1">
-                    {isLockedPage && <span className="text-amber-600">🔒 Protegida</span>}
+                  <p className="text-xs text-slate-500">
+                    Página {bookState.currentPage + 1}/{bookState.pages.length}
                   </p>
                 )}
               </div>
@@ -350,26 +346,19 @@ export function BookEditor({
                 <button
                   onClick={bookState.addPage}
                   className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded"
-                  title="Agregar 2 páginas (hoja completa)"
                 >
                   <Plus size={14} />
-                  +2 Páginas
+                  Nueva
                 </button>
                 
-                <button
-                  onClick={bookState.deletePage}
-                  disabled={!canDeleteCurrentPage}
-                  className={`
-                    p-1 rounded flex items-center gap-1 text-xs
-                    ${canDeleteCurrentPage 
-                      ? 'text-red-600 hover:bg-red-50' 
-                      : 'text-gray-400 cursor-not-allowed'
-                    }
-                  `}
-                  title={isLockedPage ? 'Las 2 primeras páginas están protegidas' : 'Eliminar 2 páginas (hoja completa)'}
-                >
-                  {isLockedPage ? <Lock size={14} /> : <Trash2 size={14} />}
-                </button>
+                {bookState.pages.length > 2 && (
+                  <button
+                    onClick={bookState.deletePage}
+                    className="p-1 text-red-600 hover:bg-red-50 rounded"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </div>
             )}
           </div>

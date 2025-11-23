@@ -10,7 +10,6 @@ interface PageRendererIndexProps {
   page: page;
   pageNumber: number;
   isActive?: boolean;
-  isEvenPage?: boolean; // ✅ Para aplicar degradado según posición
 }
 
 // Conversor de page a Page
@@ -29,48 +28,24 @@ function convertPage(oldPage: page): Page {
   };
 }
 
-const PageRendererIndex: React.FC<PageRendererIndexProps> = ({ 
-  page, 
-  pageNumber, 
-  isActive,
-  isEvenPage = false 
-}) => {
+const PageRendererIndex: React.FC<PageRendererIndexProps> = ({ page, pageNumber, isActive }) => {
   const Pagina = convertPage(page);
-  const isCover = page.layout === 'CoverLayout';
 
   return (
-    <div 
-      className="w-full h-full relative overflow-hidden" 
-      style={{ 
-        position: 'relative',
-        margin: 0,
-        padding: 0
-      }}
-    >
-      {/* ✅ Degradado blanco SOLO si NO es portada */}
-      {!isCover && (
-        <div 
-          className="absolute inset-0 pointer-events-none z-0"
-          style={{
-            background: isEvenPage 
-              ? 'linear-gradient(to right, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.3))' 
-              : 'linear-gradient(to left, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.3))'
-          }}
+    <div className="w-full h-full relative overflow-hidden" style={{ position: 'relative' }}>
+      {page.background && page.background !== "blanco" && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: "rgba(255, 255, 255, 0.1)" }}
         />
       )}
 
-      {/* Contenido de la página - SIN padding en portada */}
-      <div 
-        className="relative z-10 w-full h-full" 
-        style={{ 
-          position: 'relative', 
-          width: '100%', 
-          height: '100%',
-          margin: 0,
-          padding: 0
-        }}
-      >
+      <div className="relative z-10 w-full h-full" style={{ position: 'relative', width: '100%', height: '100%' }}>
         <PageRenderer page={Pagina} isActive={isActive} />
+      </div>
+
+      <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs font-bold bg-black bg-opacity-70 text-white z-50">
+        {pageNumber}
       </div>
     </div>
   );
@@ -208,8 +183,6 @@ export function BookViewer({
     style: {},
     children: pages.map((page, idx) => {
       const isActive = idx === activePage;
-      // ✅ Determinar si es página par (derecha) o impar (izquierda)
-      const isEvenPage = idx % 2 === 0;
       
       return (
         <div className="page w-full h-full" key={page.id || idx} style={{ position: 'relative', overflow: 'hidden' }}>
@@ -218,7 +191,6 @@ export function BookViewer({
               page={page}
               pageNumber={idx + 1}
               isActive={isActive}
-              isEvenPage={isEvenPage}
             />
           </div>
         </div>
@@ -247,38 +219,20 @@ export function BookViewer({
           </div>
         </div>
 
-        {/* ✅ Indicador de página actual - ARRIBA de los puntos */}
-        <div className="flex flex-col items-center gap-2 flex-shrink-0 z-20">
-          <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg border border-gray-200">
-            <p className="text-sm font-semibold text-gray-800">
-              Página {activePage + 1} / {pages.length}
-              {activePage === 0 && ' 📖'}
-            </p>
-          </div>
-
-          <div className="flex gap-2 flex-wrap justify-center max-w-2xl">
-            {pages.map((_, index) => {
-              const isActive = activePage === index;
-              const isCover = index === 0;
-              
-              return (
-                <button
-                  key={index}
-                  onClick={() => onPageClick(index)}
-                  disabled={isFlipping}
-                  className={`
-                    h-2.5 rounded-full transition-all
-                    ${isActive
-                      ? 'bg-indigo-600 w-8'
-                      : 'bg-gray-300 hover:bg-gray-400 w-2.5'
-                    }
-                    ${isCover ? 'ring-2 ring-amber-400' : ''}
-                  `}
-                  title={`Ir a página ${index + 1}${isCover ? ' (Portada)' : ''}`}
-                />
-              );
-            })}
-          </div>
+        <div className="flex gap-2 flex-wrap justify-center max-w-2xl flex-shrink-0 z-20">
+          {pages.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => onPageClick(index)}
+              disabled={isFlipping}
+              className={`h-2.5 rounded-full transition-all ${
+                activePage === index
+                  ? 'bg-indigo-600 w-8'
+                  : 'bg-gray-300 hover:bg-gray-400 w-2.5'
+              }`}
+              title={`Ir a página ${index + 1}`}
+            />
+          ))}
         </div>
       </div>
 
