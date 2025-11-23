@@ -1,13 +1,11 @@
-/* rich-content.css - Estilos para contenido generado por Quill */
+/* rich-content.css - Estilos para simular libro físico real */
 
-/* IMPORTANTE: Evitar overflow en flipbook */
 .rich-content {
   overflow: hidden;
   word-wrap: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
   box-sizing: border-box;
-  line-height: 1.6; /* Base line-height por defecto */
 }
 
 .rich-content * {
@@ -15,108 +13,84 @@
   box-sizing: border-box;
 }
 
-/* Estilos para páginas del flipbook */
+/* ========================================
+   PÁGINAS DEL FLIPBOOK
+   ======================================== */
+
 .flipbook-page {
-  overflow: hidden; /* ← Evita scroll en la página */
+  overflow: hidden;
   height: 100%;
   width: 100%;
   position: relative;
   box-sizing: border-box;
 }
 
-/* Contenido SIN padding por defecto (para fondos de pantalla completa) */
+/* ✅ CONTENIDO CON PADDING (márgenes de libro real) */
 .flipbook-page-content {
   overflow: hidden;
   height: 100%;
   width: 100%;
-  padding: 0;
   box-sizing: border-box;
   position: relative;
+  padding: 0; /* Por defecto sin padding */
 }
 
-/* ✅ Padding FORZADO cuando NO hay fondo - usando !important */
+/* ✅ Padding cuando hay contenido de texto */
 .flipbook-page-content.with-padding {
-  padding: 1rem !important;
-}
-
-/* Variante CON scroll para contenido muy largo (opcional) */
-.flipbook-page-content.scrollable {
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-}
-
-/* Scrollbar personalizado para WebKit (solo en modo scrollable) */
-.flipbook-page-content.scrollable::-webkit-scrollbar {
-  width: 4px;
-}
-
-.flipbook-page-content.scrollable::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.flipbook-page-content.scrollable::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 2px;
-}
-
-.flipbook-page-content.scrollable::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+  padding: 2rem 1.5rem !important;
 }
 
 /* ========================================
-   LINE-HEIGHT: Prioridad a estilos inline
+   TÍTULOS - ARRIBA IZQUIERDA por defecto
    ======================================== */
 
-
-/* 🔹 Valor base solo para párrafos sin inline line-height */
-.rich-content p:not([style*="line-height"]) {
-  line-height: 1.6;
+.rich-content h1,
+.rich-content h2,
+.rich-content h3 {
+  margin: 0 0 1rem 0;
+  padding: 0;
+  line-height: 1.3;
+  text-align: left; /* ✅ SIEMPRE izquierda por defecto */
+  font-weight: bold;
 }
-
-
-/* ========================================
-   ENCABEZADOS
-   ======================================== */
 
 .rich-content h1 {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-  line-height: 1.2;
+  font-size: 1.5rem; /* 24px - Tamaño título libro */
 }
 
 .rich-content h2 {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 0.8rem;
-  line-height: 1.3;
+  font-size: 1.25rem; /* 20px */
 }
 
 .rich-content h3 {
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-bottom: 0.6rem;
-  line-height: 1.4;
+  font-size: 1.125rem; /* 18px */
 }
 
-/* Encabezados con line-height personalizado */
-.rich-content h1[style*="line-height"],
-.rich-content h2[style*="line-height"],
-.rich-content h3[style*="line-height"] {
-  line-height: inherit !important;
+/* ✅ Respetar alineación cuando está explícita */
+.rich-content h1[style*="text-align"],
+.rich-content h2[style*="text-align"],
+.rich-content h3[style*="text-align"] {
+  text-align: inherit !important;
 }
 
 /* ========================================
-   PÁRRAFOS Y TEXTO
+   PÁRRAFOS - ARRIBA IZQUIERDA por defecto
    ======================================== */
 
 .rich-content p {
-  margin-bottom: 1rem;
-  line-height: inherit;
+  margin: 0 0 0.75rem 0;
+  padding: 0;
+  line-height: 1.6;
+  text-align: left; /* ✅ SIEMPRE izquierda por defecto */
+  font-size: 0.875rem; /* 14px - Tamaño texto libro pequeño */
 }
 
+/* ✅ Respetar alineación cuando está explícita */
+.rich-content p[style*="text-align"] {
+  text-align: inherit !important;
+}
+
+/* Formateo básico */
 .rich-content strong {
   font-weight: bold;
 }
@@ -134,64 +108,53 @@
 }
 
 /* ========================================
-   LISTAS
+   LISTAS - Tamaño pequeño
    ======================================== */
 
+.rich-content ul,
+.rich-content ol {
+  margin: 0 0 1rem 1.5rem;
+  padding: 0;
+  list-style-position: outside;
+  font-size: 0.75rem; /* EXTRA PEQUEÑO - Mismo tamaño que texto */
+}
+
 .rich-content ul {
-  list-style: none;
-  margin-left: 2rem;
-  margin-bottom: 1rem;
-  position: relative;
+  list-style-type: disc;
 }
 
 .rich-content ol {
-  list-style: none;
-  margin-left: 2rem;
-  margin-bottom: 1rem;
-  position: relative;
-  counter-reset: list-counter;
+  list-style-type: decimal;
 }
 
 .rich-content li {
   margin-bottom: 0.5rem;
-  line-height: inherit; /* Heredar del padre */
-  position: relative;
-  padding-left: 1rem;
+  line-height: 1.6;
 }
 
-/* Bullets personalizados para ul */
-.rich-content ul > li::before {
-  content: "•";
-  color: #3b82f6;
-  font-size: 1.2em;
-  position: absolute;
-  left: -0.5rem;
-  top: 0;
+/* ========================================
+   ALINEACIÓN - Soporte completo
+   ======================================== */
+
+.rich-content .ql-align-left,
+.rich-content [style*="text-align: left"] {
+  text-align: left !important;
 }
 
-/* Números personalizados para ol */
-.rich-content ol > li {
-  counter-increment: list-counter;
+.rich-content .ql-align-center,
+.rich-content [style*="text-align: center"] {
+  text-align: center !important;
 }
 
-.rich-content ol > li::before {
-  content: counter(list-counter) ".";
-  color: #3b82f6;
-  font-weight: bold;
-  position: absolute;
-  left: -0.8rem;
-  top: 0;
+.rich-content .ql-align-right,
+.rich-content [style*="text-align: right"] {
+  text-align: right !important;
 }
 
-/* Colores alternativos para listas */
-.rich-content ul.red-bullets > li::before { color: #dc2626; }
-.rich-content ol.red-numbers > li::before { color: #dc2626; }
-
-.rich-content ul.green-bullets > li::before { color: #16a34a; }
-.rich-content ol.green-numbers > li::before { color: #16a34a; }
-
-.rich-content ul.purple-bullets > li::before { color: #9333ea; }
-.rich-content ol.purple-numbers > li::before { color: #9333ea; }
+.rich-content .ql-align-justify,
+.rich-content [style*="text-align: justify"] {
+  text-align: justify !important;
+}
 
 /* ========================================
    ENLACES
@@ -207,73 +170,17 @@
 }
 
 /* ========================================
-   ALINEACIÓN (Quill genera estas clases)
-   ======================================== */
-
-.rich-content .ql-align-left {
-  text-align: left;
-}
-
-.rich-content .ql-align-center {
-  text-align: center;
-}
-
-.rich-content .ql-align-right {
-  text-align: right;
-}
-
-.rich-content .ql-align-justify {
-  text-align: justify;
-}
-
-/* ========================================
-   SANGRÍA
-   ======================================== */
-
-.rich-content .ql-indent-1 { padding-left: 3rem; }
-.rich-content .ql-indent-2 { padding-left: 6rem; }
-.rich-content .ql-indent-3 { padding-left: 9rem; }
-.rich-content .ql-indent-4 { padding-left: 12rem; }
-.rich-content .ql-indent-5 { padding-left: 15rem; }
-.rich-content .ql-indent-6 { padding-left: 18rem; }
-.rich-content .ql-indent-7 { padding-left: 21rem; }
-.rich-content .ql-indent-8 { padding-left: 24rem; }
-
-/* ========================================
-   COLORES DE TEXTO (Fallback)
-   ======================================== */
-
-.rich-content .ql-color-red { color: #e60000; }
-.rich-content .ql-color-orange { color: #f90; }
-.rich-content .ql-color-yellow { color: #ff0; }
-.rich-content .ql-color-green { color: #008a00; }
-.rich-content .ql-color-blue { color: #06c; }
-.rich-content .ql-color-purple { color: #93f; }
-
-/* ========================================
-   COLORES DE FONDO
-   ======================================== */
-
-.rich-content .ql-bg-red { background-color: #e60000; }
-.rich-content .ql-bg-orange { background-color: #f90; }
-.rich-content .ql-bg-yellow { background-color: #ff0; }
-.rich-content .ql-bg-green { background-color: #008a00; }
-.rich-content .ql-bg-blue { background-color: #06c; }
-.rich-content .ql-bg-purple { background-color: #93f; }
-
-/* ========================================
    BLOCKQUOTES
    ======================================== */
 
 .rich-content blockquote {
   border-left: 4px solid #ccc;
-  margin-left: 0;
-  margin-right: 0;
-  padding-left: 16px;
+  margin: 0 0 1rem 0;
+  padding-left: 1rem;
   color: #666;
   font-style: italic;
-  margin-bottom: 1rem;
-  line-height: inherit;
+  line-height: 1.6;
+  font-size: 0.75rem;
 }
 
 /* ========================================
@@ -285,7 +192,7 @@
   padding: 0.2rem 0.4rem;
   border-radius: 0.25rem;
   font-family: 'Courier New', Courier, monospace;
-  font-size: 0.9em;
+  font-size: 0.8em;
 }
 
 .rich-content pre {
@@ -294,34 +201,7 @@
   border-radius: 0.5rem;
   overflow-x: auto;
   margin-bottom: 1rem;
-  line-height: inherit;
-}
-
-.rich-content pre code {
-  background: none;
-  padding: 0;
-}
-
-/* ========================================
-   TABLAS
-   ======================================== */
-
-.rich-content table {
-  border-collapse: collapse;
-  width: 100%;
-  margin-bottom: 1rem;
-}
-
-.rich-content th,
-.rich-content td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: left;
-}
-
-.rich-content th {
-  background-color: #f2f2f2;
-  font-weight: bold;
+  font-size: 0.75rem;
 }
 
 /* ========================================
@@ -329,39 +209,15 @@
    ======================================== */
 
 @media (max-width: 640px) {
-  .rich-content h1 { font-size: 1.5rem; }
-  .rich-content h2 { font-size: 1.3rem; }
-  .rich-content h3 { font-size: 1.1rem; }
+  .rich-content h1 { font-size: 1.25rem; }
+  .rich-content h2 { font-size: 1.125rem; }
+  .rich-content h3 { font-size: 1rem; }
   
-  .rich-content ul,
-  .rich-content ol {
-    margin-left: 1.5rem;
+  .rich-content p {
+    font-size: 0.8rem;
   }
   
-  .rich-content .ql-indent-1 { padding-left: 2rem; }
-  .rich-content .ql-indent-2 { padding-left: 4rem; }
-  .rich-content .ql-indent-3 { padding-left: 6rem; }
-}
-
-/* ========================================
-   UTILIDADES ADICIONALES
-   ======================================== */
-
-.rich-content.title-content {
-  margin-bottom: 2rem;
-}
-
-.rich-content.text-content {
-  margin-top: 1rem;
-}
-
-/* Para centrar todo el contenido */
-.rich-content.centered {
-  text-align: center;
-}
-
-.rich-content.centered ul,
-.rich-content.centered ol {
-  display: inline-block;
-  text-align: left;
+  .flipbook-page-content.with-padding {
+    padding: 1.5rem 1rem !important;
+  }
 }
