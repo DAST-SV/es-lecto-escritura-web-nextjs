@@ -28,7 +28,6 @@ interface UseBookStateReturn {
 const createDefaultPages = (title?: string): page[] => [
   { id: 'page-1', layout: 'CoverLayout', title: title || "", text: "", image: null, background: null },
   { id: 'page-2', layout: 'TextCenterLayout', title: "", text: "", image: null, background: null },
-  { id: 'page-3', layout: 'TextCenterLayout', title: "", text: "", image: null, background: null },
 ];
 
 export const useBookState = ({ initialPages, title }: UseBookStateProps = {}): UseBookStateReturn => {
