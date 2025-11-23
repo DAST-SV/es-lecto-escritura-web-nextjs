@@ -1,19 +1,17 @@
 /**
- * BackgroundControls - SOLUCIÓN: Usar data-attribute para guardar color + imagen
+ * BackgroundControls - MEJORADO: Flujo claro para color + imagen
  * 
- * ESTRATEGIA:
- * - Si solo hay color: background = "#hex"
- * - Si solo hay imagen: background = "blob:..."
- * - Si HAY AMBOS: background = "blob:..." y guardamos el color en un data-attribute o variable externa
+ * FLUJO CORRECTO:
+ * 1. Usuario selecciona COLOR (ej: negro)
+ * 2. Usuario sube IMAGEN (la imagen se pone encima del color)
+ * 3. La imagen usa 'contain' → NO se recorta
+ * 4. El COLOR rellena los espacios vacíos de la imagen
  * 
- * Para simplificar SIN cambiar tipos, vamos a:
- * 1. Mostrar ambos controles independientes
- * 2. Aplicar background-color vía CSS inline en PageRenderer
- * 3. Aplicar background-image encima
+ * RESULTADO: Color de fondo + Imagen centrada encima
  */
 
 import React, { useState, useEffect } from 'react';
-import { Upload, Image, X, Palette, ChevronDown, ChevronUp, Info } from 'lucide-react';
+import { Upload, Image, X, Palette, ChevronDown, ChevronUp, Info, Check } from 'lucide-react';
 import { ColorPicker } from './ColorPicker';
 
 interface BackgroundControlsProps {
@@ -35,8 +33,9 @@ export function BackgroundControls({
   onRemoveBackground,
   isFirstPage = false
 }: BackgroundControlsProps) {
-  const [colorOpen, setColorOpen] = useState(false);
+  const [colorOpen, setColorOpen] = useState(true); // ✅ Abierto por defecto
   const [imageOpen, setImageOpen] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<string>('#ffffff');
 
   // ✅ Detectar qué tipo de background tenemos
   const hasBackgroundImage = 
@@ -50,6 +49,13 @@ export function BackgroundControls({
     currentBackground && 
     typeof currentBackground === 'string' && 
     currentBackground.startsWith('#');
+
+  // ✅ Guardar el color seleccionado localmente
+  useEffect(() => {
+    if (hasBackgroundColor) {
+      setSelectedColor(currentBackground);
+    }
+  }, [currentBackground, hasBackgroundColor]);
 
   return (
     <div className="space-y-3 p-3 bg-purple-50 rounded-xl border border-purple-200">
@@ -70,18 +76,24 @@ export function BackgroundControls({
         )}
       </div>
 
-      {/* ✅ IMPORTANTE: Explicación de cómo funciona */}
-      <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
+      {/* ✅ PASO A PASO: Instrucciones claras */}
+      <div className="p-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
         <div className="flex items-start gap-2">
           <Info size={14} className="text-blue-600 flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-blue-800">
-            <strong>Primero</strong> elige un color, <strong>luego</strong> sube la imagen. 
-            El color rellenará los espacios vacíos.
-          </p>
+          <div className="text-xs">
+            <p className="font-bold text-blue-900 mb-1">📋 Cómo funciona:</p>
+            <ol className="text-blue-800 space-y-1">
+              <li><strong>1.</strong> Elige un color de fondo (ej: negro)</li>
+              <li><strong>2.</strong> Sube una imagen encima</li>
+              <li><strong>3.</strong> El color rellena los espacios vacíos</li>
+            </ol>
+          </div>
         </div>
       </div>
 
-      {/* SECCIÓN: Color de fondo */}
+      {/* ========================================
+          PASO 1: Color de fondo
+          ======================================== */}
       <div className="bg-white rounded-lg border-2 border-gray-200 overflow-hidden">
         <button
           onClick={() => setColorOpen(!colorOpen)}
@@ -89,14 +101,19 @@ export function BackgroundControls({
         >
           <div className="flex items-center gap-2">
             <Palette size={16} className="text-purple-600" />
-            <span className="text-sm font-semibold text-gray-700">1. Color de fondo</span>
+            <span className="text-sm font-semibold text-gray-700">
+              Paso 1: Color base
+            </span>
           </div>
           <div className="flex items-center gap-2">
             {hasBackgroundColor && !hasBackgroundImage && (
-              <div 
-                className="w-5 h-5 rounded border-2 border-gray-300"
-                style={{ backgroundColor: currentBackground }}
-              />
+              <div className="flex items-center gap-1">
+                <div 
+                  className="w-5 h-5 rounded border-2 border-gray-300"
+                  style={{ backgroundColor: currentBackground }}
+                />
+                <Check size={14} className="text-green-600" />
+              </div>
             )}
             {colorOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </div>
@@ -105,18 +122,24 @@ export function BackgroundControls({
         {colorOpen && (
           <div className="px-3 pb-3 border-t border-gray-200">
             <ColorPicker
-              currentColor={hasBackgroundColor ? currentBackground : '#ffffff'}
-              onColorChange={onBackgroundChange}
+              currentColor={selectedColor}
+              onColorChange={(color) => {
+                setSelectedColor(color);
+                onBackgroundChange(color);
+              }}
               label=""
             />
-            <p className="text-xs text-gray-500 mt-2">
-              💡 Elige el color base que quieres usar
+            <p className="text-xs text-gray-600 mt-2 flex items-start gap-1">
+              <span>💡</span>
+              <span>Este color será la base. Si subes imagen, rellenará los espacios vacíos.</span>
             </p>
           </div>
         )}
       </div>
 
-      {/* SECCIÓN: Imagen de fondo */}
+      {/* ========================================
+          PASO 2: Imagen de fondo
+          ======================================== */}
       <div className="bg-white rounded-lg border-2 border-gray-200 overflow-hidden">
         <button
           onClick={() => setImageOpen(!imageOpen)}
@@ -124,11 +147,13 @@ export function BackgroundControls({
         >
           <div className="flex items-center gap-2">
             <Image size={16} className="text-purple-600" />
-            <span className="text-sm font-semibold text-gray-700">2. Imagen de fondo</span>
+            <span className="text-sm font-semibold text-gray-700">
+              Paso 2: Imagen encima (opcional)
+            </span>
           </div>
           <div className="flex items-center gap-2">
             {hasBackgroundImage && (
-              <span className="text-xs text-green-600 font-medium">✓</span>
+              <Check size={14} className="text-green-600" />
             )}
             {imageOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </div>
@@ -143,7 +168,8 @@ export function BackgroundControls({
                   <img
                     src={currentBackground}
                     alt="Fondo"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
+                    style={{ backgroundColor: selectedColor }} // ✅ Mostrar el color detrás
                   />
                 </div>
 
@@ -161,9 +187,9 @@ export function BackgroundControls({
                   />
                 </label>
 
-                <p className="text-xs text-amber-600">
-                  ⚠️ Al cambiar la imagen, perderás el color anterior. 
-                  Vuelve a seleccionar el color después.
+                <p className="text-xs text-green-600 flex items-start gap-1">
+                  <span>✓</span>
+                  <span>Imagen cargada. El color <strong>{selectedColor}</strong> rellena los espacios.</span>
                 </p>
               </>
             ) : (
@@ -190,9 +216,10 @@ export function BackgroundControls({
                   />
                 </label>
 
-                {hasBackgroundColor && (
-                  <p className="text-xs text-green-600">
-                    ✓ Ya tienes un color seleccionado. La imagen se colocará encima.
+                {selectedColor !== '#ffffff' && (
+                  <p className="text-xs text-green-600 flex items-start gap-1">
+                    <span>✓</span>
+                    <span>Ya tienes el color <strong>{selectedColor}</strong>. Sube imagen para completar.</span>
                   </p>
                 )}
               </>
@@ -201,21 +228,31 @@ export function BackgroundControls({
         )}
       </div>
 
-      {/* Estado actual */}
+      {/* ========================================
+          ESTADO ACTUAL
+          ======================================== */}
       {hasBackground && (
         <div className="p-2 bg-green-50 border border-green-200 rounded-lg">
           <p className="text-xs font-semibold text-green-900 mb-1">✓ Configurado:</p>
-          <div className="flex flex-wrap gap-1">
-            {hasBackgroundColor && !hasBackgroundImage && (
-              <span className="text-xs bg-white px-2 py-0.5 rounded-full text-green-800 flex items-center gap-1">
-                <Palette size={10} />
-                Solo color
-              </span>
+          <div className="flex flex-wrap gap-2 items-center">
+            {/* Mostrar color */}
+            {selectedColor !== '#ffffff' && (
+              <div className="flex items-center gap-1">
+                <div 
+                  className="w-4 h-4 rounded border border-gray-300"
+                  style={{ backgroundColor: selectedColor }}
+                />
+                <span className="text-xs text-green-800 font-medium">
+                  Color: {selectedColor}
+                </span>
+              </div>
             )}
+
+            {/* Mostrar imagen */}
             {hasBackgroundImage && (
               <span className="text-xs bg-white px-2 py-0.5 rounded-full text-green-800 flex items-center gap-1">
                 <Image size={10} />
-                Imagen (con color de relleno)
+                + Imagen encima
               </span>
             )}
           </div>

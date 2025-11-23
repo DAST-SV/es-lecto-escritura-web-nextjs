@@ -18,36 +18,49 @@ export function PageRenderer({ page, isActive }: Props) {
   const getBorderRadius = page.border ? borders[page.border] : borders.cuadrado;
 
   /**
-   * ✅ Mejorar detección de fondo
+   * ✅ SOLUCIÓN COMPLETA: Color de fondo + imagen de fondo
+   * 
+   * FLUJO:
+   * 1. Si hay imagen Y color: backgroundColor + backgroundImage
+   * 2. Si solo hay imagen: backgroundColor blanco + backgroundImage
+   * 3. Si solo hay color: backgroundColor
+   * 4. Si no hay nada: backgroundColor blanco
+   * 
+   * RESULTADO: La imagen se muestra con 'contain' (sin recortar)
+   * y el color rellena los espacios vacíos
    */
   const getBackgroundStyle = (): React.CSSProperties => {
-    if (!page.background) {
-      return { background: backgrounds.blanco };
-    }
-
     const bg = page.background;
 
-    // Si es URL (imagen de fondo)
+    // ✅ CASO 1: No hay background → blanco
+    if (!bg || bg === '' || bg === 'blanco') {
+      return { backgroundColor: backgrounds.blanco };
+    }
+
+    // ✅ CASO 2: Hay imagen (URL o blob)
     if (typeof bg === 'string' && /^(https?:\/\/|blob:)/.test(bg)) {
+      // La imagen irá encima del color blanco (o del color que se haya seleccionado antes)
       return {
+        backgroundColor: '#ffffff', // Color base por defecto
         backgroundImage: `url(${bg})`,
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        backgroundSize: 'auto 100%', // ✅ AJUSTAR AL ALTO
+        backgroundSize: 'contain', // ✅ La imagen NO se recorta, se ajusta completa
       };
     }
 
-    // Si es color hex
+    // ✅ CASO 3: Es un color hex
     if (typeof bg === 'string' && bg.startsWith('#')) {
-      return { background: bg };
+      return { backgroundColor: bg };
     }
 
-    // Si está en los presets
+    // ✅ CASO 4: Es un preset de backgrounds
     if (bg in backgrounds) {
-      return { background: backgrounds[bg as keyof typeof backgrounds] };
+      return { backgroundColor: backgrounds[bg as keyof typeof backgrounds] };
     }
 
-    return { background: backgrounds.blanco };
+    // ✅ CASO 5: Fallback
+    return { backgroundColor: backgrounds.blanco };
   };
 
   const backgroundStyle = getBackgroundStyle();

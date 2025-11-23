@@ -1,5 +1,6 @@
 /**
- * RichTextEditor.tsx - Editor de contenido con tamaños pequeños
+ * UBICACIÓN: src/presentation/features/editor/components/RichTextEditor/RichTextEditor.tsx
+ * COMPACTO: Menos padding, toolbar más pequeño
  */
 
 'use client';
@@ -12,14 +13,19 @@ import Underline from '@tiptap/extension-underline';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
-import { FontFamilyExtension, FONT_FAMILIES } from '../../extensions/FontFamily.extension';
+import { 
+  FontFamilyExtension, 
+  FONT_FAMILIES, 
+  FontFamilyKey 
+} from '../../extensions/FontFamily.extension';
 import { PasteHandlerExtension } from '../../extensions/PasteHandler.extension';
 import { 
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
   List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  Quote, Undo, Redo, Trash2
+  Quote, Undo, Redo, Trash2, Type
 } from 'lucide-react';
 import { LINE_HEIGHTS, LineHeightExtension } from '../../extensions/LineHeight.extension';
+import { FONT_SIZES, FontSizeExtension } from '../../extensions/FontSize.extension';
 
 export interface RichTextEditorProps {
   value: string;
@@ -28,15 +34,6 @@ export interface RichTextEditorProps {
   characterLimit?: number;
 }
 
-// ✅ Tamaños predefinidos para CONTENIDO en ESPAÑOL
-const CONTENT_SIZES = {
-  'Extra Pequeño': '0.75rem',   // 12px - DEFAULT
-  'Pequeño': '0.875rem',        // 14px
-  'Normal': '1rem',             // 16px
-  'Mediano': '1.125rem',        // 18px
-  'Grande': '1.25rem'           // 20px
-} as const;
-
 export function RichTextEditor({
   value,
   onChange,
@@ -44,7 +41,6 @@ export function RichTextEditor({
   characterLimit = 650
 }: RichTextEditorProps) {
   const [stats, setStats] = useState({ words: 0, characters: 0 });
-  const [currentSize, setCurrentSize] = useState('Extra Pequeño'); // ✅ DEFAULT
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -59,9 +55,10 @@ export function RichTextEditor({
       TextStyle,
       Color,
       Highlight.configure({ multicolor: true }),
+      FontSizeExtension,
       LineHeightExtension.configure({
         types: ['paragraph', 'heading'],
-        defaultLineHeight: '1.6', // ✅ Interlineado por defecto
+        defaultLineHeight: '1.5',
       }),
       FontFamilyExtension,
       PasteHandlerExtension,
@@ -95,13 +92,6 @@ export function RichTextEditor({
 
   const isNearLimit = stats.characters > characterLimit * 0.8;
   const isOverLimit = stats.characters > characterLimit;
-
-  // ✅ Aplicar tamaño al texto seleccionado
-  const applyFontSize = (size: string) => {
-    const fontSize = CONTENT_SIZES[size as keyof typeof CONTENT_SIZES];
-    editor.chain().focus().selectAll().setMark('textStyle', { fontSize }).run();
-    setCurrentSize(size);
-  };
 
   return (
     <div className="space-y-2 p-2 bg-blue-50 rounded-lg">
@@ -137,7 +127,6 @@ export function RichTextEditor({
 
         <div className="w-px h-5 bg-gray-300 mx-0.5" />
 
-        {/* ✅ Fuente */}
         <select
           onChange={(e) => {
             if (e.target.value) {
@@ -145,7 +134,6 @@ export function RichTextEditor({
             }
           }}
           className="text-xs border border-gray-300 rounded px-1 py-0.5"
-          title="Fuente"
         >
           <option value="">Fuente</option>
           {Object.entries(FONT_FAMILIES).map(([label, value]) => (
@@ -153,21 +141,22 @@ export function RichTextEditor({
           ))}
         </select>
 
-        {/* ✅ Tamaño (predefinido para contenido) */}
         <select
-          value={currentSize}
-          onChange={(e) => applyFontSize(e.target.value)}
+          onChange={(e) => {
+            if (e.target.value) {
+              editor.chain().focus().selectAll().setFontSize(e.target.value).run();
+            }
+          }}
           className="text-xs border border-gray-300 rounded px-1 py-0.5"
-          title="Tamaño"
         >
-          {Object.keys(CONTENT_SIZES).map((size) => (
-            <option key={size} value={size}>
-              {size}
+          <option value="">Tamaño</option>
+          {Object.entries(FONT_SIZES).map(([label, value]) => (
+            <option key={value} value={value}>
+              {label.replace('-', ' ')}
             </option>
           ))}
         </select>
 
-        {/* ✅ Interlineado */}
         <select
           onChange={(e) => {
             if (e.target.value) {
@@ -175,7 +164,6 @@ export function RichTextEditor({
             }
           }}
           className="text-xs border border-gray-300 rounded px-1 py-0.5"
-          title="Interlineado"
         >
           <option value="">Interlín</option>
           {Object.entries(LINE_HEIGHTS).map(([label, value]) => (
@@ -190,7 +178,6 @@ export function RichTextEditor({
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
           className={`p-1 hover:bg-gray-100 rounded ${editor.isActive("bold") ? "bg-blue-100" : ""}`}
-          title="Negrita"
         >
           <Bold size={14} />
         </button>
@@ -198,7 +185,6 @@ export function RichTextEditor({
         <button
           onClick={() => editor.chain().focus().toggleItalic().run()}
           className={`p-1 hover:bg-gray-100 rounded ${editor.isActive("italic") ? "bg-blue-100" : ""}`}
-          title="Cursiva"
         >
           <Italic size={14} />
         </button>
@@ -206,7 +192,6 @@ export function RichTextEditor({
         <button
           onClick={() => editor.chain().focus().toggleUnderline().run()}
           className={`p-1 hover:bg-gray-100 rounded ${editor.isActive("underline") ? "bg-blue-100" : ""}`}
-          title="Subrayado"
         >
           <UnderlineIcon size={14} />
         </button>
@@ -214,7 +199,6 @@ export function RichTextEditor({
         <button
           onClick={() => editor.chain().focus().toggleStrike().run()}
           className={`p-1 hover:bg-gray-100 rounded ${editor.isActive("strike") ? "bg-blue-100" : ""}`}
-          title="Tachado"
         >
           <Strikethrough size={14} />
         </button>
@@ -224,7 +208,6 @@ export function RichTextEditor({
         <button
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           className={`p-1 hover:bg-gray-100 rounded ${editor.isActive("bulletList") ? "bg-blue-100" : ""}`}
-          title="Lista"
         >
           <List size={14} />
         </button>
@@ -232,7 +215,6 @@ export function RichTextEditor({
         <button
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           className={`p-1 hover:bg-gray-100 rounded ${editor.isActive("orderedList") ? "bg-blue-100" : ""}`}
-          title="Lista numerada"
         >
           <ListOrdered size={14} />
         </button>
@@ -242,7 +224,6 @@ export function RichTextEditor({
         <button
           onClick={() => editor.chain().focus().setTextAlign("left").run()}
           className={`p-1 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "left" }) ? "bg-blue-100" : ""}`}
-          title="Izquierda"
         >
           <AlignLeft size={14} />
         </button>
@@ -250,7 +231,6 @@ export function RichTextEditor({
         <button
           onClick={() => editor.chain().focus().setTextAlign("center").run()}
           className={`p-1 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "center" }) ? "bg-blue-100" : ""}`}
-          title="Centro"
         >
           <AlignCenter size={14} />
         </button>
@@ -258,7 +238,6 @@ export function RichTextEditor({
         <button
           onClick={() => editor.chain().focus().setTextAlign("right").run()}
           className={`p-1 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "right" }) ? "bg-blue-100" : ""}`}
-          title="Derecha"
         >
           <AlignRight size={14} />
         </button>
@@ -266,7 +245,6 @@ export function RichTextEditor({
         <button
           onClick={() => editor.chain().focus().setTextAlign("justify").run()}
           className={`p-1 hover:bg-gray-100 rounded ${editor.isActive({ textAlign: "justify" }) ? "bg-blue-100" : ""}`}
-          title="Justificado"
         >
           <AlignJustify size={14} />
         </button>
@@ -276,7 +254,6 @@ export function RichTextEditor({
         <button
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           className={`p-1 hover:bg-gray-100 rounded ${editor.isActive("blockquote") ? "bg-blue-100" : ""}`}
-          title="Cita"
         >
           <Quote size={14} />
         </button>
@@ -284,7 +261,6 @@ export function RichTextEditor({
         <button
           onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
           className="p-1 hover:bg-gray-100 rounded text-red-600"
-          title="Limpiar formato"
         >
           <Trash2 size={14} />
         </button>
