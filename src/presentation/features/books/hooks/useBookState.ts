@@ -44,6 +44,14 @@ const createDefaultPages = (title?: string): page[] => [
     image: null, 
     background: null 
   },
+  { 
+    id: 'page-3', 
+    layout: 'TextCenterLayout', 
+    title: "Comienza tu historia...", 
+    text: "Escribe aquí el contenido de tu libro", 
+    image: null, 
+    background: null 
+  },
 ];
 
 export const useBookState = ({ initialPages, title }: UseBookStateProps = {}): UseBookStateReturn => {
