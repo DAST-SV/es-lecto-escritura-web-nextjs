@@ -16,6 +16,7 @@ import { useBookNavigation } from "../../hooks/useBookNavigation";
 
 import { EditorSidebar } from "./EditorSidebar";
 import { ValidationPanel } from "./ValidationPanel";
+import { LoadingOverlay } from "./LoadingOverlay"; // ✅ NUEVO
 
 import { saveBookJson, BookMetadata } from "@/src/infrastructure/services/bookService";
 import type { page } from "@/src/typings/types-page-book/index";
@@ -105,6 +106,10 @@ export function BookEditor({
   const [isSaving, setIsSaving] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
 
+  // ✅ NUEVO: Estados para el overlay de loading
+  const [loadingStatus, setLoadingStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [loadingMessage, setLoadingMessage] = useState('');
+
   const bookState = useBookState({ initialPages, title });
 
   const handleBackgroundChanged = useCallback(() => {
@@ -141,7 +146,7 @@ export function BookEditor({
   const handlePageInputSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const pageNum = parseInt(pageInput);
-    
+
     if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= bookState.pages.length) {
       navigation.goToPage(pageNum - 1);
     } else {
@@ -189,11 +194,20 @@ export function BookEditor({
     setNivelLabel(label);
   }, []);
 
+  // ✅ MODIFICADO: handleSave con loading overlay
   const handleSave = useCallback(async () => {
     const errors = validateBook();
 
     if (errors.length > 0) {
       setShowValidation(true);
+      return;
+    }
+
+    const { getUserId } = await import('@/src/utils/supabase/utilsClient');
+    const userId = await getUserId();
+
+    if (!userId) {
+      toast.error('❌ Usuario no autenticado');
       return;
     }
 
@@ -213,15 +227,35 @@ export function BookEditor({
       cardBackgroundUrl,
     };
 
+    // ✅ Activar loading overlay
     setIsSaving(true);
+    setLoadingStatus('loading');
+    setLoadingMessage('Subiendo imágenes y guardando datos...');
+
     try {
       await saveBookJson(bookState.pages, metadata, IdLibro);
-      toast.success('✅ Libro guardado correctamente');
-    } catch (error) {
+      
+      // ✅ Mostrar éxito
+      setLoadingStatus('success');
+      setLoadingMessage('Tu libro ha sido guardado correctamente');
+
+      // ✅ Esperar 2 segundos y redireccionar
+      setTimeout(() => {
+        window.location.href = '/dashboard/mis-libros'; // 👈 Cambia esta ruta
+      }, 2000);
+
+    } catch (error: any) {
       console.error("❌ Error en handleSave:", error);
-      toast.error('❌ Error al guardar el libro');
-    } finally {
-      setIsSaving(false);
+      
+      // ✅ Mostrar error
+      setLoadingStatus('error');
+      setLoadingMessage(error.message || 'Ocurrió un error al guardar el libro');
+
+      // ✅ Quitar overlay de error después de 3 segundos
+      setTimeout(() => {
+        setLoadingStatus('idle');
+        setIsSaving(false);
+      }, 3000);
     }
   }, [
     bookState.pages,
@@ -264,22 +298,24 @@ export function BookEditor({
       errors.push({ field: 'Géneros', message: 'Selecciona al menos un género' });
     }
 
-    if (!portada && !portadaUrl) {
-      errors.push({ field: 'Portada', message: 'Sube una imagen de portada' });
+    const hasPortada = portada || portadaUrl || cardBackgroundImage || cardBackgroundUrl;
+    if (!hasPortada) {
+      errors.push({ field: 'Imagen', message: 'Sube una imagen de fondo para la ficha' });
     }
 
     return errors;
-  }, [titulo, descripcion, autores, selectedCategorias, selectedGeneros, portada, portadaUrl]);
+  }, [titulo, descripcion, autores, selectedCategorias, selectedGeneros, portada, portadaUrl, cardBackgroundImage, cardBackgroundUrl]);
 
   const handlePortadaChange = useCallback((file: File | null) => {
     setPortada(file);
+
     if (file) {
-      setPortadaUrl(null);
       if (portadaUrlRef.current) {
         URL.revokeObjectURL(portadaUrlRef.current);
       }
-      portadaUrlRef.current = URL.createObjectURL(file);
-      setPortadaUrl(portadaUrlRef.current);
+      const newUrl = URL.createObjectURL(file);
+      portadaUrlRef.current = newUrl;
+      setPortadaUrl(newUrl);
     } else {
       if (portadaUrlRef.current) {
         URL.revokeObjectURL(portadaUrlRef.current);
@@ -431,8 +467,6 @@ export function BookEditor({
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden min-h-0">
-
-        {/* ✅ Sidebar más ancho: 400px */}
         <div className="w-96 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col overflow-hidden">
           {viewMode === 'pages' ? (
             <EditorSidebar
@@ -492,7 +526,6 @@ export function BookEditor({
           )}
         </div>
 
-        {/* Área Central */}
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           {viewMode === 'pages' ? (
             <div className="flex-1 overflow-hidden">
@@ -525,6 +558,13 @@ export function BookEditor({
           )}
         </div>
       </div>
+
+      {/* ✅ NUEVO: Loading Overlay */}
+      <LoadingOverlay 
+        isVisible={loadingStatus !== 'idle'} 
+        status={loadingStatus as 'loading' | 'success' | 'error'}
+        message={loadingMessage}
+      />
 
       <ValidationPanel
         isOpen={showValidation}

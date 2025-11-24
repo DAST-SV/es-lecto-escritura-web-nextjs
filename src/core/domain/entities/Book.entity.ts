@@ -17,7 +17,7 @@ export interface BookMetadata {
   selectedEtiquetas: (number | string)[];
   selectedValores: (number | string)[];
   selectedNivel: number | null;
-  
+
   // NUEVO: Campos para la Ficha Literaria (tarjeta pública)
   cardBackgroundImage?: File | null;
   cardBackgroundUrl?: string | null;
@@ -31,7 +31,7 @@ export class Book {
     public readonly userId: string,
     public readonly createdAt: Date = new Date(),
     public readonly updatedAt: Date = new Date()
-  ) {}
+  ) { }
 
   validate(): void {
     const errors: string[] = [];
@@ -56,8 +56,15 @@ export class Book {
       errors.push('Debe seleccionar al menos un género');
     }
 
-    if (!this.metadata.portada && !this.metadata.portadaUrl) {
-      errors.push('Debe seleccionar una portada');
+    // ✅ CAMBIO: Aceptar portada O imagen de fondo de ficha
+    const hasImage =
+      this.metadata.portada ||
+      this.metadata.portadaUrl ||
+      this.metadata.cardBackgroundImage ||
+      this.metadata.cardBackgroundUrl;
+
+    if (!hasImage) {
+      errors.push('Debe seleccionar una imagen (portada o imagen de fondo de ficha)');
     }
 
     if (this.pages.length === 0) {

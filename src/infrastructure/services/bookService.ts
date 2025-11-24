@@ -22,7 +22,7 @@ export interface BookMetadata {
   titulo: string;
   portada: File | null;
   portadaUrl?: string | null;
-  
+
   // NUEVO: Campos para la Ficha Literaria
   cardBackgroundImage?: File | null;
   cardBackgroundUrl?: string | null;
@@ -59,21 +59,28 @@ export async function saveBookJson(
   IdLibro?: string
 ): Promise<void> {
   try {
-    // Obtener el use case desde el contenedor DI
-    const saveBookUseCase = container.getSaveBookUseCase();
-    
-    // Obtener userId
+    // ✅ Verificar que getUserId funcione
     const { getUserId } = await import('@/src/utils/supabase/utilsClient');
     const userId = await getUserId();
-    
+
+    // ✅ TEMPORAL: Ver el userId
+    console.log('👤 userId obtenido:', userId);
+
     if (!userId) {
       throw new Error('Usuario no autenticado');
     }
 
-    // Convertir páginas a entidades de dominio
+    // ✅ TEMPORAL: Ver el metadata
+    console.log('📋 metadata:', {
+      titulo: metadata.titulo,
+      autores: metadata.autores,
+      descripcion: metadata.descripcion?.substring(0, 50)
+    });
+
+    const saveBookUseCase = container.getSaveBookUseCase();
+
     const domainPages = pages.map(p => Page.fromLegacyFormat(p));
-    
-    // Crear entidad Book
+
     const book = new Book(
       IdLibro || null,
       toDomainMetadata(metadata),
@@ -81,7 +88,13 @@ export async function saveBookJson(
       userId
     );
 
-    // Ejecutar use case
+    // ✅ TEMPORAL: Ver el book antes de ejecutar
+    console.log('📚 Book a guardar:', {
+      userId: book.userId,
+      titulo: book.metadata.titulo,
+      id: book.id
+    });
+
     const result = await saveBookUseCase.execute({
       book,
       userId,

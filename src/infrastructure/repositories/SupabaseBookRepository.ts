@@ -7,11 +7,19 @@ import { Book } from '../../core/domain/entities/Book.entity';
 import { BookMapper } from '../mappers/BookMapper';
 
 export class SupabaseBookRepository implements IBookRepository {
-  
+
   async save(book: Book): Promise<string> {
     try {
       const dto = BookMapper.toDTO(book);
-      
+
+      // ✅ TEMPORAL: Ver qué se está enviando
+      console.log('📤 DTO que se envía al API:', {
+        id_usuario: dto.id_usuario,
+        titulo: dto.titulo,
+        portada: dto.portada ? 'SÍ' : 'NO',
+        descripcion: dto.descripcion?.substring(0, 50) + '...'
+      });
+
       const response = await fetch('/api/libros/createbook', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -19,7 +27,10 @@ export class SupabaseBookRepository implements IBookRepository {
       });
 
       const data = await response.json();
-      
+
+      // ✅ TEMPORAL: Ver qué responde el API
+      console.log('📥 Respuesta del API:', data);
+
       if (!data.libroId) {
         throw new Error(data.error || 'Error al guardar libro');
       }
@@ -83,7 +94,7 @@ export class SupabaseBookRepository implements IBookRepository {
   async update(book: Book): Promise<void> {
     try {
       const dto = BookMapper.toDTO(book);
-      
+
       const response = await fetch('/api/libros/updatebook', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
