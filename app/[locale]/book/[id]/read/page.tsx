@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import BookReader from '@/src/presentation/features/books/components/BookReader/BookReader';
 import { page } from '@/src/typings/types-page-book';
-import { BookReader } from '@/src/presentation/features/books/components/BookReader/BookReader';
 
 export default function LeerLibroPage() {
   const params = useParams();
@@ -50,11 +50,7 @@ export default function LeerLibroPage() {
         console.log('📄 Páginas:', libro.paginas);
         console.log('👥 Autores:', libro.autores);
         console.log('🎭 Personajes:', libro.personajes);
-        console.log('📚 Categorías:', libro.categorias);
-        console.log('🎨 Géneros:', libro.generos);
-        console.log('💎 Valores:', libro.valores);
         
-        // Mapear las páginas al formato correcto
         const paginasFormateadas: page[] = (libro.paginas || []).map((p: any) => ({
           id: p.id || p.id_pagina,
           layout: p.layout || 'default',
@@ -149,7 +145,8 @@ export default function LeerLibroPage() {
     <BookReader
       pages={pages}
       title={title}
-      authors={metadata.authors} // ✅ Cambiado a 'authors' plural
+      author={metadata.authors[0]}
+      authors={metadata.authors}
       description={metadata.description}
       characters={metadata.characters}
       categories={metadata.categories}

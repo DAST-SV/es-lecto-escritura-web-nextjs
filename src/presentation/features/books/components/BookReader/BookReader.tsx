@@ -1,5 +1,7 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookReader/BookReader.tsx
+ * 
+ * Componente de lectura pura - Sin edición, solo lectura
  */
 
 'use client';
@@ -18,13 +20,13 @@ interface BookReaderProps {
   pages: page[];
   title?: string;
   author?: string;
-  authors?: string[]; // ✅ NUEVO: Array de autores
-  description?: string; // ✅ NUEVO
-  characters?: string[]; // ✅ NUEVO
-  categories?: string[]; // ✅ NUEVO
-  genres?: string[]; // ✅ NUEVO
-  values?: string[]; // ✅ NUEVO
-  coverImage?: string; // ✅ NUEVO
+  authors?: string[]; // ✅ Array de autores
+  description?: string; // ✅ Descripción
+  characters?: string[]; // ✅ Personajes
+  categories?: string[]; // ✅ Categorías
+  genres?: string[]; // ✅ Géneros
+  values?: string[]; // ✅ Valores
+  coverImage?: string; // ✅ Imagen de portada
   onClose?: () => void;
   showCloseButton?: boolean;
 }
@@ -339,7 +341,7 @@ export function BookReader({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header del modal */}
-            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-2xl">
+            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-2xl z-10">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <h2 className="text-2xl font-bold mb-2">{title}</h2>

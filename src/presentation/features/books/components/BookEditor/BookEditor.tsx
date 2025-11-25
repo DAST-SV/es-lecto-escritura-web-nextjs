@@ -16,9 +16,11 @@ import { useBookNavigation } from "../../hooks/useBookNavigation";
 
 import { EditorSidebar } from "./EditorSidebar";
 import { ValidationPanel } from "./ValidationPanel";
-import { LoadingOverlay } from "./LoadingOverlay"; // ✅ NUEVO
+import { LoadingOverlay } from "./LoadingOverlay";
 
-import { saveBookJson, BookMetadata } from "@/src/infrastructure/services/bookService";
+// ✅ IMPORTAR EL SERVICIO
+import { BookService } from "@/src/infrastructure/services/bookService";
+
 import type { page } from "@/src/typings/types-page-book/index";
 import LiteraryCardView from "./LiteraryCardView";
 import { LiteraryMetadataForm } from "./LiteraryMetadataForm";
@@ -105,8 +107,11 @@ export function BookEditor({
 
   const [isSaving, setIsSaving] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
+  
+  // ✅ Estados de validación
+  const [validationErrors, setValidationErrors] = useState<Array<{ field: string; message: string }>>([]);
 
-  // ✅ NUEVO: Estados para el overlay de loading
+  // Estados para el overlay de loading
   const [loadingStatus, setLoadingStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [loadingMessage, setLoadingMessage] = useState('');
 
@@ -194,117 +199,166 @@ export function BookEditor({
     setNivelLabel(label);
   }, []);
 
-  // ✅ MODIFICADO: handleSave con loading overlay
-  const handleSave = useCallback(async () => {
-    const errors = validateBook();
-
-    if (errors.length > 0) {
-      setShowValidation(true);
-      return;
-    }
-
-    const { getUserId } = await import('@/src/utils/supabase/utilsClient');
-    const userId = await getUserId();
-
-    if (!userId) {
-      toast.error('❌ Usuario no autenticado');
-      return;
-    }
-
-    const metadata: BookMetadata = {
-      selectedCategorias,
-      selectedGeneros,
-      selectedEtiquetas,
-      selectedValores,
-      selectedNivel,
-      autores,
-      personajes,
-      descripcion,
-      titulo,
-      portada,
-      portadaUrl,
-      cardBackgroundImage,
-      cardBackgroundUrl,
-    };
-
-    // ✅ Activar loading overlay
-    setIsSaving(true);
-    setLoadingStatus('loading');
-    setLoadingMessage('Subiendo imágenes y guardando datos...');
-
-    try {
-      await saveBookJson(bookState.pages, metadata, IdLibro);
-      
-      // ✅ Mostrar éxito
-      setLoadingStatus('success');
-      setLoadingMessage('Tu libro ha sido guardado correctamente');
-
-      // ✅ Esperar 2 segundos y redireccionar
-      setTimeout(() => {
-        window.location.href = '/dashboard/mis-libros'; // 👈 Cambia esta ruta
-      }, 2000);
-
-    } catch (error: any) {
-      console.error("❌ Error en handleSave:", error);
-      
-      // ✅ Mostrar error
-      setLoadingStatus('error');
-      setLoadingMessage(error.message || 'Ocurrió un error al guardar el libro');
-
-      // ✅ Quitar overlay de error después de 3 segundos
-      setTimeout(() => {
-        setLoadingStatus('idle');
-        setIsSaving(false);
-      }, 3000);
-    }
-  }, [
-    bookState.pages,
-    selectedCategorias,
-    selectedGeneros,
-    selectedEtiquetas,
-    selectedValores,
-    selectedNivel,
-    autores,
-    personajes,
-    descripcion,
-    titulo,
-    portada,
-    portadaUrl,
-    cardBackgroundImage,
-    cardBackgroundUrl,
-    IdLibro
-  ]);
-
+  // ✅ FUNCIÓN validateBook (debe estar ANTES de handleSave)
   const validateBook = useCallback(() => {
     const errors: Array<{ field: string; message: string }> = [];
 
+    // 1. Validar que haya al menos una página
+    if (!bookState.pages || bookState.pages.length === 0) {
+      errors.push({ 
+        field: 'Páginas', 
+        message: 'Debes crear al menos una página para guardar el libro' 
+      });
+    }
+
+    // 2. Validar título
     if (!titulo.trim()) {
       errors.push({ field: 'Título', message: 'El título es obligatorio' });
     }
 
+    // 3. Validar descripción
     if (!descripcion.trim()) {
       errors.push({ field: 'Descripción', message: 'La descripción es obligatoria' });
     }
 
+    // 4. Validar autores
     if (autores.length === 0) {
       errors.push({ field: 'Autores', message: 'Debe haber al menos un autor' });
     }
 
+    // 5. Validar categorías
     if (selectedCategorias.length === 0) {
       errors.push({ field: 'Tipo de Lectura', message: 'Selecciona al menos una categoría' });
     }
 
+    // 6. Validar géneros
     if (selectedGeneros.length === 0) {
       errors.push({ field: 'Géneros', message: 'Selecciona al menos un género' });
     }
 
+    // 7. Validar imagen
     const hasPortada = portada || portadaUrl || cardBackgroundImage || cardBackgroundUrl;
     if (!hasPortada) {
       errors.push({ field: 'Imagen', message: 'Sube una imagen de fondo para la ficha' });
     }
 
     return errors;
-  }, [titulo, descripcion, autores, selectedCategorias, selectedGeneros, portada, portadaUrl, cardBackgroundImage, cardBackgroundUrl]);
+  }, [
+    bookState.pages,
+    titulo, 
+    descripcion, 
+    autores, 
+    selectedCategorias, 
+    selectedGeneros, 
+    portada, 
+    portadaUrl, 
+    cardBackgroundImage, 
+    cardBackgroundUrl
+  ]);
+
+  // ✅ FUNCIÓN handleSave CORREGIDA
+  const handleSave = useCallback(async () => {
+    console.log('🔥 ========== INICIANDO GUARDADO ==========');
+    console.log('📄 Total de páginas:', bookState.pages.length);
+    console.log('🆔 ID del libro:', IdLibro);
+
+    // Validación temprana de páginas
+    if (!bookState.pages || bookState.pages.length === 0) {
+      toast.error('❌ No puedes guardar un libro sin páginas');
+      setValidationErrors([{
+        field: 'Páginas',
+        message: 'Debes crear al menos una página antes de guardar'
+      }]);
+      return;
+    }
+
+    // Validaciones generales
+    const errors = validateBook();
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      toast.error('Por favor corrige los errores antes de guardar');
+      return;
+    }
+
+    setIsSaving(true);
+    setLoadingStatus('loading');
+    setLoadingMessage('Guardando libro y páginas...');
+
+    try {
+      // Obtener userId si es creación
+      let userId: string | undefined;
+      if (!IdLibro) {
+        const userStr = localStorage.getItem('user');
+        if (!userStr) {
+          throw new Error('Usuario no autenticado');
+        }
+        const user = JSON.parse(userStr);
+        userId = user.id;
+      }
+
+      // ✅ Construir metadata
+      const metadata = {
+        titulo,
+        descripcion,
+        autores,
+        personajes,
+        portada,
+        portadaUrl,
+        cardBackgroundImage,
+        cardBackgroundUrl,
+        selectedCategorias,
+        selectedGeneros,
+        selectedEtiquetas,
+        selectedValores,
+        selectedNivel
+      };
+
+      // ✅ USAR EL SERVICIO
+      const result = await BookService.saveBook(
+        bookState.pages,
+        metadata,
+        IdLibro,
+        userId
+      );
+
+      console.log('✅ Guardado exitoso:', result);
+
+      setLoadingStatus('success');
+      setLoadingMessage('Tu libro ha sido guardado correctamente');
+
+      setTimeout(() => {
+        window.location.href = '/dashboard/mis-libros';
+      }, 2000);
+
+    } catch (error: any) {
+      console.error('❌ Error guardando libro:', error);
+      
+      setLoadingStatus('error');
+      setLoadingMessage(error.message || 'Ocurrió un error al guardar el libro');
+
+      setTimeout(() => {
+        setLoadingStatus('idle');
+        setIsSaving(false);
+      }, 3000);
+    }
+  }, [
+    bookState.pages, 
+    IdLibro, 
+    validateBook,
+    titulo,
+    descripcion,
+    autores,
+    personajes,
+    portada,
+    portadaUrl,
+    cardBackgroundImage,
+    cardBackgroundUrl,
+    selectedCategorias,
+    selectedGeneros,
+    selectedEtiquetas,
+    selectedValores,
+    selectedNivel
+  ]);
 
   const handlePortadaChange = useCallback((file: File | null) => {
     setPortada(file);
@@ -559,7 +613,7 @@ export function BookEditor({
         </div>
       </div>
 
-      {/* ✅ NUEVO: Loading Overlay */}
+      {/* Loading Overlay */}
       <LoadingOverlay 
         isVisible={loadingStatus !== 'idle'} 
         status={loadingStatus as 'loading' | 'success' | 'error'}
@@ -568,7 +622,7 @@ export function BookEditor({
 
       <ValidationPanel
         isOpen={showValidation}
-        errors={validateBook()}
+        errors={validationErrors}
         onClose={() => setShowValidation(false)}
       />
     </div>
