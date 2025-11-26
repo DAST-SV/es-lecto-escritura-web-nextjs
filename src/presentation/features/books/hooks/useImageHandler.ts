@@ -7,7 +7,7 @@
 
 import { useCallback } from 'react';
 import toast from 'react-hot-toast';
-import type { page } from '@/src/typings/types-page-book/index';
+import type { page } from '@/src/core/domain/types';
 
 interface UseImageHandlerProps {
   pages: page[];

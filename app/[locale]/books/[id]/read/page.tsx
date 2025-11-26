@@ -10,7 +10,7 @@ import {
   X, ChevronLeft, ChevronRight, Maximize, Minimize, 
   BookOpen, FileText
 } from 'lucide-react';
-import type { page } from '@/src/typings/types-page-book/index';
+import type { page } from '@/src/core/domain/types';
 import { PageRenderer } from '@/src/presentation/features/layouts/components/PageRenderer';
 import type { Page, LayoutType, backgroundstype } from '@/src/typings/types-page-book/index';
 

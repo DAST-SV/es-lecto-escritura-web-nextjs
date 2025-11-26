@@ -12,7 +12,7 @@ import { ImageFullLayout } from './components/ImageFullLayout';
 import { SplitLayout } from './components/SplitLayout';
 import { CenterImageDownTextLayout } from './components/CenterImageDownTextLayout';
 import { InteractiveLayout } from './components/InteractiveLayout';
-import type { Page } from '@/src/typings/types-page-book/index';
+import type { page } from '@/src/core/domain/types';
 
 /**
  * Tipo de componente Layout

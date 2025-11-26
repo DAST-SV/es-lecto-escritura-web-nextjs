@@ -8,7 +8,7 @@ import {
   FileText, Layout, Paintbrush
 } from 'lucide-react';
 
-import type { page } from '@/src/typings/types-page-book/index';
+import type { page } from '@/src/core/domain/types';
 import type { UseImageHandlerReturn } from '../../hooks/useImageHandler';
 import type { UseBookNavigationReturn } from '../../hooks/useBookNavigation';
 

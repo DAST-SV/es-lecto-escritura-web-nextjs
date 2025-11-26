@@ -1,5 +1,5 @@
 import React from 'react';
-import type { page } from '@/src/typings/types-page-book/index';
+import type { page } from '@/src/core/domain/types';
 import { layoutRegistry } from '@/src/presentation/features/layouts/registry';
 
 interface LayoutPreviewProps {

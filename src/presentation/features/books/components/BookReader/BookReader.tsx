@@ -17,6 +17,7 @@ import { PageRenderer } from '@/src/presentation/features/layouts/components/Pag
 
 // Estilos compartidos
 import '@/src/presentation/features/layouts/styles/book-shared.css';
+import { PageEditor } from '@/src/core/domain/types';
 
 interface BookReaderProps {
   pages: PageEditor[];

@@ -5,16 +5,14 @@
  */
 
 import React from "react";
-import type { Page } from "@/src/typings/types-page-book/index";
 import { getLayout } from "../registry";
-import { backgrounds } from "@/src/typings/types-page-book/backgrounds";
-import { borders } from "@/src/typings/types-page-book/borders";
 import { motion } from "framer-motion";
 import { getAnimation } from "@/src/utils/animations/animations";
 
 // ✅ Importar estilos compartidos
 import '@/src/presentation/features/layouts/styles/book-shared.css';
 import '@/src/style/rich-content.css';
+import { backgrounds, borders, Page } from "@/src/core/domain/types";
 
 interface Props {
   page: Page;

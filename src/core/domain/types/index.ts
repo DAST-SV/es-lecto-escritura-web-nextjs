@@ -1,8 +1,8 @@
 /**
- * UBICACIÓN: src/core/domain/types/index.ts
- * 
- * Tipos consolidados del dominio de libros
- * ✅ Reemplaza: typings/types-page-book/index.ts
+ * ============================================
+ * ARCHIVO 1: src/core/domain/types/index.ts
+ * REEMPLAZAR TODO EL CONTENIDO
+ * ============================================
  */
 
 // ============================================
@@ -29,16 +29,6 @@ export const LAYOUT_TYPES: readonly LayoutType[] = [
   'CenterImageDownTextLayout',
 ] as const;
 
-/**
- * Verificar si un string es un layout válido
- */
-export function isValidLayout(value: string): value is LayoutType {
-  return LAYOUT_TYPES.includes(value as LayoutType);
-}
-
-/**
- * Layouts que requieren imagen
- */
 export const LAYOUTS_WITH_IMAGE: readonly LayoutType[] = [
   'CoverLayout',
   'ImageLeftTextRightLayout',
@@ -49,9 +39,6 @@ export const LAYOUTS_WITH_IMAGE: readonly LayoutType[] = [
   'CenterImageDownTextLayout',
 ] as const;
 
-/**
- * Layouts que son solo texto
- */
 export const TEXT_ONLY_LAYOUTS: readonly LayoutType[] = [
   'TextCenterLayout',
 ] as const;
@@ -76,47 +63,10 @@ export const BACKGROUND_PRESETS = {
 } as const;
 
 export type BackgroundPresetKey = keyof typeof BACKGROUND_PRESETS;
-
-/**
- * Tipo de fondo: preset, color hex, o URL de imagen
- */
 export type BackgroundType = BackgroundPresetKey | string;
 
-/**
- * Verificar si es un preset válido
- */
-export function isBackgroundPreset(value: string): value is BackgroundPresetKey {
-  return value in BACKGROUND_PRESETS;
-}
-
-/**
- * Verificar si es un color hex válido
- */
-export function isHexColor(value: string): boolean {
-  return /^#[0-9A-F]{6}$/i.test(value);
-}
-
-/**
- * Verificar si es una URL de imagen
- */
-export function isImageUrl(value: string): boolean {
-  return value.startsWith('http://') || 
-         value.startsWith('https://') || 
-         value.startsWith('blob:');
-}
-
-/**
- * Obtener el color de un fondo
- */
-export function getBackgroundColor(value: string): string {
-  if (isBackgroundPreset(value)) {
-    return BACKGROUND_PRESETS[value];
-  }
-  if (isHexColor(value)) {
-    return value;
-  }
-  return BACKGROUND_PRESETS.blanco;
-}
+// Alias para compatibilidad
+export const backgrounds = BACKGROUND_PRESETS;
 
 // ============================================
 // BORDERS
@@ -129,9 +79,110 @@ export const BORDER_STYLES = {
 
 export type BorderType = keyof typeof BORDER_STYLES;
 
+// Alias para compatibilidad
+export const borders = BORDER_STYLES;
+
+// ============================================
+// TIPOS DE PÁGINA
+// ============================================
+
 /**
- * Obtener border-radius de un estilo
+ * Página en el editor (con archivos temporales)
+ * Usa esto en BookEditor, useBookState, etc.
  */
+export interface page {
+  id: string;
+  layout: string;
+  title: string;
+  text: string;
+  image: string | null;
+  background: string | null;
+  file?: Blob | null;
+  backgroundFile?: Blob | null;
+  animation?: string;
+  audio?: string;
+  interactiveGame?: string;
+  items?: string[];
+  border?: string;
+}
+
+/**
+ * Página para renderizar (sin archivos temporales)
+ * Usa esto en PageRenderer, layouts individuales
+ */
+export interface Page {
+  layout: LayoutType;
+  title: string;
+  text: string;
+  image?: string;
+  background?: BackgroundType;
+  animation?: string;
+  audio?: string;
+  interactiveGame?: string;
+  items?: string[];
+  border?: string;
+}
+
+/**
+ * Alias para mantener compatibilidad
+ */
+export type PageEditorData = page;
+export type PageEditor = page;
+
+// ============================================
+// CONVERSORES
+// ============================================
+
+/**
+ * Convierte page (editor) → Page (render)
+ */
+export function pageToRenderPage(p: page): Page {
+  return {
+    layout: p.layout as LayoutType,
+    title: p.title,
+    text: p.text,
+    image: p.image || undefined,
+    background: p.background || undefined,
+    animation: p.animation,
+    audio: p.audio,
+    interactiveGame: p.interactiveGame,
+    items: p.items,
+    border: p.border,
+  };
+}
+
+// ============================================
+// HELPERS
+// ============================================
+
+export function isValidLayout(value: string): value is LayoutType {
+  return LAYOUT_TYPES.includes(value as LayoutType);
+}
+
+export function isBackgroundPreset(value: string): value is BackgroundPresetKey {
+  return value in BACKGROUND_PRESETS;
+}
+
+export function isHexColor(value: string): boolean {
+  return /^#[0-9A-F]{6}$/i.test(value);
+}
+
+export function isImageUrl(value: string): boolean {
+  return value.startsWith('http://') || 
+         value.startsWith('https://') || 
+         value.startsWith('blob:');
+}
+
+export function getBackgroundColor(value: string): string {
+  if (isBackgroundPreset(value)) {
+    return BACKGROUND_PRESETS[value];
+  }
+  if (isHexColor(value)) {
+    return value;
+  }
+  return BACKGROUND_PRESETS.blanco;
+}
+
 export function getBorderRadius(value: string): string {
   if (value in BORDER_STYLES) {
     return BORDER_STYLES[value as BorderType];
@@ -139,9 +190,56 @@ export function getBorderRadius(value: string): string {
   return BORDER_STYLES.cuadrado;
 }
 
+export function layoutRequiresImage(layout: LayoutType): boolean {
+  return LAYOUTS_WITH_IMAGE.includes(layout);
+}
+
+export function isTextOnlyLayout(layout: LayoutType): boolean {
+  return TEXT_ONLY_LAYOUTS.includes(layout);
+}
+
+export function createEmptyEditorPage(id: string, layout: LayoutType = 'TextCenterLayout'): page {
+  return {
+    id,
+    layout,
+    title: '',
+    text: '',
+    image: null,
+    background: 'blanco',
+    file: null,
+    backgroundFile: null,
+  };
+}
+
+export function validatePageData(page: page): string[] {
+  const errors: string[] = [];
+
+  if (isValidLayout(page.layout) && layoutRequiresImage(page.layout as LayoutType)) {
+    const hasImage = page.image || page.file;
+    if (!hasImage && page.layout !== 'CoverLayout') {
+      errors.push('Este layout requiere una imagen');
+    }
+  }
+
+  if (page.layout === 'CoverLayout') {
+    if (!page.title || page.title.trim() === '') {
+      errors.push('La portada debe tener un título');
+    }
+  }
+
+  if (page.layout === 'TextCenterLayout') {
+    if (!page.title && !page.text) {
+      errors.push('La página debe tener al menos título o texto');
+    }
+  }
+
+  return errors;
+}
+
 // ============================================
-// FONT FAMILIES
+// FONTS (para compatibilidad)
 // ============================================
+
 export const FONT_FAMILIES = {
   'Arial': 'Arial, sans-serif',
   'Comic Sans': '"Comic Sans MS", cursive',
@@ -155,9 +253,6 @@ export const FONT_FAMILIES = {
 
 export type FontFamilyKey = keyof typeof FONT_FAMILIES;
 
-// ============================================
-// FONT SIZES
-// ============================================
 export const FONT_SIZES = {
   'extra-small': '0.625rem',
   'small': '0.75rem',
@@ -171,9 +266,6 @@ export const FONT_SIZES = {
 
 export type FontSizeKey = keyof typeof FONT_SIZES;
 
-// ============================================
-// LINE HEIGHTS
-// ============================================
 export const LINE_HEIGHTS = {
   'compact': '1',
   'tight': '1.15',
@@ -185,30 +277,20 @@ export const LINE_HEIGHTS = {
 
 export type LineHeightKey = keyof typeof LINE_HEIGHTS;
 
-// ============================================
-// TEXT COLORS
-// ============================================
 export const TEXT_COLORS = {
-  // Básicos
   negro: '#000000',
   blanco: '#ffffff',
   gris: '#808080',
   grisClaro: '#d3d3d3',
   grisOscuro: '#404040',
-  
-  // Primarios
   rojo: '#dc2626',
   verde: '#16a34a',
   azul: '#2563eb',
-  
-  // Secundarios
   amarillo: '#eab308',
   naranja: '#ea580c',
   morado: '#7c3aed',
   rosa: '#ec4899',
   cian: '#0891b2',
-  
-  // Especiales
   azulEnlace: '#2563eb',
   verdeExito: '#059669',
   rojoError: '#dc2626',
@@ -218,27 +300,11 @@ export const TEXT_COLORS = {
 export type TextColorKey = keyof typeof TEXT_COLORS;
 
 // ============================================
-// PAGE DATA (para editor)
+// TIPOS DE BASE DE DATOS
 // ============================================
 
 /**
- * Datos de página en el editor (con archivos temporales)
- */
-export interface PageEditorData {
-  id: string;
-  layout: LayoutType;
-  title: string;
-  text: string;
-  image: string | null;
-  background: string | null;
-  
-  // Archivos para upload
-  imageFile?: Blob | null;
-  backgroundFile?: Blob | null;
-}
-
-/**
- * Datos de página para base de datos
+ * DTO para páginas (lo que se envía al backend)
  */
 export interface PageDatabaseData {
   layout: string;
@@ -246,69 +312,4 @@ export interface PageDatabaseData {
   text: string;
   image?: string | null;
   background?: string | null;
-}
-
-// ============================================
-// HELPERS
-// ============================================
-
-/**
- * Verificar si un layout requiere imagen
- */
-export function layoutRequiresImage(layout: LayoutType): boolean {
-  return LAYOUTS_WITH_IMAGE.includes(layout);
-}
-
-/**
- * Verificar si un layout es solo texto
- */
-export function isTextOnlyLayout(layout: LayoutType): boolean {
-  return TEXT_ONLY_LAYOUTS.includes(layout);
-}
-
-/**
- * Crear página vacía para editor
- */
-export function createEmptyEditorPage(id: string, layout: LayoutType = 'TextCenterLayout'): PageEditorData {
-  return {
-    id,
-    layout,
-    title: '',
-    text: '',
-    image: null,
-    background: 'blanco',
-    imageFile: null,
-    backgroundFile: null,
-  };
-}
-
-/**
- * Validar datos de página
- */
-export function validatePageData(page: PageEditorData): string[] {
-  const errors: string[] = [];
-
-  // Validar layout requiere imagen
-  if (layoutRequiresImage(page.layout)) {
-    const hasImage = page.image || page.imageFile;
-    if (!hasImage && page.layout !== 'CoverLayout') {
-      errors.push('Este layout requiere una imagen');
-    }
-  }
-
-  // Validar contenido de portada
-  if (page.layout === 'CoverLayout') {
-    if (!page.title || page.title.trim() === '') {
-      errors.push('La portada debe tener un título');
-    }
-  }
-
-  // Validar texto en layouts de texto
-  if (isTextOnlyLayout(page.layout)) {
-    if (!page.title && !page.text) {
-      errors.push('La página debe tener al menos título o texto');
-    }
-  }
-
-  return errors;
 }

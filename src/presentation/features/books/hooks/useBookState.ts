@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import type { page } from '@/src/typings/types-page-book/index';
+import type { page } from '@/src/core/domain/types';
 
 interface UseBookStateProps {
   initialPages?: page[];

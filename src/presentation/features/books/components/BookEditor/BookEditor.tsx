@@ -30,10 +30,10 @@ import { EditorSidebar } from "./EditorSidebar";
 import { ValidationPanel } from "./ValidationPanel";
 import { LoadingOverlay } from "./LoadingOverlay";
 
-import type { page } from "@/src/typings/types-page-book/index";
 import LiteraryCardView from "./LiteraryCardView";
 import { LiteraryMetadataForm } from "./LiteraryMetadataForm";
 import { BookViewer } from "./BookViewer";
+import { page } from "@/src/core/domain/types";
 
 interface BookEditorProps {
   initialPages?: page[];

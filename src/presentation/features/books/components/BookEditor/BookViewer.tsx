@@ -12,7 +12,7 @@ import { PageRenderer } from "@/src/presentation/features/layouts/components/Pag
 
 // ✅ Importar estilos compartidos
 import '@/src/presentation/features/layouts/styles/book-shared.css';
-import { BackgroundType, LayoutType } from '@/src/core/domain/types';
+import { BackgroundType, LayoutType, page, Page } from '@/src/core/domain/types';
 
 interface PageRendererIndexProps {
   page: page;
