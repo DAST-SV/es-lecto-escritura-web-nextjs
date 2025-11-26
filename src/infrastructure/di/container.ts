@@ -1,6 +1,5 @@
 /**
  * UBICACIÓN: src/infrastructure/di/container.ts
- * Contenedor de inyección de dependencias CORREGIDO
  */
 
 import { BookRepository } from '../repositories/books/BookRepository';
@@ -36,7 +35,6 @@ class Container {
     return this.bookRepository;
   }
 
-  // Use Cases
   public getCreateBookUseCase() {
     return CreateBookUseCase;
   }

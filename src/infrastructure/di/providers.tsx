@@ -1,13 +1,15 @@
 /**
- * UBICACIÓN: src/infrastructure/di/providers.ts
+ * UBICACIÓN: src/infrastructure/di/providers.tsx
  */
 
 'use client';
 
 import React, { createContext, useContext } from 'react';
-import { container, DIContainer } from './container';
+import { container } from './container';
 
-const DIContext = createContext<DIContainer | null>(null);
+type ContainerType = typeof container;
+
+const DIContext = createContext<ContainerType | null>(null);
 
 export function DIProvider({ children }: { children: React.ReactNode }) {
   return (
@@ -17,30 +19,10 @@ export function DIProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useDI(): DIContainer {
+export function useDI(): ContainerType {
   const context = useContext(DIContext);
   if (!context) {
     throw new Error('useDI debe ser usado dentro de un DIProvider');
   }
   return context;
-}
-
-export function useSaveBook() {
-  const di = useDI();
-  return di.getSaveBookUseCase();
-}
-
-export function useLoadBook() {
-  const di = useDI();
-  return di.getLoadBookUseCase();
-}
-
-export function useBookRepository() {
-  const di = useDI();
-  return di.getBookRepository();
-}
-
-export function useStorageService() {
-  const di = useDI();
-  return di.getStorageService();
 }
