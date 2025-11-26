@@ -1,100 +1,61 @@
 /**
  * UBICACIÓN: src/infrastructure/di/container.ts
- * 
- * Contenedor de Inyección de Dependencias
- * Gestiona la creación y reutilización de instancias
+ * Contenedor de inyección de dependencias CORREGIDO
  */
 
-import { IBookRepository } from '../../core/domain/repositories/IBookRepository';
-import { IStorageService } from '../../core/application/ports/IStorageService';
-import { SupabaseBookRepository } from '../repositories/SupabaseBookRepository';
-import { SupabaseStorageService } from '../services/SupabaseStorageService';
-import { SaveBookUseCase } from '../../core/application/use-cases/book/SaveBook.usecase';
-import { LoadBookUseCase } from '../../core/application/use-cases/book/LoadBook.usecase';
+import { BookRepository } from '../repositories/books/BookRepository';
+import { CreateBookUseCase } from '../../core/application/use-cases/books/CreateBook.usecase';
+import { UpdateBookUseCase } from '../../core/application/use-cases/books/UpdateBook.usecase';
+import { GetBookUseCase } from '../../core/application/use-cases/books/GetBook.usecase';
+import { GetBooksByUserUseCase } from '../../core/application/use-cases/books/GetBooksByUser.usecase';
+import { DeleteBookUseCase } from '../../core/application/use-cases/books/DeleteBook.usecase';
 
-/**
- * Contenedor de Inyección de Dependencias (Singleton)
- * Proporciona instancias únicas de servicios y repositorios
- */
-export class DIContainer {
-  private static instance: DIContainer;
-  
-  private bookRepository?: IBookRepository;
-  private storageService?: IStorageService;
+class Container {
+  private static instance: Container;
+  private bookRepository?: typeof BookRepository;
 
-  private constructor() {}
-
-  /**
-   * Obtiene la instancia única del contenedor
-   */
-  static getInstance(): DIContainer {
-    if (!DIContainer.instance) {
-      DIContainer.instance = new DIContainer();
-    }
-    return DIContainer.instance;
+  private constructor() {
+    this.initializeRepositories();
   }
 
-  /**
-   * Obtiene el repositorio de libros
-   */
-  getBookRepository(): IBookRepository {
+  public static getInstance(): Container {
+    if (!Container.instance) {
+      Container.instance = new Container();
+    }
+    return Container.instance;
+  }
+
+  private initializeRepositories(): void {
+    this.bookRepository = BookRepository;
+  }
+
+  public getBookRepository(): typeof BookRepository {
     if (!this.bookRepository) {
-      this.bookRepository = new SupabaseBookRepository();
+      throw new Error('BookRepository no está inicializado');
     }
     return this.bookRepository;
   }
 
-  /**
-   * Obtiene el servicio de storage
-   */
-  getStorageService(): IStorageService {
-    if (!this.storageService) {
-      this.storageService = new SupabaseStorageService();
-    }
-    return this.storageService;
+  // Use Cases
+  public getCreateBookUseCase() {
+    return CreateBookUseCase;
   }
 
-  /**
-   * Crea una nueva instancia del caso de uso SaveBook
-   */
-  getSaveBookUseCase(): SaveBookUseCase {
-    return new SaveBookUseCase(
-      this.getBookRepository(),
-      this.getStorageService()
-    );
+  public getUpdateBookUseCase() {
+    return UpdateBookUseCase;
   }
 
-  /**
-   * Crea una nueva instancia del caso de uso LoadBook
-   */
-  getLoadBookUseCase(): LoadBookUseCase {
-    return new LoadBookUseCase(
-      this.getBookRepository()
-    );
+  public getGetBookUseCase() {
+    return GetBookUseCase;
   }
 
-  /**
-   * Reemplaza el repositorio de libros (útil para testing)
-   */
-  setBookRepository(repository: IBookRepository): void {
-    this.bookRepository = repository;
+  public getGetBooksByUserUseCase() {
+    return GetBooksByUserUseCase;
   }
 
-  /**
-   * Reemplaza el servicio de storage (útil para testing)
-   */
-  setStorageService(service: IStorageService): void {
-    this.storageService = service;
-  }
-
-  /**
-   * Limpia todas las instancias (útil para testing)
-   */
-  reset(): void {
-    this.bookRepository = undefined;
-    this.storageService = undefined;
+  public getDeleteBookUseCase() {
+    return DeleteBookUseCase;
   }
 }
 
-// Exportar instancia única para uso en la aplicación
-export const container = DIContainer.getInstance();
+export const container = Container.getInstance();

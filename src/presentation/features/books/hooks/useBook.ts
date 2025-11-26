@@ -1,111 +1,90 @@
 /**
  * UBICACIÓN: src/presentation/features/books/hooks/useBook.ts
- * 
- * Hook principal para gestionar libros desde la UI
+ * Hook CORREGIDO para manejar un libro individual
  */
 
-'use client';
+import { useState } from 'react';
+import { CreateBookUseCase } from '../../../../core/application/use-cases/books/CreateBook.usecase';
+import { UpdateBookUseCase } from '../../../../core/application/use-cases/books/UpdateBook.usecase';
+import { GetBookUseCase } from '../../../../core/application/use-cases/books/GetBook.usecase';
 
-import { useState, useCallback } from 'react';
-import { useSaveBook, useLoadBook } from '../../../../infrastructure/di/providers';
-import type { SaveBookDTO } from '../../../../core/application/use-cases/book/SaveBook.usecase';
-import type { LoadBookDTO } from '../../../../core/application/use-cases/book/LoadBook.usecase';
-import { Book } from '../../../../core/domain/entities/Book.entity';
-
-export interface UseBookReturn {
-  // Estado
-  book: Book | null;
-  isLoading: boolean;
-  isSaving: boolean;
-  error: string | null;
-  
-  // Acciones
-  loadBook: (bookId: string, userId: string) => Promise<void>;
-  saveBook: (dto: SaveBookDTO) => Promise<string | null>;
-  clearError: () => void;
-  clearBook: () => void;
+interface PageData {
+  layout: string;
+  title?: string;
+  text?: string;
+  image?: string;
+  background?: string;
 }
 
-export function useBook(): UseBookReturn {
-  const [book, setBook] = useState<Book | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+interface BookData {
+  titulo: string;
+  descripcion: string;
+  portada?: string;
+  autores: string[];
+  personajes: string[];
+  categorias: number[];
+  generos: number[];
+  etiquetas: number[];
+  valores: number[];
+  nivel: number;
+  pages: PageData[];
+}
+
+export function useBook() {
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const saveBookUseCase = useSaveBook();
-  const loadBookUseCase = useLoadBook();
-
   /**
-   * Carga un libro
+   * Guardar libro (crear o actualizar)
    */
-  const loadBook = useCallback(async (bookId: string, userId: string) => {
-    setIsLoading(true);
+  const saveBook = async (
+    userId: string,
+    bookData: BookData,
+    bookId?: string
+  ): Promise<string> => {
+    setLoading(true);
     setError(null);
 
     try {
-      const dto: LoadBookDTO = { bookId, userId };
-      const result = await loadBookUseCase.execute(dto);
-
-      if (result.success && result.book) {
-        setBook(result.book);
+      if (bookId) {
+        // Actualizar libro existente
+        await UpdateBookUseCase.execute(bookId, bookData);
+        return bookId;
       } else {
-        setError(result.message || 'No se pudo cargar el libro');
+        // Crear libro nuevo
+        const libroId = await CreateBookUseCase.execute(userId, bookData);
+        return libroId;
       }
     } catch (err: any) {
-      setError(err.message || 'Error al cargar el libro');
-      console.error('Error cargando libro:', err);
+      setError(err.message);
+      throw err;
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [loadBookUseCase]);
+  };
 
   /**
-   * Guarda un libro
+   * Cargar libro por ID
    */
-  const saveBook = useCallback(async (dto: SaveBookDTO): Promise<string | null> => {
-    setIsSaving(true);
+  const loadBook = async (bookId: string) => {
+    setLoading(true);
     setError(null);
 
     try {
-      const result = await saveBookUseCase.execute(dto);
-
-      if (result.success) {
-        return result.bookId;
-      } else {
-        setError(result.message);
-        return null;
-      }
+      const libro = await GetBookUseCase.execute(bookId);
+      return libro;
     } catch (err: any) {
-      setError(err.message || 'Error al guardar el libro');
-      console.error('Error guardando libro:', err);
-      return null;
+      setError(err.message);
+      throw err;
     } finally {
-      setIsSaving(false);
+      setLoading(false);
     }
-  }, [saveBookUseCase]);
-
-  /**
-   * Limpia el error
-   */
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
-
-  /**
-   * Limpia el libro cargado
-   */
-  const clearBook = useCallback(() => {
-    setBook(null);
-  }, []);
+  };
 
   return {
-    book,
-    isLoading,
-    isSaving,
+    loading,
     error,
-    loadBook,
     saveBook,
-    clearError,
-    clearBook
+    loadBook,
   };
 }
