@@ -162,7 +162,6 @@ export function MultiSelectFromTable<T extends Record<string, any>>({
       const newValues = [...values, option.value];
       onChange(newValues);
       
-      // ✅ Cerrar automáticamente si alcanza el límite
       if (newValues.length >= maxItems) {
         setTimeout(() => {
           setIsOpen(false);
@@ -197,7 +196,7 @@ export function MultiSelectFromTable<T extends Record<string, any>>({
           className={`
             w-full px-3 py-2 rounded-lg border-2 transition-all
             ${isMaxReached 
-              ? 'border-amber-400 bg-amber-50 cursor-not-allowed' 
+              ? 'border-gray-300 bg-gray-50 cursor-not-allowed' 
               : isOpen 
                 ? `${colors.border} bg-white cursor-pointer` 
                 : 'border-gray-300 hover:border-gray-400 bg-white cursor-pointer'
@@ -302,14 +301,6 @@ export function MultiSelectFromTable<T extends Record<string, any>>({
           ))}
         </div>
       )}
-
-      {/* Alerta de límite */}
-      {/* {isMaxReached && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-300 rounded-lg text-xs text-amber-800">
-          <span className="font-bold">⚠️</span>
-          <span>Límite alcanzado. Elimina elementos para agregar otros.</span>
-        </div>
-      )} */}
     </div>
   );
 }

@@ -1,17 +1,21 @@
 /**
- * BookEditor - ACTUALIZADO con Clean Architecture
- * ✅ Usa Use Cases en lugar de servicios directos
+ * BookEditor - CORREGIDO: Obtener usuario desde Supabase
+ * ✅ Usa cliente de Supabase para autenticación
  */
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import {
   Save, ChevronLeft, ChevronRight, BookOpen, Plus, Trash2,
   FileText, ArrowLeft, Loader2
 } from "lucide-react";
 
-// ✅ NUEVO: Importar Use Cases
+// ✅ IMPORTAR CLIENTE DE SUPABASE + LOCALE
+import { createClient } from '@/src/utils/supabase/client';
+import { useLocale } from 'next-intl'; // ✅ NUEVO
+
+// Use Cases
 import { CreateBookUseCase } from "@/src/core/application/use-cases/books/CreateBook.usecase";
 import { UpdateBookUseCase } from "@/src/core/application/use-cases/books/UpdateBook.usecase";
 import { GetBookUseCase } from "@/src/core/application/use-cases/books/GetBook.usecase";
@@ -58,6 +62,14 @@ export function BookEditor({
 }: BookEditorProps = {}) {
 
   const bookRef = useRef<any>(null);
+  
+  // ✅ CREAR INSTANCIA DE SUPABASE + OBTENER LOCALE
+  const supabase = createClient();
+  const locale = useLocale(); // ✅ NUEVO: Obtener idioma actual
+
+  // ✅ ESTADO PARA ALMACENAR USER ID
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   const [viewMode, setViewMode] = useState<'pages' | 'card'>('pages');
   const [pageInput, setPageInput] = useState('1');
@@ -133,10 +145,47 @@ export function BookEditor({
     setPageInput((bookState.currentPage + 1).toString());
   }, [bookState.currentPage]);
 
-  // ✅ Validación del libro
+  // ✅ EFECTO PARA VERIFICAR AUTENTICACIÓN AL MONTAR
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (error) {
+          console.error('❌ Error obteniendo usuario:', error);
+          toast.error('Error de autenticación');
+          setIsCheckingAuth(false);
+          return;
+        }
+
+        if (!user) {
+          console.warn('⚠️ Usuario no autenticado');
+          toast.error('Debes iniciar sesión para crear libros');
+          // Opcional: redirigir a login
+          // window.location.href = '/login';
+          setIsCheckingAuth(false);
+          return;
+        }
+
+        console.log('✅ Usuario autenticado:', user.id);
+        setCurrentUserId(user.id);
+        setIsCheckingAuth(false);
+        
+      } catch (err) {
+        console.error('❌ Error verificando autenticación:', err);
+        toast.error('Error al verificar sesión');
+        setIsCheckingAuth(false);
+      }
+    }
+
+    checkAuth();
+  }, [supabase]);
+
+  // ✅ Validación del libro - SOLO CAMPOS OBLIGATORIOS
   const validateBook = useCallback(() => {
     const errors: Array<{ field: string; message: string }> = [];
 
+    // 1. PÁGINAS - Obligatorio (debe tener contenido)
     if (!bookState.pages || bookState.pages.length === 0) {
       errors.push({
         field: 'Páginas',
@@ -144,24 +193,41 @@ export function BookEditor({
       });
     }
 
+    // 2. TÍTULO - Obligatorio (NOT NULL en BD)
     if (!titulo.trim()) {
-      errors.push({ field: 'Título', message: 'El título es obligatorio' });
+      errors.push({ 
+        field: 'Título', 
+        message: 'El título es obligatorio' 
+      });
+    } else if (titulo.trim().length > 255) {
+      errors.push({ 
+        field: 'Título', 
+        message: 'El título no puede exceder 255 caracteres' 
+      });
     }
 
-    if (!descripcion.trim()) {
-      errors.push({ field: 'Descripción', message: 'La descripción es obligatoria' });
-    }
-
+    // 3. AUTORES - Obligatorio (tabla libros_autores debe tener al menos 1)
     if (autores.length === 0) {
-      errors.push({ field: 'Autores', message: 'Debe haber al menos un autor' });
+      errors.push({ 
+        field: 'Autores', 
+        message: 'Debe haber al menos un autor' 
+      });
     }
 
-    if (selectedCategorias.length === 0) {
-      errors.push({ field: 'Categorías', message: 'Selecciona al menos una categoría' });
+    // 4. NIVEL - Obligatorio (id_nivel NOT NULL)
+    if (!selectedNivel || selectedNivel === null) {
+      errors.push({ 
+        field: 'Nivel de Lectura', 
+        message: 'Debes seleccionar un nivel de lectura' 
+      });
     }
 
-    if (selectedGeneros.length === 0) {
-      errors.push({ field: 'Géneros', message: 'Selecciona al menos un género' });
+    // ✅ VALIDACIONES DE LÍMITES (no bloquean guardado, solo alertan)
+    if (descripcion && descripcion.length > 800) {
+      errors.push({ 
+        field: 'Descripción', 
+        message: 'La descripción no puede exceder 800 caracteres' 
+      });
     }
 
     return errors;
@@ -170,15 +236,23 @@ export function BookEditor({
     titulo,
     descripcion,
     autores,
-    selectedCategorias,
-    selectedGeneros
+    selectedNivel
   ]);
 
-  // ✅ FUNCIÓN PRINCIPAL: handleSave con Use Cases
+  // ✅ FUNCIÓN PRINCIPAL: handleSave - CORREGIDA
   const handleSave = useCallback(async () => {
     console.log('🔥 INICIANDO GUARDADO');
 
-    // Validaciones
+    // ✅ VALIDAR AUTENTICACIÓN
+    if (!currentUserId) {
+      toast.error('❌ Debes iniciar sesión para guardar', {
+        duration: 5000,
+        style: { zIndex: 99999 }
+      });
+      return;
+    }
+
+    // Validaciones de contenido
     const errors = validateBook();
     if (errors.length > 0) {
       setValidationErrors(errors);
@@ -195,16 +269,6 @@ export function BookEditor({
     setLoadingMessage('Guardando libro...');
 
     try {
-      // 1️⃣ Obtener userId (solo si es creación)
-      let userId: string | undefined;
-      if (!IdLibro) {
-        const userStr = localStorage.getItem('user');
-        if (!userStr) {
-          throw new Error('Usuario no autenticado');
-        }
-        userId = JSON.parse(userStr).id;
-      }
-
       // 2️⃣ Preparar datos del libro
       const bookData = {
         titulo,
@@ -229,35 +293,41 @@ export function BookEditor({
       console.log('📦 Datos del libro:', {
         titulo: bookData.titulo,
         pagesCount: bookData.pages.length,
-        autoresCount: bookData.autores.length
+        autoresCount: bookData.autores.length,
+        userId: currentUserId
       });
 
       // 3️⃣ Guardar usando el Use Case apropiado
+      let savedBookId: string;
+      
       if (IdLibro) {
         // ✅ ACTUALIZAR libro existente
         console.log('✏️ Actualizando libro:', IdLibro);
         await UpdateBookUseCase.execute(IdLibro, bookData);
+        savedBookId = IdLibro;
       } else {
-        // ✅ CREAR libro nuevo
-        console.log('🆕 Creando libro nuevo');
-        if (!userId) throw new Error('userId es requerido para crear');
-        await CreateBookUseCase.execute(userId, bookData);
+        // ✅ CREAR libro nuevo - USA EL USER ID DE SUPABASE
+        console.log('🆕 Creando libro nuevo para usuario:', currentUserId);
+        savedBookId = await CreateBookUseCase.execute(currentUserId, bookData);
       }
 
-      console.log('✅ Guardado exitoso');
+      console.log('✅ Guardado exitoso, ID:', savedBookId);
 
       setLoadingStatus('success');
-      setLoadingMessage('¡Libro guardado correctamente!');
+      setLoadingMessage(IdLibro 
+        ? '¡Libro actualizado! Abriendo...' 
+        : '¡Libro creado! Abriendo modo lectura...'
+      );
       
-      toast.success('✅ Libro guardado', {
-        duration: 3000,
+      toast.success('✅ Libro guardado - Abriendo modo lectura...', {
+        duration: 2000,
         style: { zIndex: 99999 }
       });
 
-      // Redirigir después de 2 segundos
+      // ✅ Redirigir al modo lectura CON LOCALE después de 1.5 segundos
       setTimeout(() => {
-        window.location.href = '/dashboard/mis-libros';
-      }, 2000);
+        window.location.href = `/${locale}/books/${savedBookId}/read`;
+      }, 1500);
 
     } catch (error: any) {
       console.error('❌ Error al guardar:', error);
@@ -276,6 +346,7 @@ export function BookEditor({
       }, 3000);
     }
   }, [
+    currentUserId, // ✅ AÑADIDA DEPENDENCIA
     IdLibro,
     validateBook,
     titulo,
@@ -350,13 +421,55 @@ export function BookEditor({
     }
   };
 
+  // ✅ MOSTRAR LOADING MIENTRAS VERIFICA AUTENTICACIÓN
+  if (isCheckingAuth) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-white">
+        <div className="text-center">
+          <Loader2 size={48} className="animate-spin text-indigo-600 mx-auto mb-4" />
+          <p className="text-gray-600">Verificando sesión...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ MOSTRAR ERROR SI NO HAY USUARIO
+  if (!currentUserId) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-white">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="text-red-500 text-6xl mb-4">🔒</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Sesión requerida
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Debes iniciar sesión para crear o editar libros
+          </p>
+          <button
+            onClick={() => window.location.href = '/login'}
+            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+          >
+            Ir a Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full w-full flex flex-col overflow-hidden border border-slate-200 bg-white">
       <Toaster 
         position="top-right"
         toastOptions={{
-          style: { zIndex: 99999 }
-        }} 
+          style: { 
+            zIndex: 99999 
+          },
+          duration: 4000,
+        }}
+        containerStyle={{
+          top: 80, // ✅ Espacio para el navbar (60px + margen)
+          zIndex: 99999
+        }}
       />
 
       {/* Header */}

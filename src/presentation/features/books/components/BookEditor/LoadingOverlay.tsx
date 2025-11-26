@@ -1,11 +1,10 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookEditor/LoadingOverlay.tsx
- * 
- * Overlay de carga que bloquea toda la interacción
+ * ✅ MEJORADO: Mensajes más claros y específicos
  */
 
 import React from 'react';
-import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, BookOpen } from 'lucide-react';
 
 interface LoadingOverlayProps {
   isVisible: boolean;
@@ -17,7 +16,7 @@ export function LoadingOverlay({ isVisible, status, message }: LoadingOverlayPro
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 transform transition-all">
         <div className="flex flex-col items-center text-center space-y-4">
           
@@ -33,6 +32,10 @@ export function LoadingOverlay({ isVisible, status, message }: LoadingOverlayPro
             <div className="relative">
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center animate-scale-in">
                 <CheckCircle size={48} className="text-green-600" strokeWidth={2.5} />
+              </div>
+              {/* ✅ Icono de libro flotando */}
+              <div className="absolute -top-2 -right-2 animate-bounce">
+                <BookOpen size={24} className="text-green-500" />
               </div>
             </div>
           )}
@@ -53,12 +56,18 @@ export function LoadingOverlay({ isVisible, status, message }: LoadingOverlayPro
               'text-red-900'
             }`}>
               {status === 'loading' && 'Guardando libro...'}
-              {status === 'success' && '¡Libro guardado!'}
-              {status === 'error' && 'Error al guardar'}
+              {status === 'success' && '¡Éxito!'}
+              {status === 'error' && 'Error'}
             </h3>
             
             {message && (
-              <p className="text-sm text-gray-600">{message}</p>
+              <p className={`text-sm ${
+                status === 'loading' ? 'text-gray-600' :
+                status === 'success' ? 'text-green-700' :
+                'text-red-600'
+              }`}>
+                {message}
+              </p>
             )}
 
             {status === 'loading' && (
@@ -68,9 +77,14 @@ export function LoadingOverlay({ isVisible, status, message }: LoadingOverlayPro
             )}
 
             {status === 'success' && (
-              <p className="text-xs text-green-600 mt-2">
-                Redirigiendo en un momento...
-              </p>
+              <div className="mt-3 space-y-1">
+                <p className="text-xs text-green-600 font-medium">
+                  📖 Abriendo tu libro...
+                </p>
+                <p className="text-xs text-gray-500">
+                  Serás redirigido en un momento
+                </p>
+              </div>
             )}
           </div>
 
@@ -78,6 +92,13 @@ export function LoadingOverlay({ isVisible, status, message }: LoadingOverlayPro
           {status === 'loading' && (
             <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
               <div className="h-full bg-indigo-600 rounded-full animate-progress" />
+            </div>
+          )}
+
+          {/* Success animation bar */}
+          {status === 'success' && (
+            <div className="w-full bg-green-200 rounded-full h-1.5 overflow-hidden">
+              <div className="h-full bg-green-600 rounded-full animate-fill-fast" />
             </div>
           )}
         </div>
@@ -117,6 +138,15 @@ export function LoadingOverlay({ isVisible, status, message }: LoadingOverlayPro
           }
         }
 
+        @keyframes fill-fast {
+          0% {
+            width: 0%;
+          }
+          100% {
+            width: 100%;
+          }
+        }
+
         .animate-scale-in {
           animation: scale-in 0.5s ease-out;
         }
@@ -127,6 +157,10 @@ export function LoadingOverlay({ isVisible, status, message }: LoadingOverlayPro
 
         .animate-progress {
           animation: progress 2s ease-in-out infinite;
+        }
+
+        .animate-fill-fast {
+          animation: fill-fast 1s ease-out forwards;
         }
       `}</style>
     </div>

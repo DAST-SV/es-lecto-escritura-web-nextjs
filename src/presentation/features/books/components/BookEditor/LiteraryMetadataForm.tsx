@@ -1,6 +1,5 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookEditor/LiteraryMetadataForm.tsx
- * ACTUALIZADO: Con callbacks para IDs y Labels + Etiquetas corregidas
  */
 
 'use client';
@@ -34,14 +33,12 @@ interface LiteraryMetadataFormProps {
   onPortadaChange: (value: File | null) => void;
   onCardBackgroundChange: (file: File | null) => void;
   
-  // Callbacks para IDs
   onCategoriasChange: (values: (number | string)[]) => void;
   onGenerosChange: (values: (number | string)[]) => void;
   onEtiquetasChange: (values: (number | string)[]) => void;
   onValoresChange: (values: (number | string)[]) => void;
   onNivelChange: (value: number | null) => void;
   
-  // Callbacks para Labels
   onCategoriasLabelsChange: (labels: string[]) => void;
   onGenerosLabelsChange: (labels: string[]) => void;
   onEtiquetasLabelsChange: (labels: string[]) => void;
@@ -80,7 +77,6 @@ export function LiteraryMetadataForm({
 
   const [activeTab, setActiveTab] = useState<'basic' | 'classification'>('basic');
 
-  // Contador de caracteres para descripción
   const descripcionLength = descripcion.length;
   const descripcionLimit = 800;
   const descripcionNearLimit = descripcionLength > descripcionLimit * 0.8;
@@ -124,8 +120,8 @@ export function LiteraryMetadataForm({
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4">
+      {/* ✅ SOLUCIÓN: Content con scroll independiente y padding-bottom extra */}
+      <div className="flex-1 overflow-y-auto p-4 pb-20">
         
         {/* TAB: Básico */}
         {activeTab === 'basic' && (
