@@ -20,7 +20,7 @@ export class SupabaseBookRepository implements IBookRepository {
         descripcion: dto.descripcion?.substring(0, 50) + '...'
       });
 
-      const response = await fetch('/api/libros/createbook', {
+      const response = await fetch('/api/books/createbook', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dto),
@@ -60,7 +60,7 @@ export class SupabaseBookRepository implements IBookRepository {
 
   async findByUserId(userId: string): Promise<Book[]> {
     try {
-      const response = await fetch(`/api/libros/bookinformation/${userId}`);
+      const response = await fetch(`/api/books/bookinformation/${userId}`);
       const data = await response.json();
 
       if (!data.libros) {
@@ -76,7 +76,7 @@ export class SupabaseBookRepository implements IBookRepository {
 
   async delete(id: string): Promise<void> {
     try {
-      const response = await fetch('/api/libros/deletebook', {
+      const response = await fetch('/api/books/deletebook', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ LibroId: id }),
@@ -95,7 +95,7 @@ export class SupabaseBookRepository implements IBookRepository {
     try {
       const dto = BookMapper.toDTO(book);
 
-      const response = await fetch('/api/libros/updatebook', {
+      const response = await fetch('/api/books/updatebook', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dto),

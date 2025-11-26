@@ -107,7 +107,7 @@ export function BookEditor({
 
   const [isSaving, setIsSaving] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
-  
+
   // ✅ Estados de validación
   const [validationErrors, setValidationErrors] = useState<Array<{ field: string; message: string }>>([]);
 
@@ -205,9 +205,9 @@ export function BookEditor({
 
     // 1. Validar que haya al menos una página
     if (!bookState.pages || bookState.pages.length === 0) {
-      errors.push({ 
-        field: 'Páginas', 
-        message: 'Debes crear al menos una página para guardar el libro' 
+      errors.push({
+        field: 'Páginas',
+        message: 'Debes crear al menos una página para guardar el libro'
       });
     }
 
@@ -245,18 +245,17 @@ export function BookEditor({
     return errors;
   }, [
     bookState.pages,
-    titulo, 
-    descripcion, 
-    autores, 
-    selectedCategorias, 
-    selectedGeneros, 
-    portada, 
-    portadaUrl, 
-    cardBackgroundImage, 
+    titulo,
+    descripcion,
+    autores,
+    selectedCategorias,
+    selectedGeneros,
+    portada,
+    portadaUrl,
+    cardBackgroundImage,
     cardBackgroundUrl
   ]);
 
-  // ✅ FUNCIÓN handleSave CORREGIDA
   const handleSave = useCallback(async () => {
     console.log('🔥 ========== INICIANDO GUARDADO ==========');
     console.log('📄 Total de páginas:', bookState.pages.length);
@@ -264,19 +263,27 @@ export function BookEditor({
 
     // Validación temprana de páginas
     if (!bookState.pages || bookState.pages.length === 0) {
-      toast.error('❌ No puedes guardar un libro sin páginas');
+      console.warn('⚠️ Validación falló: No hay páginas');
       setValidationErrors([{
         field: 'Páginas',
         message: 'Debes crear al menos una página antes de guardar'
       }]);
+      setShowValidation(true); // ✅ MOSTRAR PANEL
       return;
     }
 
     // Validaciones generales
     const errors = validateBook();
+
+    console.log('🔍 Errores de validación:', errors);
+
     if (errors.length > 0) {
       setValidationErrors(errors);
-      toast.error('Por favor corrige los errores antes de guardar');
+      setShowValidation(true); // ✅ MOSTRAR PANEL
+      // toast.error('Por favor corrige los errores antes de guardar', {
+      //   duration: 5000,
+      //   style: { zIndex: 99999 }
+      // });
       return;
     }
 
@@ -288,15 +295,19 @@ export function BookEditor({
       // Obtener userId si es creación
       let userId: string | undefined;
       if (!IdLibro) {
+        console.log('🆕 Modo creación - Obteniendo userId...');
         const userStr = localStorage.getItem('user');
         if (!userStr) {
-          throw new Error('Usuario no autenticado');
+          throw new Error('Usuario no autenticado. Por favor inicia sesión nuevamente.');
         }
         const user = JSON.parse(userStr);
         userId = user.id;
+        console.log('👤 UserId obtenido:', userId);
+      } else {
+        console.log('✏️ Modo edición - ID del libro:', IdLibro);
       }
 
-      // ✅ Construir metadata
+      // Construir metadata
       const metadata = {
         titulo,
         descripcion,
@@ -313,7 +324,17 @@ export function BookEditor({
         selectedNivel
       };
 
-      // ✅ USAR EL SERVICIO
+      console.log('📦 Metadata preparada:', {
+        titulo: metadata.titulo,
+        autoresCount: metadata.autores.length,
+        personajesCount: metadata.personajes.length,
+        categoriasCount: metadata.selectedCategorias.length,
+        generosCount: metadata.selectedGeneros.length,
+        hasPortada: !!(metadata.portada || metadata.portadaUrl || metadata.cardBackgroundImage || metadata.cardBackgroundUrl)
+      });
+
+      // Guardar usando el servicio
+      console.log('📤 Llamando a BookService.saveBook...');
       const result = await BookService.saveBook(
         bookState.pages,
         metadata,
@@ -326,24 +347,27 @@ export function BookEditor({
       setLoadingStatus('success');
       setLoadingMessage('Tu libro ha sido guardado correctamente');
 
+      // Redireccionar después de 2 segundos
       setTimeout(() => {
         window.location.href = '/dashboard/mis-libros';
       }, 2000);
 
     } catch (error: any) {
       console.error('❌ Error guardando libro:', error);
-      
-      setLoadingStatus('error');
-      setLoadingMessage(error.message || 'Ocurrió un error al guardar el libro');
+      console.error('❌ Stack trace:', error.stack);
 
+      setLoadingStatus('error');
+      setLoadingMessage(error.message || 'Ocurrió un error al guardar el libro. Por favor intenta nuevamente.');
+
+      // Restaurar estado después de 3 segundos
       setTimeout(() => {
         setLoadingStatus('idle');
         setIsSaving(false);
       }, 3000);
     }
   }, [
-    bookState.pages, 
-    IdLibro, 
+    bookState.pages,
+    IdLibro,
     validateBook,
     titulo,
     descripcion,
@@ -410,7 +434,12 @@ export function BookEditor({
 
   return (
     <div className="h-full w-full flex flex-col overflow-hidden border border-slate-200 bg-white">
-      <Toaster position="top-right" />
+      <Toaster position="top-right"
+        toastOptions={{
+          style: {
+            zIndex: 99999, // ⭐ Muy alto para estar sobre todo
+          },
+        }} />
 
       {/* Header */}
       <div className="flex-shrink-0 bg-white border-b border-slate-200 shadow-sm">
@@ -614,8 +643,8 @@ export function BookEditor({
       </div>
 
       {/* Loading Overlay */}
-      <LoadingOverlay 
-        isVisible={loadingStatus !== 'idle'} 
+      <LoadingOverlay
+        isVisible={loadingStatus !== 'idle'}
         status={loadingStatus as 'loading' | 'success' | 'error'}
         message={loadingMessage}
       />

@@ -24,12 +24,12 @@ export function ValidationPanel({ isOpen, errors, onClose }: ValidationPanelProp
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/20 z-40"
+        className="fixed inset-0 bg-black/30 z-[10000]" // ✅ Aumentado z-index
         onClick={onClose}
       />
 
       {/* Panel */}
-      <div className="fixed right-4 top-20 w-80 bg-white rounded-xl shadow-2xl z-50 border-2 border-amber-200">
+      <div className="fixed right-4 top-20 w-80 bg-white rounded-xl shadow-2xl z-[10001] border-2 border-amber-200"> {/* ✅ Aumentado z-index */}
         {/* Header */}
         <div className="px-4 py-3 bg-amber-50 border-b border-amber-200 rounded-t-xl flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -49,7 +49,7 @@ export function ValidationPanel({ isOpen, errors, onClose }: ValidationPanelProp
         {/* Content */}
         <div className="p-4 max-h-96 overflow-y-auto">
           <p className="text-xs text-amber-800 mb-3 font-medium">
-            Completa los siguientes campos:
+            Completa los siguientes campos para guardar:
           </p>
 
           <div className="space-y-2">
