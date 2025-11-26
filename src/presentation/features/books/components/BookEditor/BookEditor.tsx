@@ -1,6 +1,7 @@
 /**
- * BookEditor - CORREGIDO: Obtener usuario desde Supabase
- * ✅ Usa cliente de Supabase para autenticación
+ * BookEditor - CORREGIDO: Sube imágenes a Supabase antes de guardar
+ * ✅ Usa BookImageService para persistir imágenes
+ * ✅ Consistencia visual con modo lectura
  */
 "use client";
 
@@ -11,14 +12,15 @@ import {
   FileText, ArrowLeft, Loader2
 } from "lucide-react";
 
-// ✅ IMPORTAR CLIENTE DE SUPABASE + LOCALE
 import { createClient } from '@/src/utils/supabase/client';
-import { useLocale } from 'next-intl'; // ✅ NUEVO
+import { useLocale } from 'next-intl';
 
 // Use Cases
 import { CreateBookUseCase } from "@/src/core/application/use-cases/books/CreateBook.usecase";
 import { UpdateBookUseCase } from "@/src/core/application/use-cases/books/UpdateBook.usecase";
-import { GetBookUseCase } from "@/src/core/application/use-cases/books/GetBook.usecase";
+
+// ✅ NUEVO: Servicio de imágenes
+import { BookImageService } from "@/src/infrastructure/services/BookImageService";
 
 import { useBookState } from "../../hooks/useBookState";
 import { useImageHandler } from "../../hooks/useImageHandler";
@@ -62,12 +64,9 @@ export function BookEditor({
 }: BookEditorProps = {}) {
 
   const bookRef = useRef<any>(null);
-  
-  // ✅ CREAR INSTANCIA DE SUPABASE + OBTENER LOCALE
   const supabase = createClient();
-  const locale = useLocale(); // ✅ NUEVO: Obtener idioma actual
+  const locale = useLocale();
 
-  // ✅ ESTADO PARA ALMACENAR USER ID
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
@@ -102,12 +101,13 @@ export function BookEditor({
   const [descripcion, setDescripcion] = useState<string>(initialMetadata?.descripcion || "");
   const [titulo, setTitulo] = useState<string>(initialMetadata?.titulo || "");
 
-  const [portada, setPortada] = useState<File | null>(null);
+  // ✅ ARCHIVOS de portada y card background
+  const [portadaFile, setPortadaFile] = useState<File | null>(null);
   const [portadaUrl, setPortadaUrl] = useState<string | null>(
     initialMetadata?.portadaUrl || null
   );
 
-  const [cardBackgroundImage, setCardBackgroundImage] = useState<File | null>(null);
+  const [cardBackgroundFile, setCardBackgroundFile] = useState<File | null>(null);
   const [cardBackgroundUrl, setCardBackgroundUrl] = useState<string | null>(
     initialMetadata?.cardBackgroundUrl || null
   );
@@ -145,24 +145,15 @@ export function BookEditor({
     setPageInput((bookState.currentPage + 1).toString());
   }, [bookState.currentPage]);
 
-  // ✅ EFECTO PARA VERIFICAR AUTENTICACIÓN AL MONTAR
+  // Verificar autenticación
   useEffect(() => {
     async function checkAuth() {
       try {
         const { data: { user }, error } = await supabase.auth.getUser();
         
-        if (error) {
-          console.error('❌ Error obteniendo usuario:', error);
-          toast.error('Error de autenticación');
-          setIsCheckingAuth(false);
-          return;
-        }
-
-        if (!user) {
+        if (error || !user) {
           console.warn('⚠️ Usuario no autenticado');
           toast.error('Debes iniciar sesión para crear libros');
-          // Opcional: redirigir a login
-          // window.location.href = '/login';
           setIsCheckingAuth(false);
           return;
         }
@@ -181,11 +172,10 @@ export function BookEditor({
     checkAuth();
   }, [supabase]);
 
-  // ✅ Validación del libro - SOLO CAMPOS OBLIGATORIOS
+  // Validación del libro
   const validateBook = useCallback(() => {
     const errors: Array<{ field: string; message: string }> = [];
 
-    // 1. PÁGINAS - Obligatorio (debe tener contenido)
     if (!bookState.pages || bookState.pages.length === 0) {
       errors.push({
         field: 'Páginas',
@@ -193,20 +183,13 @@ export function BookEditor({
       });
     }
 
-    // 2. TÍTULO - Obligatorio (NOT NULL en BD)
     if (!titulo.trim()) {
       errors.push({ 
         field: 'Título', 
         message: 'El título es obligatorio' 
       });
-    } else if (titulo.trim().length > 255) {
-      errors.push({ 
-        field: 'Título', 
-        message: 'El título no puede exceder 255 caracteres' 
-      });
     }
 
-    // 3. AUTORES - Obligatorio (tabla libros_autores debe tener al menos 1)
     if (autores.length === 0) {
       errors.push({ 
         field: 'Autores', 
@@ -214,15 +197,13 @@ export function BookEditor({
       });
     }
 
-    // 4. NIVEL - Obligatorio (id_nivel NOT NULL)
-    if (!selectedNivel || selectedNivel === null) {
+    if (!selectedNivel) {
       errors.push({ 
         field: 'Nivel de Lectura', 
         message: 'Debes seleccionar un nivel de lectura' 
       });
     }
 
-    // ✅ VALIDACIONES DE LÍMITES (no bloquean guardado, solo alertan)
     if (descripcion && descripcion.length > 800) {
       errors.push({ 
         field: 'Descripción', 
@@ -231,49 +212,97 @@ export function BookEditor({
     }
 
     return errors;
-  }, [
-    bookState.pages,
-    titulo,
-    descripcion,
-    autores,
-    selectedNivel
-  ]);
+  }, [bookState.pages, titulo, descripcion, autores, selectedNivel]);
 
-  // ✅ FUNCIÓN PRINCIPAL: handleSave - CORREGIDA
+  // ✅ FUNCIÓN PRINCIPAL: handleSave - CON UPLOAD DE IMÁGENES
   const handleSave = useCallback(async () => {
     console.log('🔥 INICIANDO GUARDADO');
 
-    // ✅ VALIDAR AUTENTICACIÓN
     if (!currentUserId) {
-      toast.error('❌ Debes iniciar sesión para guardar', {
-        duration: 5000,
-        style: { zIndex: 99999 }
-      });
+      toast.error('❌ Debes iniciar sesión para guardar');
       return;
     }
 
-    // Validaciones de contenido
     const errors = validateBook();
     if (errors.length > 0) {
       setValidationErrors(errors);
       setShowValidation(true);
-      toast.error('Corrige los errores antes de guardar', {
-        duration: 5000,
-        style: { zIndex: 99999 }
-      });
+      toast.error('Corrige los errores antes de guardar');
       return;
     }
 
     setIsSaving(true);
     setLoadingStatus('loading');
-    setLoadingMessage('Guardando libro...');
+    setLoadingMessage('Preparando libro...');
 
     try {
-      // 2️⃣ Preparar datos del libro
+      // 1️⃣ Generar ID temporal si es libro nuevo
+      const tempBookId = IdLibro || `temp_${Date.now()}`;
+
+      // 2️⃣ SUBIR TODAS LAS IMÁGENES PRIMERO
+      setLoadingMessage('Subiendo imágenes...');
+      
+      const uploadedImages = await BookImageService.uploadAllBookImages(
+        currentUserId,
+        tempBookId,
+        {
+          portadaFile: portadaFile,
+          cardBackgroundFile: cardBackgroundFile,
+          pages: bookState.pages.map(page => ({
+            file: page.file as Blob | null,
+            backgroundFile: page.backgroundFile as Blob | null,
+            image: page.image,
+            background: page.background
+          }))
+        }
+      );
+
+      console.log('📸 Imágenes subidas:', uploadedImages);
+
+      // 3️⃣ Determinar la portada final
+      const finalPortadaUrl = uploadedImages.portadaUrl || 
+                              uploadedImages.cardBackgroundUrl || 
+                              portadaUrl || 
+                              cardBackgroundUrl;
+
+      // 4️⃣ Preparar páginas con URLs permanentes
+      setLoadingMessage('Guardando libro...');
+      
+      const pagesWithUrls = bookState.pages.map((page, idx) => {
+        const uploadedPage = uploadedImages.pages[idx];
+        
+        // Determinar imagen final
+        let finalImage = page.image;
+        if (uploadedPage?.imageUrl) {
+          finalImage = uploadedPage.imageUrl;
+        } else if (page.image && BookImageService.isTempUrl(page.image)) {
+          finalImage = null; // Descartar blob: URLs
+        }
+
+        // Determinar fondo final
+        let finalBackground = page.background;
+        if (uploadedPage?.backgroundUrl) {
+          finalBackground = uploadedPage.backgroundUrl;
+        } else if (page.background && 
+                   typeof page.background === 'string' && 
+                   BookImageService.isTempUrl(page.background)) {
+          finalBackground = 'blanco'; // Fallback si era blob:
+        }
+
+        return {
+          layout: page.layout || 'TextCenterLayout',
+          title: page.title || '',
+          text: page.text || '',
+          image: finalImage || '',
+          background: finalBackground || 'blanco',
+        };
+      });
+
+      // 5️⃣ Preparar datos del libro
       const bookData = {
         titulo,
         descripcion,
-        portada: portadaUrl || cardBackgroundUrl || undefined,
+        portada: finalPortadaUrl || undefined,
         autores,
         personajes,
         categorias: selectedCategorias.map(c => Number(c)),
@@ -281,50 +310,34 @@ export function BookEditor({
         etiquetas: selectedEtiquetas.map(e => Number(e)),
         valores: selectedValores.map(v => Number(v)),
         nivel: selectedNivel || 1,
-        pages: bookState.pages.map(page => ({
-          layout: page.layout || 'TextCenterLayout',
-          title: page.title || '',
-          text: page.text || '',
-          image: page.image || '',
-          background: page.background || 'blanco',
-        }))
+        pages: pagesWithUrls
       };
 
       console.log('📦 Datos del libro:', {
         titulo: bookData.titulo,
+        portada: bookData.portada,
         pagesCount: bookData.pages.length,
-        autoresCount: bookData.autores.length,
-        userId: currentUserId
+        firstPageImage: bookData.pages[0]?.image,
       });
 
-      // 3️⃣ Guardar usando el Use Case apropiado
+      // 6️⃣ Guardar en base de datos
       let savedBookId: string;
       
       if (IdLibro) {
-        // ✅ ACTUALIZAR libro existente
-        console.log('✏️ Actualizando libro:', IdLibro);
         await UpdateBookUseCase.execute(IdLibro, bookData);
         savedBookId = IdLibro;
       } else {
-        // ✅ CREAR libro nuevo - USA EL USER ID DE SUPABASE
-        console.log('🆕 Creando libro nuevo para usuario:', currentUserId);
         savedBookId = await CreateBookUseCase.execute(currentUserId, bookData);
       }
 
       console.log('✅ Guardado exitoso, ID:', savedBookId);
 
       setLoadingStatus('success');
-      setLoadingMessage(IdLibro 
-        ? '¡Libro actualizado! Abriendo...' 
-        : '¡Libro creado! Abriendo modo lectura...'
-      );
+      setLoadingMessage('¡Libro guardado! Abriendo modo lectura...');
       
-      toast.success('✅ Libro guardado - Abriendo modo lectura...', {
-        duration: 2000,
-        style: { zIndex: 99999 }
-      });
+      toast.success('✅ Libro guardado correctamente');
 
-      // ✅ Redirigir al modo lectura CON LOCALE después de 1.5 segundos
+      // Redirigir al modo lectura
       setTimeout(() => {
         window.location.href = `/${locale}/books/${savedBookId}/read`;
       }, 1500);
@@ -335,10 +348,7 @@ export function BookEditor({
       setLoadingStatus('error');
       setLoadingMessage(error.message || 'Error al guardar el libro');
       
-      toast.error(`❌ ${error.message}`, {
-        duration: 5000,
-        style: { zIndex: 99999 }
-      });
+      toast.error(`❌ ${error.message}`);
 
       setTimeout(() => {
         setLoadingStatus('idle');
@@ -346,21 +356,24 @@ export function BookEditor({
       }, 3000);
     }
   }, [
-    currentUserId, // ✅ AÑADIDA DEPENDENCIA
+    currentUserId,
     IdLibro,
     validateBook,
     titulo,
     descripcion,
     autores,
     personajes,
+    portadaFile,
     portadaUrl,
+    cardBackgroundFile,
     cardBackgroundUrl,
     selectedCategorias,
     selectedGeneros,
     selectedEtiquetas,
     selectedValores,
     selectedNivel,
-    bookState.pages
+    bookState.pages,
+    locale
   ]);
 
   // Handlers de metadata
@@ -384,8 +397,9 @@ export function BookEditor({
     setSelectedNivel(value);
   }, []);
 
+  // ✅ CORREGIDO: Guardar archivo además de URL
   const handlePortadaChange = useCallback((file: File | null) => {
-    setPortada(file);
+    setPortadaFile(file);
     if (file) {
       const url = URL.createObjectURL(file);
       setPortadaUrl(url);
@@ -394,8 +408,9 @@ export function BookEditor({
     }
   }, []);
 
+  // ✅ CORREGIDO: Guardar archivo además de URL
   const handleCardBackgroundChange = useCallback((file: File | null) => {
-    setCardBackgroundImage(file);
+    setCardBackgroundFile(file);
     if (file) {
       const url = URL.createObjectURL(file);
       setCardBackgroundUrl(url);
@@ -421,7 +436,7 @@ export function BookEditor({
     }
   };
 
-  // ✅ MOSTRAR LOADING MIENTRAS VERIFICA AUTENTICACIÓN
+  // Loading states
   if (isCheckingAuth) {
     return (
       <div className="h-full w-full flex items-center justify-center bg-white">
@@ -433,7 +448,6 @@ export function BookEditor({
     );
   }
 
-  // ✅ MOSTRAR ERROR SI NO HAY USUARIO
   if (!currentUserId) {
     return (
       <div className="h-full w-full flex items-center justify-center bg-white">
@@ -446,7 +460,7 @@ export function BookEditor({
             Debes iniciar sesión para crear o editar libros
           </p>
           <button
-            onClick={() => window.location.href = '/login'}
+            onClick={() => window.location.href = `/${locale}/login`}
             className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
           >
             Ir a Login
@@ -461,15 +475,10 @@ export function BookEditor({
       <Toaster 
         position="top-right"
         toastOptions={{
-          style: { 
-            zIndex: 99999 
-          },
+          style: { zIndex: 99999 },
           duration: 4000,
         }}
-        containerStyle={{
-          top: 80, // ✅ Espacio para el navbar (60px + margen)
-          zIndex: 99999
-        }}
+        containerStyle={{ top: 80, zIndex: 99999 }}
       />
 
       {/* Header */}
@@ -589,7 +598,7 @@ export function BookEditor({
               generosLabels={generosLabels}
               valoresLabels={valoresLabels}
               nivelLabel={nivelLabel}
-              cardBackgroundImage={cardBackgroundImage}
+              cardBackgroundImage={cardBackgroundFile}
               cardBackgroundUrl={cardBackgroundUrl}
               onCardBackgroundChange={handleCardBackgroundChange}
               onLayoutChange={bookState.handleLayoutChange}
@@ -603,9 +612,9 @@ export function BookEditor({
               descripcion={descripcion}
               autores={autores}
               personajes={personajes}
-              portada={portada}
+              portada={portadaFile}
               portadaUrl={portadaUrl}
-              cardBackgroundImage={cardBackgroundImage}
+              cardBackgroundImage={cardBackgroundFile}
               cardBackgroundUrl={cardBackgroundUrl}
               selectedCategorias={selectedCategorias}
               selectedGeneros={selectedGeneros}

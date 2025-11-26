@@ -1,7 +1,8 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookReader/BookReader.tsx
  * 
- * Componente de lectura pura - Sin edición, solo lectura
+ * ✅ ACTUALIZADO: Usa tipos del dominio
+ * Garantiza que el libro se vea igual en editor y lectura
  */
 
 'use client';
@@ -12,51 +13,38 @@ import {
   X, ChevronLeft, ChevronRight, Maximize, Minimize, 
   BookOpen, FileText
 } from 'lucide-react';
-import type { page } from '@/src/typings/types-page-book/index';
+import type { PageEditor } from '@/src/core/domain/types';
 import { PageRenderer } from '@/src/presentation/features/layouts/components/PageRenderer';
-import type { Page, LayoutType, backgroundstype } from '@/src/typings/types-page-book/index';
+
+// Estilos compartidos
+import '@/src/presentation/features/layouts/styles/book-shared.css';
 
 interface BookReaderProps {
-  pages: page[];
+  pages: PageEditor[];
   title?: string;
   author?: string;
-  authors?: string[]; // ✅ Array de autores
-  description?: string; // ✅ Descripción
-  characters?: string[]; // ✅ Personajes
-  categories?: string[]; // ✅ Categorías
-  genres?: string[]; // ✅ Géneros
-  values?: string[]; // ✅ Valores
-  coverImage?: string; // ✅ Imagen de portada
+  authors?: string[];
+  description?: string;
+  characters?: string[];
+  categories?: string[];
+  genres?: string[];
+  values?: string[];
+  coverImage?: string;
   onClose?: () => void;
   showCloseButton?: boolean;
-}
-
-function convertPage(oldPage: page): Page {
-  return {
-    layout: oldPage.layout as LayoutType,
-    title: oldPage.title,
-    text: oldPage.text,
-    image: oldPage.image ?? undefined,
-    background: oldPage.background as backgroundstype,
-    animation: undefined,
-    audio: undefined,
-    interactiveGame: undefined,
-    items: [],
-    border: undefined
-  };
 }
 
 export function BookReader({ 
   pages, 
   title = 'Libro', 
   author,
-  authors = [], // ✅ NUEVO
-  description, // ✅ NUEVO
-  characters = [], // ✅ NUEVO
-  categories = [], // ✅ NUEVO
-  genres = [], // ✅ NUEVO
-  values = [], // ✅ NUEVO
-  coverImage, // ✅ NUEVO
+  authors = [],
+  description,
+  characters = [],
+  categories = [],
+  genres = [],
+  values = [],
+  coverImage,
   onClose,
   showCloseButton = true 
 }: BookReaderProps) {
@@ -68,13 +56,13 @@ export function BookReader({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [activePage, setActivePage] = useState(0);
-  const [showLiteraryCard, setShowLiteraryCard] = useState(false); // ✅ NUEVO: Estado para modal
+  const [showLiteraryCard, setShowLiteraryCard] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Calcular dimensiones del libro
+  // Cálculo de dimensiones (igual que BookViewer)
   useEffect(() => {
     if (!isClient) return;
 
@@ -86,7 +74,7 @@ export function BookReader({
 
       if (containerHeight <= 0 || containerWidth <= 0) return;
 
-      const reservedHeight = 80;
+      const reservedHeight = 160;
       const availableHeight = containerHeight - reservedHeight;
       const availableWidth = containerWidth - 100;
 
@@ -96,7 +84,7 @@ export function BookReader({
       let bookHeight = 520;
 
       if (availableHeight > 0 && availableWidth > 0) {
-        bookHeight = Math.min(availableHeight, 900);
+        bookHeight = Math.min(availableHeight, 700);
         bookWidth = bookHeight * aspectRatio;
 
         if (bookWidth > availableWidth) {
@@ -129,7 +117,6 @@ export function BookReader({
     };
   }, [isClient, isFullscreen]);
 
-  // Toggle fullscreen
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       containerRef.current?.requestFullscreen();
@@ -140,7 +127,6 @@ export function BookReader({
     }
   };
 
-  // Navegación
   const goToNextPage = () => {
     if (currentPage < pages.length - 1) {
       bookRef.current?.pageFlip().flipNext();
@@ -153,7 +139,6 @@ export function BookReader({
     }
   };
 
-  // Keyboard navigation
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') goToNextPage();
@@ -190,7 +175,7 @@ export function BookReader({
     showCover: true,
     flippingTime: 700,
     size: "fixed",
-    className: "reader-flipbook",
+    className: "book-flipbook-container",
     onFlip: (e: any) => {
       setCurrentPage(e.data);
       setActivePage(e.data);
@@ -217,8 +202,13 @@ export function BookReader({
         <div className="page w-full h-full" key={page.id || idx}>
           <div className="page-inner w-full h-full">
             <PageRenderer
-              page={convertPage(page)}
-              isActive={isActive}
+              layout={page.layout}
+              title={page.title}
+              text={page.text}
+              image={page.image}
+              background={page.background}
+              pageNumber={idx + 1}
+              isEditor={false}
             />
           </div>
         </div>
@@ -226,7 +216,6 @@ export function BookReader({
     }),
   };
 
-  // ✅ NUEVO: Determinar autores a mostrar
   const displayAuthors = authors.length > 0 ? authors : (author ? [author] : []);
 
   return (
@@ -237,7 +226,6 @@ export function BookReader({
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/60 to-transparent px-6 py-4">
         <div className="flex items-center justify-between">
-          {/* Título */}
           <div className="flex items-center gap-3">
             <BookOpen className="text-white" size={24} />
             <div>
@@ -250,9 +238,7 @@ export function BookReader({
             </div>
           </div>
 
-          {/* Controles superiores */}
           <div className="flex items-center gap-2">
-            {/* ✅ NUEVO: Botón de ficha literaria */}
             <button
               onClick={() => setShowLiteraryCard(true)}
               className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-lg transition-all"
@@ -283,7 +269,7 @@ export function BookReader({
       </div>
 
       {/* Libro centrado */}
-      <div className="absolute inset-0 flex items-center justify-center pt-20 pb-20">
+      <div className="absolute inset-0 flex items-center justify-center">
         <div 
           className="flex-shrink-0 z-10"
           style={{
@@ -297,7 +283,7 @@ export function BookReader({
         </div>
       </div>
 
-      {/* Controles de navegación inferiores */}
+      {/* Footer con controles */}
       <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/60 to-transparent px-6 py-6">
         <div className="flex items-center justify-center gap-6">
           <button
@@ -330,7 +316,7 @@ export function BookReader({
         </div>
       </div>
 
-      {/* ✅ NUEVO: Modal de Ficha Literaria */}
+      {/* Modal de Ficha Literaria */}
       {showLiteraryCard && (
         <div 
           className="fixed inset-0 z-30 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
@@ -340,7 +326,6 @@ export function BookReader({
             className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header del modal */}
             <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-2xl z-10">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -360,7 +345,6 @@ export function BookReader({
               </div>
             </div>
 
-            {/* Contenido del modal */}
             <div className="p-6 space-y-6">
               {/* Portada y descripción */}
               <div className="flex gap-6">
@@ -450,22 +434,6 @@ export function BookReader({
           </div>
         </div>
       )}
-
-      <style jsx>{`
-        .reader-flipbook {
-          border-radius: 12px;
-          overflow: hidden;
-          margin: 0 !important;
-          padding: 0 !important;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        }
-
-        .reader-flipbook .page {
-          display: inline-block !important;
-          position: relative !important;
-          background: white;
-        }
-      `}</style>
     </div>
   );
 }

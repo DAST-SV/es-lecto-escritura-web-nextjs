@@ -1,65 +1,127 @@
-// src/typings/types-page-book/index.ts
-import { layoutRegistry } from "@/src/presentation/features/layouts/registry"; // ✅ NUEVO
-import { backgrounds } from "./backgrounds"; 
-import { borders } from "./borders"
+/**
+ * UBICACIÓN: src/typings/types-page-book/index.ts
+ * 
+ * Tipos para las páginas del libro
+ * ✅ ACTUALIZADO: Incluye file y backgroundFile para upload
+ */
 
-export type LayoutType = keyof typeof layoutRegistry; // ✅ CORREGIDO
-export type borderstype = keyof typeof borders;
-export type backgroundstype = keyof typeof backgrounds;
+// Tipos de layout disponibles
+export type LayoutType = 
+  | 'CoverLayout'
+  | 'TextCenterLayout'
+  | 'ImageLeftTextRightLayout'
+  | 'TextLeftImageRightLayout'
+  | 'SplitTopBottomLayout'
+  | 'ImageFullLayout'
+  | 'SplitLayout'
+  | 'CenterImageDownTextLayout'
+  | 'InteractiveLayout';
 
-// ⭐ NUEVO: Tipo para posición de imagen
-export type ImagePosition = 
-  | 'top-left' 
-  | 'top-center' 
-  | 'top-right'
-  | 'center-left' 
-  | 'center' 
-  | 'center-right'
-  | 'bottom-left' 
-  | 'bottom-center' 
-  | 'bottom-right'
-  | 'full';
+// Tipos de fondo disponibles
+export type backgroundstype = 
+  | 'blanco'
+  | 'crema'
+  | 'gris'
+  | 'azul'
+  | 'verde'
+  | 'rosa'
+  | 'amarillo'
+  | 'naranja'
+  | 'morado'
+  | 'rojo'
+  | string; // Para colores hex y URLs de imágenes
 
-////
-// Este tipo se usa para la construcción del JSON para visualizar el libro
-////
-export interface Page {
-  layout: LayoutType;
-  animation?: string;
-  title?: string;
-  text?: string;
-  image?: string;
-  imagePosition?: ImagePosition; // ⭐ NUEVO
+// Tipos de borde
+export type BorderType = 'cuadrado' | 'redondeado' | 'circular';
+
+// Tipos de animación
+export type AnimationType = 
+  | 'fadeIn'
+  | 'slideIn'
+  | 'zoomIn'
+  | 'bounceIn'
+  | undefined;
+
+/**
+ * Tipo para página en el editor (con archivos temporales)
+ */
+export interface page {
+  id?: string;
+  layout: string;
+  title: string;
+  text: string;
+  image: string | null;
+  background: string | null;
+  
+  // ✅ NUEVOS: Archivos para upload
+  file?: Blob | null;           // Imagen de contenido (archivo)
+  backgroundFile?: Blob | null;  // Fondo de página (archivo)
+  
+  // Opcionales
+  animation?: AnimationType;
   audio?: string;
   interactiveGame?: string;
   items?: string[];
-  background?: backgroundstype | string; 
-  border?: borderstype;
+  border?: BorderType;
 }
 
-////
-// Este tipo se usa para la creación y editado de los libros
-////
-export interface page {
-  id: string;
+/**
+ * Tipo para página en el dominio/base de datos
+ */
+export interface Page {
+  layout: LayoutType;
+  title: string;
+  text: string;
+  image?: string;
+  background?: backgroundstype;
+  animation?: AnimationType;
+  audio?: string;
+  interactiveGame?: string;
+  items?: string[];
+  border?: BorderType;
+}
+
+/**
+ * Datos de página para guardar en BD
+ */
+export interface PageData {
   layout: string;
   title?: string;
   text?: string;
-  image?: string | null;         // URL para mostrar en la UI
-  file?: Blob | File | null;     // Archivo real para subir
-  imagePosition?: ImagePosition; // ⭐ NUEVO
-  background?: string | null;    // color o URL para mostrar
-  backgroundFile?: Blob | File | null; // Archivo real del background
+  image?: string;
+  background?: string;
 }
 
-export interface LibroUI {
-  Json: string;
-  src: string;
-  caption: string;
-  description?: string;
+/**
+ * Helper para convertir page (editor) a Page (dominio)
+ */
+export function convertEditorPageToPage(editorPage: page): Page {
+  return {
+    layout: editorPage.layout as LayoutType,
+    title: editorPage.title,
+    text: editorPage.text,
+    image: editorPage.image || undefined,
+    background: editorPage.background as backgroundstype || undefined,
+    animation: editorPage.animation,
+    audio: editorPage.audio,
+    interactiveGame: editorPage.interactiveGame,
+    items: editorPage.items,
+    border: editorPage.border,
+  };
 }
 
-// Tipo del libro completo
-export interface Story {
-  pages: Page[];           // Array de páginas
+/**
+ * Helper para crear una página vacía
+ */
+export function createEmptyPage(id: string, layout: LayoutType = 'TextCenterLayout'): page {
+  return {
+    id,
+    layout,
+    title: '',
+    text: '',
+    image: null,
+    background: 'blanco',
+    file: null,
+    backgroundFile: null,
+  };
 }

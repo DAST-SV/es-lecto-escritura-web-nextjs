@@ -1,3 +1,9 @@
+/**
+ * UBICACIÓN: src/presentation/features/books/components/BookEditor/BookViewer.tsx
+ * 
+ * ✅ UNIFICADO: Usa exactamente los mismos estilos que BookReader
+ * Garantiza que el libro se vea igual en editor y lectura
+ */
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -5,6 +11,9 @@ import HTMLFlipBook from 'react-pageflip';
 import type { page, Page } from '@/src/typings/types-page-book/index';
 import { PageRenderer } from "@/src/presentation/features/layouts/components/PageRenderer";
 import type { LayoutType, backgroundstype } from '@/src/typings/types-page-book/index';
+
+// ✅ Importar estilos compartidos
+import '@/src/presentation/features/layouts/styles/book-shared.css';
 
 interface PageRendererIndexProps {
   page: page;
@@ -31,17 +40,8 @@ const PageRendererIndex: React.FC<PageRendererIndexProps> = ({ page, pageNumber,
   const Pagina = convertPage(page);
 
   return (
-    <div className="w-full h-full relative overflow-hidden" style={{ position: 'relative' }}>
-      {page.background && page.background !== "blanco" && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: "rgba(255, 255, 255, 0.1)" }}
-        />
-      )}
-
-      <div className="relative z-10 w-full h-full" style={{ position: 'relative', width: '100%', height: '100%' }}>
-        <PageRenderer page={Pagina} isActive={isActive} />
-      </div>
+    <div className="w-full h-full relative overflow-hidden">
+      <PageRenderer page={Pagina} isActive={isActive} />
     </div>
   );
 };
@@ -74,6 +74,7 @@ export function BookViewer({
     setIsClient(true);
   }, []);
 
+  // ✅ MISMO CÁLCULO que BookReader
   useEffect(() => {
     if (!isClient) return;
 
@@ -85,8 +86,8 @@ export function BookViewer({
 
       if (containerHeight <= 0 || containerWidth <= 0) return;
 
-      // ✅ Más espacio vertical (sin navegación inferior)
-      const reservedHeight = 40; // Reducido de 120
+      // ✅ MISMO espacio reservado que BookReader
+      const reservedHeight = 80;
       const availableHeight = containerHeight - reservedHeight;
       const availableWidth = containerWidth - 100;
 
@@ -96,7 +97,8 @@ export function BookViewer({
       let bookHeight = 520;
 
       if (availableHeight > 0 && availableWidth > 0) {
-        bookHeight = Math.min(availableHeight, 800); // Aumentado de 600
+        // ✅ MISMO maxHeight que BookReader
+        bookHeight = Math.min(availableHeight, 700);
         bookWidth = bookHeight * aspectRatio;
 
         if (bookWidth > availableWidth) {
@@ -148,6 +150,7 @@ export function BookViewer({
     );
   }
 
+  // ✅ MISMAS PROPS que BookReader
   const flipBookProps: React.ComponentProps<typeof HTMLFlipBook> = {
     width: bookDimensions.width,
     height: bookDimensions.height,
@@ -156,7 +159,7 @@ export function BookViewer({
     showCover: true,
     flippingTime: 700,
     size: "fixed",
-    className: "storybook-flipbook",
+    className: "book-flipbook-container", // ✅ MISMA clase
     onFlip: (e: unknown) => {
       const ev = e as { data: number };
       setActivePage(ev.data);
@@ -181,8 +184,8 @@ export function BookViewer({
       const isActive = idx === activePage;
       
       return (
-        <div className="page w-full h-full" key={page.id || idx} style={{ position: 'relative', overflow: 'hidden' }}>
-          <div className="page-inner w-full h-full box-border" style={{ position: 'relative', width: '100%', height: '100%' }}>
+        <div className="page w-full h-full" key={page.id || idx}>
+          <div className="page-inner w-full h-full">
             <PageRendererIndex
               page={page}
               pageNumber={idx + 1}
@@ -196,42 +199,23 @@ export function BookViewer({
 
   return (
     <div ref={containerRef} className="w-full h-full relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50" />
+      {/* ✅ MISMO fondo que BookReader */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50" />
 
-      {/* ✅ Libro centrado sin navegación inferior */}
+      {/* ✅ Libro centrado - MISMO layout que BookReader */}
       <div className="absolute inset-0 flex items-center justify-center p-4">
         <div 
           className="flex-shrink-0 z-10"
           style={{
             width: `${bookDimensions.width}px`,
             height: `${bookDimensions.height}px`,
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
           }}
         >
           <div className="drop-shadow-2xl">
-            <HTMLFlipBook {...flipBookProps} ref={bookRef} key={`single-${bookKey}`} />
+            <HTMLFlipBook {...flipBookProps} ref={bookRef} key={`viewer-${bookKey}`} />
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .storybook-flipbook {
-          border-radius: 12px;
-          overflow: hidden;
-          margin: 0 !important;
-          padding: 0 !important;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-
-        .storybook-flipbook .page {
-          display: inline-block !important;
-          position: relative !important;
-          background: white;
-        }
-      `}</style>
     </div>
   );
 }

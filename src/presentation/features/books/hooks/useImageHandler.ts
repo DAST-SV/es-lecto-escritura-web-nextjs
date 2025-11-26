@@ -1,8 +1,8 @@
 /**
  * UBICACIÓN: src/presentation/features/books/hooks/useImageHandler.ts
  * 
- * Hook para manejar imágenes (subir, redimensionar, eliminar)
- * FIX: Notificar cambios de fondo para forzar re-render
+ * ✅ MEJORADO: Guarda los archivos (Blob) para upload posterior
+ * Mantiene las URLs temporales para preview, pero preserva los archivos originales
  */
 
 import { useCallback } from 'react';
@@ -13,7 +13,7 @@ interface UseImageHandlerProps {
   pages: page[];
   currentPage: number;
   setPages: React.Dispatch<React.SetStateAction<page[]>>;
-  onBackgroundChange?: () => void; // ✅ Callback para notificar cambios
+  onBackgroundChange?: () => void;
 }
 
 export interface UseImageHandlerReturn {
@@ -57,14 +57,14 @@ function resizeImage(file: File, maxWidth: number, maxHeight: number): Promise<B
 
       ctx.drawImage(img, 0, 0, width, height);
 
-      // Convertir a Blob (JPEG con calidad 0.8)
+      // Convertir a Blob (JPEG con calidad 0.85)
       canvas.toBlob(
         (blob) => {
           if (blob) resolve(blob);
           else reject("No se pudo crear el Blob");
         },
         "image/jpeg",
-        0.8
+        0.85
       );
     };
 
@@ -77,37 +77,39 @@ export const useImageHandler = ({
   pages,
   currentPage,
   setPages,
-  onBackgroundChange // ✅ Recibir callback
+  onBackgroundChange
 }: UseImageHandlerProps): UseImageHandlerReturn => {
 
-  // Handler para cambio de imagen principal
+  // Handler para imagen de contenido
   const handleImageChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (!file) return;
 
       try {
-        const resizedBlob = await resizeImage(file, 800, 800);
+        const resizedBlob = await resizeImage(file, 1200, 1200);
         const previewUrl = URL.createObjectURL(resizedBlob);
 
         setPages(prev => {
           const updated = [...prev];
           const currentPageData = updated[currentPage];
 
-          // Liberar URL anterior si existe para evitar memory leaks
-          if (currentPageData.image && currentPageData.image.startsWith('blob:')) {
+          // Liberar URL anterior
+          if (currentPageData.image && 
+              typeof currentPageData.image === 'string' && 
+              currentPageData.image.startsWith('blob:')) {
             URL.revokeObjectURL(currentPageData.image);
           }
 
           updated[currentPage] = {
             ...currentPageData,
-            image: previewUrl,
-            file: resizedBlob
+            image: previewUrl,        // URL temporal para preview
+            file: resizedBlob         // ✅ Blob para upload posterior
           };
           return updated;
         });
 
-        toast.success('Imagen cargada correctamente');
+        toast.success('Imagen cargada');
       } catch (error) {
         console.error("Error al procesar la imagen:", error);
         toast.error("Error al procesar la imagen");
@@ -116,18 +118,19 @@ export const useImageHandler = ({
     [currentPage, setPages]
   );
 
-  // Función para remover imagen
+  // Remover imagen
   const removeImage = useCallback(() => {
     setPages(prev => {
       const updated = [...prev];
       const currentPageData = updated[currentPage];
 
-      // Liberar memoria del blob URL si existe
-      if (currentPageData.image && currentPageData.image.startsWith('blob:')) {
+      // Liberar URL
+      if (currentPageData.image && 
+          typeof currentPageData.image === 'string' && 
+          currentPageData.image.startsWith('blob:')) {
         URL.revokeObjectURL(currentPageData.image);
       }
 
-      // Limpiar tanto la URL como el archivo
       updated[currentPage] = {
         ...currentPageData,
         image: null,
@@ -140,7 +143,7 @@ export const useImageHandler = ({
     toast.success('Imagen eliminada');
   }, [currentPage, setPages]);
 
-  // Handler para archivo de fondo
+  // Handler para fondo de página
   const handleBackgroundFile = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
@@ -154,65 +157,63 @@ export const useImageHandler = ({
           const updated = [...prev];
           const currentPageData = updated[currentPage];
 
-          // Liberar URL anterior si existe
+          // Liberar URL anterior
           if (currentPageData.background &&
-            typeof currentPageData.background === 'string' &&
-            currentPageData.background.startsWith('blob:')) {
+              typeof currentPageData.background === 'string' &&
+              currentPageData.background.startsWith('blob:')) {
             URL.revokeObjectURL(currentPageData.background);
           }
 
           updated[currentPage] = {
             ...currentPageData,
-            background: previewUrl,
-            backgroundFile: resizedBlob
+            background: previewUrl,      // URL temporal para preview
+            backgroundFile: resizedBlob  // ✅ Blob para upload posterior
           };
           return updated;
         });
 
-        // ✅ NOTIFICAR QUE EL FONDO CAMBIÓ
+        // Notificar cambio
         if (onBackgroundChange) {
           onBackgroundChange();
         }
 
-        toast.success('Fondo cargado correctamente');
+        toast.success('Fondo cargado');
       } catch (error) {
         console.error("Error al procesar la imagen de fondo:", error);
-        toast.error("Error al procesar la imagen de fondo");
+        toast.error("Error al procesar el fondo");
       }
     },
-    [currentPage, setPages, onBackgroundChange] // ✅ Agregar dependencia
+    [currentPage, setPages, onBackgroundChange]
   );
 
-  // Función para quitar fondo
+  // Remover fondo
   const removeBackground = useCallback(() => {
     setPages(prev => {
       const updated = [...prev];
       const currentPageData = updated[currentPage];
 
-      // Liberar memoria del blob URL si existe
+      // Liberar URL
       if (currentPageData.background &&
-        typeof currentPageData.background === 'string' &&
-        currentPageData.background.startsWith('blob:')) {
+          typeof currentPageData.background === 'string' &&
+          currentPageData.background.startsWith('blob:')) {
         URL.revokeObjectURL(currentPageData.background);
       }
 
-      // Limpiar tanto la URL como el archivo
       updated[currentPage] = {
         ...currentPageData,
-        background: null,
+        background: 'blanco',  // ✅ Volver a fondo blanco
         backgroundFile: null
       };
 
       return updated;
     });
 
-    // ✅ NOTIFICAR QUE EL FONDO CAMBIÓ
     if (onBackgroundChange) {
       onBackgroundChange();
     }
 
     toast.success('Fondo eliminado');
-  }, [currentPage, setPages, onBackgroundChange]); // ✅ Agregar dependencia
+  }, [currentPage, setPages, onBackgroundChange]);
 
   return {
     handleImageChange,

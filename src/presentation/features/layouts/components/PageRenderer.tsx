@@ -1,3 +1,9 @@
+/**
+ * UBICACIÓN: src/presentation/features/layouts/components/PageRenderer.tsx
+ * 
+ * ✅ MEJORADO: Estilos consistentes entre editor y lector
+ */
+
 import React from "react";
 import type { Page } from "@/src/typings/types-page-book/index";
 import { getLayout } from "../registry";
@@ -5,6 +11,9 @@ import { backgrounds } from "@/src/typings/types-page-book/backgrounds";
 import { borders } from "@/src/typings/types-page-book/borders";
 import { motion } from "framer-motion";
 import { getAnimation } from "@/src/utils/animations/animations";
+
+// ✅ Importar estilos compartidos
+import '@/src/presentation/features/layouts/styles/book-shared.css';
 import '@/src/style/rich-content.css';
 
 interface Props {
@@ -14,62 +23,55 @@ interface Props {
 
 export function PageRenderer({ page, isActive }: Props) {
   const Layout = getLayout(page.layout);
-
   const getBorderRadius = page.border ? borders[page.border] : borders.cuadrado;
 
   /**
-   * ✅ SOLUCIÓN COMPLETA: Color de fondo + imagen de fondo
-   * 
-   * FLUJO:
-   * 1. Si hay imagen Y color: backgroundColor + backgroundImage
-   * 2. Si solo hay imagen: backgroundColor blanco + backgroundImage
-   * 3. Si solo hay color: backgroundColor
-   * 4. Si no hay nada: backgroundColor blanco
-   * 
-   * RESULTADO: La imagen se muestra con 'contain' (sin recortar)
-   * y el color rellena los espacios vacíos
+   * ✅ Lógica de fondo unificada:
+   * 1. Color de fondo (backgroundColor)
+   * 2. Imagen de fondo encima (backgroundImage con contain)
    */
   const getBackgroundStyle = (): React.CSSProperties => {
     const bg = page.background;
 
-    // ✅ CASO 1: No hay background → blanco
+    // Sin fondo → blanco
     if (!bg || bg === '' || bg === 'blanco') {
-      return { backgroundColor: backgrounds.blanco };
+      return { backgroundColor: backgrounds.blanco || '#ffffff' };
     }
 
-    // ✅ CASO 2: Hay imagen (URL o blob)
+    // Es una URL de imagen
     if (typeof bg === 'string' && /^(https?:\/\/|blob:)/.test(bg)) {
-      // La imagen irá encima del color blanco (o del color que se haya seleccionado antes)
       return {
-        backgroundColor: '#ffffff', // Color base por defecto
+        backgroundColor: '#ffffff',
         backgroundImage: `url(${bg})`,
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        backgroundSize: 'contain', // ✅ La imagen NO se recorta, se ajusta completa
+        backgroundSize: 'contain',
       };
     }
 
-    // ✅ CASO 3: Es un color hex
+    // Es un color hex
     if (typeof bg === 'string' && bg.startsWith('#')) {
       return { backgroundColor: bg };
     }
 
-    // ✅ CASO 4: Es un preset de backgrounds
+    // Es un preset de backgrounds
     if (bg in backgrounds) {
       return { backgroundColor: backgrounds[bg as keyof typeof backgrounds] };
     }
 
-    // ✅ CASO 5: Fallback
-    return { backgroundColor: backgrounds.blanco };
+    // Fallback
+    return { backgroundColor: '#ffffff' };
   };
 
   const backgroundStyle = getBackgroundStyle();
   const animation = page.animation ? getAnimation(page.animation) : null;
 
+  // Determinar si tiene fondo personalizado (para padding)
   const hasCustomBackground = 
     page.background && 
     page.background !== 'blanco' && 
-    page.background !== '';
+    page.background !== '' &&
+    page.background !== '#ffffff';
 
   const content = (
     <div
@@ -79,8 +81,6 @@ export function PageRenderer({ page, isActive }: Props) {
         borderRadius: getBorderRadius,
         width: "100%",
         height: "100%",
-        padding: 0,
-        margin: 0,
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -92,6 +92,9 @@ export function PageRenderer({ page, isActive }: Props) {
           height: '100%',
           position: 'relative',
           overflow: 'hidden',
+          // ✅ Padding consistente
+          padding: hasCustomBackground ? 0 : '1.5rem',
+          boxSizing: 'border-box',
         }}
       >
         <Layout page={page} />
@@ -102,11 +105,17 @@ export function PageRenderer({ page, isActive }: Props) {
   if (animation) {
     return (
       <motion.div
-        className="w-full h-full rich-content flex box-border"
+        className="w-full h-full rich-content"
         initial="hidden"
         animate={isActive ? "visible" : "hidden"}
         variants={animation}
-        style={{ margin: 0, padding: 0, overflow: 'hidden' }}
+        style={{ 
+          margin: 0, 
+          padding: 0, 
+          overflow: 'hidden',
+          width: '100%',
+          height: '100%',
+        }}
       >
         {content}
       </motion.div>
@@ -114,7 +123,16 @@ export function PageRenderer({ page, isActive }: Props) {
   }
 
   return (
-    <div className="w-full h-full rich-content flex box-border" style={{ margin: 0, padding: 0, overflow: 'hidden' }}>
+    <div 
+      className="w-full h-full rich-content"
+      style={{ 
+        margin: 0, 
+        padding: 0, 
+        overflow: 'hidden',
+        width: '100%',
+        height: '100%',
+      }}
+    >
       {content}
     </div>
   );
