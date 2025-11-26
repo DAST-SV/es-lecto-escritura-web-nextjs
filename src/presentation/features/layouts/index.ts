@@ -1,5 +1,6 @@
 /**
- * Exportaciones centralizadas del módulo de layouts
+ * UBICACIÓN: src/presentation/features/layouts/index.ts
+ * ✅ CORREGIDO: Eliminar export inexistente
  */
 
 // Componentes individuales
@@ -19,7 +20,6 @@ export {
   layoutRegistry,
   getLayout,
   isValidLayoutId,
-  availableLayoutIds,
   layoutConfig,
   canUseLayoutOnPage,
   type LayoutComponent,

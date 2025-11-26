@@ -1,63 +1,26 @@
 /**
  * UBICACIÓN: src/presentation/features/layouts/components/PageRenderer.tsx
- * ✅ CORREGIDO: Tipos y estilos consistentes
+ * ✅ LIMPIO: Un solo tipo Page, sin conversiones
  */
 
 import React from "react";
 import { getLayout } from "../registry";
 import { motion } from "framer-motion";
 import { getAnimation } from "@/src/utils/animations/animations";
+import { Page, BACKGROUND_PRESETS, isBackgroundPreset } from "@/src/core/domain/types";
 import '@/src/presentation/features/layouts/styles/book-shared.css';
 import '@/src/style/rich-content.css';
-import { backgrounds, borders, Page as PageType } from "@/src/core/domain/types";
 
 interface Props {
-  layout: string;
-  title: string;
-  text: string;
-  image?: string;
-  background?: string;
-  animation?: string;
-  border?: string;
-  pageNumber: number;
-  isEditor: boolean;
+  page: Page;
   isActive?: boolean;
 }
 
-export function PageRenderer({ 
-  layout,
-  title,
-  text,
-  image,
-  background,
-  animation,
-  border,
-  pageNumber,
-  isEditor,
-  isActive 
-}: Props) {
-  // ✅ Convertir props a Page
-  const page: PageType = {
-    layout: layout as any,
-    title,
-    text,
-    image,
-    background: background as any,
-    animation,
-    border,
-  };
-
+export function PageRenderer({ page, isActive = true }: Props) {
   const Layout = getLayout(page.layout);
   
-  // ✅ Arreglar getBorderRadius
-  const getBorderRadius = () => {
-    if (!page.border) return '0';
-    const borderKey = page.border as keyof typeof borders;
-    return borders[borderKey] || '0';
-  };
-
   /**
-   * ✅ Lógica de fondo unificada
+   * ✅ Lógica de fondo simplificada
    */
   const getBackgroundStyle = (): React.CSSProperties => {
     const bg = page.background;
@@ -83,8 +46,8 @@ export function PageRenderer({
     }
 
     // Preset
-    if (bg in backgrounds) {
-      return { backgroundColor: backgrounds[bg as keyof typeof backgrounds] };
+    if (isBackgroundPreset(bg)) {
+      return { backgroundColor: BACKGROUND_PRESETS[bg] };
     }
 
     return { backgroundColor: '#ffffff' };
@@ -104,7 +67,6 @@ export function PageRenderer({
       className="flipbook-page"
       style={{
         ...backgroundStyle,
-        borderRadius: getBorderRadius(),
         width: "100%",
         height: "100%",
         position: 'relative',

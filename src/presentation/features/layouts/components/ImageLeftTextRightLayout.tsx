@@ -2,7 +2,7 @@
 // 1. ImageLeftTextRightLayout.tsx
 // ============================================
 import React from "react";
-import type { Page } from "@/src/typings/types-page-book/index";
+import { Page } from "@/src/core/domain/types";
 
 interface Props {
   page: Page;

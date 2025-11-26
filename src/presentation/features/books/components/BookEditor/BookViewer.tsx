@@ -1,21 +1,17 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookEditor/BookViewer.tsx
- * 
- * ✅ UNIFICADO: Usa exactamente los mismos estilos que BookReader
- * Garantiza que el libro se vea igual en editor y lectura
+ * ✅ CORREGIDO: Pasar page completo en vez de props individuales
  */
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import { PageRenderer } from "@/src/presentation/features/layouts/components/PageRenderer";
-
-// ✅ Importar estilos compartidos
+import { Page } from '@/src/core/domain/types';
 import '@/src/presentation/features/layouts/styles/book-shared.css';
-import { page } from '@/src/core/domain/types';
 
 interface BookViewerProps {
-  pages: page[];
+  pages: Page[];
   currentPage: number;
   isFlipping: boolean;
   bookKey: number;
@@ -42,7 +38,6 @@ export function BookViewer({
     setIsClient(true);
   }, []);
 
-  // ✅ MISMO CÁLCULO que BookReader
   useEffect(() => {
     if (!isClient) return;
 
@@ -54,7 +49,6 @@ export function BookViewer({
 
       if (containerHeight <= 0 || containerWidth <= 0) return;
 
-      // ✅ MISMO espacio reservado que BookReader
       const reservedHeight = 80;
       const availableHeight = containerHeight - reservedHeight;
       const availableWidth = containerWidth - 100;
@@ -65,7 +59,6 @@ export function BookViewer({
       let bookHeight = 520;
 
       if (availableHeight > 0 && availableWidth > 0) {
-        // ✅ MISMO maxHeight que BookReader
         bookHeight = Math.min(availableHeight, 700);
         bookWidth = bookHeight * aspectRatio;
 
@@ -118,7 +111,6 @@ export function BookViewer({
     );
   }
 
-  // ✅ MISMAS PROPS que BookReader
   const flipBookProps: React.ComponentProps<typeof HTMLFlipBook> = {
     width: bookDimensions.width,
     height: bookDimensions.height,
@@ -127,7 +119,7 @@ export function BookViewer({
     showCover: true,
     flippingTime: 700,
     size: "fixed",
-    className: "book-flipbook-container", // ✅ MISMA clase
+    className: "book-flipbook-container",
     onFlip: (e: unknown) => {
       const ev = e as { data: number };
       setActivePage(ev.data);
@@ -152,19 +144,11 @@ export function BookViewer({
       const isActive = idx === activePage;
       
       return (
-        <div className="page w-full h-full" key={page.id || idx}>
+        <div className="page w-full h-full" key={idx}>
           <div className="page-inner w-full h-full">
-            {/* ✅ CORREGIDO: Pasar props individuales */}
+            {/* ✅ CORREGIDO: Pasar page completo */}
             <PageRenderer
-              layout={page.layout}
-              title={page.title}
-              text={page.text}
-              image={page.image ?? undefined}
-              background={page.background ?? undefined}
-              animation={page.animation}
-              border={page.border}
-              pageNumber={idx + 1}
-              isEditor={true}
+              page={page}
               isActive={isActive}
             />
           </div>
@@ -175,10 +159,8 @@ export function BookViewer({
 
   return (
     <div ref={containerRef} className="w-full h-full relative overflow-hidden">
-      {/* ✅ MISMO fondo que BookReader */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50" />
 
-      {/* ✅ Libro centrado - MISMO layout que BookReader */}
       <div className="absolute inset-0 flex items-center justify-center p-4">
         <div 
           className="flex-shrink-0 z-10"

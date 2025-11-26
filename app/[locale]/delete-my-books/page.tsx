@@ -9,7 +9,7 @@ export default Page;
 // import { Book, Trash2, ArrowLeft, Sparkles, Library, Star, Heart } from "lucide-react";
 // import ImageGrid from "@/src/utils/imagenes/ImageGrid";
 // import FlipBook from "@/src/components/components-for-books/book/utils/FlipBook";
-// import type { Page } from "@/src/typings/types-page-book/index";
+// import { Page } from "@/src/core/domain/types";
 // import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
 // import { getUserId } from "@/src/utils/supabase/utilsClient";
 

@@ -1,18 +1,16 @@
 /**
  * UBICACIÓN: src/presentation/features/books/hooks/useImageHandler.ts
- * 
- * ✅ MEJORADO: Guarda los archivos (Blob) para upload posterior
- * Mantiene las URLs temporales para preview, pero preserva los archivos originales
+ * ✅ CORREGIDO: Usar Page en vez de page
  */
 
 import { useCallback } from 'react';
 import toast from 'react-hot-toast';
-import type { page } from '@/src/core/domain/types';
+import { Page } from '@/src/core/domain/types'; // ✅ Import correcto
 
 interface UseImageHandlerProps {
-  pages: page[];
+  pages: Page[];
   currentPage: number;
-  setPages: React.Dispatch<React.SetStateAction<page[]>>;
+  setPages: React.Dispatch<React.SetStateAction<Page[]>>;
   onBackgroundChange?: () => void;
 }
 
@@ -39,7 +37,6 @@ function resizeImage(file: File, maxWidth: number, maxHeight: number): Promise<B
       let width = img.width;
       let height = img.height;
 
-      // Mantener proporciones
       if (width > maxWidth) {
         height = (maxWidth / width) * height;
         width = maxWidth;
@@ -57,7 +54,6 @@ function resizeImage(file: File, maxWidth: number, maxHeight: number): Promise<B
 
       ctx.drawImage(img, 0, 0, width, height);
 
-      // Convertir a Blob (JPEG con calidad 0.85)
       canvas.toBlob(
         (blob) => {
           if (blob) resolve(blob);
@@ -94,7 +90,6 @@ export const useImageHandler = ({
           const updated = [...prev];
           const currentPageData = updated[currentPage];
 
-          // Liberar URL anterior
           if (currentPageData.image && 
               typeof currentPageData.image === 'string' && 
               currentPageData.image.startsWith('blob:')) {
@@ -103,8 +98,8 @@ export const useImageHandler = ({
 
           updated[currentPage] = {
             ...currentPageData,
-            image: previewUrl,        // URL temporal para preview
-            file: resizedBlob         // ✅ Blob para upload posterior
+            image: previewUrl,
+            file: resizedBlob
           };
           return updated;
         });
@@ -124,7 +119,6 @@ export const useImageHandler = ({
       const updated = [...prev];
       const currentPageData = updated[currentPage];
 
-      // Liberar URL
       if (currentPageData.image && 
           typeof currentPageData.image === 'string' && 
           currentPageData.image.startsWith('blob:')) {
@@ -157,7 +151,6 @@ export const useImageHandler = ({
           const updated = [...prev];
           const currentPageData = updated[currentPage];
 
-          // Liberar URL anterior
           if (currentPageData.background &&
               typeof currentPageData.background === 'string' &&
               currentPageData.background.startsWith('blob:')) {
@@ -166,13 +159,12 @@ export const useImageHandler = ({
 
           updated[currentPage] = {
             ...currentPageData,
-            background: previewUrl,      // URL temporal para preview
-            backgroundFile: resizedBlob  // ✅ Blob para upload posterior
+            background: previewUrl,
+            backgroundFile: resizedBlob
           };
           return updated;
         });
 
-        // Notificar cambio
         if (onBackgroundChange) {
           onBackgroundChange();
         }
@@ -192,7 +184,6 @@ export const useImageHandler = ({
       const updated = [...prev];
       const currentPageData = updated[currentPage];
 
-      // Liberar URL
       if (currentPageData.background &&
           typeof currentPageData.background === 'string' &&
           currentPageData.background.startsWith('blob:')) {
@@ -201,7 +192,7 @@ export const useImageHandler = ({
 
       updated[currentPage] = {
         ...currentPageData,
-        background: 'blanco',  // ✅ Volver a fondo blanco
+        background: 'blanco',
         backgroundFile: null
       };
 

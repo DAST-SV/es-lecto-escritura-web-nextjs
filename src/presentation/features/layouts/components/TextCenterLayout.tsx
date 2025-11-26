@@ -1,14 +1,20 @@
+/**
+ * ============================================
+ * LAYOUTS - INTERFAZ LIMPIA
+ * Todos los layouts usan el mismo tipo Page
+ * ============================================
+ */
+
 import React from "react";
-import type { Page } from "@/src/typings/types-page-book/index";
+import { Page } from "@/src/core/domain/types";
 
 interface Props {
   page: Page;
 }
 
-/**
- * ✅ CORREGIDO: Texto empieza arriba-izquierda (como libro real)
- * NO centrado por defecto
- */
+// ============================================
+// 1. TextCenterLayout
+// ============================================
 export function TextCenterLayout({ page }: Props) {
   return (
     <div className="w-full h-full flex flex-col">

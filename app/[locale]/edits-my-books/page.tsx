@@ -9,7 +9,7 @@ export default Page;
 // import { Edit, ArrowLeft, Star, Sparkles, BookOpen, Palette } from "lucide-react";
 // import ImageGrid from "@/src/utils/imagenes/ImageGrid";
 // import { Book } from "@/src/components/components-for-books/book/create-edits-books/components/Book";
-// import type { page } from "@/src/typings/types-page-book/index";
+// import { Page } from "@/src/core/domain/types";
 // import { getUserId } from "@/src/utils/supabase/utilsClient";
 // import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
 

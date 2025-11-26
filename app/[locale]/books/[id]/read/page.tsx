@@ -1,5 +1,6 @@
 /**
- * UBICACIÓN: src/presentation/features/books/components/BookReader/BookReader.tsx
+ * UBICACIÓN: app/[locale]/books/[id]/read/page.tsx
+ * ✅ CORREGIDO: Imports del tipo limpio
  */
 
 'use client';
@@ -10,12 +11,11 @@ import {
   X, ChevronLeft, ChevronRight, Maximize, Minimize, 
   BookOpen, FileText
 } from 'lucide-react';
-import type { page } from '@/src/core/domain/types';
+import { Page, LayoutType } from '@/src/core/domain/types'; // ✅ Import corregido
 import { PageRenderer } from '@/src/presentation/features/layouts/components/PageRenderer';
-import type { Page, LayoutType, backgroundstype } from '@/src/typings/types-page-book/index';
 
 interface BookReaderProps {
-  pages: page[];
+  pages: Page[];
   title?: string;
   author?: string;
   authors?: string[];
@@ -27,21 +27,6 @@ interface BookReaderProps {
   coverImage?: string;
   onClose?: () => void;
   showCloseButton?: boolean;
-}
-
-function convertPage(oldPage: page): Page {
-  return {
-    layout: oldPage.layout as LayoutType,
-    title: oldPage.title,
-    text: oldPage.text,
-    image: oldPage.image ?? undefined,
-    background: oldPage.background as backgroundstype,
-    animation: undefined,
-    audio: undefined,
-    interactiveGame: undefined,
-    items: [],
-    border: undefined
-  };
 }
 
 export function BookReader({ 
@@ -84,7 +69,7 @@ export function BookReader({
 
       if (containerHeight <= 0 || containerWidth <= 0) return;
 
-      const reservedHeight = 160; // Header + Footer
+      const reservedHeight = 160;
       const availableHeight = containerHeight - reservedHeight;
       const availableWidth = containerWidth - 100;
 
@@ -185,7 +170,7 @@ export function BookReader({
     showCover: true,
     flippingTime: 700,
     size: "fixed",
-    className: "reader-flipbook",
+    className: "book-flipbook-container",
     onFlip: (e: any) => {
       setCurrentPage(e.data);
       setActivePage(e.data);
@@ -209,12 +194,9 @@ export function BookReader({
       const isActive = idx === activePage;
       
       return (
-        <div className="page w-full h-full" key={page.id || idx}>
+        <div className="page w-full h-full" key={idx}>
           <div className="page-inner w-full h-full">
-            <PageRenderer
-              page={convertPage(page)}
-              isActive={isActive}
-            />
+            <PageRenderer page={page} isActive={isActive} />
           </div>
         </div>
       );
@@ -273,7 +255,7 @@ export function BookReader({
         </div>
       </div>
 
-      {/* ✅ Libro centrado vertical y horizontalmente */}
+      {/* Libro centrado */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div 
           className="flex-shrink-0 z-10"
@@ -351,24 +333,20 @@ export function BookReader({
             </div>
 
             <div className="p-6 space-y-6">
-              {/* Portada y descripción */}
-              <div className="flex gap-6">
-                {coverImage && (
-                  <img 
-                    src={coverImage} 
-                    alt={title}
-                    className="w-32 h-40 object-cover rounded-lg shadow-lg flex-shrink-0"
-                  />
-                )}
-                {description && (
-                  <div className="flex-1">
-                    <h3 className="font-bold text-lg mb-2 text-gray-800">Descripción</h3>
-                    <p className="text-gray-600 leading-relaxed">{description}</p>
-                  </div>
-                )}
-              </div>
+              {coverImage && (
+                <img 
+                  src={coverImage} 
+                  alt={title}
+                  className="w-32 h-40 object-cover rounded-lg shadow-lg"
+                />
+              )}
+              {description && (
+                <div>
+                  <h3 className="font-bold text-lg mb-2 text-gray-800">Descripción</h3>
+                  <p className="text-gray-600 leading-relaxed">{description}</p>
+                </div>
+              )}
 
-              {/* Personajes */}
               {characters.length > 0 && (
                 <div>
                   <h3 className="font-bold text-lg mb-3 text-gray-800">Personajes</h3>
@@ -385,7 +363,6 @@ export function BookReader({
                 </div>
               )}
 
-              {/* Categorías */}
               {categories.length > 0 && (
                 <div>
                   <h3 className="font-bold text-lg mb-3 text-gray-800">Categorías</h3>
@@ -402,7 +379,6 @@ export function BookReader({
                 </div>
               )}
 
-              {/* Géneros */}
               {genres.length > 0 && (
                 <div>
                   <h3 className="font-bold text-lg mb-3 text-gray-800">Géneros</h3>
@@ -419,7 +395,6 @@ export function BookReader({
                 </div>
               )}
 
-              {/* Valores */}
               {values.length > 0 && (
                 <div>
                   <h3 className="font-bold text-lg mb-3 text-gray-800">Valores</h3>
@@ -439,22 +414,6 @@ export function BookReader({
           </div>
         </div>
       )}
-
-      <style jsx>{`
-        .reader-flipbook {
-          border-radius: 12px;
-          overflow: hidden;
-          margin: 0 !important;
-          padding: 0 !important;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        }
-
-        .reader-flipbook .page {
-          display: inline-block !important;
-          position: relative !important;
-          background: white;
-        }
-      `}</style>
     </div>
   );
 }

@@ -1,8 +1,9 @@
 /**
  * UBICACIÓN: src/core/domain/repositories/IBookRepository.ts
+ * ✅ CORREGIDO: Import desde entities/index.ts
  */
 
-import { Book } from '../entities/Book.entity';
+import { Book } from '../entities'; // ✅ Import corregido
 
 export interface IBookRepository {
   save(book: Book): Promise<string>;

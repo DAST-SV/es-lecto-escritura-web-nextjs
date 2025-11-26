@@ -1,13 +1,13 @@
 /**
  * UBICACIÓN: src/presentation/features/books/hooks/useBookState.ts
- * Hook para manejar el estado del libro - MODIFICADO para exponer setBookKey
+ * ✅ CORREGIDO: Usar Page (uppercase) en vez de page (lowercase)
  */
 
 import { useState, useCallback } from 'react';
-import type { page } from '@/src/core/domain/types';
+import { Page } from '@/src/core/domain/types'; // ✅ Import correcto
 
 interface UseBookStateProps {
-  initialPages?: page[];
+  initialPages?: Page[];
   title?: string;
 }
 
@@ -16,7 +16,7 @@ export const useBookState = ({ initialPages, title }: UseBookStateProps = {}) =>
   const [currentPage, setCurrentPage] = useState(0);
   const [isFlipping, setIsFlipping] = useState(false);
   
-  const [pages, setPages] = useState<page[]>(
+  const [pages, setPages] = useState<Page[]>( // ✅ Tipo correcto
     initialPages || [
       {
         id: '1',
@@ -37,7 +37,7 @@ export const useBookState = ({ initialPages, title }: UseBookStateProps = {}) =>
     ]
   );
 
-  // Agregar páginas de 2 en 2 (como un libro real)
+  // Agregar páginas de 2 en 2
   const addPage = useCallback(() => {
     setPages((prev) => {
       const nextId = (prev.length + 1).toString();
@@ -45,7 +45,6 @@ export const useBookState = ({ initialPages, title }: UseBookStateProps = {}) =>
       
       return [
         ...prev,
-        // Página izquierda (anverso)
         {
           id: nextId,
           layout: 'TextCenterLayout',
@@ -54,7 +53,6 @@ export const useBookState = ({ initialPages, title }: UseBookStateProps = {}) =>
           image: null,
           background: 'blanco',
         },
-        // Página derecha (reverso)
         {
           id: nextId2,
           layout: 'TextCenterLayout',
@@ -68,27 +66,23 @@ export const useBookState = ({ initialPages, title }: UseBookStateProps = {}) =>
     setBookKey((k) => k + 1);
   }, []);
 
-  // Eliminar páginas de 2 en 2 (si hay más de 2)
+  // Eliminar páginas de 2 en 2
   const deletePage = useCallback(() => {
     setPages((prev) => {
-      // No permitir eliminar si solo quedan 2 páginas (portada + contraportada)
       if (prev.length <= 2) return prev;
-      
-      // Eliminar las últimas 2 páginas
       return prev.slice(0, -2);
     });
     
-    // Ajustar la página actual si es necesario
     setCurrentPage((curr) => {
-      const newLength = pages.length - 2; // Longitud después de eliminar
-      const maxPage = Math.max(0, newLength - 1); // Última página disponible
+      const newLength = pages.length - 2;
+      const maxPage = Math.max(0, newLength - 1);
       return Math.min(curr, maxPage);
     });
     
     setBookKey((k) => k + 1);
   }, [pages.length]);
 
-  // Cambiar layout de página
+  // Cambiar layout
   const handleLayoutChange = useCallback(
     (layout: string) => {
       setPages((prev) => {
@@ -101,7 +95,7 @@ export const useBookState = ({ initialPages, title }: UseBookStateProps = {}) =>
     [currentPage]
   );
 
-  // Cambiar fondo de página
+  // Cambiar fondo
   const handleBackgroundChange = useCallback(
     (value: string) => {
       setPages((prev) => {
@@ -122,7 +116,7 @@ export const useBookState = ({ initialPages, title }: UseBookStateProps = {}) =>
     isFlipping,
     setIsFlipping,
     bookKey,
-    setBookKey, // ✅ EXPONER setBookKey
+    setBookKey,
     addPage,
     deletePage,
     handleLayoutChange,
