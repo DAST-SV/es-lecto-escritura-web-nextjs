@@ -13,7 +13,6 @@ import {
   X, ChevronLeft, ChevronRight, Maximize, Minimize, 
   BookOpen, FileText
 } from 'lucide-react';
-import type { PageEditor } from '@/src/core/domain/types';
 import { PageRenderer } from '@/src/presentation/features/layouts/components/PageRenderer';
 
 // Estilos compartidos

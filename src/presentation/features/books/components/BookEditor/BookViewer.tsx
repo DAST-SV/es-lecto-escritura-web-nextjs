@@ -8,12 +8,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import HTMLFlipBook from 'react-pageflip';
-import type { page, Page } from '@/src/typings/types-page-book/index';
 import { PageRenderer } from "@/src/presentation/features/layouts/components/PageRenderer";
-import type { LayoutType, backgroundstype } from '@/src/typings/types-page-book/index';
 
 // ✅ Importar estilos compartidos
 import '@/src/presentation/features/layouts/styles/book-shared.css';
+import { BackgroundType, LayoutType } from '@/src/core/domain/types';
 
 interface PageRendererIndexProps {
   page: page;
@@ -27,7 +26,7 @@ function convertPage(oldPage: page): Page {
     title: oldPage.title,
     text: oldPage.text,
     image: oldPage.image ?? undefined,
-    background: oldPage.background as backgroundstype,
+    background: oldPage.background as BackgroundType,
     animation: undefined,
     audio: undefined,
     interactiveGame: undefined,
