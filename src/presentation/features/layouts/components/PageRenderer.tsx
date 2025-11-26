@@ -1,42 +1,72 @@
 /**
  * UBICACIÓN: src/presentation/features/layouts/components/PageRenderer.tsx
- * 
- * ✅ MEJORADO: Estilos consistentes entre editor y lector
+ * ✅ CORREGIDO: Tipos y estilos consistentes
  */
 
 import React from "react";
 import { getLayout } from "../registry";
 import { motion } from "framer-motion";
 import { getAnimation } from "@/src/utils/animations/animations";
-
-// ✅ Importar estilos compartidos
 import '@/src/presentation/features/layouts/styles/book-shared.css';
 import '@/src/style/rich-content.css';
-import { backgrounds, borders, Page } from "@/src/core/domain/types";
+import { backgrounds, borders, Page as PageType } from "@/src/core/domain/types";
 
 interface Props {
-  page: Page;
+  layout: string;
+  title: string;
+  text: string;
+  image?: string;
+  background?: string;
+  animation?: string;
+  border?: string;
+  pageNumber: number;
+  isEditor: boolean;
   isActive?: boolean;
 }
 
-export function PageRenderer({ page, isActive }: Props) {
+export function PageRenderer({ 
+  layout,
+  title,
+  text,
+  image,
+  background,
+  animation,
+  border,
+  pageNumber,
+  isEditor,
+  isActive 
+}: Props) {
+  // ✅ Convertir props a Page
+  const page: PageType = {
+    layout: layout as any,
+    title,
+    text,
+    image,
+    background: background as any,
+    animation,
+    border,
+  };
+
   const Layout = getLayout(page.layout);
-  const getBorderRadius = page.border ? borders[page.border] : borders.cuadrado;
+  
+  // ✅ Arreglar getBorderRadius
+  const getBorderRadius = () => {
+    if (!page.border) return '0';
+    const borderKey = page.border as keyof typeof borders;
+    return borders[borderKey] || '0';
+  };
 
   /**
-   * ✅ Lógica de fondo unificada:
-   * 1. Color de fondo (backgroundColor)
-   * 2. Imagen de fondo encima (backgroundImage con contain)
+   * ✅ Lógica de fondo unificada
    */
   const getBackgroundStyle = (): React.CSSProperties => {
     const bg = page.background;
 
-    // Sin fondo → blanco
     if (!bg || bg === '' || bg === 'blanco') {
-      return { backgroundColor: backgrounds.blanco || '#ffffff' };
+      return { backgroundColor: '#ffffff' };
     }
 
-    // Es una URL de imagen
+    // URL de imagen
     if (typeof bg === 'string' && /^(https?:\/\/|blob:)/.test(bg)) {
       return {
         backgroundColor: '#ffffff',
@@ -47,24 +77,22 @@ export function PageRenderer({ page, isActive }: Props) {
       };
     }
 
-    // Es un color hex
+    // Color hex
     if (typeof bg === 'string' && bg.startsWith('#')) {
       return { backgroundColor: bg };
     }
 
-    // Es un preset de backgrounds
+    // Preset
     if (bg in backgrounds) {
       return { backgroundColor: backgrounds[bg as keyof typeof backgrounds] };
     }
 
-    // Fallback
     return { backgroundColor: '#ffffff' };
   };
 
   const backgroundStyle = getBackgroundStyle();
-  const animation = page.animation ? getAnimation(page.animation) : null;
-
-  // Determinar si tiene fondo personalizado (para padding)
+  const animationVariants = page.animation ? getAnimation(page.animation) : null;
+  
   const hasCustomBackground = 
     page.background && 
     page.background !== 'blanco' && 
@@ -76,7 +104,7 @@ export function PageRenderer({ page, isActive }: Props) {
       className="flipbook-page"
       style={{
         ...backgroundStyle,
-        borderRadius: getBorderRadius,
+        borderRadius: getBorderRadius(),
         width: "100%",
         height: "100%",
         position: 'relative',
@@ -90,7 +118,6 @@ export function PageRenderer({ page, isActive }: Props) {
           height: '100%',
           position: 'relative',
           overflow: 'hidden',
-          // ✅ Padding consistente
           padding: hasCustomBackground ? 0 : '1.5rem',
           boxSizing: 'border-box',
         }}
@@ -100,20 +127,14 @@ export function PageRenderer({ page, isActive }: Props) {
     </div>
   );
 
-  if (animation) {
+  if (animationVariants) {
     return (
       <motion.div
         className="w-full h-full rich-content"
         initial="hidden"
         animate={isActive ? "visible" : "hidden"}
-        variants={animation}
-        style={{ 
-          margin: 0, 
-          padding: 0, 
-          overflow: 'hidden',
-          width: '100%',
-          height: '100%',
-        }}
+        variants={animationVariants}
+        style={{ margin: 0, padding: 0, overflow: 'hidden' }}
       >
         {content}
       </motion.div>
@@ -123,13 +144,7 @@ export function PageRenderer({ page, isActive }: Props) {
   return (
     <div 
       className="w-full h-full rich-content"
-      style={{ 
-        margin: 0, 
-        padding: 0, 
-        overflow: 'hidden',
-        width: '100%',
-        height: '100%',
-      }}
+      style={{ margin: 0, padding: 0, overflow: 'hidden' }}
     >
       {content}
     </div>

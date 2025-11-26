@@ -1,8 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookReader/BookReader.tsx
- * 
- * ✅ ACTUALIZADO: Usa tipos del dominio
- * Garantiza que el libro se vea igual en editor y lectura
+ * ✅ CORREGIDO: Props tipadas correctamente
  */
 
 'use client';
@@ -14,8 +12,6 @@ import {
   BookOpen, FileText
 } from 'lucide-react';
 import { PageRenderer } from '@/src/presentation/features/layouts/components/PageRenderer';
-
-// Estilos compartidos
 import '@/src/presentation/features/layouts/styles/book-shared.css';
 import { PageEditor } from '@/src/core/domain/types';
 
@@ -62,7 +58,7 @@ export function BookReader({
     setIsClient(true);
   }, []);
 
-  // Cálculo de dimensiones (igual que BookViewer)
+  // Cálculo de dimensiones
   useEffect(() => {
     if (!isClient) return;
 
@@ -201,14 +197,18 @@ export function BookReader({
       return (
         <div className="page w-full h-full" key={page.id || idx}>
           <div className="page-inner w-full h-full">
+            {/* ✅ CORREGIDO: Pasar props individuales */}
             <PageRenderer
               layout={page.layout}
               title={page.title}
               text={page.text}
-              image={page.image}
-              background={page.background}
+              image={page.image ?? undefined}
+              background={page.background ?? undefined}
+              animation={page.animation}
+              border={page.border}
               pageNumber={idx + 1}
               isEditor={false}
+              isActive={isActive}
             />
           </div>
         </div>

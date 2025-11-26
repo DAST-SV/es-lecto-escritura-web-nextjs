@@ -12,38 +12,7 @@ import { PageRenderer } from "@/src/presentation/features/layouts/components/Pag
 
 // ✅ Importar estilos compartidos
 import '@/src/presentation/features/layouts/styles/book-shared.css';
-import { BackgroundType, LayoutType, page, Page } from '@/src/core/domain/types';
-
-interface PageRendererIndexProps {
-  page: page;
-  pageNumber: number;
-  isActive?: boolean;
-}
-
-function convertPage(oldPage: page): Page {
-  return {
-    layout: oldPage.layout as LayoutType,
-    title: oldPage.title,
-    text: oldPage.text,
-    image: oldPage.image ?? undefined,
-    background: oldPage.background as BackgroundType,
-    animation: undefined,
-    audio: undefined,
-    interactiveGame: undefined,
-    items: [],
-    border: undefined
-  };
-}
-
-const PageRendererIndex: React.FC<PageRendererIndexProps> = ({ page, pageNumber, isActive }) => {
-  const Pagina = convertPage(page);
-
-  return (
-    <div className="w-full h-full relative overflow-hidden">
-      <PageRenderer page={Pagina} isActive={isActive} />
-    </div>
-  );
-};
+import { page } from '@/src/core/domain/types';
 
 interface BookViewerProps {
   pages: page[];
@@ -185,9 +154,17 @@ export function BookViewer({
       return (
         <div className="page w-full h-full" key={page.id || idx}>
           <div className="page-inner w-full h-full">
-            <PageRendererIndex
-              page={page}
+            {/* ✅ CORREGIDO: Pasar props individuales */}
+            <PageRenderer
+              layout={page.layout}
+              title={page.title}
+              text={page.text}
+              image={page.image ?? undefined}
+              background={page.background ?? undefined}
+              animation={page.animation}
+              border={page.border}
               pageNumber={idx + 1}
+              isEditor={true}
               isActive={isActive}
             />
           </div>
