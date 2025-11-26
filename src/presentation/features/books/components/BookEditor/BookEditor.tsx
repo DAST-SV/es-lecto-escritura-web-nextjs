@@ -18,13 +18,12 @@ import { EditorSidebar } from "./EditorSidebar";
 import { ValidationPanel } from "./ValidationPanel";
 import { LoadingOverlay } from "./LoadingOverlay";
 
-// ✅ IMPORTAR EL SERVICIO
-import { BookService } from "@/src/infrastructure/services/bookService";
-
 import type { page } from "@/src/typings/types-page-book/index";
 import LiteraryCardView from "./LiteraryCardView";
 import { LiteraryMetadataForm } from "./LiteraryMetadataForm";
 import { BookViewer } from "./BookViewer";
+import { CreatePageDTO } from "@/src/infrastructure/dto/PageDTO";
+import { BookService } from "@/src/infrastructure/services/bookService";
 
 interface BookEditorProps {
   initialPages?: page[];
@@ -264,26 +263,28 @@ export function BookEditor({
     // Validación temprana de páginas
     if (!bookState.pages || bookState.pages.length === 0) {
       console.warn('⚠️ Validación falló: No hay páginas');
+      toast.error('❌ No puedes guardar un libro sin páginas', {
+        duration: 4000,
+        style: { zIndex: 99999 }
+      });
       setValidationErrors([{
         field: 'Páginas',
         message: 'Debes crear al menos una página antes de guardar'
       }]);
-      setShowValidation(true); // ✅ MOSTRAR PANEL
+      setShowValidation(true);
       return;
     }
 
     // Validaciones generales
     const errors = validateBook();
 
-    console.log('🔍 Errores de validación:', errors);
-
     if (errors.length > 0) {
       setValidationErrors(errors);
-      setShowValidation(true); // ✅ MOSTRAR PANEL
-      // toast.error('Por favor corrige los errores antes de guardar', {
-      //   duration: 5000,
-      //   style: { zIndex: 99999 }
-      // });
+      setShowValidation(true);
+      toast.error('Por favor corrige los errores antes de guardar', {
+        duration: 5000,
+        style: { zIndex: 99999 }
+      });
       return;
     }
 
@@ -306,6 +307,22 @@ export function BookEditor({
       } else {
         console.log('✏️ Modo edición - ID del libro:', IdLibro);
       }
+
+      // ✅ Convertir páginas a DTOs
+      const pagesDTO: CreatePageDTO[] = bookState.pages.map(page => ({
+        layout: page.layout || 'default',
+        title: page.title || '',
+        text: page.text || '',
+        image: page.image || '',
+        background: page.background || '',
+        animation: page.animation || '',
+        audio: page.audio || '',
+        interactiveGame: page.interactiveGame || '',
+        items: page.items || [],
+        border: page.border || ''
+      }));
+
+      console.log('📦 Páginas convertidas a DTOs:', pagesDTO.length);
 
       // Construir metadata
       const metadata = {
@@ -336,7 +353,7 @@ export function BookEditor({
       // Guardar usando el servicio
       console.log('📤 Llamando a BookService.saveBook...');
       const result = await BookService.saveBook(
-        bookState.pages,
+        pagesDTO,  // ✅ DTOs ya convertidos
         metadata,
         IdLibro,
         userId
@@ -347,19 +364,16 @@ export function BookEditor({
       setLoadingStatus('success');
       setLoadingMessage('Tu libro ha sido guardado correctamente');
 
-      // Redireccionar después de 2 segundos
       setTimeout(() => {
         window.location.href = '/dashboard/mis-libros';
       }, 2000);
 
     } catch (error: any) {
       console.error('❌ Error guardando libro:', error);
-      console.error('❌ Stack trace:', error.stack);
 
       setLoadingStatus('error');
       setLoadingMessage(error.message || 'Ocurrió un error al guardar el libro. Por favor intenta nuevamente.');
 
-      // Restaurar estado después de 3 segundos
       setTimeout(() => {
         setLoadingStatus('idle');
         setIsSaving(false);
@@ -383,6 +397,7 @@ export function BookEditor({
     selectedValores,
     selectedNivel
   ]);
+
 
   const handlePortadaChange = useCallback((file: File | null) => {
     setPortada(file);

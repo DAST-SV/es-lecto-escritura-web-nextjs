@@ -1,12 +1,9 @@
 /**
  * UBICACIÓN: src/infrastructure/services/BookService.ts
- * 
- * Servicio centralizado para operaciones CRUD de libros
  */
 
-import { page } from '@/src/typings/types-page-book';
+import { CreatePageDTO } from '../dto/PageDTO';
 
-// Tipo para metadata del libro
 export interface BookMetadata {
   titulo: string;
   descripcion: string;
@@ -25,262 +22,155 @@ export interface BookMetadata {
 
 export class BookService {
   /**
-   * Guardar libro (crear o actualizar según si tiene ID)
+   * Guarda un libro (crea o actualiza)
    */
   static async saveBook(
-    pages: page[],
+    pages: CreatePageDTO[],  // ✅ Recibe DTOs directamente
     metadata: BookMetadata,
     bookId?: string,
     userId?: string
-  ): Promise<{ success: boolean; bookId: string; message: string }> {
+  ): Promise<{ success: boolean; bookId: string }> {
     
-    console.log('📚 BookService.saveBook llamado');
-    console.log('   📄 Páginas:', pages.length);
-    console.log('   🆔 BookId:', bookId);
-    console.log('   👤 UserId:', userId);
-
-    // ✅ VALIDACIÓN: Sin páginas no se puede guardar
+    // Validar páginas
     if (!pages || pages.length === 0) {
-      throw new Error('No se puede guardar un libro sin páginas. Debes crear al menos una página.');
+      throw new Error('Debe haber al menos una página.');
     }
+
+    console.log('📚 BookService.saveBook iniciado');
+    console.log('   Páginas:', pages.length);
+    console.log('   BookId:', bookId || 'NUEVO');
 
     if (bookId) {
-      // ACTUALIZAR libro existente
-      const result = await this.updateBook(bookId, pages, metadata);
-      return {
-        ...result,
-        bookId: bookId
-      };
+      return await this.updateBook(bookId, pages, metadata);
     } else {
-      // CREAR libro nuevo
-      if (!userId) {
-        throw new Error('userId es requerido para crear un libro nuevo');
-      }
-      return await this.createBook(pages, metadata, userId);
+      return await this.createBook(pages, metadata, userId!);
     }
   }
 
   /**
-   * Actualizar libro existente
+   * Crea un libro nuevo
    */
-  static async updateBook(
-    bookId: string,
-    pages: page[],
-    metadata: BookMetadata
-  ): Promise<{ success: boolean; message: string }> {
-    
-    console.log('✏️ BookService.updateBook llamado');
-    console.log('   🆔 BookId:', bookId);
-    console.log('   📄 Páginas:', pages.length);
-
-    // ✅ VALIDACIÓN: Sin páginas no se puede actualizar
-    if (!pages || pages.length === 0) {
-      throw new Error('No se puede actualizar un libro sin páginas. Debes crear al menos una página.');
-    }
-
-    try {
-      // Determinar la portada final
-      const portadaFinal = 
-        metadata.portada || 
-        metadata.portadaUrl || 
-        metadata.cardBackgroundImage || 
-        metadata.cardBackgroundUrl || 
-        null;
-
-      const response = await fetch('/api/books/update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          idLibro: bookId,
-          pages: pages,
-          titulo: metadata.titulo,
-          descripcion: metadata.descripcion,
-          portada: portadaFinal,
-          autores: metadata.autores,
-          personajes: metadata.personajes,
-          categoria: metadata.selectedCategorias,
-          genero: metadata.selectedGeneros,
-          etiquetas: metadata.selectedEtiquetas,
-          valores: metadata.selectedValores,
-          nivel: metadata.selectedNivel,
-        })
-      });
-
-      const data = await response.json();
-      console.log('✅ Respuesta de updatebook:', data);
-
-      if (!data.ok) {
-        throw new Error(data.error || 'Error al actualizar el libro');
-      }
-
-      return {
-        success: true,
-        message: data.message || 'Libro actualizado correctamente'
-      };
-
-    } catch (error: any) {
-      console.error('❌ Error en BookService.updateBook:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Crear libro nuevo
-   */
-  static async createBook(
-    pages: page[],
+  private static async createBook(
+    pages: CreatePageDTO[],
     metadata: BookMetadata,
     userId: string
-  ): Promise<{ success: boolean; bookId: string; message: string }> {
+  ): Promise<{ success: boolean; bookId: string }> {
     
-    console.log('🆕 BookService.createBook llamado');
-    console.log('   👤 UserId:', userId);
-    console.log('   📄 Páginas:', pages.length);
-
-    // ✅ VALIDACIÓN: Sin páginas no se puede crear
-    if (!pages || pages.length === 0) {
-      throw new Error('No se puede crear un libro sin páginas. Debes crear al menos una página.');
+    if (!userId) {
+      throw new Error('userId es requerido para crear un libro');
     }
 
-    try {
-      // Determinar la portada final
-      const portadaFinal = 
-        metadata.portada || 
-        metadata.portadaUrl || 
-        metadata.cardBackgroundImage || 
-        metadata.cardBackgroundUrl || 
-        null;
+    console.log('📝 Creando libro nuevo...');
 
-      // ========== PASO 1: Crear el libro ==========
-      console.log('📤 PASO 1: Creando libro...');
-      const createBookResponse = await fetch('/api/libros/createbook', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: userId,
-          title: metadata.titulo,
-          descripcion: metadata.descripcion,
-          portada: portadaFinal,
-          autores: metadata.autores,
-          personajes: metadata.personajes,
-          categoria: metadata.selectedCategorias,
-          genero: metadata.selectedGeneros,
-          etiquetas: metadata.selectedEtiquetas,
-          valores: metadata.selectedValores,
-          nivel: metadata.selectedNivel,
-        })
-      });
+    const createDTO = {
+      userId,
+      title: metadata.titulo,
+      nivel: metadata.selectedNivel || 1,
+      autores: metadata.autores,
+      personajes: metadata.personajes,
+      categoria: metadata.selectedCategorias.map(c => Number(c)),
+      genero: metadata.selectedGeneros.map(g => Number(g)),
+      descripcion: metadata.descripcion,
+      etiquetas: metadata.selectedEtiquetas.map(e => Number(e)),
+      portada: metadata.portadaUrl || metadata.cardBackgroundUrl,
+      valores: metadata.selectedValores.map(v => Number(v))
+    };
 
-      const createBookData = await createBookResponse.json();
-      console.log('✅ Libro creado:', createBookData);
+    // 1. Crear libro
+    const response1 = await fetch('/api/libros/createbook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(createDTO)
+    });
 
-      if (!createBookData.ok || !createBookData.libroId) {
-        throw new Error(createBookData.error || 'Error al crear el libro');
-      }
-
-      const newBookId = createBookData.libroId;
-
-      // ========== PASO 2: Guardar las páginas ==========
-      console.log('📤 PASO 2: Guardando', pages.length, 'páginas para libro:', newBookId);
-      const createPagesResponse = await fetch('/api/libros/createpages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          LibroId: newBookId,
-          pages: pages
-        })
-      });
-
-      const createPagesData = await createPagesResponse.json();
-      console.log('✅ Páginas guardadas:', createPagesData);
-
-      if (!createPagesData.ok) {
-        // Si falla el guardado de páginas, idealmente deberíamos eliminar el libro creado
-        console.error('❌ Error al guardar páginas, libro creado pero sin páginas');
-        throw new Error(createPagesData.error || 'Error al guardar las páginas');
-      }
-
-      return {
-        success: true,
-        bookId: newBookId,
-        message: `Libro creado exitosamente con ${createPagesData.cantidadInsertadas} páginas`
-      };
-
-    } catch (error: any) {
-      console.error('❌ Error en BookService.createBook:', error);
-      throw error;
+    const data1 = await response1.json();
+    if (!data1.libroId) {
+      throw new Error(data1.error || 'Error al crear libro');
     }
+
+    const libroId = data1.libroId;
+    console.log('✅ Libro creado con ID:', libroId);
+
+    // 2. Crear páginas
+    const response2 = await fetch('/api/libros/createpages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ LibroId: libroId, pages })
+    });
+
+    const data2 = await response2.json();
+    if (!data2.ok) {
+      throw new Error(data2.error || 'Error al crear páginas');
+    }
+
+    console.log('✅ Páginas creadas:', pages.length);
+
+    return { success: true, bookId: libroId };
   }
 
   /**
-   * Actualizar libro existente (versión completa con lógica de DB)
+   * Actualiza un libro existente
    */
-  static async updateBookComplete(
+  private static async updateBook(
     bookId: string,
-    pages: page[],
+    pages: CreatePageDTO[],
     metadata: BookMetadata
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<{ success: boolean; bookId: string }> {
     
-    console.log('✏️ BookService.updateBookComplete llamado');
+    console.log('✏️ Actualizando libro:', bookId);
 
-    if (!pages || pages.length === 0) {
-      throw new Error('No se puede actualizar un libro sin páginas.');
+    const updateDTO = {
+      idLibro: bookId,
+      titulo: metadata.titulo,
+      descripcion: metadata.descripcion,
+      portada: metadata.portadaUrl || metadata.cardBackgroundUrl,
+      nivel: metadata.selectedNivel || 1,
+      autores: metadata.autores,
+      personajes: metadata.personajes,
+      categoria: metadata.selectedCategorias.map(c => Number(c)),
+      genero: metadata.selectedGeneros.map(g => Number(g)),
+      etiquetas: metadata.selectedEtiquetas.map(e => Number(e)),
+      valores: metadata.selectedValores.map(v => Number(v)),
+      pages
+    };
+
+    const response = await fetch('/api/libros/updatebook', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updateDTO)
+    });
+
+    const data = await response.json();
+    if (!data.ok) {
+      throw new Error(data.error || 'Error al actualizar libro');
     }
 
-    // Aquí solo llamamos al API endpoint que ya tienes
-    // El endpoint /api/libros/updatebook maneja toda la lógica
-    return await this.updateBook(bookId, pages, metadata);
+    console.log('✅ Libro actualizado');
+
+    return { success: true, bookId };
   }
 
   /**
-   * Leer libro completo (con todas sus relaciones)
+   * Obtiene un libro completo
    */
-  static async getBookComplete(bookId: string): Promise<any> {
-    console.log('📖 BookService.getBookComplete llamado');
-    console.log('   🆔 BookId:', bookId);
-
-    try {
-      const response = await fetch(`/api/books/${bookId}/read`);
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      return data.libro;
-
-    } catch (error: any) {
-      console.error('❌ Error en BookService.getBookComplete:', error);
-      throw error;
-    }
+  static async getBookComplete(bookId: string) {
+    const response = await fetch(`/api/books/${bookId}/read`);
+    const data = await response.json();
+    return data.libro || null;
   }
 
   /**
-   * Eliminar libro
+   * Elimina un libro
    */
-  static async deleteBook(bookId: string): Promise<{ success: boolean; message: string }> {
-    console.log('🗑️ BookService.deleteBook llamado');
-    console.log('   🆔 BookId:', bookId);
+  static async deleteBook(bookId: string): Promise<void> {
+    const response = await fetch('/api/libros/deletebook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ LibroId: bookId })
+    });
 
-    try {
-      const response = await fetch(`/api/libros/deletebook/${bookId}`, {
-        method: 'DELETE',
-      });
-
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      return {
-        success: true,
-        message: 'Libro eliminado correctamente'
-      };
-
-    } catch (error: any) {
-      console.error('❌ Error en BookService.deleteBook:', error);
-      throw error;
+    if (!response.ok) {
+      throw new Error('Error al eliminar libro');
     }
   }
 }
