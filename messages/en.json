@@ -100,7 +100,7 @@
     "book": {
       "create": {
         "text": "Create Book",
-        "href": "/book/create",
+        "href": "/books/create",
         "title": "Start creating a new book"
       }
     },

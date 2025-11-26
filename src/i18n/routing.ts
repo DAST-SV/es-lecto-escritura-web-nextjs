@@ -38,9 +38,9 @@ export const routing = defineRouting({
       en: '/my-books',
       es: '/mis-libros'
     },
-    '/book/create':{
-      en: '/book/create',
-      es: '/libro/crear'
+    '/books/create':{
+      en: '/books/create',
+      es: '/libros/crear'
     },
     '/library': {
       en: '/library',
