@@ -1,12 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookEditor/BookEditor.tsx
- * ✅ CORREGIDO: Funciona con el nuevo schema books.*
- * 
- * Características:
- * - Sube imágenes a Supabase antes de guardar
- * - Usa BookImageService para persistir imágenes
- * - Consistencia visual con modo lectura
- * - Carga datos existentes para edición
+ * ✅ CORREGIDO: Mejor flujo de guardado y manejo de errores
  */
 "use client";
 
@@ -275,6 +269,14 @@ export function BookEditor({
   // FUNCIÓN PRINCIPAL: handleSave
   const handleSave = useCallback(async () => {
     console.log('🔥 INICIANDO GUARDADO');
+    console.log('📊 Estado actual:', {
+      userId: currentUserId,
+      titulo,
+      pagesCount: bookState.pages.length,
+      autoresCount: autores.length,
+      hasPortadaFile: !!portadaFile,
+      hasCardBgFile: !!cardBackgroundFile,
+    });
 
     if (!currentUserId) {
       toast.error('❌ Debes iniciar sesión para guardar');
@@ -296,65 +298,96 @@ export function BookEditor({
     try {
       // 1️⃣ Generar ID temporal si es libro nuevo
       const tempBookId = IdLibro || `temp_${Date.now()}`;
+      console.log('📦 ID del libro:', tempBookId);
 
-      // 2️⃣ SUBIR TODAS LAS IMÁGENES PRIMERO
-      setLoadingMessage('Subiendo imágenes...');
-      
-      const uploadedImages = await BookImageService.uploadAllBookImages(
-        currentUserId,
-        tempBookId,
-        {
-          portadaFile: portadaFile,
-          cardBackgroundFile: cardBackgroundFile,
-          pages: bookState.pages.map(page => ({
-            file: page.file as Blob | null,
-            backgroundFile: page.backgroundFile as Blob | null,
-            image: page.image,
-            background: page.background
-          }))
-        }
-      );
+      // 2️⃣ SUBIR IMÁGENES (solo si hay archivos nuevos)
+      let uploadedImages = {
+        portadaUrl: null as string | null,
+        cardBackgroundUrl: null as string | null,
+        pages: [] as Array<{ imageUrl: string | null; backgroundUrl: string | null }>
+      };
 
-      console.log('📸 Imágenes subidas:', uploadedImages);
+      const hasFilesToUpload = portadaFile || cardBackgroundFile || 
+        bookState.pages.some(p => p.file || p.backgroundFile);
+
+      if (hasFilesToUpload) {
+        setLoadingMessage('Subiendo imágenes...');
+        console.log('📸 Subiendo imágenes...');
+        
+        uploadedImages = await BookImageService.uploadAllBookImages(
+          currentUserId,
+          tempBookId,
+          {
+            portadaFile: portadaFile,
+            cardBackgroundFile: cardBackgroundFile,
+            pages: bookState.pages.map(page => ({
+              file: page.file as Blob | null,
+              backgroundFile: page.backgroundFile as Blob | null,
+              image: page.image,
+              background: page.background
+            }))
+          }
+        );
+
+        console.log('📸 Resultado de subida:', uploadedImages);
+      } else {
+        // Si no hay archivos nuevos, mantener URLs existentes
+        uploadedImages.pages = bookState.pages.map(page => ({
+          imageUrl: BookImageService.isPermanentUrl(page.image) ? page.image! : null,
+          backgroundUrl: BookImageService.isPermanentUrl(page.background as string) ? page.background as string : 
+                        BookImageService.isColor(page.background as string) ? page.background as string : null,
+        }));
+      }
 
       // 3️⃣ Determinar la portada final
       const finalPortadaUrl = uploadedImages.portadaUrl || 
                               uploadedImages.cardBackgroundUrl || 
-                              portadaUrl || 
-                              cardBackgroundUrl;
+                              (BookImageService.isPermanentUrl(portadaUrl) ? portadaUrl : null) || 
+                              (BookImageService.isPermanentUrl(cardBackgroundUrl) ? cardBackgroundUrl : null);
+
+      console.log('🖼️ Portada final:', finalPortadaUrl);
 
       // 4️⃣ Preparar páginas con URLs permanentes
       setLoadingMessage('Guardando libro...');
       
       const pagesWithUrls = bookState.pages.map((page, idx) => {
-        const uploadedPage = uploadedImages.pages[idx];
+        const uploadedPage = uploadedImages.pages[idx] || { imageUrl: null, backgroundUrl: null };
         
         // Determinar imagen final
-        let finalImage = page.image;
-        if (uploadedPage?.imageUrl) {
+        let finalImage = '';
+        if (uploadedPage.imageUrl) {
           finalImage = uploadedPage.imageUrl;
-        } else if (page.image && BookImageService.isTempUrl(page.image)) {
-          finalImage = null; // Descartar blob: URLs
+        } else if (page.image && BookImageService.isPermanentUrl(page.image)) {
+          finalImage = page.image;
         }
 
         // Determinar fondo final
-        let finalBackground = page.background;
-        if (uploadedPage?.backgroundUrl && !BookImageService.isColor(uploadedPage.backgroundUrl)) {
+        let finalBackground = 'blanco';
+        if (uploadedPage.backgroundUrl) {
           finalBackground = uploadedPage.backgroundUrl;
-        } else if (page.background && 
-                   typeof page.background === 'string' && 
-                   BookImageService.isTempUrl(page.background)) {
-          finalBackground = 'blanco'; // Fallback si era blob:
+        } else if (page.background) {
+          if (BookImageService.isPermanentUrl(page.background as string)) {
+            finalBackground = page.background as string;
+          } else if (BookImageService.isColor(page.background as string)) {
+            finalBackground = page.background as string;
+          }
         }
 
         return {
           layout: page.layout || 'TextCenterLayout',
           title: page.title || '',
           text: page.text || '',
-          image: finalImage || '',
-          background: finalBackground || 'blanco',
+          image: finalImage,
+          background: finalBackground,
         };
       });
+
+      console.log('📄 Páginas preparadas:', pagesWithUrls.map((p, i) => ({
+        page: i + 1,
+        layout: p.layout,
+        hasImage: !!p.image,
+        background: p.background
+      })));
 
       // 5️⃣ Preparar datos del libro
       const bookData = {
@@ -371,21 +404,23 @@ export function BookEditor({
         pages: pagesWithUrls
       };
 
-      console.log('📦 Datos del libro:', {
+      console.log('📦 Datos del libro a guardar:', {
         titulo: bookData.titulo,
         portada: bookData.portada,
         pagesCount: bookData.pages.length,
-        firstPageImage: bookData.pages[0]?.image,
+        autoresCount: bookData.autores.length,
       });
 
       // 6️⃣ Guardar en base de datos
       let savedBookId: string;
       
       if (IdLibro) {
+        console.log('📝 Actualizando libro existente:', IdLibro);
         await UpdateBookUseCase.execute(IdLibro, bookData);
         savedBookId = IdLibro;
         console.log('✅ Libro actualizado:', savedBookId);
       } else {
+        console.log('📝 Creando libro nuevo...');
         savedBookId = await CreateBookUseCase.execute(currentUserId, bookData);
         console.log('✅ Libro creado:', savedBookId);
       }

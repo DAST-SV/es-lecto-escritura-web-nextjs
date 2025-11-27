@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/layouts/components/PageRenderer.tsx
- * ✅ LIMPIO: Un solo tipo Page, sin conversiones
+ * ✅ CORREGIDO: Mejor manejo de fondos (color + imagen)
  */
 
 import React from "react";
@@ -20,19 +20,35 @@ export function PageRenderer({ page, isActive = true }: Props) {
   const Layout = getLayout(page.layout);
   
   /**
-   * ✅ Lógica de fondo simplificada
+   * ✅ Lógica de fondo mejorada:
+   * 1. Si es URL de imagen -> fondo con imagen
+   * 2. Si es color hex -> fondo de color
+   * 3. Si es preset -> convertir a color
+   * 4. Default -> blanco
    */
   const getBackgroundStyle = (): React.CSSProperties => {
     const bg = page.background;
 
-    if (!bg || bg === '' || bg === 'blanco') {
+    // Sin fondo o blanco
+    if (!bg || bg === '' || bg === 'blanco' || bg === '#ffffff') {
       return { backgroundColor: '#ffffff' };
     }
 
-    // URL de imagen
-    if (typeof bg === 'string' && /^(https?:\/\/|blob:)/.test(bg)) {
+    // URL de imagen (https, http)
+    if (typeof bg === 'string' && (bg.startsWith('https://') || bg.startsWith('http://'))) {
       return {
-        backgroundColor: '#ffffff',
+        backgroundColor: '#000000', // Fondo negro detrás de la imagen
+        backgroundImage: `url(${bg})`,
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: 'contain',
+      };
+    }
+
+    // URL blob temporal (no debería llegar aquí en producción)
+    if (typeof bg === 'string' && bg.startsWith('blob:')) {
+      return {
+        backgroundColor: '#000000',
         backgroundImage: `url(${bg})`,
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -45,22 +61,32 @@ export function PageRenderer({ page, isActive = true }: Props) {
       return { backgroundColor: bg };
     }
 
-    // Preset
-    if (isBackgroundPreset(bg)) {
+    // Preset de color
+    if (typeof bg === 'string' && isBackgroundPreset(bg)) {
       return { backgroundColor: BACKGROUND_PRESETS[bg] };
     }
 
+    // Fallback
     return { backgroundColor: '#ffffff' };
   };
 
   const backgroundStyle = getBackgroundStyle();
   const animationVariants = page.animation ? getAnimation(page.animation) : null;
   
+  // Determinar si tiene fondo personalizado (para padding)
   const hasCustomBackground = 
     page.background && 
     page.background !== 'blanco' && 
     page.background !== '' &&
     page.background !== '#ffffff';
+
+  // Determinar si el fondo es oscuro (para texto claro)
+  const isDarkBackground = 
+    page.background === '#000000' ||
+    page.background === 'negro' ||
+    page.background === 'azulOscuro' ||
+    page.background === 'verdeOscuro' ||
+    (typeof page.background === 'string' && page.background.startsWith('http'));
 
   const content = (
     <div
@@ -82,6 +108,7 @@ export function PageRenderer({ page, isActive = true }: Props) {
           overflow: 'hidden',
           padding: hasCustomBackground ? 0 : '1.5rem',
           boxSizing: 'border-box',
+          color: isDarkBackground ? '#ffffff' : 'inherit',
         }}
       >
         <Layout page={page} />

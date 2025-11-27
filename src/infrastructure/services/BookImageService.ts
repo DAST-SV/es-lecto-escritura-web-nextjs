@@ -1,13 +1,6 @@
 /**
  * UBICACIÓN: src/infrastructure/services/BookImageService.ts
- * ✅ ACTUALIZADO: Usa el bucket 'book-images' con manejo robusto
- * 
- * NOTA: El bucket debe crearse manualmente en Supabase Dashboard:
- * 1. Ve a Storage > New Bucket
- * 2. Nombre: book-images
- * 3. Public: true
- * 4. File size limit: 5MB
- * 5. Allowed MIME types: image/jpeg, image/png, image/gif, image/webp
+ * ✅ CORREGIDO: Mejor manejo de errores y verificación de bucket
  */
 
 import { createClient } from '@/src/utils/supabase/client';
@@ -31,11 +24,21 @@ export class BookImageService {
   static async checkBucket(): Promise<boolean> {
     try {
       const supabase = this.getSupabase();
-      const { data, error } = await supabase.storage.getBucket(BUCKET_NAME);
+      
+      // Intentar listar archivos en el bucket (forma más fiable de verificar)
+      const { data, error } = await supabase.storage
+        .from(BUCKET_NAME)
+        .list('', { limit: 1 });
       
       if (error) {
-        console.warn(`⚠️ Bucket '${BUCKET_NAME}' no encontrado o no accesible:`, error.message);
-        return false;
+        // Si el error es "not found", el bucket no existe
+        if (error.message?.includes('not found') || error.message?.includes('does not exist')) {
+          console.warn(`⚠️ Bucket '${BUCKET_NAME}' no existe. Crearlo manualmente en Supabase Dashboard.`);
+          return false;
+        }
+        // Otros errores pueden ser de permisos pero el bucket existe
+        console.warn(`⚠️ Bucket '${BUCKET_NAME}' puede existir pero hay error de acceso:`, error.message);
+        return true; // Intentamos de todos modos
       }
       
       console.log(`✅ Bucket '${BUCKET_NAME}' disponible`);
@@ -90,7 +93,7 @@ export class BookImageService {
           fileName = `${userId}/${bookId}/misc/misc_${timestamp}_${randomStr}.${extension}`;
       }
 
-      console.log(`📤 Subiendo imagen: ${fileName}`);
+      console.log(`📤 Subiendo imagen: ${fileName} (${(file.size / 1024).toFixed(1)}KB)`);
 
       // Subir archivo
       const { data, error } = await supabase.storage
@@ -165,11 +168,13 @@ export class BookImageService {
     // Verificar bucket
     const bucketExists = await this.checkBucket();
     if (!bucketExists) {
-      console.warn('⚠️ Bucket no disponible, las imágenes no se subirán');
-      // Retornar estructura vacía pero válida
+      console.warn('⚠️ Bucket no disponible, las imágenes NO se subirán');
+      console.warn('⚠️ Crear bucket "book-images" manualmente en Supabase Dashboard > Storage');
+      
+      // Retornar estructura con URLs existentes pero sin subir nada nuevo
       results.pages = data.pages.map(page => ({
-        imageUrl: (this.isPermanentUrl(page.image) ? page.image : null) ?? null,
-        backgroundUrl: (this.isPermanentUrl(page.background) ? page.background : null) ?? null,
+        imageUrl: this.isPermanentUrl(page.image) ? page.image! : null,
+        backgroundUrl: this.isPermanentUrl(page.background) ? page.background! : null,
       }));
       return results;
     }
@@ -215,10 +220,12 @@ export class BookImageService {
         if (result.success && result.url) {
           pageResult.imageUrl = result.url;
           console.log(`✅ Imagen página ${i + 1} subida`);
+        } else {
+          console.error(`❌ Error subiendo imagen página ${i + 1}:`, result.error);
         }
       } else if (page.image && this.isPermanentUrl(page.image)) {
         // Mantener URL existente si es permanente
-        pageResult.imageUrl = page.image ?? null;
+        pageResult.imageUrl = page.image;
       }
 
       // Fondo de página (si es imagen, no color)
@@ -228,13 +235,15 @@ export class BookImageService {
         if (result.success && result.url) {
           pageResult.backgroundUrl = result.url;
           console.log(`✅ Fondo página ${i + 1} subido`);
+        } else {
+          console.error(`❌ Error subiendo fondo página ${i + 1}:`, result.error);
         }
       } else if (page.background && this.isPermanentUrl(page.background)) {
         // Mantener URL existente
-        pageResult.backgroundUrl = page.background ?? null;
+        pageResult.backgroundUrl = page.background;
       } else if (page.background && this.isColor(page.background)) {
         // Mantener color
-        pageResult.backgroundUrl = page.background ?? null;
+        pageResult.backgroundUrl = page.background;
       }
 
       results.pages.push(pageResult);
@@ -269,7 +278,7 @@ export class BookImageService {
           .list(`${folderPath}/${subfolder}`, { limit: 1000 });
 
         if (listError) {
-          console.warn(`Error listando ${subfolder}:`, listError);
+          console.warn(`⚠️ Error listando ${subfolder}:`, listError.message);
           continue;
         }
 
@@ -283,7 +292,7 @@ export class BookImageService {
             .remove(filesToDelete);
 
           if (deleteError) {
-            console.error(`Error eliminando archivos de ${subfolder}:`, deleteError);
+            console.error(`❌ Error eliminando archivos de ${subfolder}:`, deleteError.message);
           }
         }
       }
