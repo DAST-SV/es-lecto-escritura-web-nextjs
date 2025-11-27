@@ -1,5 +1,6 @@
 /**
  * UBICACIÓN: app/api/books/route.ts
+ * ✅ ACTUALIZADO: Compatible con nuevo schema
  */
 
 import { NextResponse } from 'next/server';
@@ -15,7 +16,12 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'userId requerido' }, { status: 400 });
     }
 
+    console.log('📚 API: Obteniendo libros del usuario:', userId);
+
     const books = await GetBooksByUserUseCase.execute(userId);
+
+    console.log('✅ Libros encontrados:', books.length);
+
     return NextResponse.json({ books });
   } catch (error: any) {
     console.error('❌ Error GET /api/books:', error);
@@ -29,11 +35,34 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { userId, titulo, descripcion, portada, autores, personajes, categorias, generos, etiquetas, valores, nivel, pages } = body;
+    const { 
+      userId, 
+      titulo, 
+      descripcion, 
+      portada, 
+      autores, 
+      personajes, 
+      categorias, 
+      generos, 
+      etiquetas, 
+      valores, 
+      nivel, 
+      pages 
+    } = body;
 
     if (!userId) {
       return NextResponse.json({ error: 'Usuario requerido' }, { status: 400 });
     }
+
+    if (!titulo || !titulo.trim()) {
+      return NextResponse.json({ error: 'Título requerido' }, { status: 400 });
+    }
+
+    if (!pages || pages.length === 0) {
+      return NextResponse.json({ error: 'Se requiere al menos una página' }, { status: 400 });
+    }
+
+    console.log('📚 API: Creando libro:', { userId, titulo, pages: pages.length });
 
     const libroId = await CreateBookUseCase.execute(userId, {
       titulo,
@@ -48,6 +77,8 @@ export async function POST(req: Request) {
       nivel: nivel || 1,
       pages,
     });
+
+    console.log('✅ Libro creado:', libroId);
 
     return NextResponse.json({ success: true, bookId: libroId });
   } catch (error: any) {

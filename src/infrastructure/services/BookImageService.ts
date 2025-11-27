@@ -1,14 +1,17 @@
 /**
  * UBICACIÓN: src/infrastructure/services/BookImageService.ts
- * ✅ ACTUALIZADO: Usa el nuevo bucket 'book-images'
+ * ✅ ACTUALIZADO: Usa el bucket 'book-images' con manejo robusto
  * 
- * Servicio para subir imágenes del libro a Supabase Storage
- * Maneja: portada, fondo de ficha, imágenes de página, fondos de página
+ * NOTA: El bucket debe crearse manualmente en Supabase Dashboard:
+ * 1. Ve a Storage > New Bucket
+ * 2. Nombre: book-images
+ * 3. Public: true
+ * 4. File size limit: 5MB
+ * 5. Allowed MIME types: image/jpeg, image/png, image/gif, image/webp
  */
 
 import { createClient } from '@/src/utils/supabase/client';
 
-// ✅ NUEVO BUCKET
 const BUCKET_NAME = 'book-images';
 
 export interface UploadResult {
@@ -18,7 +21,30 @@ export interface UploadResult {
 }
 
 export class BookImageService {
-  private static supabase = createClient();
+  private static getSupabase() {
+    return createClient();
+  }
+
+  /**
+   * Verifica si el bucket existe y está accesible
+   */
+  static async checkBucket(): Promise<boolean> {
+    try {
+      const supabase = this.getSupabase();
+      const { data, error } = await supabase.storage.getBucket(BUCKET_NAME);
+      
+      if (error) {
+        console.warn(`⚠️ Bucket '${BUCKET_NAME}' no encontrado o no accesible:`, error.message);
+        return false;
+      }
+      
+      console.log(`✅ Bucket '${BUCKET_NAME}' disponible`);
+      return true;
+    } catch (e) {
+      console.error('Error verificando bucket:', e);
+      return false;
+    }
+  }
 
   /**
    * Sube una imagen a Supabase Storage
@@ -31,34 +57,43 @@ export class BookImageService {
     pageNumber?: number
   ): Promise<UploadResult> {
     try {
+      const supabase = this.getSupabase();
+
       // Generar nombre único
       const timestamp = Date.now();
-      const extension = file instanceof File ? file.name.split('.').pop() : 'jpg';
+      const randomStr = Math.random().toString(36).substring(2, 8);
+      const extension = file instanceof File 
+        ? file.name.split('.').pop()?.toLowerCase() || 'jpg'
+        : 'jpg';
       
       let fileName: string;
       
       // Estructura de carpetas:
-      // book-images/
-      //   {userId}/
-      //     {bookId}/
-      //       covers/       - portadas y fondos de ficha
-      //       pages/        - imágenes de contenido
-      //       backgrounds/  - fondos de página
+      // book-images/{userId}/{bookId}/covers/
+      // book-images/{userId}/{bookId}/pages/
+      // book-images/{userId}/{bookId}/backgrounds/
       
-      if (imageType === 'portada') {
-        fileName = `${userId}/${bookId}/covers/cover_${timestamp}.${extension}`;
-      } else if (imageType === 'card-background') {
-        fileName = `${userId}/${bookId}/covers/card_bg_${timestamp}.${extension}`;
-      } else if (imageType === 'pagina' && pageNumber !== undefined) {
-        fileName = `${userId}/${bookId}/pages/page_${pageNumber}_${timestamp}.${extension}`;
-      } else if (imageType === 'fondo' && pageNumber !== undefined) {
-        fileName = `${userId}/${bookId}/backgrounds/bg_${pageNumber}_${timestamp}.${extension}`;
-      } else {
-        fileName = `${userId}/${bookId}/misc/misc_${timestamp}.${extension}`;
+      switch (imageType) {
+        case 'portada':
+          fileName = `${userId}/${bookId}/covers/cover_${timestamp}_${randomStr}.${extension}`;
+          break;
+        case 'card-background':
+          fileName = `${userId}/${bookId}/covers/card_bg_${timestamp}_${randomStr}.${extension}`;
+          break;
+        case 'pagina':
+          fileName = `${userId}/${bookId}/pages/page_${pageNumber || 0}_${timestamp}_${randomStr}.${extension}`;
+          break;
+        case 'fondo':
+          fileName = `${userId}/${bookId}/backgrounds/bg_${pageNumber || 0}_${timestamp}_${randomStr}.${extension}`;
+          break;
+        default:
+          fileName = `${userId}/${bookId}/misc/misc_${timestamp}_${randomStr}.${extension}`;
       }
 
+      console.log(`📤 Subiendo imagen: ${fileName}`);
+
       // Subir archivo
-      const { data, error } = await this.supabase.storage
+      const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
         .upload(fileName, file, {
           cacheControl: '3600',
@@ -68,20 +103,27 @@ export class BookImageService {
 
       if (error) {
         console.error('❌ Error subiendo imagen:', error);
-        return { success: false, error: error.message };
+        return { 
+          success: false, 
+          error: `Error al subir imagen: ${error.message}` 
+        };
       }
 
       // Obtener URL pública
-      const { data: urlData } = this.supabase.storage
+      const { data: urlData } = supabase.storage
         .from(BUCKET_NAME)
         .getPublicUrl(fileName);
 
-      console.log('✅ Imagen subida:', urlData.publicUrl);
+      const publicUrl = urlData.publicUrl;
+      console.log('✅ Imagen subida:', publicUrl);
       
-      return { success: true, url: urlData.publicUrl };
+      return { success: true, url: publicUrl };
     } catch (error: any) {
       console.error('❌ Error en uploadImage:', error);
-      return { success: false, error: error.message };
+      return { 
+        success: false, 
+        error: error.message || 'Error desconocido al subir imagen' 
+      };
     }
   }
 
@@ -109,11 +151,28 @@ export class BookImageService {
       backgroundUrl: string | null;
     }>;
   }> {
+    console.log('📸 BookImageService.uploadAllBookImages - Iniciando');
+    console.log('👤 Usuario:', userId);
+    console.log('📖 Libro:', bookId);
+    console.log('📄 Páginas:', data.pages.length);
+
     const results = {
       portadaUrl: null as string | null,
       cardBackgroundUrl: null as string | null,
       pages: [] as Array<{ imageUrl: string | null; backgroundUrl: string | null }>
     };
+
+    // Verificar bucket
+    const bucketExists = await this.checkBucket();
+    if (!bucketExists) {
+      console.warn('⚠️ Bucket no disponible, las imágenes no se subirán');
+      // Retornar estructura vacía pero válida
+      results.pages = data.pages.map(page => ({
+        imageUrl: (this.isPermanentUrl(page.image) ? page.image : null) ?? null,
+        backgroundUrl: (this.isPermanentUrl(page.background) ? page.background : null) ?? null,
+      }));
+      return results;
+    }
 
     // 1. Subir portada si hay archivo nuevo
     if (data.portadaFile) {
@@ -122,6 +181,8 @@ export class BookImageService {
       if (result.success && result.url) {
         results.portadaUrl = result.url;
         console.log('✅ Portada subida:', result.url);
+      } else {
+        console.error('❌ Error subiendo portada:', result.error);
       }
     }
 
@@ -132,15 +193,20 @@ export class BookImageService {
       if (result.success && result.url) {
         results.cardBackgroundUrl = result.url;
         console.log('✅ Fondo de ficha subido:', result.url);
+      } else {
+        console.error('❌ Error subiendo fondo de ficha:', result.error);
       }
     }
 
     // 3. Subir imágenes de cada página
-    console.log(`📤 Subiendo ${data.pages.length} páginas...`);
+    console.log(`📤 Procesando ${data.pages.length} páginas...`);
     
     for (let i = 0; i < data.pages.length; i++) {
       const page = data.pages[i];
-      const pageResult = { imageUrl: null as string | null, backgroundUrl: null as string | null };
+      const pageResult = { 
+        imageUrl: null as string | null, 
+        backgroundUrl: null as string | null 
+      };
 
       // Imagen de contenido
       if (page.file) {
@@ -148,11 +214,11 @@ export class BookImageService {
         const result = await this.uploadImage(page.file, userId, bookId, 'pagina', i + 1);
         if (result.success && result.url) {
           pageResult.imageUrl = result.url;
-          console.log(`✅ Imagen página ${i + 1} subida:`, result.url);
+          console.log(`✅ Imagen página ${i + 1} subida`);
         }
-      } else if (page.image && !page.image.startsWith('blob:')) {
-        // Mantener URL existente si no es blob
-        pageResult.imageUrl = page.image;
+      } else if (page.image && this.isPermanentUrl(page.image)) {
+        // Mantener URL existente si es permanente
+        pageResult.imageUrl = page.image ?? null;
       }
 
       // Fondo de página (si es imagen, no color)
@@ -161,20 +227,20 @@ export class BookImageService {
         const result = await this.uploadImage(page.backgroundFile, userId, bookId, 'fondo', i + 1);
         if (result.success && result.url) {
           pageResult.backgroundUrl = result.url;
-          console.log(`✅ Fondo página ${i + 1} subido:`, result.url);
+          console.log(`✅ Fondo página ${i + 1} subido`);
         }
-      } else if (page.background && 
-                 typeof page.background === 'string' && 
-                 !page.background.startsWith('blob:') &&
-                 (page.background.startsWith('http') || page.background.startsWith('#'))) {
-        // Mantener URL o color existente
-        pageResult.backgroundUrl = page.background;
+      } else if (page.background && this.isPermanentUrl(page.background)) {
+        // Mantener URL existente
+        pageResult.backgroundUrl = page.background ?? null;
+      } else if (page.background && this.isColor(page.background)) {
+        // Mantener color
+        pageResult.backgroundUrl = page.background ?? null;
       }
 
       results.pages.push(pageResult);
     }
 
-    console.log('✅ Todas las imágenes procesadas:', {
+    console.log('✅ Procesamiento de imágenes completado:', {
       portada: !!results.portadaUrl,
       cardBackground: !!results.cardBackgroundUrl,
       pagesWithImages: results.pages.filter(p => p.imageUrl).length,
@@ -189,41 +255,40 @@ export class BookImageService {
    */
   static async deleteBookImages(userId: string, bookId: string): Promise<void> {
     try {
+      const supabase = this.getSupabase();
       const folderPath = `${userId}/${bookId}`;
       
       console.log(`🗑️ Eliminando imágenes de: ${folderPath}`);
+
+      // Listar archivos en subcarpetas
+      const subfolders = ['covers', 'pages', 'backgrounds', 'misc'];
       
-      // Listar todos los archivos en la carpeta del libro
-      const { data: files, error } = await this.supabase.storage
-        .from(BUCKET_NAME)
-        .list(folderPath, { 
-          limit: 1000,
-          sortBy: { column: 'name', order: 'asc' }
-        });
-
-      if (error) {
-        console.error('Error listando archivos:', error);
-        return;
-      }
-
-      if (files && files.length > 0) {
-        // Construir rutas completas
-        const filesToDelete = files.map(file => `${folderPath}/${file.name}`);
-        
-        console.log(`🗑️ Eliminando ${filesToDelete.length} archivos...`);
-        
-        const { error: deleteError } = await this.supabase.storage
+      for (const subfolder of subfolders) {
+        const { data: files, error: listError } = await supabase.storage
           .from(BUCKET_NAME)
-          .remove(filesToDelete);
+          .list(`${folderPath}/${subfolder}`, { limit: 1000 });
 
-        if (deleteError) {
-          console.error('Error eliminando archivos:', deleteError);
-        } else {
-          console.log('✅ Imágenes eliminadas correctamente');
+        if (listError) {
+          console.warn(`Error listando ${subfolder}:`, listError);
+          continue;
         }
-      } else {
-        console.log('ℹ️ No hay imágenes para eliminar');
+
+        if (files && files.length > 0) {
+          const filesToDelete = files.map(file => `${folderPath}/${subfolder}/${file.name}`);
+          
+          console.log(`🗑️ Eliminando ${filesToDelete.length} archivos de ${subfolder}...`);
+          
+          const { error: deleteError } = await supabase.storage
+            .from(BUCKET_NAME)
+            .remove(filesToDelete);
+
+          if (deleteError) {
+            console.error(`Error eliminando archivos de ${subfolder}:`, deleteError);
+          }
+        }
       }
+
+      console.log('✅ Limpieza de imágenes completada');
     } catch (error) {
       console.error('Error en deleteBookImages:', error);
     }
@@ -251,6 +316,7 @@ export class BookImageService {
   static isColor(value: string | null | undefined): boolean {
     if (!value) return false;
     // Color hex o nombre de preset (sin http/blob)
-    return value.startsWith('#') || (!value.startsWith('http') && !value.startsWith('blob:'));
+    return value.startsWith('#') || 
+           (!value.startsWith('http') && !value.startsWith('blob:'));
   }
 }

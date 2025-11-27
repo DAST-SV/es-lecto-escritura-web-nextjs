@@ -1,4 +1,7 @@
-// src/presentation/features/books/components/BookMetadata/SelectFromTableAsync.tsx
+/**
+ * UBICACIÓN: src/presentation/features/books/components/BookMetadata/SelectFromTableAsync.tsx
+ * ✅ ACTUALIZADO: Funciona con las tablas del nuevo schema books.*
+ */
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@/src/utils/supabase/client';
 import { Search, ChevronDown, Check, Loader2, X } from 'lucide-react';
@@ -93,7 +96,12 @@ export function SelectFromTableAsync<T extends Record<string, any>>({
       }
 
       const { data, error } = await query.limit(50);
-      if (error) throw error;
+      
+      if (error) {
+        console.error(`Error cargando opciones de ${table}:`, error);
+        setOptions([]);
+        return;
+      }
 
       const formattedOptions = (data || []).map((item: T) => ({
         value: item[valueField] as number | string,
@@ -117,7 +125,12 @@ export function SelectFromTableAsync<T extends Record<string, any>>({
         .eq(String(valueField), value)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error cargando valor seleccionado:', error);
+        setSelectedOption(null);
+        if (onLabelChange) onLabelChange(null);
+        return;
+      }
 
       if (data) {
         const option = {

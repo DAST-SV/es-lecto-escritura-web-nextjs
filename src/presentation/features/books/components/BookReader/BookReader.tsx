@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookReader/BookReader.tsx
- * ✅ LIMPIO: Usa Page directamente
+ * ✅ ACTUALIZADO: Lee libros del nuevo schema books.*
  */
 
 'use client';
@@ -12,7 +12,7 @@ import {
   BookOpen, FileText
 } from 'lucide-react';
 import { PageRenderer } from '@/src/presentation/features/layouts/components/PageRenderer';
-import { Page } from '@/src/core/domain/types';
+import { Page, LayoutType } from '@/src/core/domain/types';
 import '@/src/presentation/features/layouts/styles/book-shared.css';
 
 interface BookReaderProps {
@@ -161,6 +161,27 @@ export function BookReader({
     );
   }
 
+  if (!pages || pages.length === 0) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+        <div className="text-white text-center">
+          <BookOpen size={48} className="mx-auto mb-4" />
+          <p>Este libro no tiene páginas</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Normalizar páginas para asegurar estructura correcta
+  const normalizedPages: Page[] = pages.map((page, idx) => ({
+    id: page.id || `page-${idx}`,
+    layout: (page.layout || 'TextCenterLayout') as LayoutType,
+    title: page.title || '',
+    text: page.text || '',
+    image: page.image || null,
+    background: page.background || 'blanco',
+  }));
+
   const flipBookProps: React.ComponentProps<typeof HTMLFlipBook> = {
     width: bookDimensions.width,
     height: bookDimensions.height,
@@ -189,7 +210,7 @@ export function BookReader({
     showPageCorners: true,
     disableFlipByClick: false,
     style: {},
-    children: pages.map((page, idx) => {
+    children: normalizedPages.map((page, idx) => {
       const isActive = idx === activePage;
       
       return (
@@ -281,12 +302,12 @@ export function BookReader({
           </button>
 
           <div className="px-6 py-3 bg-white/10 backdrop-blur-sm text-white rounded-full font-medium">
-            {currentPage + 1} / {pages.length}
+            {currentPage + 1} / {normalizedPages.length}
           </div>
 
           <button
             onClick={goToNextPage}
-            disabled={currentPage === pages.length - 1}
+            disabled={currentPage === normalizedPages.length - 1}
             className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-full transition-all disabled:opacity-30"
           >
             <ChevronRight size={24} />
@@ -310,7 +331,104 @@ export function BookReader({
             className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* ... resto del modal ... */}
+            {/* Header del modal */}
+            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  <FileText size={24} />
+                  Ficha Literaria
+                </h2>
+                <button
+                  onClick={() => setShowLiteraryCard(false)}
+                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                >
+                  <X size={20} className="text-white" />
+                </button>
+              </div>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-6 space-y-4">
+              {/* Portada e info básica */}
+              <div className="flex gap-6">
+                {coverImage && (
+                  <div className="flex-shrink-0">
+                    <img
+                      src={coverImage}
+                      alt={title}
+                      className="w-32 h-44 object-cover rounded-lg shadow-md"
+                    />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{title}</h3>
+                  {displayAuthors.length > 0 && (
+                    <p className="text-gray-600 mb-2">
+                      <span className="font-medium">Autor(es):</span> {displayAuthors.join(', ')}
+                    </p>
+                  )}
+                  {description && (
+                    <p className="text-gray-700 text-sm leading-relaxed">{description}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Personajes */}
+              {characters.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Personajes</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {characters.map((char, idx) => (
+                      <span key={idx} className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">
+                        {char}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Categorías y Géneros */}
+              <div className="grid grid-cols-2 gap-4">
+                {categories.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Categorías</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {categories.map((cat, idx) => (
+                        <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                          {cat}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {genres.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Géneros</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {genres.map((genre, idx) => (
+                        <span key={idx} className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
+                          {genre}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Valores */}
+              {values.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Valores que transmite</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {values.map((val, idx) => (
+                      <span key={idx} className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                        {val}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

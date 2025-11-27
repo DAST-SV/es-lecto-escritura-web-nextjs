@@ -1,7 +1,12 @@
 /**
- * BookEditor - CORREGIDO: Sube imágenes a Supabase antes de guardar
- * ✅ Usa BookImageService para persistir imágenes
- * ✅ Consistencia visual con modo lectura
+ * UBICACIÓN: src/presentation/features/books/components/BookEditor/BookEditor.tsx
+ * ✅ CORREGIDO: Funciona con el nuevo schema books.*
+ * 
+ * Características:
+ * - Sube imágenes a Supabase antes de guardar
+ * - Usa BookImageService para persistir imágenes
+ * - Consistencia visual con modo lectura
+ * - Carga datos existentes para edición
  */
 "use client";
 
@@ -18,8 +23,9 @@ import { useLocale } from 'next-intl';
 // Use Cases
 import { CreateBookUseCase } from "@/src/core/application/use-cases/books/CreateBook.usecase";
 import { UpdateBookUseCase } from "@/src/core/application/use-cases/books/UpdateBook.usecase";
+import { GetBookUseCase } from "@/src/core/application/use-cases/books/GetBook.usecase";
 
-// ✅ NUEVO: Servicio de imágenes
+// Servicio de imágenes
 import { BookImageService } from "@/src/infrastructure/services/BookImageService";
 
 import { useBookState } from "../../hooks/useBookState";
@@ -33,10 +39,10 @@ import { LoadingOverlay } from "./LoadingOverlay";
 import LiteraryCardView from "./LiteraryCardView";
 import { LiteraryMetadataForm } from "./LiteraryMetadataForm";
 import { BookViewer } from "./BookViewer";
-import { page } from "@/src/core/domain/types";
+import { Page, LayoutType } from "@/src/core/domain/types";
 
 interface BookEditorProps {
-  initialPages?: page[];
+  initialPages?: Page[];
   title?: string;
   IdLibro?: string;
   initialMetadata?: {
@@ -69,6 +75,7 @@ export function BookEditor({
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isLoadingBook, setIsLoadingBook] = useState(false);
 
   const [viewMode, setViewMode] = useState<'pages' | 'card'>('pages');
   const [pageInput, setPageInput] = useState('1');
@@ -99,9 +106,9 @@ export function BookEditor({
   const [autores, setAutores] = useState<string[]>(initialMetadata?.autores || []);
   const [personajes, setPersonajes] = useState<string[]>(initialMetadata?.personajes || []);
   const [descripcion, setDescripcion] = useState<string>(initialMetadata?.descripcion || "");
-  const [titulo, setTitulo] = useState<string>(initialMetadata?.titulo || "");
+  const [titulo, setTitulo] = useState<string>(initialMetadata?.titulo || title || "");
 
-  // ✅ ARCHIVOS de portada y card background
+  // Archivos de portada y card background
   const [portadaFile, setPortadaFile] = useState<File | null>(null);
   const [portadaUrl, setPortadaUrl] = useState<string | null>(
     initialMetadata?.portadaUrl || null
@@ -172,6 +179,64 @@ export function BookEditor({
     checkAuth();
   }, [supabase]);
 
+  // Cargar libro existente si hay IdLibro
+  useEffect(() => {
+    async function loadExistingBook() {
+      if (!IdLibro || !currentUserId) return;
+
+      setIsLoadingBook(true);
+      console.log('📖 Cargando libro existente:', IdLibro);
+
+      try {
+        const libro = await GetBookUseCase.execute(IdLibro);
+        
+        if (!libro) {
+          toast.error('Libro no encontrado');
+          setIsLoadingBook(false);
+          return;
+        }
+
+        console.log('✅ Libro cargado:', libro);
+
+        // Cargar metadata
+        setTitulo(libro.titulo || '');
+        setDescripcion(libro.descripcion || '');
+        setAutores(libro.autores || []);
+        setPersonajes(libro.personajes || []);
+        setPortadaUrl(libro.portada || null);
+
+        // Cargar nivel
+        if (libro.nivel?.id) {
+          setSelectedNivel(libro.nivel.id);
+          setNivelLabel(libro.nivel.name || null);
+        }
+
+        // Cargar páginas
+        if (libro.paginas && libro.paginas.length > 0) {
+          const loadedPages: Page[] = libro.paginas.map((p: any, idx: number) => ({
+            id: p.id || `page-${idx}-${Date.now()}`,
+            layout: (p.layout || 'TextCenterLayout') as LayoutType,
+            title: p.title || '',
+            text: p.text || p.content || '',
+            image: p.image || p.image_url || null,
+            background: p.background || p.background_url || p.background_color || 'blanco',
+          }));
+
+          bookState.setPages(loadedPages);
+        }
+
+        toast.success('Libro cargado correctamente');
+      } catch (err: any) {
+        console.error('❌ Error cargando libro:', err);
+        toast.error(`Error al cargar libro: ${err.message}`);
+      } finally {
+        setIsLoadingBook(false);
+      }
+    }
+
+    loadExistingBook();
+  }, [IdLibro, currentUserId]);
+
   // Validación del libro
   const validateBook = useCallback(() => {
     const errors: Array<{ field: string; message: string }> = [];
@@ -197,13 +262,6 @@ export function BookEditor({
       });
     }
 
-    if (!selectedNivel) {
-      errors.push({ 
-        field: 'Nivel de Lectura', 
-        message: 'Debes seleccionar un nivel de lectura' 
-      });
-    }
-
     if (descripcion && descripcion.length > 800) {
       errors.push({ 
         field: 'Descripción', 
@@ -212,9 +270,9 @@ export function BookEditor({
     }
 
     return errors;
-  }, [bookState.pages, titulo, descripcion, autores, selectedNivel]);
+  }, [bookState.pages, titulo, descripcion, autores]);
 
-  // ✅ FUNCIÓN PRINCIPAL: handleSave - CON UPLOAD DE IMÁGENES
+  // FUNCIÓN PRINCIPAL: handleSave
   const handleSave = useCallback(async () => {
     console.log('🔥 INICIANDO GUARDADO');
 
@@ -281,7 +339,7 @@ export function BookEditor({
 
         // Determinar fondo final
         let finalBackground = page.background;
-        if (uploadedPage?.backgroundUrl) {
+        if (uploadedPage?.backgroundUrl && !BookImageService.isColor(uploadedPage.backgroundUrl)) {
           finalBackground = uploadedPage.backgroundUrl;
         } else if (page.background && 
                    typeof page.background === 'string' && 
@@ -326,11 +384,11 @@ export function BookEditor({
       if (IdLibro) {
         await UpdateBookUseCase.execute(IdLibro, bookData);
         savedBookId = IdLibro;
+        console.log('✅ Libro actualizado:', savedBookId);
       } else {
         savedBookId = await CreateBookUseCase.execute(currentUserId, bookData);
+        console.log('✅ Libro creado:', savedBookId);
       }
-
-      console.log('✅ Guardado exitoso, ID:', savedBookId);
 
       setLoadingStatus('success');
       setLoadingMessage('¡Libro guardado! Abriendo modo lectura...');
@@ -397,7 +455,7 @@ export function BookEditor({
     setSelectedNivel(value);
   }, []);
 
-  // ✅ CORREGIDO: Guardar archivo además de URL
+  // Handler para portada
   const handlePortadaChange = useCallback((file: File | null) => {
     setPortadaFile(file);
     if (file) {
@@ -408,7 +466,7 @@ export function BookEditor({
     }
   }, []);
 
-  // ✅ CORREGIDO: Guardar archivo además de URL
+  // Handler para card background
   const handleCardBackgroundChange = useCallback((file: File | null) => {
     setCardBackgroundFile(file);
     if (file) {
@@ -470,6 +528,17 @@ export function BookEditor({
     );
   }
 
+  if (isLoadingBook) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-white">
+        <div className="text-center">
+          <Loader2 size={48} className="animate-spin text-indigo-600 mx-auto mb-4" />
+          <p className="text-gray-600">Cargando libro...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full w-full flex flex-col overflow-hidden border border-slate-200 bg-white">
       <Toaster 
@@ -490,6 +559,11 @@ export function BookEditor({
               <h1 className="text-sm font-semibold text-slate-900">
                 {titulo || 'Nuevo Libro'}
               </h1>
+              {IdLibro && (
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                  Editando
+                </span>
+              )}
             </div>
 
             {viewMode === 'pages' && (

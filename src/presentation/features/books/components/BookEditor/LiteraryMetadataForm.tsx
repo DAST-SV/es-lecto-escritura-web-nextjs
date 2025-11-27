@@ -1,5 +1,13 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookEditor/LiteraryMetadataForm.tsx
+ * ✅ ACTUALIZADO: Usa los nombres de tabla del nuevo schema books.*
+ * 
+ * Mapeo de tablas viejas -> nuevas:
+ * - categorias -> book_categories
+ * - generos -> book_genres
+ * - niveles -> book_levels
+ * - valores -> book_values
+ * - etiquetas -> book_tags
  */
 
 'use client';
@@ -120,7 +128,7 @@ export function LiteraryMetadataForm({
         </div>
       </div>
 
-      {/* ✅ SOLUCIÓN: Content con scroll independiente y padding-bottom extra */}
+      {/* Content con scroll independiente */}
       <div className="flex-1 overflow-y-auto p-4 pb-20">
         
         {/* TAB: Básico */}
@@ -203,92 +211,97 @@ export function LiteraryMetadataForm({
         {/* TAB: Clasificación */}
         {activeTab === 'classification' && (
           <div className="space-y-4">
-            {/* Categorías */}
+            {/* Categorías - TABLA: book_categories */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Tipo de Lectura <span className="text-red-500">*</span>
               </label>
-              <MultiSelectFromTable<{ id_categoria: number; nombre: string }>
-                table="categorias"
-                valueField="id_categoria"
-                labelField="nombre"
-                filterField="nombre"
+              <MultiSelectFromTable<{ id: number; name: string }>
+                table="book_categories"
+                valueField="id"
+                labelField="name"
+                filterField="name"
                 values={selectedCategorias}
                 placeholder="Selecciona una categoría..."
                 onChange={onCategoriasChange}
                 onLabelsChange={onCategoriasLabelsChange}
                 maxItems={1}
+                color="blue"
               />
             </div>
 
-            {/* Géneros */}
+            {/* Géneros - TABLA: book_genres */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Géneros Literarios <span className="text-red-500">*</span>
               </label>
-              <MultiSelectFromTable<{ id_genero: number; nombre: string }>
-                table="generos"
-                valueField="id_genero"
-                labelField="nombre"
-                filterField="nombre"
+              <MultiSelectFromTable<{ id: number; name: string }>
+                table="book_genres"
+                valueField="id"
+                labelField="name"
+                filterField="name"
                 values={selectedGeneros}
                 placeholder="Hasta 2 géneros..."
                 onChange={onGenerosChange}
                 onLabelsChange={onGenerosLabelsChange}
                 maxItems={2}
+                color="purple"
               />
             </div>
 
-            {/* Nivel */}
+            {/* Nivel - TABLA: book_levels */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Nivel de Lectura
               </label>
-              <SelectFromTableAsync<{ id_nivel: number; nombre: string }>
-                table="niveles"
-                valueField="id_nivel"
-                labelField="nombre"
-                filterField="nombre"
+              <SelectFromTableAsync<{ id: number; name: string }>
+                table="book_levels"
+                valueField="id"
+                labelField="name"
+                filterField="name"
                 value={selectedNivel}
                 placeholder="Selecciona un nivel..."
                 onChange={(value) => onNivelChange(value as number)}
                 onLabelChange={onNivelLabelChange}
+                color="green"
               />
             </div>
 
-            {/* Valores */}
+            {/* Valores - TABLA: book_values */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Valores que Transmite
               </label>
-              <MultiSelectFromTable<{ id_valor: number; nombre: string }>
-                table="valores"
-                valueField="id_valor"
-                labelField="nombre"
-                filterField="nombre"
+              <MultiSelectFromTable<{ id: number; name: string }>
+                table="book_values"
+                valueField="id"
+                labelField="name"
+                filterField="name"
                 values={selectedValores}
                 placeholder="Hasta 5 valores..."
                 onChange={onValoresChange}
                 onLabelsChange={onValoresLabelsChange}
                 maxItems={5}
+                color="green"
               />
             </div>
 
-            {/* Etiquetas */}
+            {/* Etiquetas - TABLA: book_tags */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Etiquetas Adicionales
               </label>
-              <MultiSelectFromTable<{ id_etiqueta: number; nombre: string }>
-                table="etiquetas"
-                valueField="id_etiqueta"
-                labelField="nombre"
-                filterField="nombre"
+              <MultiSelectFromTable<{ id: number; name: string }>
+                table="book_tags"
+                valueField="id"
+                labelField="name"
+                filterField="name"
                 values={selectedEtiquetas}
                 placeholder="Hasta 5 etiquetas..."
                 onChange={onEtiquetasChange}
                 onLabelsChange={onEtiquetasLabelsChange}
                 maxItems={5}
+                color="pink"
               />
               <p className="mt-2 text-xs text-gray-500">
                 💡 Las etiquetas ayudan a categorizar y buscar tu libro

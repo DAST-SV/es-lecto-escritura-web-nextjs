@@ -1,5 +1,6 @@
 /**
  * UBICACIÓN: app/api/books/[id]/read/route.ts
+ * ✅ ACTUALIZADO: Campos del nuevo schema
  */
 
 import { NextResponse } from 'next/server';
@@ -7,13 +8,12 @@ import { GetBookUseCase } from '@/src/core/application/use-cases/books/GetBook.u
 
 export async function GET(
   req: Request,
-  { params }: { params: Promise<{ id: string }> } // ✅ params es una Promise
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // ✅ AWAIT params para obtener el ID
     const { id: bookId } = await params;
 
-    console.log('📖 1. ID recibido:', bookId);
+    console.log('📖 API: Obteniendo libro:', bookId);
 
     if (!bookId) {
       return NextResponse.json(
@@ -22,7 +22,6 @@ export async function GET(
       );
     }
 
-    console.log('📖 2. Llamando GetBookUseCase...');
     const libro = await GetBookUseCase.execute(bookId);
 
     if (!libro) {
@@ -38,9 +37,11 @@ export async function GET(
       autores: libro.autores?.length || 0
     });
 
+    // Retornar con formato compatible
     return NextResponse.json({
       libro: {
-        id_libro: libro.id_libro,
+        id: libro.id,
+        id_libro: libro.id, // Compatibilidad
         titulo: libro.titulo,
         descripcion: libro.descripcion,
         portada: libro.portada,
@@ -57,7 +58,7 @@ export async function GET(
     });
 
   } catch (error: any) {
-    console.error('❌ Error obteniendo libro para lectura:', error);
+    console.error('❌ Error obteniendo libro:', error);
     
     return NextResponse.json(
       { error: error.message || 'Error al cargar el libro' },

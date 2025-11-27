@@ -1,4 +1,7 @@
-// src/presentation/features/books/components/BookMetadata/MultiSelectFromTable.tsx
+/**
+ * UBICACIÓN: src/presentation/features/books/components/BookMetadata/MultiSelectFromTable.tsx
+ * ✅ ACTUALIZADO: Funciona con las tablas del nuevo schema books.*
+ */
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@/src/utils/supabase/client';
 import { Search, ChevronDown, X, Check, Loader2 } from 'lucide-react';
@@ -115,7 +118,12 @@ export function MultiSelectFromTable<T extends Record<string, any>>({
       }
 
       const { data, error } = await query.limit(50);
-      if (error) throw error;
+      
+      if (error) {
+        console.error(`Error cargando opciones de ${table}:`, error);
+        setOptions([]);
+        return;
+      }
 
       const formattedOptions = (data || []).map((item: T) => ({
         value: item[valueField] as number | string,
@@ -138,7 +146,11 @@ export function MultiSelectFromTable<T extends Record<string, any>>({
         .select('*')
         .in(String(valueField), values);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error cargando valores seleccionados:', error);
+        setSelectedOptions([]);
+        return;
+      }
 
       const formatted = (data || []).map((item: T) => ({
         value: item[valueField] as number | string,
