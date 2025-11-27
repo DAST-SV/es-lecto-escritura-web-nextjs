@@ -1,10 +1,10 @@
 /**
  * UBICACIÓN: src/presentation/features/books/hooks/useBookState.ts
- * ✅ CORREGIDO: Usar Page (uppercase) en vez de page (lowercase)
+ * ✅ CORREGIDO: Cast explícito a LayoutType
  */
 
 import { useState, useCallback } from 'react';
-import { Page } from '@/src/core/domain/types'; // ✅ Import correcto
+import { Page, LayoutType } from '@/src/core/domain/types';
 
 interface UseBookStateProps {
   initialPages?: Page[];
@@ -16,11 +16,11 @@ export const useBookState = ({ initialPages, title }: UseBookStateProps = {}) =>
   const [currentPage, setCurrentPage] = useState(0);
   const [isFlipping, setIsFlipping] = useState(false);
   
-  const [pages, setPages] = useState<Page[]>( // ✅ Tipo correcto
+  const [pages, setPages] = useState<Page[]>(
     initialPages || [
       {
         id: '1',
-        layout: 'CoverLayout',
+        layout: 'CoverLayout' as LayoutType, // ✅ Cast explícito
         title: title || '',
         text: '',
         image: null,
@@ -28,7 +28,7 @@ export const useBookState = ({ initialPages, title }: UseBookStateProps = {}) =>
       },
       {
         id: '2',
-        layout: 'TextCenterLayout',
+        layout: 'TextCenterLayout' as LayoutType, // ✅ Cast explícito
         title: '',
         text: '',
         image: null,
@@ -47,7 +47,7 @@ export const useBookState = ({ initialPages, title }: UseBookStateProps = {}) =>
         ...prev,
         {
           id: nextId,
-          layout: 'TextCenterLayout',
+          layout: 'TextCenterLayout' as LayoutType, // ✅ Cast explícito
           title: '',
           text: '',
           image: null,
@@ -55,7 +55,7 @@ export const useBookState = ({ initialPages, title }: UseBookStateProps = {}) =>
         },
         {
           id: nextId2,
-          layout: 'TextCenterLayout',
+          layout: 'TextCenterLayout' as LayoutType, // ✅ Cast explícito
           title: '',
           text: '',
           image: null,
@@ -87,7 +87,10 @@ export const useBookState = ({ initialPages, title }: UseBookStateProps = {}) =>
     (layout: string) => {
       setPages((prev) => {
         const updated = [...prev];
-        updated[currentPage] = { ...updated[currentPage], layout };
+        updated[currentPage] = { 
+          ...updated[currentPage], 
+          layout: layout as LayoutType // ✅ Cast explícito
+        };
         return updated;
       });
       setBookKey((k) => k + 1);
