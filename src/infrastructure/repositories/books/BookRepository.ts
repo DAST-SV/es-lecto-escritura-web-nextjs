@@ -1,5 +1,6 @@
 /**
  * UBICACIÓN: src/infrastructure/repositories/books/BookRepository.ts
+ * ✅ ACTUALIZADO: Trabaja con el nuevo schema books.*
  */
 
 import { supabaseAdmin } from '@/src/utils/supabase/admin';
@@ -28,24 +29,30 @@ interface BookData {
 
 export class BookRepository {
   
+  /**
+   * Crear un nuevo libro
+   */
   static async create(userId: string, bookData: BookData): Promise<string> {
+    // 1. Crear el libro principal
     const { data: libro, error: libroError } = await supabaseAdmin
-      .from('libros')
+      .from('books.books')
       .insert({
-        id_usuario: userId,
-        id_tipo: 2,
-        titulo: bookData.titulo,
-        descripcion: bookData.descripcion,
-        portada: bookData.portada || null,
-        id_nivel: bookData.nivel,
+        user_id: userId,
+        type_id: 2, // Usuario
+        title: bookData.titulo,
+        description: bookData.descripcion,
+        cover_url: bookData.portada || null,
+        level_id: bookData.nivel,
+        is_published: false,
       })
-      .select('id_libro')
+      .select('id')
       .single();
 
     if (libroError) throw libroError;
 
-    const libroId = libro.id_libro;
+    const libroId = libro.id;
 
+    // 2. Guardar relaciones en paralelo
     await Promise.all([
       this.saveAutores(libroId, bookData.autores),
       this.savePersonajes(libroId, bookData.personajes),
@@ -59,19 +66,25 @@ export class BookRepository {
     return libroId;
   }
 
+  /**
+   * Actualizar un libro existente
+   */
   static async update(libroId: string, bookData: BookData): Promise<void> {
+    // 1. Actualizar libro principal
     const { error: updateError } = await supabaseAdmin
-      .from('libros')
+      .from('books.books')
       .update({
-        titulo: bookData.titulo,
-        descripcion: bookData.descripcion,
-        portada: bookData.portada || null,
-        id_nivel: bookData.nivel,
+        title: bookData.titulo,
+        description: bookData.descripcion,
+        cover_url: bookData.portada || null,
+        level_id: bookData.nivel,
+        updated_at: new Date().toISOString(),
       })
-      .eq('id_libro', libroId);
+      .eq('id', libroId);
 
     if (updateError) throw updateError;
 
+    // 2. Reemplazar todas las relaciones
     await Promise.all([
       this.replaceAutores(libroId, bookData.autores),
       this.replacePersonajes(libroId, bookData.personajes),
@@ -83,11 +96,15 @@ export class BookRepository {
     ]);
   }
 
+  /**
+   * Obtener libro completo con todas las relaciones
+   */
   static async getComplete(libroId: string): Promise<any> {
     const { data: libro, error } = await supabaseAdmin
-      .from('libros')
+      .from('books.books')
       .select('*')
-      .eq('id_libro', libroId)
+      .eq('id', libroId)
+      .is('deleted_at', null)
       .single();
 
     if (error || !libro) return null;
@@ -100,15 +117,15 @@ export class BookRepository {
         this.getGeneros(libroId),
         this.getValores(libroId),
         this.getEtiquetas(libroId),
-        this.getNivel(libro.id_nivel),
+        this.getNivel(libro.level_id),
         this.getPages(libroId),
       ]);
 
     return {
-      id_libro: libro.id_libro,
-      titulo: libro.titulo,
-      descripcion: libro.descripcion,
-      portada: libro.portada,
+      id: libro.id,
+      titulo: libro.title,
+      descripcion: libro.description,
+      portada: libro.cover_url,
       autores,
       personajes,
       categorias,
@@ -117,218 +134,308 @@ export class BookRepository {
       etiquetas,
       nivel,
       paginas,
-      fecha_creacion: libro.fecha_creacion,
+      fecha_creacion: libro.created_at,
     };
   }
 
+  /**
+   * Encontrar libros por usuario
+   */
   static async findByUserId(userId: string): Promise<any[]> {
     const { data: libros, error } = await supabaseAdmin
-      .from('libros')
-      .select('id_libro, titulo, descripcion, portada, fecha_creacion')
-      .eq('id_usuario', userId)
-      .order('fecha_creacion', { ascending: false });
+      .from('books.books')
+      .select('id, title, description, cover_url, created_at')
+      .eq('user_id', userId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
 
     const librosConAutores = await Promise.all(
       (libros || []).map(async (libro) => {
-        const autores = await this.getAutores(libro.id_libro);
-        return { ...libro, autores };
+        const autores = await this.getAutores(libro.id);
+        return { 
+          id_libro: libro.id,
+          titulo: libro.title,
+          descripcion: libro.description,
+          portada: libro.cover_url,
+          autores,
+          fecha_creacion: libro.created_at,
+        };
       })
     );
 
     return librosConAutores;
   }
 
+  /**
+   * Eliminar libro (soft delete)
+   */
   static async delete(libroId: string): Promise<void> {
     const { error } = await supabaseAdmin
-      .from('libros')
-      .delete()
-      .eq('id_libro', libroId);
+      .from('books.books')
+      .update({
+        deleted_at: new Date().toISOString(),
+      })
+      .eq('id', libroId);
 
     if (error) throw error;
   }
 
+  // ============================================
+  // MÉTODOS PRIVADOS - AUTORES
+  // ============================================
+  
   private static async saveAutores(libroId: string, autores: string[]): Promise<void> {
     if (!autores.length) return;
+    
     const autoresIds = await Promise.all(
       autores.map(async (nombre) => {
         const { data } = await supabaseAdmin
-          .from('autores')
-          .insert({ nombre: nombre.trim() })
-          .select('id_autor')
+          .from('books.book_authors')
+          .insert({ name: nombre.trim() })
+          .select('id')
           .single();
-        return data?.id_autor;
+        return data?.id;
       })
     );
+    
     await supabaseAdmin
-      .from('libros_autores')
-      .insert(autoresIds.filter(Boolean).map(id_autor => ({ id_libro: libroId, id_autor })));
+      .from('books.books_authors')
+      .insert(autoresIds.filter(Boolean).map((author_id, idx) => ({ 
+        book_id: libroId, 
+        author_id,
+        author_order: idx + 1
+      })));
   }
 
   private static async replaceAutores(libroId: string, autores: string[]): Promise<void> {
-    await supabaseAdmin.from('libros_autores').delete().eq('id_libro', libroId);
+    await supabaseAdmin.from('books.books_authors').delete().eq('book_id', libroId);
     await this.saveAutores(libroId, autores);
   }
 
   private static async getAutores(libroId: string): Promise<string[]> {
     const { data } = await supabaseAdmin
-      .from('libros_autores')
-      .select('autores(nombre)')
-      .eq('id_libro', libroId);
-    return data?.map((item: any) => item.autores.nombre).filter(Boolean) || [];
+      .from('books.books_authors')
+      .select('book_authors(name)')
+      .eq('book_id', libroId)
+      .order('author_order');
+    
+    return data?.map((item: any) => item.book_authors.name).filter(Boolean) || [];
   }
 
+  // ============================================
+  // MÉTODOS PRIVADOS - PERSONAJES
+  // ============================================
+  
   private static async savePersonajes(libroId: string, personajes: string[]): Promise<void> {
     if (!personajes.length) return;
+    
     const personajesIds = await Promise.all(
       personajes.map(async (nombre) => {
         const { data } = await supabaseAdmin
-          .from('personajes')
-          .insert({ nombre: nombre.trim() })
-          .select('id_personaje')
+          .from('books.book_characters')
+          .insert({ name: nombre.trim() })
+          .select('id')
           .single();
-        return data?.id_personaje;
+        return data?.id;
       })
     );
+    
     await supabaseAdmin
-      .from('libros_personajes')
-      .insert(personajesIds.filter(Boolean).map(id_personaje => ({ id_libro: libroId, id_personaje })));
+      .from('books.books_characters')
+      .insert(personajesIds.filter(Boolean).map(character_id => ({ 
+        book_id: libroId, 
+        character_id 
+      })));
   }
 
   private static async replacePersonajes(libroId: string, personajes: string[]): Promise<void> {
-    await supabaseAdmin.from('libros_personajes').delete().eq('id_libro', libroId);
+    await supabaseAdmin.from('books.books_characters').delete().eq('book_id', libroId);
     await this.savePersonajes(libroId, personajes);
   }
 
   private static async getPersonajes(libroId: string): Promise<string[]> {
     const { data } = await supabaseAdmin
-      .from('libros_personajes')
-      .select('personajes(nombre)')
-      .eq('id_libro', libroId);
-    return data?.map((item: any) => item.personajes.nombre).filter(Boolean) || [];
+      .from('books.books_characters')
+      .select('book_characters(name)')
+      .eq('book_id', libroId);
+    
+    return data?.map((item: any) => item.book_characters.name).filter(Boolean) || [];
   }
 
+  // ============================================
+  // MÉTODOS PRIVADOS - CATEGORÍAS
+  // ============================================
+  
   private static async saveCategorias(libroId: string, categorias: number[]): Promise<void> {
     if (!categorias.length) return;
+    
     await supabaseAdmin
-      .from('libro_categorias')
-      .insert(categorias.map(id_categoria => ({ id_libro: libroId, id_categoria })));
+      .from('books.books_categories')
+      .insert(categorias.map((category_id, idx) => ({ 
+        book_id: libroId, 
+        category_id,
+        is_primary: idx === 0
+      })));
   }
 
   private static async replaceCategorias(libroId: string, categorias: number[]): Promise<void> {
-    await supabaseAdmin.from('libro_categorias').delete().eq('id_libro', libroId);
+    await supabaseAdmin.from('books.books_categories').delete().eq('book_id', libroId);
     await this.saveCategorias(libroId, categorias);
   }
 
   private static async getCategorias(libroId: string): Promise<string[]> {
     const { data } = await supabaseAdmin
-      .from('libro_categorias')
-      .select('categorias(nombre)')
-      .eq('id_libro', libroId);
-    return data?.map((item: any) => item.categorias.nombre).filter(Boolean) || [];
+      .from('books.books_categories')
+      .select('book_categories(name)')
+      .eq('book_id', libroId);
+    
+    return data?.map((item: any) => item.book_categories.name).filter(Boolean) || [];
   }
 
+  // ============================================
+  // MÉTODOS PRIVADOS - GÉNEROS
+  // ============================================
+  
   private static async saveGeneros(libroId: string, generos: number[]): Promise<void> {
     if (!generos.length) return;
+    
     await supabaseAdmin
-      .from('libro_generos')
-      .insert(generos.map(id_genero => ({ id_libro: libroId, id_genero })));
+      .from('books.books_genres')
+      .insert(generos.map(genre_id => ({ book_id: libroId, genre_id })));
   }
 
   private static async replaceGeneros(libroId: string, generos: number[]): Promise<void> {
-    await supabaseAdmin.from('libro_generos').delete().eq('id_libro', libroId);
+    await supabaseAdmin.from('books.books_genres').delete().eq('book_id', libroId);
     await this.saveGeneros(libroId, generos);
   }
 
   private static async getGeneros(libroId: string): Promise<string[]> {
     const { data } = await supabaseAdmin
-      .from('libro_generos')
-      .select('generos(nombre)')
-      .eq('id_libro', libroId);
-    return data?.map((item: any) => item.generos.nombre).filter(Boolean) || [];
+      .from('books.books_genres')
+      .select('book_genres(name)')
+      .eq('book_id', libroId);
+    
+    return data?.map((item: any) => item.book_genres.name).filter(Boolean) || [];
   }
 
+  // ============================================
+  // MÉTODOS PRIVADOS - ETIQUETAS
+  // ============================================
+  
   private static async saveEtiquetas(libroId: string, etiquetas: number[]): Promise<void> {
     if (!etiquetas.length) return;
+    
     await supabaseAdmin
-      .from('libro_etiquetas')
-      .insert(etiquetas.map(id_etiqueta => ({ id_libro: libroId, id_etiqueta })));
+      .from('books.books_tags')
+      .insert(etiquetas.map((tag_id, idx) => ({ 
+        book_id: libroId, 
+        tag_id,
+        is_primary: idx === 0
+      })));
   }
 
   private static async replaceEtiquetas(libroId: string, etiquetas: number[]): Promise<void> {
-    await supabaseAdmin.from('libro_etiquetas').delete().eq('id_libro', libroId);
+    await supabaseAdmin.from('books.books_tags').delete().eq('book_id', libroId);
     await this.saveEtiquetas(libroId, etiquetas);
   }
 
   private static async getEtiquetas(libroId: string): Promise<string[]> {
     const { data } = await supabaseAdmin
-      .from('libro_etiquetas')
-      .select('etiquetas(nombre)')
-      .eq('id_libro', libroId);
-    return data?.map((item: any) => item.etiquetas.nombre).filter(Boolean) || [];
+      .from('books.books_tags')
+      .select('book_tags(name)')
+      .eq('book_id', libroId);
+    
+    return data?.map((item: any) => item.book_tags.name).filter(Boolean) || [];
   }
 
+  // ============================================
+  // MÉTODOS PRIVADOS - VALORES
+  // ============================================
+  
   private static async saveValores(libroId: string, valores: number[]): Promise<void> {
     if (!valores.length) return;
+    
     await supabaseAdmin
-      .from('libro_valores')
-      .insert(valores.map(id_valor => ({ id_libro: libroId, id_valor })));
+      .from('books.books_values')
+      .insert(valores.map((value_id, idx) => ({ 
+        book_id: libroId, 
+        value_id,
+        is_primary: idx === 0
+      })));
   }
 
   private static async replaceValores(libroId: string, valores: number[]): Promise<void> {
-    await supabaseAdmin.from('libro_valores').delete().eq('id_libro', libroId);
+    await supabaseAdmin.from('books.books_values').delete().eq('book_id', libroId);
     await this.saveValores(libroId, valores);
   }
 
   private static async getValores(libroId: string): Promise<string[]> {
     const { data } = await supabaseAdmin
-      .from('libro_valores')
-      .select('valores(nombre)')
-      .eq('id_libro', libroId);
-    return data?.map((item: any) => item.valores.nombre).filter(Boolean) || [];
+      .from('books.books_values')
+      .select('book_values(name)')
+      .eq('book_id', libroId);
+    
+    return data?.map((item: any) => item.book_values.name).filter(Boolean) || [];
   }
 
+  // ============================================
+  // MÉTODOS PRIVADOS - NIVEL
+  // ============================================
+  
   private static async getNivel(idNivel: number): Promise<any> {
     if (!idNivel) return null;
+    
     const { data } = await supabaseAdmin
-      .from('niveles')
+      .from('books.book_levels')
       .select('*')
-      .eq('id_nivel', idNivel)
+      .eq('id', idNivel)
       .single();
+    
     return data || null;
   }
 
+  // ============================================
+  // MÉTODOS PRIVADOS - PÁGINAS
+  // ============================================
+  
   private static async savePages(libroId: string, pages: PageData[]): Promise<void> {
     if (!pages.length) return;
+    
     const paginasToInsert = pages.map((p, idx) => ({
-      id_libro: libroId,
-      numero_pagina: idx + 1,
+      book_id: libroId,
+      page_number: idx + 1,
       layout: p.layout,
       title: p.title || null,
-      text: p.text || null,
-      image: p.image || null,
-      background: p.background || null,
+      content: p.text || null,
+      image_url: p.image || null,
+      background_url: p.background || null,
+      background_color: null,
+      text_color: null,
+      font: null,
+      border_style: null,
       animation: null,
-      audio: null,
+      audio_url: null,
       interactive_game: null,
       items: null,
-      border: null,
     }));
-    await supabaseAdmin.from('paginas_libro').insert(paginasToInsert);
+    
+    await supabaseAdmin.from('books.book_pages').insert(paginasToInsert);
   }
 
   private static async replacePages(libroId: string, pages: PageData[]): Promise<void> {
-    await supabaseAdmin.from('paginas_libro').delete().eq('id_libro', libroId);
+    await supabaseAdmin.from('books.book_pages').delete().eq('book_id', libroId);
     await this.savePages(libroId, pages);
   }
 
   private static async getPages(libroId: string): Promise<any[]> {
     const { data } = await supabaseAdmin
-      .from('paginas_libro')
+      .from('books.book_pages')
       .select('*')
-      .eq('id_libro', libroId)
-      .order('numero_pagina');
+      .eq('book_id', libroId)
+      .order('page_number');
+    
     return data || [];
   }
 }
