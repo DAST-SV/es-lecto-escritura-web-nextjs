@@ -1,0 +1,474 @@
+/**
+ * UBICACIÓN: src/presentation/features/layouts/styles/rich-content.css
+ * Estilos para contenido enriquecido en las páginas del libro
+ * 
+ * MIGRADO DESDE: src/style/rich-content.css
+ */
+
+/* ============================================
+   CONTENEDOR PRINCIPAL
+   ============================================ */
+
+.rich-content {
+  width: 100%;
+  height: 100%;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  line-height: 1.7;
+  color: #1f2937;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+/* ============================================
+   ENCABEZADOS
+   ============================================ */
+
+.rich-content h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem 0;
+  line-height: 1.2;
+  color: #111827;
+}
+
+.rich-content h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 0.625rem 0;
+  line-height: 1.25;
+  color: #1f2937;
+}
+
+.rich-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.3;
+  color: #374151;
+}
+
+.rich-content h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.35;
+  color: #4b5563;
+}
+
+.rich-content h5,
+.rich-content h6 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
+  color: #6b7280;
+}
+
+/* ============================================
+   PÁRRAFOS Y TEXTO
+   ============================================ */
+
+.rich-content p {
+  margin: 0 0 0.75em 0;
+  text-align: justify;
+  text-justify: inter-word;
+}
+
+.rich-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Primera letra decorativa (drop cap) - opcional */
+.rich-content p.drop-cap::first-letter {
+  float: left;
+  font-size: 3.5em;
+  line-height: 0.8;
+  padding-right: 0.1em;
+  font-weight: 700;
+  color: #4f46e5;
+}
+
+/* ============================================
+   ÉNFASIS Y FORMATO DE TEXTO
+   ============================================ */
+
+.rich-content strong,
+.rich-content b {
+  font-weight: 700;
+  color: inherit;
+}
+
+.rich-content em,
+.rich-content i {
+  font-style: italic;
+}
+
+.rich-content u {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rich-content s,
+.rich-content del {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.rich-content mark {
+  background-color: #fef08a;
+  padding: 0.1em 0.2em;
+  border-radius: 2px;
+}
+
+.rich-content small {
+  font-size: 0.875em;
+}
+
+.rich-content sub {
+  font-size: 0.75em;
+  vertical-align: sub;
+}
+
+.rich-content sup {
+  font-size: 0.75em;
+  vertical-align: super;
+}
+
+/* ============================================
+   ENLACES
+   ============================================ */
+
+.rich-content a {
+  color: #4f46e5;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.2s ease;
+}
+
+.rich-content a:hover {
+  color: #4338ca;
+}
+
+/* ============================================
+   LISTAS
+   ============================================ */
+
+.rich-content ul,
+.rich-content ol {
+  margin: 0 0 0.75em 0;
+  padding-left: 1.5em;
+}
+
+.rich-content ul {
+  list-style-type: disc;
+}
+
+.rich-content ol {
+  list-style-type: decimal;
+}
+
+.rich-content li {
+  margin-bottom: 0.25em;
+  line-height: 1.6;
+}
+
+.rich-content li:last-child {
+  margin-bottom: 0;
+}
+
+/* Listas anidadas */
+.rich-content ul ul,
+.rich-content ol ol,
+.rich-content ul ol,
+.rich-content ol ul {
+  margin-top: 0.25em;
+  margin-bottom: 0;
+}
+
+.rich-content ul ul {
+  list-style-type: circle;
+}
+
+.rich-content ul ul ul {
+  list-style-type: square;
+}
+
+/* ============================================
+   CITAS Y BLOQUES
+   ============================================ */
+
+.rich-content blockquote {
+  margin: 0.75em 0;
+  padding: 0.75em 1em;
+  border-left: 4px solid #6366f1;
+  background-color: rgba(99, 102, 241, 0.05);
+  font-style: italic;
+  border-radius: 0 8px 8px 0;
+}
+
+.rich-content blockquote p {
+  margin: 0;
+}
+
+.rich-content blockquote cite {
+  display: block;
+  margin-top: 0.5em;
+  font-size: 0.875em;
+  font-style: normal;
+  color: #6b7280;
+}
+
+.rich-content blockquote cite::before {
+  content: "— ";
+}
+
+/* ============================================
+   CÓDIGO
+   ============================================ */
+
+.rich-content code {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875em;
+  padding: 0.15em 0.4em;
+  background-color: #f3f4f6;
+  border-radius: 4px;
+  color: #ef4444;
+}
+
+.rich-content pre {
+  margin: 0.75em 0;
+  padding: 1em;
+  background-color: #1f2937;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.rich-content pre code {
+  background-color: transparent;
+  padding: 0;
+  color: #e5e7eb;
+  font-size: 0.8125em;
+}
+
+/* ============================================
+   TABLAS
+   ============================================ */
+
+.rich-content table {
+  width: 100%;
+  margin: 0.75em 0;
+  border-collapse: collapse;
+  font-size: 0.875em;
+}
+
+.rich-content th,
+.rich-content td {
+  padding: 0.5em 0.75em;
+  border: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.rich-content th {
+  background-color: #f9fafb;
+  font-weight: 600;
+}
+
+.rich-content tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+/* ============================================
+   LÍNEA HORIZONTAL
+   ============================================ */
+
+.rich-content hr {
+  margin: 1.5em 0;
+  border: none;
+  border-top: 2px solid #e5e7eb;
+}
+
+/* Separador decorativo */
+.rich-content hr.decorative {
+  border: none;
+  text-align: center;
+  height: 1em;
+}
+
+.rich-content hr.decorative::before {
+  content: "✦ ✦ ✦";
+  color: #9ca3af;
+  font-size: 0.75em;
+  letter-spacing: 0.5em;
+}
+
+/* ============================================
+   IMÁGENES
+   ============================================ */
+
+.rich-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+  margin: 0.75em auto;
+}
+
+.rich-content figure {
+  margin: 0.75em 0;
+  text-align: center;
+}
+
+.rich-content figcaption {
+  margin-top: 0.5em;
+  font-size: 0.875em;
+  font-style: italic;
+  color: #6b7280;
+}
+
+/* ============================================
+   ESTILOS PARA FONDOS OSCUROS
+   ============================================ */
+
+.rich-content.dark-mode,
+.dark-background .rich-content {
+  color: #f9fafb;
+}
+
+.rich-content.dark-mode h1,
+.rich-content.dark-mode h2,
+.rich-content.dark-mode h3,
+.rich-content.dark-mode h4,
+.dark-background .rich-content h1,
+.dark-background .rich-content h2,
+.dark-background .rich-content h3,
+.dark-background .rich-content h4 {
+  color: #ffffff;
+}
+
+.rich-content.dark-mode a,
+.dark-background .rich-content a {
+  color: #818cf8;
+}
+
+.rich-content.dark-mode blockquote,
+.dark-background .rich-content blockquote {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-left-color: #818cf8;
+}
+
+.rich-content.dark-mode code,
+.dark-background .rich-content code {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #fca5a5;
+}
+
+/* Sombra de texto para mejor legibilidad */
+.rich-content.text-shadow,
+.dark-background .rich-content {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   ALINEACIÓN DE TEXTO
+   ============================================ */
+
+.rich-content .text-left {
+  text-align: left;
+}
+
+.rich-content .text-center {
+  text-align: center;
+}
+
+.rich-content .text-right {
+  text-align: right;
+}
+
+.rich-content .text-justify {
+  text-align: justify;
+}
+
+/* ============================================
+   TAMAÑOS DE FUENTE RELATIVOS
+   ============================================ */
+
+.rich-content .text-xs {
+  font-size: 0.75rem;
+}
+
+.rich-content .text-sm {
+  font-size: 0.875rem;
+}
+
+.rich-content .text-base {
+  font-size: 1rem;
+}
+
+.rich-content .text-lg {
+  font-size: 1.125rem;
+}
+
+.rich-content .text-xl {
+  font-size: 1.25rem;
+}
+
+.rich-content .text-2xl {
+  font-size: 1.5rem;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 640px) {
+  .rich-content {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+
+  .rich-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .rich-content h2 {
+    font-size: 1.25rem;
+  }
+
+  .rich-content h3 {
+    font-size: 1.125rem;
+  }
+
+  .rich-content blockquote {
+    padding: 0.5em 0.75em;
+  }
+
+  .rich-content pre {
+    padding: 0.75em;
+    font-size: 0.75em;
+  }
+
+  .rich-content table {
+    font-size: 0.8125rem;
+  }
+
+  .rich-content th,
+  .rich-content td {
+    padding: 0.375em 0.5em;
+  }
+}
+
+/* ============================================
+   ANIMACIONES SUAVES
+   ============================================ */
+
+.rich-content * {
+  transition: color 0.2s ease;
+}
+
+/* Prevenir problemas con backface */
+.rich-content,
+.rich-content * {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}

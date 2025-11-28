@@ -1,29 +1,28 @@
 /**
  * UBICACIÓN: src/presentation/features/layouts/styles/book-shared.css
- * 
- * Estilos compartidos entre BookViewer (editor) y BookReader (lectura)
- * Garantiza que el libro se vea EXACTAMENTE igual en ambos modos
+ * ✅ CORREGIDO: Mejor centrado y transiciones de imagen
  */
 
-/* ===================================
-   CONTENEDOR DEL FLIPBOOK
-   =================================== */
+/* CONTENEDOR DEL FLIPBOOK */
 .book-flipbook-container {
   border-radius: 12px;
   overflow: hidden;
   margin: 0 !important;
   padding: 0 !important;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
-/* ===================================
-   PÁGINAS DEL LIBRO
-   =================================== */
+/* PÁGINAS DEL LIBRO */
 .book-flipbook-container .page {
   display: inline-block !important;
   position: relative !important;
   background: white;
   overflow: hidden !important;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .book-flipbook-container .page-inner {
@@ -32,17 +31,20 @@
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
+  transform: translateZ(0);
 }
 
-/* ===================================
-   CONTENIDO DE PÁGINA - FLIPBOOK
-   =================================== */
+/* CONTENIDO DE PÁGINA */
 .flipbook-page {
   width: 100%;
   height: 100%;
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .flipbook-page-content {
@@ -51,18 +53,25 @@
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
+  transform: translateZ(0);
 }
 
-/* Padding solo si NO tiene fondo personalizado */
 .flipbook-page-content.with-padding {
   padding: 1.5rem;
 }
 
-/* ===================================
-   LAYOUTS - ESTILOS BASE
-   =================================== */
+/* ✅ IMÁGENES - Prevenir problemas durante flip */
+.flipbook-page img,
+.page-inner img,
+.flipbook-page-content img {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+  image-rendering: auto;
+  image-rendering: -webkit-optimize-contrast;
+}
 
-/* Solo Texto - Centrado */
+/* LAYOUTS */
 .layout-text-center {
   width: 100%;
   height: 100%;
@@ -72,7 +81,6 @@
   box-sizing: border-box;
 }
 
-/* Imagen + Texto (lado a lado) */
 .layout-split-horizontal {
   width: 100%;
   height: 100%;
@@ -97,7 +105,6 @@
   overflow: auto;
 }
 
-/* Imagen Arriba, Texto Abajo */
 .layout-split-vertical {
   width: 100%;
   height: 100%;
@@ -120,7 +127,6 @@
   overflow: auto;
 }
 
-/* Imagen Completa */
 .layout-image-full {
   width: 100%;
   height: 100%;
@@ -132,7 +138,6 @@
   object-fit: cover;
 }
 
-/* Portada */
 .layout-cover {
   width: 100%;
   height: 100%;
@@ -150,25 +155,25 @@
   max-width: 90%;
 }
 
-/* ===================================
-   IMÁGENES EN LAYOUTS
-   =================================== */
+/* IMÁGENES */
 .page-image {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
   border-radius: 8px;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .page-image-cover {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
-/* ===================================
-   TEXTO EN LAYOUTS
-   =================================== */
+/* TEXTO */
 .page-title {
   margin-bottom: 0.75rem;
 }
@@ -177,9 +182,7 @@
   line-height: 1.6;
 }
 
-/* ===================================
-   RICH CONTENT (del editor TipTap)
-   =================================== */
+/* RICH CONTENT */
 .rich-content {
   width: 100%;
   height: 100%;
@@ -209,15 +212,15 @@
   font-style: italic;
 }
 
-/* ===================================
-   FONDOS
-   =================================== */
+/* FONDOS */
 .page-background-image {
   position: absolute;
   inset: 0;
   background-position: center;
   background-repeat: no-repeat;
   background-size: contain;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .page-background-color {
@@ -225,9 +228,7 @@
   inset: 0;
 }
 
-/* ===================================
-   SOMBRAS DE TEXTO (para fondos oscuros)
-   =================================== */
+/* SOMBRAS DE TEXTO */
 .text-shadow-sm {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
@@ -240,9 +241,16 @@
   text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
 }
 
-/* ===================================
-   RESPONSIVE - Ajustes para diferentes tamaños
-   =================================== */
+/* FIX Z-INDEX */
+.stf__parent {
+  perspective: 2000px;
+}
+
+.stf__wrapper {
+  transform-style: preserve-3d;
+}
+
+/* RESPONSIVE */
 @media (max-width: 640px) {
   .flipbook-page-content.with-padding {
     padding: 1rem;

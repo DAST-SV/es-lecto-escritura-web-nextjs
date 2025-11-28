@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookEditor/BookViewer.tsx
- * ✅ CORREGIDO: Pasar page completo en vez de props individuales
+ * ✅ CORREGIDO: Centrado del libro y mejor manejo de transiciones
  */
 'use client'
 
@@ -33,9 +33,12 @@ export function BookViewer({
   const [bookDimensions, setBookDimensions] = useState({ width: 400, height: 520 });
   const [activePage, setActivePage] = useState(currentPage);
   const [isClient, setIsClient] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
+    const timer = setTimeout(() => setIsReady(true), 100);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -52,7 +55,6 @@ export function BookViewer({
       const reservedHeight = 80;
       const availableHeight = containerHeight - reservedHeight;
       const availableWidth = containerWidth - 100;
-
       const aspectRatio = 5 / 6;
 
       let bookWidth = 400;
@@ -77,6 +79,7 @@ export function BookViewer({
     calculateDimensions();
     const timer1 = setTimeout(calculateDimensions, 100);
     const timer2 = setTimeout(calculateDimensions, 300);
+    const timer3 = setTimeout(calculateDimensions, 500);
     
     window.addEventListener('resize', calculateDimensions);
     
@@ -89,18 +92,29 @@ export function BookViewer({
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
+      clearTimeout(timer3);
       window.removeEventListener('resize', calculateDimensions);
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-      }
+      if (resizeObserver) resizeObserver.disconnect();
     };
-  }, [isClient]);
+  }, [isClient, bookKey]);
 
   useEffect(() => {
     setActivePage(currentPage);
   }, [currentPage]);
 
-  if (!isClient) {
+  useEffect(() => {
+    if (bookRef.current && isReady) {
+      setTimeout(() => {
+        if (bookRef.current?.pageFlip) {
+          try {
+            bookRef.current.pageFlip().turnToPage(currentPage);
+          } catch (e) {}
+        }
+      }, 50);
+    }
+  }, [bookKey, isReady]);
+
+  if (!isClient || !isReady) {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <div className="bg-white/90 backdrop-blur-sm rounded-lg px-6 py-8 shadow-lg max-w-md text-center">
@@ -144,13 +158,9 @@ export function BookViewer({
       const isActive = idx === activePage;
       
       return (
-        <div className="page w-full h-full" key={idx}>
+        <div className="page w-full h-full" key={`page-${idx}-${bookKey}`}>
           <div className="page-inner w-full h-full">
-            {/* ✅ CORREGIDO: Pasar page completo */}
-            <PageRenderer
-              page={page}
-              isActive={isActive}
-            />
+            <PageRenderer page={page} isActive={isActive} />
           </div>
         </div>
       );
@@ -158,12 +168,16 @@ export function BookViewer({
   };
 
   return (
-    <div ref={containerRef} className="w-full h-full relative overflow-hidden">
+    <div 
+      ref={containerRef} 
+      className="w-full h-full relative overflow-hidden"
+    >
       <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50" />
 
-      <div className="absolute inset-0 flex items-center justify-center p-4">
+      {/* ✅ Contenedor CENTRADO */}
+      <div className="absolute inset-0 flex items-center justify-center">
         <div 
-          className="flex-shrink-0 z-10"
+          className="relative z-10"
           style={{
             width: `${bookDimensions.width}px`,
             height: `${bookDimensions.height}px`,

@@ -1,15 +1,15 @@
 /**
  * UBICACIÓN: src/presentation/features/layouts/components/PageRenderer.tsx
- * ✅ CORREGIDO: Mejor manejo de fondos (color + imagen)
+ * ✅ CORREGIDO: Mejor manejo de fondos y transiciones de imagen
  */
 
-import React from "react";
+import React, { useMemo } from "react";
 import { getLayout } from "../registry";
 import { motion } from "framer-motion";
 import { getAnimation } from "@/src/utils/animations/animations";
 import { Page, BACKGROUND_PRESETS, isBackgroundPreset } from "@/src/core/domain/types";
 import '@/src/presentation/features/layouts/styles/book-shared.css';
-import '@/src/style/rich-content.css';
+import '@/src/presentation/features/layouts/styles/rich-content.css';
 
 interface Props {
   page: Page;
@@ -20,24 +20,18 @@ export function PageRenderer({ page, isActive = true }: Props) {
   const Layout = getLayout(page.layout);
   
   /**
-   * ✅ Lógica de fondo mejorada:
-   * 1. Si es URL de imagen -> fondo con imagen
-   * 2. Si es color hex -> fondo de color
-   * 3. Si es preset -> convertir a color
-   * 4. Default -> blanco
+   * ✅ Memoizar estilos de fondo
    */
-  const getBackgroundStyle = (): React.CSSProperties => {
+  const backgroundStyle = useMemo((): React.CSSProperties => {
     const bg = page.background;
 
-    // Sin fondo o blanco
     if (!bg || bg === '' || bg === 'blanco' || bg === '#ffffff') {
       return { backgroundColor: '#ffffff' };
     }
 
-    // URL de imagen (https, http)
     if (typeof bg === 'string' && (bg.startsWith('https://') || bg.startsWith('http://'))) {
       return {
-        backgroundColor: '#000000', // Fondo negro detrás de la imagen
+        backgroundColor: '#000000',
         backgroundImage: `url(${bg})`,
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -45,7 +39,6 @@ export function PageRenderer({ page, isActive = true }: Props) {
       };
     }
 
-    // URL blob temporal (no debería llegar aquí en producción)
     if (typeof bg === 'string' && bg.startsWith('blob:')) {
       return {
         backgroundColor: '#000000',
@@ -56,37 +49,36 @@ export function PageRenderer({ page, isActive = true }: Props) {
       };
     }
 
-    // Color hex
     if (typeof bg === 'string' && bg.startsWith('#')) {
       return { backgroundColor: bg };
     }
 
-    // Preset de color
     if (typeof bg === 'string' && isBackgroundPreset(bg)) {
       return { backgroundColor: BACKGROUND_PRESETS[bg] };
     }
 
-    // Fallback
     return { backgroundColor: '#ffffff' };
-  };
+  }, [page.background]);
 
-  const backgroundStyle = getBackgroundStyle();
   const animationVariants = page.animation ? getAnimation(page.animation) : null;
   
-  // Determinar si tiene fondo personalizado (para padding)
-  const hasCustomBackground = 
-    page.background && 
-    page.background !== 'blanco' && 
-    page.background !== '' &&
-    page.background !== '#ffffff';
+  const hasCustomBackground = useMemo(() => {
+    return page.background && 
+      page.background !== 'blanco' && 
+      page.background !== '' &&
+      page.background !== '#ffffff';
+  }, [page.background]);
 
-  // Determinar si el fondo es oscuro (para texto claro)
-  const isDarkBackground = 
-    page.background === '#000000' ||
-    page.background === 'negro' ||
-    page.background === 'azulOscuro' ||
-    page.background === 'verdeOscuro' ||
-    (typeof page.background === 'string' && page.background.startsWith('http'));
+  const isDarkBackground = useMemo(() => {
+    const bg = page.background;
+    if (!bg) return false;
+    
+    return bg === '#000000' ||
+      bg === 'negro' ||
+      bg === 'azulOscuro' ||
+      bg === 'verdeOscuro' ||
+      (typeof bg === 'string' && (bg.startsWith('http') || bg.startsWith('blob:')));
+  }, [page.background]);
 
   const content = (
     <div
@@ -97,6 +89,8 @@ export function PageRenderer({ page, isActive = true }: Props) {
         height: "100%",
         position: 'relative',
         overflow: 'hidden',
+        willChange: 'transform',
+        backfaceVisibility: 'hidden',
       }}
     >
       <div 
@@ -109,6 +103,7 @@ export function PageRenderer({ page, isActive = true }: Props) {
           padding: hasCustomBackground ? 0 : '1.5rem',
           boxSizing: 'border-box',
           color: isDarkBackground ? '#ffffff' : 'inherit',
+          transform: 'translateZ(0)',
         }}
       >
         <Layout page={page} />
@@ -123,7 +118,12 @@ export function PageRenderer({ page, isActive = true }: Props) {
         initial="hidden"
         animate={isActive ? "visible" : "hidden"}
         variants={animationVariants}
-        style={{ margin: 0, padding: 0, overflow: 'hidden' }}
+        style={{ 
+          margin: 0, 
+          padding: 0, 
+          overflow: 'hidden',
+          willChange: 'transform, opacity',
+        }}
       >
         {content}
       </motion.div>
@@ -133,7 +133,13 @@ export function PageRenderer({ page, isActive = true }: Props) {
   return (
     <div 
       className="w-full h-full rich-content"
-      style={{ margin: 0, padding: 0, overflow: 'hidden' }}
+      style={{ 
+        margin: 0, 
+        padding: 0, 
+        overflow: 'hidden',
+        transform: 'translateZ(0)',
+        backfaceVisibility: 'hidden',
+      }}
     >
       {content}
     </div>

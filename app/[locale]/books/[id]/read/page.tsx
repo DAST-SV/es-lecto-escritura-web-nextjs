@@ -1,11 +1,11 @@
 /**
  * UBICACIÓN: app/[locale]/books/[id]/read/page.tsx
- * ✅ ACTUALIZADO: Carga libro desde la BD y lo muestra
+ * ✅ CORREGIDO: Centrado del libro y mejor manejo de imágenes
  */
 
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import HTMLFlipBook from 'react-pageflip';
 import { 
@@ -47,6 +47,7 @@ export default function ReadBookPage() {
   const [bookDimensions, setBookDimensions] = useState({ width: 400, height: 520 });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const [activePage, setActivePage] = useState(0);
   const [showLiteraryCard, setShowLiteraryCard] = useState(false);
 
@@ -60,7 +61,6 @@ export default function ReadBookPage() {
       }
 
       try {
-        console.log('📖 Cargando libro:', bookId);
         const libro = await GetBookUseCase.execute(bookId);
 
         if (!libro) {
@@ -69,9 +69,7 @@ export default function ReadBookPage() {
           return;
         }
 
-        console.log('✅ Libro cargado:', libro);
-
-        // Transformar páginas al formato esperado
+        // Transformar páginas
         const pages: Page[] = (libro.paginas || []).map((p: any, idx: number) => ({
           id: p.id || `page-${idx}`,
           layout: (p.layout || 'TextCenterLayout') as LayoutType,
@@ -95,7 +93,7 @@ export default function ReadBookPage() {
 
         setIsLoading(false);
       } catch (err: any) {
-        console.error('❌ Error cargando libro:', err);
+        console.error('Error cargando libro:', err);
         setError(err.message || 'Error al cargar el libro');
         setIsLoading(false);
       }
@@ -106,6 +104,8 @@ export default function ReadBookPage() {
 
   useEffect(() => {
     setIsClient(true);
+    const timer = setTimeout(() => setIsReady(true), 150);
+    return () => clearTimeout(timer);
   }, []);
 
   // Calcular dimensiones
@@ -146,6 +146,7 @@ export default function ReadBookPage() {
 
     calculateDimensions();
     const timer = setTimeout(calculateDimensions, 100);
+    const timer2 = setTimeout(calculateDimensions, 300);
     
     window.addEventListener('resize', calculateDimensions);
     
@@ -157,6 +158,7 @@ export default function ReadBookPage() {
     
     return () => {
       clearTimeout(timer);
+      clearTimeout(timer2);
       window.removeEventListener('resize', calculateDimensions);
       if (resizeObserver) resizeObserver.disconnect();
     };
@@ -206,6 +208,15 @@ export default function ReadBookPage() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [currentPage, bookData?.pages.length, showLiteraryCard]);
 
+  // Memoizar páginas
+  const memoizedPages = useMemo(() => {
+    if (!bookData) return [];
+    return bookData.pages.map((page, idx) => ({
+      ...page,
+      key: `page-${page.id}-${idx}`,
+    }));
+  }, [bookData]);
+
   // Estado de carga
   if (isLoading) {
     return (
@@ -234,15 +245,13 @@ export default function ReadBookPage() {
           
           <p className="text-gray-600 mb-6">{error}</p>
           
-          <div className="flex flex-col gap-3">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg font-medium transition-colors"
-            >
-              <ArrowLeft size={20} />
-              Volver
-            </button>
-          </div>
+          <button
+            onClick={() => router.back()}
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg font-medium transition-colors w-full"
+          >
+            <ArrowLeft size={20} />
+            Volver
+          </button>
         </div>
       </div>
     );
@@ -262,7 +271,7 @@ export default function ReadBookPage() {
           </h2>
           
           <p className="text-gray-600 mb-6">
-            Este libro no tiene páginas disponibles para mostrar.
+            Este libro no tiene páginas disponibles.
           </p>
           
           <button
@@ -277,7 +286,7 @@ export default function ReadBookPage() {
     );
   }
 
-  if (!isClient) {
+  if (!isClient || !isReady) {
     return (
       <div className="w-full h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
         <div className="text-white text-center">
@@ -316,11 +325,11 @@ export default function ReadBookPage() {
     showPageCorners: true,
     disableFlipByClick: false,
     style: {},
-    children: bookData.pages.map((page, idx) => {
+    children: memoizedPages.map((page, idx) => {
       const isActive = idx === activePage;
       
       return (
-        <div className="page w-full h-full" key={page.id || idx}>
+        <div className="page w-full h-full" key={page.key}>
           <div className="page-inner w-full h-full">
             <PageRenderer page={page} isActive={isActive} />
           </div>
@@ -361,7 +370,6 @@ export default function ReadBookPage() {
             <button
               onClick={toggleFullscreen}
               className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-lg transition-all"
-              title={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
             >
               {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
             </button>
@@ -369,7 +377,6 @@ export default function ReadBookPage() {
             <button
               onClick={handleClose}
               className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-lg transition-all"
-              title="Cerrar"
             >
               <X size={20} />
             </button>
@@ -377,10 +384,10 @@ export default function ReadBookPage() {
         </div>
       </div>
 
-      {/* Libro centrado */}
+      {/* ✅ Libro CENTRADO */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div 
-          className="flex-shrink-0 z-10"
+          className="relative z-10"
           style={{
             width: `${bookDimensions.width}px`,
             height: `${bookDimensions.height}px`,
@@ -416,11 +423,9 @@ export default function ReadBookPage() {
           </button>
         </div>
 
-        <div className="text-center mt-3">
-          <p className="text-white/60 text-xs">
-            Usa las flechas ← → para navegar | ESC para salir
-          </p>
-        </div>
+        <p className="text-center text-white/60 text-xs mt-3">
+          Usa las flechas ← → para navegar | ESC para salir
+        </p>
       </div>
 
       {/* Modal Ficha Literaria */}
@@ -433,7 +438,6 @@ export default function ReadBookPage() {
             className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header del modal */}
             <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 rounded-t-2xl">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -449,18 +453,14 @@ export default function ReadBookPage() {
               </div>
             </div>
 
-            {/* Contenido */}
             <div className="p-6 space-y-4">
-              {/* Portada e info básica */}
               <div className="flex gap-6">
                 {bookData.coverImage && (
-                  <div className="flex-shrink-0">
-                    <img
-                      src={bookData.coverImage}
-                      alt={bookData.title}
-                      className="w-32 h-44 object-cover rounded-lg shadow-md"
-                    />
-                  </div>
+                  <img
+                    src={bookData.coverImage}
+                    alt={bookData.title}
+                    className="w-32 h-44 object-cover rounded-lg shadow-md flex-shrink-0"
+                  />
                 )}
                 <div className="flex-1">
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">{bookData.title}</h3>
@@ -475,7 +475,6 @@ export default function ReadBookPage() {
                 </div>
               </div>
 
-              {/* Personajes */}
               {bookData.characters.length > 0 && (
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-2">Personajes</h4>
@@ -489,7 +488,6 @@ export default function ReadBookPage() {
                 </div>
               )}
 
-              {/* Categorías y Géneros */}
               <div className="grid grid-cols-2 gap-4">
                 {bookData.categories.length > 0 && (
                   <div>
@@ -517,10 +515,9 @@ export default function ReadBookPage() {
                 )}
               </div>
 
-              {/* Valores */}
               {bookData.values.length > 0 && (
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Valores que transmite</h4>
+                  <h4 className="font-semibold text-gray-900 mb-2">Valores</h4>
                   <div className="flex flex-wrap gap-2">
                     {bookData.values.map((val, idx) => (
                       <span key={idx} className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
