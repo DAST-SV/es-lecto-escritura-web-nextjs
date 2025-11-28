@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: app/[locale]/books/[id]/read/page.tsx
- * ✅ CORREGIDO: Centrado del libro y mejor manejo de imágenes
+ * ✅ CORREGIDO: Sin UnifiedLayout para control total de la pantalla
  */
 
 'use client';
@@ -342,9 +342,10 @@ export default function ReadBookPage() {
     <div 
       ref={containerRef}
       className="w-full h-screen relative bg-gradient-to-br from-slate-900 to-slate-800"
+      style={{ zIndex: 9999 }} // ✅ Z-index alto para estar por encima de todo
     >
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/60 to-transparent px-6 py-4">
+      <div className="absolute top-0 left-0 right-0 z-[10000] bg-gradient-to-b from-black/60 to-transparent px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <BookOpen className="text-white" size={24} />
@@ -384,10 +385,10 @@ export default function ReadBookPage() {
         </div>
       </div>
 
-      {/* ✅ Libro CENTRADO */}
-      <div className="absolute inset-0 flex items-center justify-center">
+      {/* ✅ Libro CENTRADO con z-index apropiado */}
+      <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 9998 }}>
         <div 
-          className="relative z-10"
+          className="relative"
           style={{
             width: `${bookDimensions.width}px`,
             height: `${bookDimensions.height}px`,
@@ -400,7 +401,7 @@ export default function ReadBookPage() {
       </div>
 
       {/* Footer */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/60 to-transparent px-6 py-6">
+      <div className="absolute bottom-0 left-0 right-0 z-[10000] bg-gradient-to-t from-black/60 to-transparent px-6 py-6">
         <div className="flex items-center justify-center gap-6">
           <button
             onClick={goToPrevPage}
@@ -431,7 +432,7 @@ export default function ReadBookPage() {
       {/* Modal Ficha Literaria */}
       {showLiteraryCard && (
         <div 
-          className="fixed inset-0 z-30 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-[10001] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setShowLiteraryCard(false)}
         >
           <div 

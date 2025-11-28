@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: app/[locale]/books/[id]/edit/page.tsx
- * Página de edición de libro existente
+ * ✅ CORREGIDO: Uso de fullscreen en UnifiedLayout
  */
 
 'use client';
@@ -209,28 +209,27 @@ export default function EditBookPage() {
     return null;
   }
 
+  // ✅ Usar fullscreen para el editor
   return (
-    <UnifiedLayout className="min-h-screen bg-slate-50" mainClassName="pt-0">
-      <div className="w-full">
-        <div className="relative h-[calc(100vh-60px)] overflow-hidden">
-          <BookEditor
-            IdLibro={bookId}
-            initialPages={bookData.pages}
-            title={bookData.titulo}
-            initialMetadata={{
-              titulo: bookData.titulo,
-              autores: bookData.autores,
-              descripcion: bookData.descripcion,
-              personajes: bookData.personajes,
-              selectedCategorias: bookData.categorias,
-              selectedGeneros: bookData.generos,
-              selectedEtiquetas: bookData.etiquetas,
-              selectedValores: bookData.valores,
-              selectedNivel: bookData.nivel,
-              portadaUrl: bookData.portadaUrl,
-            }}
-          />
-        </div>
+    <UnifiedLayout fullscreen={true}>
+      <div className="w-full h-screen overflow-hidden" style={{ zIndex: 9999 }}>
+        <BookEditor
+          IdLibro={bookId}
+          initialPages={bookData.pages}
+          title={bookData.titulo}
+          initialMetadata={{
+            titulo: bookData.titulo,
+            autores: bookData.autores,
+            descripcion: bookData.descripcion,
+            personajes: bookData.personajes,
+            selectedCategorias: bookData.categorias,
+            selectedGeneros: bookData.generos,
+            selectedEtiquetas: bookData.etiquetas,
+            selectedValores: bookData.valores,
+            selectedNivel: bookData.nivel,
+            portadaUrl: bookData.portadaUrl,
+          }}
+        />
       </div>
     </UnifiedLayout>
   );

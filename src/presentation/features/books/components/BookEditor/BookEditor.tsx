@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookEditor/BookEditor.tsx
- * ✅ CORREGIDO: Mejor flujo de guardado y manejo de errores
+ * ✅ CORREGIDO: Layout con altura fija y cálculo correcto de espacios
  */
 "use client";
 
@@ -269,14 +269,6 @@ export function BookEditor({
   // FUNCIÓN PRINCIPAL: handleSave
   const handleSave = useCallback(async () => {
     console.log('🔥 INICIANDO GUARDADO');
-    console.log('📊 Estado actual:', {
-      userId: currentUserId,
-      titulo,
-      pagesCount: bookState.pages.length,
-      autoresCount: autores.length,
-      hasPortadaFile: !!portadaFile,
-      hasCardBgFile: !!cardBackgroundFile,
-    });
 
     if (!currentUserId) {
       toast.error('❌ Debes iniciar sesión para guardar');
@@ -296,11 +288,8 @@ export function BookEditor({
     setLoadingMessage('Preparando libro...');
 
     try {
-      // 1️⃣ Generar ID temporal si es libro nuevo
       const tempBookId = IdLibro || `temp_${Date.now()}`;
-      console.log('📦 ID del libro:', tempBookId);
 
-      // 2️⃣ SUBIR IMÁGENES (solo si hay archivos nuevos)
       let uploadedImages = {
         portadaUrl: null as string | null,
         cardBackgroundUrl: null as string | null,
@@ -312,7 +301,6 @@ export function BookEditor({
 
       if (hasFilesToUpload) {
         setLoadingMessage('Subiendo imágenes...');
-        console.log('📸 Subiendo imágenes...');
         
         uploadedImages = await BookImageService.uploadAllBookImages(
           currentUserId,
@@ -328,10 +316,7 @@ export function BookEditor({
             }))
           }
         );
-
-        console.log('📸 Resultado de subida:', uploadedImages);
       } else {
-        // Si no hay archivos nuevos, mantener URLs existentes
         uploadedImages.pages = bookState.pages.map(page => ({
           imageUrl: BookImageService.isPermanentUrl(page.image) ? page.image! : null,
           backgroundUrl: BookImageService.isPermanentUrl(page.background as string) ? page.background as string : 
@@ -339,21 +324,16 @@ export function BookEditor({
         }));
       }
 
-      // 3️⃣ Determinar la portada final
       const finalPortadaUrl = uploadedImages.portadaUrl || 
                               uploadedImages.cardBackgroundUrl || 
                               (BookImageService.isPermanentUrl(portadaUrl) ? portadaUrl : null) || 
                               (BookImageService.isPermanentUrl(cardBackgroundUrl) ? cardBackgroundUrl : null);
 
-      console.log('🖼️ Portada final:', finalPortadaUrl);
-
-      // 4️⃣ Preparar páginas con URLs permanentes
       setLoadingMessage('Guardando libro...');
       
       const pagesWithUrls = bookState.pages.map((page, idx) => {
         const uploadedPage = uploadedImages.pages[idx] || { imageUrl: null, backgroundUrl: null };
         
-        // Determinar imagen final
         let finalImage = '';
         if (uploadedPage.imageUrl) {
           finalImage = uploadedPage.imageUrl;
@@ -361,7 +341,6 @@ export function BookEditor({
           finalImage = page.image;
         }
 
-        // Determinar fondo final
         let finalBackground = 'blanco';
         if (uploadedPage.backgroundUrl) {
           finalBackground = uploadedPage.backgroundUrl;
@@ -382,14 +361,6 @@ export function BookEditor({
         };
       });
 
-      console.log('📄 Páginas preparadas:', pagesWithUrls.map((p, i) => ({
-        page: i + 1,
-        layout: p.layout,
-        hasImage: !!p.image,
-        background: p.background
-      })));
-
-      // 5️⃣ Preparar datos del libro
       const bookData = {
         titulo,
         descripcion,
@@ -404,25 +375,13 @@ export function BookEditor({
         pages: pagesWithUrls
       };
 
-      console.log('📦 Datos del libro a guardar:', {
-        titulo: bookData.titulo,
-        portada: bookData.portada,
-        pagesCount: bookData.pages.length,
-        autoresCount: bookData.autores.length,
-      });
-
-      // 6️⃣ Guardar en base de datos
       let savedBookId: string;
       
       if (IdLibro) {
-        console.log('📝 Actualizando libro existente:', IdLibro);
         await UpdateBookUseCase.execute(IdLibro, bookData);
         savedBookId = IdLibro;
-        console.log('✅ Libro actualizado:', savedBookId);
       } else {
-        console.log('📝 Creando libro nuevo...');
         savedBookId = await CreateBookUseCase.execute(currentUserId, bookData);
-        console.log('✅ Libro creado:', savedBookId);
       }
 
       setLoadingStatus('success');
@@ -430,7 +389,6 @@ export function BookEditor({
       
       toast.success('✅ Libro guardado correctamente');
 
-      // Redirigir al modo lectura
       setTimeout(() => {
         window.location.href = `/${locale}/books/${savedBookId}/read`;
       }, 1500);
@@ -490,7 +448,6 @@ export function BookEditor({
     setSelectedNivel(value);
   }, []);
 
-  // Handler para portada
   const handlePortadaChange = useCallback((file: File | null) => {
     setPortadaFile(file);
     if (file) {
@@ -501,7 +458,6 @@ export function BookEditor({
     }
   }, []);
 
-  // Handler para card background
   const handleCardBackgroundChange = useCallback((file: File | null) => {
     setCardBackgroundFile(file);
     if (file) {
@@ -532,7 +488,7 @@ export function BookEditor({
   // Loading states
   if (isCheckingAuth) {
     return (
-      <div className="h-full w-full flex items-center justify-center bg-white">
+      <div className="h-screen w-full flex items-center justify-center bg-white">
         <div className="text-center">
           <Loader2 size={48} className="animate-spin text-indigo-600 mx-auto mb-4" />
           <p className="text-gray-600">Verificando sesión...</p>
@@ -543,7 +499,7 @@ export function BookEditor({
 
   if (!currentUserId) {
     return (
-      <div className="h-full w-full flex items-center justify-center bg-white">
+      <div className="h-screen w-full flex items-center justify-center bg-white">
         <div className="text-center max-w-md mx-auto p-6">
           <div className="text-red-500 text-6xl mb-4">🔒</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -565,7 +521,7 @@ export function BookEditor({
 
   if (isLoadingBook) {
     return (
-      <div className="h-full w-full flex items-center justify-center bg-white">
+      <div className="h-screen w-full flex items-center justify-center bg-white">
         <div className="text-center">
           <Loader2 size={48} className="animate-spin text-indigo-600 mx-auto mb-4" />
           <p className="text-gray-600">Cargando libro...</p>
@@ -574,8 +530,9 @@ export function BookEditor({
     );
   }
 
+  // ✅ LAYOUT PRINCIPAL CON ALTURA FIJA
   return (
-    <div className="h-full w-full flex flex-col overflow-hidden border border-slate-200 bg-white">
+    <div className="fixed inset-0 flex flex-col bg-white overflow-hidden">
       <Toaster 
         position="top-right"
         toastOptions={{
@@ -585,9 +542,9 @@ export function BookEditor({
         containerStyle={{ top: 80, zIndex: 99999 }}
       />
 
-      {/* Header */}
-      <div className="flex-shrink-0 bg-white border-b border-slate-200 shadow-sm">
-        <div className="px-4 py-2 flex items-center justify-between">
+      {/* ✅ HEADER - Altura fija: 60px */}
+      <div className="flex-shrink-0 h-[60px] bg-white border-b border-slate-200 shadow-sm">
+        <div className="h-full px-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
               <BookOpen className="text-indigo-600" size={20} />
@@ -689,9 +646,10 @@ export function BookEditor({
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        <div className="w-96 bg-white border-r border-slate-200 flex flex-col overflow-hidden">
+      {/* ✅ MAIN CONTENT - Resto de altura disponible (calc(100vh - 60px)) */}
+      <div className="flex-1 flex overflow-hidden" style={{ height: 'calc(100vh - 60px)' }}>
+        {/* ✅ SIDEBAR - Ancho fijo: 384px (w-96) */}
+        <div className="w-96 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col overflow-hidden">
           {viewMode === 'pages' ? (
             <EditorSidebar
               pages={bookState.pages}
@@ -750,6 +708,7 @@ export function BookEditor({
           )}
         </div>
 
+        {/* ✅ VIEWER - Resto del espacio (calc(100% - 384px)) */}
         <div className="flex-1 overflow-hidden">
           {viewMode === 'pages' ? (
             <BookViewer
@@ -762,7 +721,7 @@ export function BookEditor({
               onPageClick={navigation.goToPage}
             />
           ) : (
-            <div className="h-full bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+            <div className="h-full bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 overflow-auto">
               <LiteraryCardView
                 backgroundUrl={cardBackgroundUrl || portadaUrl}
                 titulo={titulo}

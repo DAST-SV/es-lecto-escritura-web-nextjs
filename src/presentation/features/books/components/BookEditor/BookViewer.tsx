@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookEditor/BookViewer.tsx
- * ✅ CORREGIDO: Centrado del libro y mejor manejo de transiciones
+ * ✅ SIMPLIFICADO: Usa porcentajes del viewport para cálculo confiable
  */
 'use client'
 
@@ -27,10 +27,9 @@ export function BookViewer({
   bookKey,
   bookRef,
   onFlip,
-  onPageClick
 }: BookViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [bookDimensions, setBookDimensions] = useState({ width: 400, height: 520 });
+  const [bookDimensions, setBookDimensions] = useState({ width: 500, height: 650 });
   const [activePage, setActivePage] = useState(currentPage);
   const [isClient, setIsClient] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -41,60 +40,66 @@ export function BookViewer({
     return () => clearTimeout(timer);
   }, []);
 
+  // ✅ CÁLCULO SIMPLIFICADO: Basado en viewport height
   useEffect(() => {
     if (!isClient) return;
 
     const calculateDimensions = () => {
-      if (!containerRef.current) return;
+      // ✅ Usar dimensiones del viewport directamente
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
 
-      const containerHeight = containerRef.current.clientHeight;
-      const containerWidth = containerRef.current.clientWidth;
+      // ✅ Restar navbar (60px) y márgenes
+      const availableHeight = viewportHeight - 60 - 40; // 60px navbar, 40px margen
+      const availableWidth = viewportWidth - 384 - 80; // 384px sidebar, 80px margen
 
-      if (containerHeight <= 0 || containerWidth <= 0) return;
-
-      const reservedHeight = 80;
-      const availableHeight = containerHeight - reservedHeight;
-      const availableWidth = containerWidth - 100;
+      // ✅ Aspect ratio 5:6
       const aspectRatio = 5 / 6;
 
-      let bookWidth = 400;
-      let bookHeight = 520;
+      // ✅ Calcular por altura (más confiable)
+      let bookHeight = availableHeight * 0.90; // 90% de altura disponible
+      let bookWidth = bookHeight * aspectRatio;
 
-      if (availableHeight > 0 && availableWidth > 0) {
-        bookHeight = Math.min(availableHeight, 700);
-        bookWidth = bookHeight * aspectRatio;
-
-        if (bookWidth > availableWidth) {
-          bookWidth = availableWidth;
-          bookHeight = bookWidth / aspectRatio;
-        }
+      // Si el ancho es muy grande, ajustar por ancho
+      if (bookWidth > availableWidth * 0.90) {
+        bookWidth = availableWidth * 0.90;
+        bookHeight = bookWidth / aspectRatio;
       }
 
+      // ✅ Dimensiones mínimas
+      bookWidth = Math.max(bookWidth, 400);
+      bookHeight = Math.max(bookHeight, 480);
+
+      // ✅ Dimensiones máximas para evitar overflow
+      bookWidth = Math.min(bookWidth, 800);
+      bookHeight = Math.min(bookHeight, 960);
+
+      const finalWidth = Math.round(bookWidth);
+      const finalHeight = Math.round(bookHeight);
+
+      console.log('📖 BookViewer dimensions:', {
+        viewport: { w: viewportWidth, h: viewportHeight },
+        available: { w: availableWidth, h: availableHeight },
+        book: { w: finalWidth, h: finalHeight }
+      });
+
       setBookDimensions({
-        width: Math.max(Math.round(bookWidth), 300),
-        height: Math.max(Math.round(bookHeight), 390)
+        width: finalWidth,
+        height: finalHeight
       });
     };
 
+    // ✅ Calcular múltiples veces para asegurar
     calculateDimensions();
-    const timer1 = setTimeout(calculateDimensions, 100);
-    const timer2 = setTimeout(calculateDimensions, 300);
-    const timer3 = setTimeout(calculateDimensions, 500);
+    const timers = [100, 300, 500, 1000].map(delay => 
+      setTimeout(calculateDimensions, delay)
+    );
     
     window.addEventListener('resize', calculateDimensions);
     
-    let resizeObserver: ResizeObserver | null = null;
-    if (containerRef.current) {
-      resizeObserver = new ResizeObserver(calculateDimensions);
-      resizeObserver.observe(containerRef.current);
-    }
-    
     return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
+      timers.forEach(clearTimeout);
       window.removeEventListener('resize', calculateDimensions);
-      if (resizeObserver) resizeObserver.disconnect();
     };
   }, [isClient, bookKey]);
 
@@ -108,7 +113,9 @@ export function BookViewer({
         if (bookRef.current?.pageFlip) {
           try {
             bookRef.current.pageFlip().turnToPage(currentPage);
-          } catch (e) {}
+          } catch (e) {
+            console.warn('Error al cambiar página:', e);
+          }
         }
       }, 50);
     }
@@ -116,7 +123,7 @@ export function BookViewer({
 
   if (!isClient || !isReady) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
+      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
         <div className="bg-white/90 backdrop-blur-sm rounded-lg px-6 py-8 shadow-lg max-w-md text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
           <p className="text-sm text-gray-600">Cargando libro...</p>
@@ -172,12 +179,13 @@ export function BookViewer({
       ref={containerRef} 
       className="w-full h-full relative overflow-hidden"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50" />
+      {/* Fondo con gradiente */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50" />
 
-      {/* ✅ Contenedor CENTRADO */}
+      {/* ✅ Libro centrado */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div 
-          className="relative z-10"
+          className="relative"
           style={{
             width: `${bookDimensions.width}px`,
             height: `${bookDimensions.height}px`,
@@ -187,6 +195,11 @@ export function BookViewer({
             <HTMLFlipBook {...flipBookProps} ref={bookRef} key={`viewer-${bookKey}`} />
           </div>
         </div>
+      </div>
+
+      {/* ✅ Info de dimensiones en esquina */}
+      <div className="absolute bottom-3 left-3 bg-black/60 text-white text-xs px-2 py-1 rounded font-mono backdrop-blur-sm">
+        📖 {bookDimensions.width} × {bookDimensions.height}
       </div>
     </div>
   );
