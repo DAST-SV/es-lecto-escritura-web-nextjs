@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookEditor/BookEditor.tsx
- * ✅ CORREGIDO: Layout con altura fija y cálculo correcto de espacios
+ * ✅ ARREGLADO: NO usa fixed inset-0, se adapta al contenedor padre
  */
 "use client";
 
@@ -530,9 +530,9 @@ export function BookEditor({
     );
   }
 
-  // ✅ LAYOUT PRINCIPAL CON ALTURA FIJA
+  // ✅ LAYOUT PRINCIPAL - SE ADAPTA AL CONTENEDOR PADRE (NO fixed inset-0)
   return (
-    <div className="fixed inset-0 flex flex-col bg-white overflow-hidden">
+    <div className="w-full h-full flex flex-col bg-white overflow-hidden">
       <Toaster 
         position="top-right"
         toastOptions={{
@@ -542,9 +542,9 @@ export function BookEditor({
         containerStyle={{ top: 80, zIndex: 99999 }}
       />
 
-      {/* ✅ HEADER - Altura fija: 60px */}
-      <div className="flex-shrink-0 h-[60px] bg-white border-b border-slate-200 shadow-sm">
-        <div className="h-full px-4 flex items-center justify-between">
+      {/* ✅ HEADER - Altura reducida: 48px */}
+      <div className="flex-shrink-0 h-[48px] bg-white border-b border-slate-200 shadow-sm relative z-50">
+        <div className="h-full px-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
               <BookOpen className="text-indigo-600" size={20} />
@@ -646,8 +646,8 @@ export function BookEditor({
         </div>
       </div>
 
-      {/* ✅ MAIN CONTENT - Resto de altura disponible (calc(100vh - 60px)) */}
-      <div className="flex-1 flex overflow-hidden" style={{ height: 'calc(100vh - 60px)' }}>
+      {/* ✅ MAIN CONTENT - Resto de altura disponible */}
+      <div className="flex-1 flex overflow-hidden min-h-0">
         {/* ✅ SIDEBAR - Ancho fijo: 384px (w-96) */}
         <div className="w-96 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col overflow-hidden">
           {viewMode === 'pages' ? (
@@ -708,8 +708,8 @@ export function BookEditor({
           )}
         </div>
 
-        {/* ✅ VIEWER - Resto del espacio (calc(100% - 384px)) */}
-        <div className="flex-1 overflow-hidden">
+        {/* ✅ VIEWER - Resto del espacio */}
+        <div className="flex-1 overflow-hidden min-w-0">
           {viewMode === 'pages' ? (
             <BookViewer
               bookRef={bookRef}

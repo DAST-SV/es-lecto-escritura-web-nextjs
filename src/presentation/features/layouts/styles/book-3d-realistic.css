@@ -1,0 +1,297 @@
+/**
+ * UBICACIÓN: src/presentation/features/layouts/styles/book-3d-realistic.css
+ * ✅ EFECTOS 3D REALISTAS para el flipbook
+ * 
+ * AGREGAR ESTE IMPORT en BookViewer.tsx:
+ * import '@/src/presentation/features/layouts/styles/book-3d-realistic.css';
+ */
+
+/* ============================================
+   CONTENEDOR DEL LIBRO - EFECTO 3D
+   ============================================ */
+
+.book-flipbook-container {
+  border-radius: 16px;
+  overflow: visible !important; /* Permitir que las sombras se vean */
+  margin: 0 !important;
+  padding: 0 !important;
+  
+  /* Sombra realista multicapa */
+  box-shadow: 
+    /* Sombra principal profunda */
+    0 30px 60px -12px rgba(0, 0, 0, 0.35),
+    /* Sombra media */
+    0 18px 36px -18px rgba(0, 0, 0, 0.25),
+    /* Sombra suave */
+    0 8px 16px -8px rgba(0, 0, 0, 0.15),
+    /* Highlight sutil en el borde */
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 2000px;
+  
+  /* Transición suave para las sombras */
+  transition: box-shadow 0.3s ease;
+}
+
+.book-flipbook-container:hover {
+  /* Sombra más intensa al hover */
+  box-shadow: 
+    0 40px 80px -12px rgba(0, 0, 0, 0.4),
+    0 24px 48px -18px rgba(0, 0, 0, 0.3),
+    0 12px 24px -8px rgba(0, 0, 0, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+/* ============================================
+   PÁGINAS - EFECTO PAPEL REAL
+   ============================================ */
+
+.book-flipbook-container .page {
+  display: inline-block !important;
+  position: relative !important;
+  background: #fdfdfb !important; /* Blanco ligeramente cálido (papel) */
+  overflow: hidden !important;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  
+  /* Textura de papel sutil */
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.01) 0px,
+      transparent 1px,
+      transparent 2px,
+      rgba(0, 0, 0, 0.01) 3px
+    );
+  
+  /* Borde interno sutil */
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+/* Efecto de papel al voltear */
+.book-flipbook-container .page.--flipping {
+  /* Sombra dinámica durante el flip */
+  box-shadow: 
+    0 0 20px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   LOMO DEL LIBRO (simulado)
+   ============================================ */
+
+.book-flipbook-container::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.15) 0%,
+    rgba(0, 0, 0, 0.05) 20%,
+    rgba(255, 255, 255, 0.1) 40%,
+    rgba(255, 255, 255, 0.1) 60%,
+    rgba(0, 0, 0, 0.05) 80%,
+    rgba(0, 0, 0, 0.15) 100%
+  );
+  z-index: 100;
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+/* ============================================
+   SOMBRAS DE PÁGINA (internas)
+   ============================================ */
+
+.book-flipbook-container .stf__hardShadow,
+.book-flipbook-container .stf__hardInnerShadow {
+  opacity: 0.6 !important; /* Más visible */
+}
+
+.book-flipbook-container .stf__outerShadow {
+  opacity: 0.5 !important;
+  filter: blur(8px);
+}
+
+/* ============================================
+   ESQUINAS DE PÁGINA
+   ============================================ */
+
+.book-flipbook-container .stf__pageCorner {
+  /* Esquina con efecto de papel doblado */
+  background: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.1) 0%,
+    transparent 100%
+  ) !important;
+  border-radius: 0 0 4px 0;
+}
+
+/* ============================================
+   TRANSICIÓN SUAVE DURANTE FLIP
+   ============================================ */
+
+.book-flipbook-container .stf__wrapper {
+  transform-style: preserve-3d;
+  perspective: 2000px;
+}
+
+.book-flipbook-container .stf__parent {
+  perspective: 2000px;
+}
+
+/* ============================================
+   EFECTO DE PROFUNDIDAD EN PÁGINAS
+   ============================================ */
+
+.book-flipbook-container .page-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  transform: translateZ(0);
+  
+  /* Sombra interna muy sutil */
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.03);
+}
+
+/* ============================================
+   BORDE DECORATIVO DEL LIBRO
+   ============================================ */
+
+.book-flipbook-container::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 18px;
+  padding: 2px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0),
+    rgba(0, 0, 0, 0.1)
+  );
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 101;
+}
+
+/* ============================================
+   ANIMACIÓN DE APERTURA
+   ============================================ */
+
+@keyframes bookOpen {
+  from {
+    transform: scale(0.95) rotateY(-5deg);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) rotateY(0deg);
+    opacity: 1;
+  }
+}
+
+.book-flipbook-container {
+  animation: bookOpen 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* ============================================
+   PÁGINAS ESPECÍFICAS - EFECTOS ESPECIALES
+   ============================================ */
+
+/* Primera página (portada) */
+.book-flipbook-container .page:first-child {
+  /* Textura más pronunciada en portada */
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.02) 0px,
+      transparent 1px,
+      transparent 2px,
+      rgba(0, 0, 0, 0.02) 3px
+    );
+  
+  /* Brillo sutil */
+  box-shadow: 
+    inset 0 0 100px rgba(255, 255, 255, 0.1),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+/* Última página (contraportada) */
+.book-flipbook-container .page:last-child {
+  background: #f8f8f6 !important;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+/* ============================================
+   RESPONSIVE - Ajustes para móvil
+   ============================================ */
+
+@media (max-width: 768px) {
+  .book-flipbook-container {
+    box-shadow: 
+      0 20px 40px -12px rgba(0, 0, 0, 0.3),
+      0 12px 24px -12px rgba(0, 0, 0, 0.2),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+  
+  .book-flipbook-container::before {
+    width: 6px;
+  }
+}
+
+/* ============================================
+   MEJORAS DE PERFORMANCE
+   ============================================ */
+
+.book-flipbook-container,
+.book-flipbook-container *,
+.book-flipbook-container *::before,
+.book-flipbook-container *::after {
+  /* Optimización de rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Force GPU acceleration */
+.book-flipbook-container .page,
+.book-flipbook-container .page-inner {
+  transform: translate3d(0, 0, 0);
+  will-change: transform, opacity;
+}
+
+/* ============================================
+   EFECTO DE ILUMINACIÓN AMBIENTE
+   ============================================ */
+
+.book-viewer-container {
+  position: relative;
+}
+
+.book-viewer-container::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: -20%;
+  right: -20%;
+  bottom: -20%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
