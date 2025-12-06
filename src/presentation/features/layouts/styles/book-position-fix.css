@@ -13,16 +13,3 @@
 .book-flipbook-container .stf__item {
   top: 0 !important;
 }
-
-/* Asegurar que el contenedor también esté bien posicionado */
-.book-flipbook-container .stf__block {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.book-flipbook-container .stf__wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
