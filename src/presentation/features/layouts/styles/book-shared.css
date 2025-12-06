@@ -1,11 +1,10 @@
 /**
  * UBICACIÓN: src/presentation/features/layouts/styles/book-shared.css
- * ✅ CORREGIDO: Mejor centrado y transiciones de imagen
+ * ✅ SIN BORDES REDONDEADOS - Bordes puntiagudos
  */
 
 /* CONTENEDOR DEL FLIPBOOK */
 .book-flipbook-container {
-  border-radius: 12px;
   overflow: hidden;
   margin: 0 !important;
   padding: 0 !important;
@@ -155,12 +154,11 @@
   max-width: 90%;
 }
 
-/* IMÁGENES */
+/* IMÁGENES - SIN borderRadius */
 .page-image {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  border-radius: 8px;
   backface-visibility: hidden;
   transform: translateZ(0);
 }

@@ -1,0 +1,28 @@
+/**
+ * UBICACIÓN: src/presentation/features/layouts/styles/book-position-fix.css
+ * ✅ FIX CRÍTICO: Corregir posicionamiento de páginas en HTMLFlipBook
+ * 
+ * IMPORTAR EN BookViewer.tsx:
+ * import '@/src/presentation/features/layouts/styles/book-position-fix.css';
+ */
+
+/* ============================================
+   FIX: Posicionamiento correcto de páginas
+   ============================================ */
+
+.book-flipbook-container .stf__item {
+  top: 0 !important;
+}
+
+/* Asegurar que el contenedor también esté bien posicionado */
+.book-flipbook-container .stf__block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.book-flipbook-container .stf__wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/BookEditor/BookEditor.tsx
- * ✅ ARREGLADO: NO usa fixed inset-0, se adapta al contenedor padre
+ * ✅ CORREGIDO: Altura 100% para aprovechar todo el espacio del contenedor
  */
 "use client";
 
@@ -488,7 +488,7 @@ export function BookEditor({
   // Loading states
   if (isCheckingAuth) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-white">
+      <div className="h-full w-full flex items-center justify-center bg-white">
         <div className="text-center">
           <Loader2 size={48} className="animate-spin text-indigo-600 mx-auto mb-4" />
           <p className="text-gray-600">Verificando sesión...</p>
@@ -499,7 +499,7 @@ export function BookEditor({
 
   if (!currentUserId) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-white">
+      <div className="h-full w-full flex items-center justify-center bg-white">
         <div className="text-center max-w-md mx-auto p-6">
           <div className="text-red-500 text-6xl mb-4">🔒</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -521,7 +521,7 @@ export function BookEditor({
 
   if (isLoadingBook) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-white">
+      <div className="h-full w-full flex items-center justify-center bg-white">
         <div className="text-center">
           <Loader2 size={48} className="animate-spin text-indigo-600 mx-auto mb-4" />
           <p className="text-gray-600">Cargando libro...</p>
@@ -530,9 +530,9 @@ export function BookEditor({
     );
   }
 
-  // ✅ LAYOUT PRINCIPAL - SE ADAPTA AL CONTENEDOR PADRE (NO fixed inset-0)
+  // ✅ LAYOUT PRINCIPAL - ALTURA 100%
   return (
-    <div className="w-full h-full flex flex-col bg-white overflow-hidden">
+    <div className="w-full h-full flex flex-col bg-white">
       <Toaster 
         position="top-right"
         toastOptions={{
@@ -542,7 +542,7 @@ export function BookEditor({
         containerStyle={{ top: 80, zIndex: 99999 }}
       />
 
-      {/* ✅ HEADER - Altura reducida: 48px */}
+      {/* ✅ HEADER - Altura fija: 48px */}
       <div className="flex-shrink-0 h-[48px] bg-white border-b border-slate-200 shadow-sm relative z-50">
         <div className="h-full px-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -646,9 +646,9 @@ export function BookEditor({
         </div>
       </div>
 
-      {/* ✅ MAIN CONTENT - Resto de altura disponible */}
-      <div className="flex-1 flex overflow-hidden min-h-0">
-        {/* ✅ SIDEBAR - Ancho fijo: 384px (w-96) */}
+      {/* ✅ MAIN CONTENT - flex-1 toma el resto de la altura */}
+      <div className="flex-1 flex min-h-0">
+        {/* ✅ SIDEBAR - Ancho fijo: 384px */}
         <div className="w-96 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col overflow-hidden">
           {viewMode === 'pages' ? (
             <EditorSidebar
@@ -708,8 +708,8 @@ export function BookEditor({
           )}
         </div>
 
-        {/* ✅ VIEWER - Resto del espacio */}
-        <div className="flex-1 overflow-hidden min-w-0">
+        {/* ✅ VIEWER - flex-1 toma el resto del espacio */}
+        <div className="flex-1 min-w-0">
           {viewMode === 'pages' ? (
             <BookViewer
               bookRef={bookRef}

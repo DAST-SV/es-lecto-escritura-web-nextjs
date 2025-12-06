@@ -8,8 +8,6 @@ import { getLayout } from "../registry";
 import { motion } from "framer-motion";
 import { getAnimation } from "@/src/utils/animations/animations";
 import { Page, BACKGROUND_PRESETS, isBackgroundPreset } from "@/src/core/domain/types";
-import '@/src/presentation/features/layouts/styles/book-shared.css';
-import '@/src/presentation/features/layouts/styles/rich-content.css';
 
 interface Props {
   page: Page;
