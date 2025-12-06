@@ -17,7 +17,7 @@ interface BookViewerProps {
   currentPage: number;
   isFlipping: boolean;
   bookKey: number;
-  bookRef: React.RefObject<any>; 
+  bookRef: React.RefObject<any>;
   onFlip: (e: unknown) => void;
   onPageClick: (pageIndex: number) => void;
 }
@@ -72,7 +72,7 @@ export function BookViewer({
 
       // Verificar si caben 2 páginas horizontalmente
       const totalWidth = pageWidth * 2;
-      
+
       if (totalWidth > availableWidth) {
         pageWidth = (availableWidth * 0.85) / 2;
         pageHeight = pageWidth / PAGE_ASPECT_RATIO;
@@ -98,9 +98,9 @@ export function BookViewer({
 
     const resizeObserver = new ResizeObserver(calculateDimensions);
     if (containerRef.current) resizeObserver.observe(containerRef.current);
-    
+
     window.addEventListener('resize', calculateDimensions);
-    
+
     return () => {
       timers.forEach(clearTimeout);
       resizeObserver.disconnect();
@@ -133,10 +133,16 @@ export function BookViewer({
   if (!isClient || !isReady) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
-        <div className="bg-white/90 backdrop-blur-sm rounded-lg px-6 py-8 shadow-lg max-w-md text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-sm text-gray-600">Cargando libro...</p>
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl px-8 py-10 shadow-2xl max-w-md text-center border border-white/20">
+          <div className="relative w-12 h-12 mx-auto mb-6">
+            <div className="absolute inset-0 rounded-full border-4 border-indigo-100"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-t-indigo-600 border-r-indigo-500 border-b-transparent border-l-transparent animate-spin"></div>
+            <div className="absolute inset-2 rounded-full border-4 border-t-purple-400 border-r-transparent border-b-transparent border-l-purple-300 animate-spin" style={{ animationDuration: '1.5s', animationDirection: 'reverse' }}></div>
+          </div>
+          <p className="text-base font-medium text-gray-700 mb-1">Preparando tu libro</p>
+          <p className="text-sm text-gray-500">Calculando dimensiones...</p>
         </div>
+
       </div>
     );
   }
@@ -171,8 +177,8 @@ export function BookViewer({
     disableFlipByClick: false,
     style: {},
     children: pages.map((page, idx) => (
-      <div 
-        className="page w-full h-full" 
+      <div
+        className="page w-full h-full"
         key={`page-${idx}-${bookKey}`}
       >
         <div className="page-inner w-full h-full">
@@ -183,12 +189,12 @@ export function BookViewer({
   };
 
   return (
-    <div 
-      ref={containerRef} 
+    <div
+      ref={containerRef}
       className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 relative"
     >
       {/* Patrón de fondo sutil */}
-      <div 
+      <div
         className="absolute inset-0 opacity-30"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
@@ -198,11 +204,6 @@ export function BookViewer({
       {/* Libro centrado */}
       <div className="relative z-10">
         <HTMLFlipBook {...flipBookProps} ref={bookRef} key={`viewer-${bookKey}`} />
-      </div>
-
-      {/* Info de dimensiones */}
-      <div className="absolute bottom-4 left-4 bg-black/70 text-white text-xs px-3 py-1.5 rounded-lg font-mono backdrop-blur-md border border-white/10 shadow-lg z-20">
-        📖 {bookDimensions.width} × {bookDimensions.height} px (página) | Libro: {bookDimensions.width * 2} × {bookDimensions.height} px
       </div>
     </div>
   );
