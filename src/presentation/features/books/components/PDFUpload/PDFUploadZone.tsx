@@ -1,11 +1,16 @@
+/**
+ * UBICACIÓN: src/presentation/features/books/components/PDFUpload/PDFUploadZone.tsx
+ * ✅ Componente drag-and-drop para subir PDFs
+ */
+
 'use client';
 
-import React, { useCallback, useState } from 'react';
-import { Upload, FileText, X, AlertCircle, CheckCircle } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Upload, FileText, X, Check, AlertCircle } from 'lucide-react';
 
 interface PDFUploadZoneProps {
   onFileSelect: (file: File | null) => void;
-  currentFile?: File | null;
+  currentFile: File | null;
   error?: string;
 }
 
@@ -16,127 +21,165 @@ export function PDFUploadZone({
 }: PDFUploadZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
 
-  const validateFile = (file: File): string | null => {
+  const validateFile = useCallback((file: File): string | null => {
+    // Validar tipo
     if (file.type !== 'application/pdf') {
       return 'Solo se permiten archivos PDF';
     }
-    const maxSize = 50 * 1024 * 1024; // 50MB
+
+    // Validar tamaño (50MB)
+    const maxSize = 50 * 1024 * 1024;
     if (file.size > maxSize) {
-      return 'El archivo excede el tamaño máximo de 50MB';
+      return 'El archivo es muy grande. Máximo 50MB';
     }
+
     return null;
-  };
+  }, []);
 
   const handleFile = useCallback((file: File) => {
-    const validationError = validateFile(file);
-    if (validationError) {
-      alert(validationError);
+    const error = validateFile(file);
+    if (error) {
       onFileSelect(null);
       return;
     }
     onFileSelect(file);
-  }, [onFileSelect]);
+  }, [validateFile, onFileSelect]);
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    const files = e.dataTransfer.files;
-    if (files?.[0]) handleFile(files[0]);
-  };
 
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files?.[0]) handleFile(files[0]);
-  };
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      handleFile(file);
+    }
+  }, [handleFile]);
+
+  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFile(file);
+    }
+  }, [handleFile]);
+
+  const handleRemove = useCallback(() => {
+    onFileSelect(null);
+  }, [onFileSelect]);
 
   return (
-    <div className="space-y-4">
-      {!currentFile ? (
-        <div
-          onDragEnter={(e) => { e.preventDefault(); setIsDragging(true); }}
-          onDragOver={(e) => e.preventDefault()}
-          onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+    <div className="space-y-3">
+      {currentFile ? (
+        // Archivo seleccionado
+        <div className="relative">
+          <div className="p-4 bg-green-50 border-2 border-green-300 rounded-lg">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <FileText size={24} className="text-green-600" />
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-green-900 truncate">
+                  {currentFile.name}
+                </p>
+                <p className="text-xs text-green-700 mt-1">
+                  {(currentFile.size / (1024 * 1024)).toFixed(2)} MB
+                </p>
+              </div>
+
+              <button
+                onClick={handleRemove}
+                className="flex-shrink-0 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                title="Quitar archivo"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Check badge */}
+            <div className="absolute top-2 right-2">
+              <div className="bg-green-500 text-white rounded-full p-1">
+                <Check size={16} strokeWidth={3} />
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        // Zona de drop
+        <label
           onDrop={handleDrop}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
           className={`
-            border-2 border-dashed rounded-lg p-8 transition-all cursor-pointer
-            ${isDragging ? 'border-blue-500 bg-blue-50 scale-105' : 'border-gray-300 hover:border-blue-400'}
-            ${error ? 'border-red-300 bg-red-50' : ''}
+            block cursor-pointer transition-all
+            ${isDragging 
+              ? 'border-indigo-500 bg-indigo-50 scale-105' 
+              : error
+                ? 'border-red-400 bg-red-50'
+                : 'border-gray-300 bg-gray-50 hover:border-indigo-400 hover:bg-indigo-50/50'
+            }
           `}
         >
+          <div className="border-2 border-dashed rounded-lg p-8">
+            <div className="flex flex-col items-center text-center">
+              <div className={`
+                w-16 h-16 rounded-full flex items-center justify-center mb-4
+                ${isDragging 
+                  ? 'bg-indigo-200' 
+                  : error 
+                    ? 'bg-red-200' 
+                    : 'bg-indigo-100'
+                }
+              `}>
+                {isDragging ? (
+                  <Upload size={32} className="text-indigo-600 animate-bounce" />
+                ) : error ? (
+                  <AlertCircle size={32} className="text-red-600" />
+                ) : (
+                  <FileText size={32} className="text-indigo-500" />
+                )}
+              </div>
+
+              <p className="text-sm font-semibold text-gray-800 mb-1">
+                {isDragging 
+                  ? '¡Suelta el archivo aquí!' 
+                  : error
+                    ? 'Archivo inválido'
+                    : 'Arrastra tu PDF aquí'
+                }
+              </p>
+
+              <p className="text-xs text-gray-600 mb-4">
+                o haz clic para seleccionar
+              </p>
+
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 transition">
+                <Upload size={14} />
+                Seleccionar PDF
+              </div>
+
+              <p className="text-[10px] text-gray-500 mt-4">
+                Solo PDF • Máximo 50MB
+              </p>
+            </div>
+          </div>
+
           <input
             type="file"
-            id="pdf-upload"
             accept="application/pdf"
             onChange={handleFileInput}
             className="hidden"
           />
-          
-          <label htmlFor="pdf-upload" className="flex flex-col items-center cursor-pointer">
-            <Upload 
-              size={48} 
-              className={`mb-4 ${isDragging ? 'text-blue-500' : 'text-gray-400'}`}
-            />
-            <p className="text-lg font-semibold text-gray-700 mb-2">
-              {isDragging ? '¡Suelta el PDF aquí!' : 'Arrastra tu PDF'}
-            </p>
-            <p className="text-sm text-gray-500 mb-4">
-              o haz clic para seleccionar
-            </p>
-            <div className="flex gap-6 text-xs text-gray-400">
-              <span>✓ Formato: PDF</span>
-              <span>✓ Máx: 50 MB</span>
-            </div>
-          </label>
-        </div>
-      ) : (
-        <div className="border-2 border-green-500 bg-green-50 rounded-lg p-6">
-          <div className="flex items-start gap-4">
-            <CheckCircle size={40} className="text-green-600 flex-shrink-0" />
-            
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-green-900 mb-1">
-                ✓ PDF Seleccionado
-              </p>
-              <p className="text-sm text-green-700 break-all font-medium">
-                {currentFile.name}
-              </p>
-              <p className="text-xs text-green-600 mt-2">
-                {(currentFile.size / 1024 / 1024).toFixed(2)} MB
-              </p>
-            </div>
-
-            <button
-              onClick={() => onFileSelect(null)}
-              className="p-2 text-green-700 hover:bg-green-200 rounded-full transition-colors flex-shrink-0"
-              title="Eliminar"
-            >
-              <X size={20} />
-            </button>
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-green-300">
-            <label
-              htmlFor="pdf-change"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer text-sm font-medium"
-            >
-              <Upload size={16} />
-              Cambiar PDF
-            </label>
-            <input
-              type="file"
-              id="pdf-change"
-              accept="application/pdf"
-              onChange={handleFileInput}
-              className="hidden"
-            />
-          </div>
-        </div>
+        </label>
       )}
 
+      {/* Error message */}
       {error && (
-        <div className="flex items-start gap-3 p-4 bg-red-50 border-2 border-red-300 rounded-lg">
-          <AlertCircle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-red-700 font-medium">{error}</p>
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+          <AlertCircle size={16} className="text-red-600 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-red-700">{error}</p>
         </div>
       )}
     </div>

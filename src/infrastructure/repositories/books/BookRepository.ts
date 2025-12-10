@@ -1,15 +1,23 @@
 /**
  * UBICACIÓN: src/infrastructure/repositories/books/BookRepository.ts
- * ✅ MODIFICADO: Sistema SOLO PDF (sin páginas individuales)
+ * ✅ VERSIÓN HÍBRIDA: Soporta libros con páginas O con PDF
  */
 
 import { supabaseAdmin } from '@/src/utils/supabase/admin';
+
+interface PageData {
+  layout: string;
+  title?: string;
+  text?: string;
+  image?: string;
+  background?: string;
+}
 
 interface BookData {
   titulo: string;
   descripcion: string;
   portada?: string;
-  pdfUrl: string; // ⭐ NUEVO - OBLIGATORIO
+  pdfUrl?: string; // ✅ NUEVO: Soporte para PDF
   autores: string[];
   personajes: string[];
   categorias: number[];
@@ -17,27 +25,25 @@ interface BookData {
   etiquetas: number[];
   valores: number[];
   nivel: number;
+  pages?: PageData[]; // ✅ AHORA OPCIONAL
 }
 
 export class BookRepository {
   
   /**
-   * Crear un nuevo libro CON PDF
+   * Crear un nuevo libro
    */
   static async create(userId: string, bookData: BookData): Promise<string> {
     console.log('📚 BookRepository.create - Iniciando creación de libro');
     console.log('👤 Usuario:', userId);
     console.log('📖 Datos:', {
       titulo: bookData.titulo,
-      pdfUrl: bookData.pdfUrl
+      pagesCount: bookData.pages?.length || 0,
+      pdfUrl: bookData.pdfUrl || 'N/A',
+      autoresCount: bookData.autores.length
     });
 
-    // Validar que tenga PDF
-    if (!bookData.pdfUrl) {
-      throw new Error('El PDF es obligatorio');
-    }
-
-    // 1. Crear el libro principal
+    // 1. Crear el libro principal usando RPC o inserción directa
     const { data: libro, error: libroError } = await supabaseAdmin
       .from('books')
       .insert({
@@ -46,8 +52,8 @@ export class BookRepository {
         title: bookData.titulo,
         description: bookData.descripcion,
         cover_url: bookData.portada || null,
-        pdf_url: bookData.pdfUrl, // ⭐ NUEVO
         level_id: bookData.nivel || null,
+        pdf_url: bookData.pdfUrl || null, // ✅ NUEVO
         is_published: false,
       })
       .select('id')
@@ -65,7 +71,22 @@ export class BookRepository {
     const libroId = libro.id;
     console.log('✅ Libro creado con ID:', libroId);
 
-    // 2. Guardar relaciones (sin fallar si alguna falla)
+    // 2. Guardar páginas SOLO SI existen
+    if (bookData.pages && bookData.pages.length > 0) {
+      try {
+        await this.savePages(libroId, bookData.pages);
+        console.log('✅ Páginas guardadas');
+      } catch (pageError: any) {
+        console.error('❌ Error guardando páginas:', pageError);
+        // Solo fallar si NO tiene PDF alternativo
+        if (!bookData.pdfUrl) {
+          await supabaseAdmin.from('books').delete().eq('id', libroId);
+          throw new Error(`Error al guardar páginas: ${pageError.message}`);
+        }
+      }
+    }
+
+    // 3. Guardar relaciones (sin fallar si alguna falla)
     try {
       await Promise.allSettled([
         this.saveAutores(libroId, bookData.autores),
@@ -78,6 +99,7 @@ export class BookRepository {
       console.log('✅ Relaciones guardadas');
     } catch (relError: any) {
       console.warn('⚠️ Algunas relaciones no se guardaron:', relError.message);
+      // No fallamos aquí, el libro ya está creado
     }
 
     return libroId;
@@ -89,15 +111,15 @@ export class BookRepository {
   static async update(libroId: string, bookData: BookData): Promise<void> {
     console.log('📚 BookRepository.update - Actualizando libro:', libroId);
 
-    // Actualizar libro principal
+    // 1. Actualizar libro principal
     const { error: updateError } = await supabaseAdmin
       .from('books')
       .update({
         title: bookData.titulo,
         description: bookData.descripcion,
         cover_url: bookData.portada || null,
-        pdf_url: bookData.pdfUrl, // ⭐ NUEVO
         level_id: bookData.nivel || null,
+        pdf_url: bookData.pdfUrl || null, // ✅ NUEVO
         updated_at: new Date().toISOString(),
       })
       .eq('id', libroId);
@@ -107,7 +129,21 @@ export class BookRepository {
       throw new Error(`Error al actualizar libro: ${updateError.message}`);
     }
 
-    // Actualizar relaciones
+    // 2. Reemplazar páginas SOLO SI existen
+    if (bookData.pages && bookData.pages.length > 0) {
+      try {
+        await this.replacePages(libroId, bookData.pages);
+        console.log('✅ Páginas actualizadas');
+      } catch (pageError: any) {
+        console.error('❌ Error actualizando páginas:', pageError);
+        // Solo fallar si NO tiene PDF alternativo
+        if (!bookData.pdfUrl) {
+          throw new Error(`Error al actualizar páginas: ${pageError.message}`);
+        }
+      }
+    }
+
+    // 3. Actualizar relaciones
     try {
       await Promise.allSettled([
         this.replaceAutores(libroId, bookData.autores),
@@ -146,6 +182,12 @@ export class BookRepository {
       return null;
     }
 
+    // ✅ LÓGICA HÍBRIDA: Solo cargar páginas si NO tiene PDF
+    let paginas = [];
+    if (!libro.pdf_url) {
+      paginas = await this.getPages(libroId);
+    }
+
     // Obtener todas las relaciones en paralelo
     const [autores, personajes, categorias, generos, valores, etiquetas, nivel] = 
       await Promise.all([
@@ -163,7 +205,7 @@ export class BookRepository {
       titulo: libro.title,
       descripcion: libro.description,
       portada: libro.cover_url,
-      pdfUrl: libro.pdf_url, // ⭐ NUEVO
+      pdfUrl: libro.pdf_url, // ✅ NUEVO
       autores,
       personajes,
       categorias,
@@ -171,6 +213,7 @@ export class BookRepository {
       valores,
       etiquetas,
       nivel,
+      paginas, // Puede estar vacío si tiene PDF
       fecha_creacion: libro.created_at,
       is_published: libro.is_published,
     };
@@ -178,7 +221,8 @@ export class BookRepository {
     console.log('✅ Libro obtenido:', {
       id: result.id,
       titulo: result.titulo,
-      hasPdf: !!result.pdfUrl
+      paginasCount: result.paginas.length,
+      pdfUrl: result.pdfUrl || 'N/A'
     });
 
     return result;
@@ -192,7 +236,7 @@ export class BookRepository {
 
     const { data: libros, error } = await supabaseAdmin
       .from('books')
-      .select('id, title, description, cover_url, pdf_url, created_at')
+      .select('id, title, description, cover_url, pdf_url, created_at') // ✅ INCLUIR pdf_url
       .eq('user_id', userId)
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
@@ -211,7 +255,7 @@ export class BookRepository {
           titulo: libro.title,
           descripcion: libro.description,
           portada: libro.cover_url,
-          pdfUrl: libro.pdf_url, // ⭐ NUEVO
+          pdfUrl: libro.pdf_url, // ✅ NUEVO
           autores,
           fecha_creacion: libro.created_at,
         };
@@ -244,6 +288,87 @@ export class BookRepository {
   }
 
   // ============================================
+  // MÉTODOS PRIVADOS - PÁGINAS
+  // ============================================
+  
+  private static async savePages(libroId: string, pages: PageData[]): Promise<void> {
+    if (!pages.length) {
+      console.warn('⚠️ No hay páginas para guardar');
+      return;
+    }
+    
+    console.log('📝 Guardando páginas:', pages.length);
+
+    const paginasToInsert = pages.map((p, idx) => ({
+      book_id: libroId,
+      page_number: idx + 1,
+      layout: p.layout || 'TextCenterLayout',
+      title: p.title || null,
+      content: p.text || null,
+      image_url: this.cleanUrl(p.image),
+      background_url: this.isImageUrl(p.background) ? this.cleanUrl(p.background) : null,
+      background_color: this.isColor(p.background) ? p.background : null,
+    }));
+
+    console.log('📄 Páginas a insertar:', paginasToInsert.map(p => ({
+      page_number: p.page_number,
+      layout: p.layout,
+      hasImage: !!p.image_url,
+      hasBackground: !!(p.background_url || p.background_color)
+    })));
+
+    const { error } = await supabaseAdmin
+      .from('book_pages')
+      .insert(paginasToInsert);
+
+    if (error) {
+      console.error('❌ Error guardando páginas:', error);
+      throw new Error(`Error al guardar páginas: ${error.message}`);
+    }
+
+    console.log('✅ Páginas guardadas correctamente');
+  }
+
+  private static async replacePages(libroId: string, pages: PageData[]): Promise<void> {
+    // Eliminar páginas existentes
+    const { error: deleteError } = await supabaseAdmin
+      .from('book_pages')
+      .delete()
+      .eq('book_id', libroId);
+
+    if (deleteError) {
+      console.error('❌ Error eliminando páginas:', deleteError);
+    }
+
+    // Insertar nuevas
+    await this.savePages(libroId, pages);
+  }
+
+  private static async getPages(libroId: string): Promise<any[]> {
+    const { data, error } = await supabaseAdmin
+      .from('book_pages')
+      .select('*')
+      .eq('book_id', libroId)
+      .order('page_number');
+
+    if (error) {
+      console.error('Error obteniendo páginas:', error);
+      return [];
+    }
+
+    // Transformar al formato esperado por el frontend
+    return (data || []).map(page => ({
+      id: page.id,
+      layout: page.layout || 'TextCenterLayout',
+      title: page.title || '',
+      text: page.content || '',
+      image: page.image_url || null,
+      background: page.background_url || page.background_color || 'blanco',
+      page_number: page.page_number,
+    }));
+  }
+
+  // ============================================
   // MÉTODOS PRIVADOS - AUTORES
   // ============================================
   
@@ -257,6 +382,7 @@ export class BookRepository {
       if (!nombre) continue;
 
       try {
+        // Buscar autor existente
         let { data: existingAutor } = await supabaseAdmin
           .from('book_authors')
           .select('id')
@@ -268,6 +394,7 @@ export class BookRepository {
         if (existingAutor?.id) {
           autorId = existingAutor.id;
         } else {
+          // Crear nuevo autor
           const { data: newAutor, error: createError } = await supabaseAdmin
             .from('book_authors')
             .insert({ name: nombre })
@@ -281,6 +408,7 @@ export class BookRepository {
           autorId = newAutor.id;
         }
 
+        // Crear relación libro-autor
         await supabaseAdmin
           .from('books_authors')
           .insert({ 
@@ -590,5 +718,29 @@ export class BookRepository {
       .single();
     
     return data || null;
+  }
+
+  // ============================================
+  // HELPERS
+  // ============================================
+
+  private static cleanUrl(url: string | null | undefined): string | null {
+    if (!url) return null;
+    // No guardar URLs blob: temporales
+    if (url.startsWith('blob:')) return null;
+    return url;
+  }
+
+  private static isImageUrl(value: string | null | undefined): boolean {
+    if (!value) return false;
+    return value.startsWith('http://') || 
+           value.startsWith('https://');
+  }
+
+  private static isColor(value: string | null | undefined): boolean {
+    if (!value) return false;
+    // Color hex o nombre de preset
+    return value.startsWith('#') || 
+           (!value.startsWith('http') && !value.startsWith('blob:'));
   }
 }

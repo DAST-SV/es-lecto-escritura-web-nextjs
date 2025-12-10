@@ -1,45 +1,115 @@
+/**
+ * UBICACIÓN: src/infrastructure/services/BookPDFService.ts
+ * ✅ Servicio para subir PDFs a Supabase Storage
+ */
+
 import { createClient } from '@/src/utils/supabase/client';
 
+const BUCKET_NAME = 'book-pdfs';
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
+export interface UploadPDFResult {
+  url: string | null;
+  error: string | null;
+}
+
 export class BookPDFService {
-  private static supabase = createClient();
-  private static BUCKET_NAME = 'book-pdfs';
-  private static MAX_FILE_SIZE = 50 * 1024 * 1024;
+  private static getSupabase() {
+    return createClient();
+  }
 
-  static async uploadPDF(file: File, userId: string, bookId: string) {
+  /**
+   * Subir PDF a Supabase Storage
+   */
+  static async uploadPDF(
+    file: File,
+    userId: string,
+    bookId: string
+  ): Promise<UploadPDFResult> {
     try {
+      const supabase = this.getSupabase();
+
+      // Validar tipo
       if (file.type !== 'application/pdf') {
-        return { url: null, error: 'El archivo debe ser un PDF' };
-      }
-      if (file.size > this.MAX_FILE_SIZE) {
-        return { url: null, error: 'El archivo excede 50MB' };
+        return { url: null, error: 'Solo se permiten archivos PDF' };
       }
 
+      // Validar tamaño
+      if (file.size > MAX_FILE_SIZE) {
+        return { url: null, error: 'El PDF es muy grande. Máximo 50MB' };
+      }
+
+      // Ruta: {userId}/{bookId}/document.pdf
       const filePath = `${userId}/${bookId}/document.pdf`;
-      await this.supabase.storage.from(this.BUCKET_NAME).remove([filePath]);
 
-      const { error: uploadError } = await this.supabase.storage
-        .from(this.BUCKET_NAME)
-        .upload(filePath, file, { cacheControl: '3600', upsert: true });
+      console.log('📤 Subiendo PDF:', filePath);
 
-      if (uploadError) {
-        return { url: null, error: uploadError.message };
+      // Subir archivo
+      const { data, error } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: 'application/pdf'
+        });
+
+      if (error) {
+        console.error('❌ Error subiendo PDF:', error);
+        return { url: null, error: error.message };
       }
 
-      const { data: { publicUrl } } = this.supabase.storage
-        .from(this.BUCKET_NAME)
+      // Obtener URL pública
+      const { data: urlData } = supabase.storage
+        .from(BUCKET_NAME)
         .getPublicUrl(filePath);
 
-      return { url: publicUrl, error: null };
-    } catch (error) {
-      return { url: null, error: 'Error inesperado' };
+      console.log('✅ PDF subido:', urlData.publicUrl);
+
+      return { url: urlData.publicUrl, error: null };
+
+    } catch (error: any) {
+      console.error('❌ Error en uploadPDF:', error);
+      return { url: null, error: error.message || 'Error desconocido' };
     }
   }
 
+  /**
+   * Obtener URL pública de un PDF
+   */
   static getPublicUrl(userId: string, bookId: string): string {
+    const supabase = this.getSupabase();
     const filePath = `${userId}/${bookId}/document.pdf`;
-    const { data: { publicUrl } } = this.supabase.storage
-      .from(this.BUCKET_NAME)
+    
+    const { data } = supabase.storage
+      .from(BUCKET_NAME)
       .getPublicUrl(filePath);
-    return publicUrl;
+    
+    return data.publicUrl;
+  }
+
+  /**
+   * Eliminar PDF
+   */
+  static async deletePDF(userId: string, bookId: string): Promise<boolean> {
+    try {
+      const supabase = this.getSupabase();
+      const filePath = `${userId}/${bookId}/document.pdf`;
+
+      const { error } = await supabase.storage
+        .from(BUCKET_NAME)
+        .remove([filePath]);
+
+      if (error) {
+        console.error('❌ Error eliminando PDF:', error);
+        return false;
+      }
+
+      console.log('✅ PDF eliminado:', filePath);
+      return true;
+
+    } catch (error) {
+      console.error('❌ Error en deletePDF:', error);
+      return false;
+    }
   }
 }
