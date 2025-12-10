@@ -1,23 +1,15 @@
 /**
  * UBICACIÓN: src/infrastructure/repositories/books/BookRepository.ts
- * ✅ CORREGIDO: Trabaja directamente con las tablas del schema books
- * usando supabaseAdmin con acceso directo
+ * ✅ MODIFICADO: Sistema SOLO PDF (sin páginas individuales)
  */
 
 import { supabaseAdmin } from '@/src/utils/supabase/admin';
-
-interface PageData {
-  layout: string;
-  title?: string;
-  text?: string;
-  image?: string;
-  background?: string;
-}
 
 interface BookData {
   titulo: string;
   descripcion: string;
   portada?: string;
+  pdfUrl: string; // ⭐ NUEVO - OBLIGATORIO
   autores: string[];
   personajes: string[];
   categorias: number[];
@@ -25,24 +17,27 @@ interface BookData {
   etiquetas: number[];
   valores: number[];
   nivel: number;
-  pages: PageData[];
 }
 
 export class BookRepository {
   
   /**
-   * Crear un nuevo libro
+   * Crear un nuevo libro CON PDF
    */
   static async create(userId: string, bookData: BookData): Promise<string> {
     console.log('📚 BookRepository.create - Iniciando creación de libro');
     console.log('👤 Usuario:', userId);
     console.log('📖 Datos:', {
       titulo: bookData.titulo,
-      pagesCount: bookData.pages.length,
-      autoresCount: bookData.autores.length
+      pdfUrl: bookData.pdfUrl
     });
 
-    // 1. Crear el libro principal usando RPC o inserción directa
+    // Validar que tenga PDF
+    if (!bookData.pdfUrl) {
+      throw new Error('El PDF es obligatorio');
+    }
+
+    // 1. Crear el libro principal
     const { data: libro, error: libroError } = await supabaseAdmin
       .from('books')
       .insert({
@@ -51,6 +46,7 @@ export class BookRepository {
         title: bookData.titulo,
         description: bookData.descripcion,
         cover_url: bookData.portada || null,
+        pdf_url: bookData.pdfUrl, // ⭐ NUEVO
         level_id: bookData.nivel || null,
         is_published: false,
       })
@@ -69,18 +65,7 @@ export class BookRepository {
     const libroId = libro.id;
     console.log('✅ Libro creado con ID:', libroId);
 
-    // 2. Guardar páginas primero (es lo más importante)
-    try {
-      await this.savePages(libroId, bookData.pages);
-      console.log('✅ Páginas guardadas');
-    } catch (pageError: any) {
-      console.error('❌ Error guardando páginas:', pageError);
-      // Limpiar libro si fallan las páginas
-      await supabaseAdmin.from('books').delete().eq('id', libroId);
-      throw new Error(`Error al guardar páginas: ${pageError.message}`);
-    }
-
-    // 3. Guardar relaciones (sin fallar si alguna falla)
+    // 2. Guardar relaciones (sin fallar si alguna falla)
     try {
       await Promise.allSettled([
         this.saveAutores(libroId, bookData.autores),
@@ -93,7 +78,6 @@ export class BookRepository {
       console.log('✅ Relaciones guardadas');
     } catch (relError: any) {
       console.warn('⚠️ Algunas relaciones no se guardaron:', relError.message);
-      // No fallamos aquí, el libro ya está creado
     }
 
     return libroId;
@@ -105,13 +89,14 @@ export class BookRepository {
   static async update(libroId: string, bookData: BookData): Promise<void> {
     console.log('📚 BookRepository.update - Actualizando libro:', libroId);
 
-    // 1. Actualizar libro principal
+    // Actualizar libro principal
     const { error: updateError } = await supabaseAdmin
       .from('books')
       .update({
         title: bookData.titulo,
         description: bookData.descripcion,
         cover_url: bookData.portada || null,
+        pdf_url: bookData.pdfUrl, // ⭐ NUEVO
         level_id: bookData.nivel || null,
         updated_at: new Date().toISOString(),
       })
@@ -122,16 +107,7 @@ export class BookRepository {
       throw new Error(`Error al actualizar libro: ${updateError.message}`);
     }
 
-    // 2. Reemplazar páginas
-    try {
-      await this.replacePages(libroId, bookData.pages);
-      console.log('✅ Páginas actualizadas');
-    } catch (pageError: any) {
-      console.error('❌ Error actualizando páginas:', pageError);
-      throw new Error(`Error al actualizar páginas: ${pageError.message}`);
-    }
-
-    // 3. Actualizar relaciones
+    // Actualizar relaciones
     try {
       await Promise.allSettled([
         this.replaceAutores(libroId, bookData.autores),
@@ -171,7 +147,7 @@ export class BookRepository {
     }
 
     // Obtener todas las relaciones en paralelo
-    const [autores, personajes, categorias, generos, valores, etiquetas, nivel, paginas] = 
+    const [autores, personajes, categorias, generos, valores, etiquetas, nivel] = 
       await Promise.all([
         this.getAutores(libroId),
         this.getPersonajes(libroId),
@@ -180,7 +156,6 @@ export class BookRepository {
         this.getValores(libroId),
         this.getEtiquetas(libroId),
         this.getNivel(libro.level_id),
-        this.getPages(libroId),
       ]);
 
     const result = {
@@ -188,6 +163,7 @@ export class BookRepository {
       titulo: libro.title,
       descripcion: libro.description,
       portada: libro.cover_url,
+      pdfUrl: libro.pdf_url, // ⭐ NUEVO
       autores,
       personajes,
       categorias,
@@ -195,7 +171,6 @@ export class BookRepository {
       valores,
       etiquetas,
       nivel,
-      paginas,
       fecha_creacion: libro.created_at,
       is_published: libro.is_published,
     };
@@ -203,7 +178,7 @@ export class BookRepository {
     console.log('✅ Libro obtenido:', {
       id: result.id,
       titulo: result.titulo,
-      paginasCount: result.paginas.length
+      hasPdf: !!result.pdfUrl
     });
 
     return result;
@@ -217,7 +192,7 @@ export class BookRepository {
 
     const { data: libros, error } = await supabaseAdmin
       .from('books')
-      .select('id, title, description, cover_url, created_at')
+      .select('id, title, description, cover_url, pdf_url, created_at')
       .eq('user_id', userId)
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
@@ -236,6 +211,7 @@ export class BookRepository {
           titulo: libro.title,
           descripcion: libro.description,
           portada: libro.cover_url,
+          pdfUrl: libro.pdf_url, // ⭐ NUEVO
           autores,
           fecha_creacion: libro.created_at,
         };
@@ -268,87 +244,6 @@ export class BookRepository {
   }
 
   // ============================================
-  // MÉTODOS PRIVADOS - PÁGINAS
-  // ============================================
-  
-  private static async savePages(libroId: string, pages: PageData[]): Promise<void> {
-    if (!pages.length) {
-      console.warn('⚠️ No hay páginas para guardar');
-      return;
-    }
-    
-    console.log('📝 Guardando páginas:', pages.length);
-
-    const paginasToInsert = pages.map((p, idx) => ({
-      book_id: libroId,
-      page_number: idx + 1,
-      layout: p.layout || 'TextCenterLayout',
-      title: p.title || null,
-      content: p.text || null,
-      image_url: this.cleanUrl(p.image),
-      background_url: this.isImageUrl(p.background) ? this.cleanUrl(p.background) : null,
-      background_color: this.isColor(p.background) ? p.background : null,
-    }));
-
-    console.log('📄 Páginas a insertar:', paginasToInsert.map(p => ({
-      page_number: p.page_number,
-      layout: p.layout,
-      hasImage: !!p.image_url,
-      hasBackground: !!(p.background_url || p.background_color)
-    })));
-
-    const { error } = await supabaseAdmin
-      .from('book_pages')
-      .insert(paginasToInsert);
-
-    if (error) {
-      console.error('❌ Error guardando páginas:', error);
-      throw new Error(`Error al guardar páginas: ${error.message}`);
-    }
-
-    console.log('✅ Páginas guardadas correctamente');
-  }
-
-  private static async replacePages(libroId: string, pages: PageData[]): Promise<void> {
-    // Eliminar páginas existentes
-    const { error: deleteError } = await supabaseAdmin
-      .from('book_pages')
-      .delete()
-      .eq('book_id', libroId);
-
-    if (deleteError) {
-      console.error('❌ Error eliminando páginas:', deleteError);
-    }
-
-    // Insertar nuevas
-    await this.savePages(libroId, pages);
-  }
-
-  private static async getPages(libroId: string): Promise<any[]> {
-    const { data, error } = await supabaseAdmin
-      .from('book_pages')
-      .select('*')
-      .eq('book_id', libroId)
-      .order('page_number');
-
-    if (error) {
-      console.error('Error obteniendo páginas:', error);
-      return [];
-    }
-
-    // Transformar al formato esperado por el frontend
-    return (data || []).map(page => ({
-      id: page.id,
-      layout: page.layout || 'TextCenterLayout',
-      title: page.title || '',
-      text: page.content || '',
-      image: page.image_url || null,
-      background: page.background_url || page.background_color || 'blanco',
-      page_number: page.page_number,
-    }));
-  }
-
-  // ============================================
   // MÉTODOS PRIVADOS - AUTORES
   // ============================================
   
@@ -362,7 +257,6 @@ export class BookRepository {
       if (!nombre) continue;
 
       try {
-        // Buscar autor existente
         let { data: existingAutor } = await supabaseAdmin
           .from('book_authors')
           .select('id')
@@ -374,7 +268,6 @@ export class BookRepository {
         if (existingAutor?.id) {
           autorId = existingAutor.id;
         } else {
-          // Crear nuevo autor
           const { data: newAutor, error: createError } = await supabaseAdmin
             .from('book_authors')
             .insert({ name: nombre })
@@ -388,7 +281,6 @@ export class BookRepository {
           autorId = newAutor.id;
         }
 
-        // Crear relación libro-autor
         await supabaseAdmin
           .from('books_authors')
           .insert({ 
@@ -698,29 +590,5 @@ export class BookRepository {
       .single();
     
     return data || null;
-  }
-
-  // ============================================
-  // HELPERS
-  // ============================================
-
-  private static cleanUrl(url: string | null | undefined): string | null {
-    if (!url) return null;
-    // No guardar URLs blob: temporales
-    if (url.startsWith('blob:')) return null;
-    return url;
-  }
-
-  private static isImageUrl(value: string | null | undefined): boolean {
-    if (!value) return false;
-    return value.startsWith('http://') || 
-           value.startsWith('https://');
-  }
-
-  private static isColor(value: string | null | undefined): boolean {
-    if (!value) return false;
-    // Color hex o nombre de preset
-    return value.startsWith('#') || 
-           (!value.startsWith('http') && !value.startsWith('blob:'));
   }
 }
