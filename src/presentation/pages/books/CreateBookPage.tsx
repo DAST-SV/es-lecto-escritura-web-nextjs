@@ -1,107 +1,42 @@
 /**
  * UBICACIÓN: src/presentation/pages/books/CreateBookPage.tsx
- * ✅ CON FLIPBOOK PREVIEW ANTES DE GUARDAR
+ * ✅ REFACTORIZADO - Usa componentes modulares
  */
 
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import HTMLFlipBook from 'react-pageflip';
-import {
-  X, ChevronLeft, ChevronRight, Save, ArrowLeft, Loader2
-} from 'lucide-react';
+import { Loader2, Eye } from 'lucide-react';
 import NavBar from '@/src/components/nav/NavBar';
 import { BookPDFService } from '@/src/infrastructure/services/BookPDFService';
 import { PDFUploadZone } from '@/src/presentation/features/books/components/PDFUpload/PDFUploadZone';
+import { PDFPreviewMode } from '@/src/presentation/features/books/components/PDFPreview/PDFPreviewMode';
 import { BookRepository } from '@/src/infrastructure/repositories/books/BookRepository';
 import { supabaseAdmin } from '@/src/utils/supabase/admin';
 import type { Page } from '@/src/core/domain/types';
-import '@/src/presentation/features/layouts/styles/book-shared.css';
 
 export function CreateBookPage() {
   const router = useRouter();
-  const bookRef = useRef<any>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
+  
   // Estados del formulario
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [autores, setAutores] = useState<string[]>(['']);
   const [personajes, setPersonajes] = useState<string[]>(['']);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-
+  
   // Estados del preview
   const [extractedPages, setExtractedPages] = useState<Page[]>([]);
   const [isExtractingPages, setIsExtractingPages] = useState(false);
-  const [showPreview, setShowPreview] = useState(false); // ✅ Estado para mostrar flipbook
-
-  // Estados del flipbook
-  const [currentPage, setCurrentPage] = useState(0);
-  const [bookDimensions, setBookDimensions] = useState({ width: 400, height: 520 });
-  const [isClient, setIsClient] = useState(false);
-  const [activePage, setActivePage] = useState(0);
-
+  const [showPreview, setShowPreview] = useState(false);
+  const [pdfDimensions, setPdfDimensions] = useState<{ width: number; height: number } | null>(null);
+  
   // Estados de UI
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingPDF, setIsUploadingPDF] = useState(false);
   const [pdfError, setPdfError] = useState('');
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  // Calcular dimensiones del flipbook
-  useEffect(() => {
-    if (!isClient || !showPreview) return;
-
-    const calculateDimensions = () => {
-      if (!containerRef.current) return;
-
-      const containerHeight = containerRef.current.clientHeight;
-      const containerWidth = containerRef.current.clientWidth;
-
-      if (containerHeight <= 0 || containerWidth <= 0) return;
-
-      const reservedHeight = 160;
-      const availableHeight = containerHeight - reservedHeight;
-      const availableWidth = containerWidth - 100;
-      const aspectRatio = 5 / 6;
-
-      let bookWidth = 400;
-      let bookHeight = 520;
-
-      if (availableHeight > 0 && availableWidth > 0) {
-        bookHeight = Math.min(availableHeight, 700);
-        bookWidth = bookHeight * aspectRatio;
-
-        if (bookWidth > availableWidth) {
-          bookWidth = availableWidth;
-          bookHeight = bookWidth / aspectRatio;
-        }
-      }
-
-      setBookDimensions({
-        width: Math.max(Math.round(bookWidth), 300),
-        height: Math.max(Math.round(bookHeight), 390)
-      });
-    };
-
-    calculateDimensions();
-    window.addEventListener('resize', calculateDimensions);
-
-    let resizeObserver: ResizeObserver | null = null;
-    if (containerRef.current) {
-      resizeObserver = new ResizeObserver(calculateDimensions);
-      resizeObserver.observe(containerRef.current);
-    }
-
-    return () => {
-      window.removeEventListener('resize', calculateDimensions);
-      if (resizeObserver) resizeObserver.disconnect();
-    };
-  }, [isClient, showPreview]);
 
   // Manejadores de autores
   const addAutor = () => setAutores([...autores, '']);
@@ -127,15 +62,16 @@ export function CreateBookPage() {
     setPersonajes(newPersonajes);
   };
 
-  // ✅ Manejar selección de PDF y extraer páginas
+  // Manejar selección de PDF
   const handlePDFSelect = async (file: File | null) => {
     if (!file) {
       setPdfFile(null);
       setExtractedPages([]);
       setShowPreview(false);
+      setPdfDimensions(null);
       return;
     }
-
+    
     setPdfFile(file);
     setPdfError('');
     setExtractedPages([]);
@@ -144,17 +80,24 @@ export function CreateBookPage() {
 
     try {
       console.log('📄 Extrayendo páginas del PDF...');
-
+      
       const { PDFExtractorService } = await import('@/src/infrastructure/services/PDFExtractorService');
       const result = await PDFExtractorService.extractPagesFromPDF(file);
-
+      
       setExtractedPages(result.pages);
-      setTitulo(result.pdfTitle || ''); // Auto-llenar título
+      setTitulo(result.pdfTitle || '');
+      
+      if (result.pageWidth && result.pageHeight) {
+        setPdfDimensions({
+          width: result.pageWidth,
+          height: result.pageHeight
+        });
+        console.log(`📐 Dimensiones: ${result.pageWidth}x${result.pageHeight}`);
+      }
+      
       console.log(`✅ ${result.pages.length} páginas extraídas`);
-
-      // ✅ Mostrar preview automáticamente
       setShowPreview(true);
-
+      
     } catch (err: any) {
       console.error('❌ Error extrayendo páginas:', err);
       setPdfError('Error al procesar el PDF');
@@ -163,17 +106,9 @@ export function CreateBookPage() {
     }
   };
 
-  // ✅ Cerrar preview
-  const handleClosePreview = async () => {
+  // Cerrar preview
+  const handleClosePreview = () => {
     setShowPreview(false);
-    setCurrentPage(0);
-    setActivePage(0);
-
-    // Limpiar URLs temporales
-    const { PDFExtractorService } = await import('@/src/infrastructure/services/PDFExtractorService');
-    PDFExtractorService.cleanupBlobUrls(extractedPages);
-    setExtractedPages([]);
-    setPdfFile(null);
   };
 
   // Guardar libro
@@ -234,14 +169,13 @@ export function CreateBookPage() {
       });
 
       console.log('✅ Libro creado exitosamente');
-
-      // Limpiar URLs temporales
+      
       if (extractedPages.length > 0) {
         const { PDFExtractorService } = await import('@/src/infrastructure/services/PDFExtractorService');
         PDFExtractorService.cleanupBlobUrls(extractedPages);
       }
-
-      router.push(`/books/${bookId}/read`);
+      
+      router.push(`/es/books/${bookId}/read`);
 
     } catch (err: any) {
       console.error('❌ Error al crear libro:', err);
@@ -252,206 +186,29 @@ export function CreateBookPage() {
     }
   };
 
-  // Controles del flipbook
-  const goToNextPage = () => {
-    if (currentPage < extractedPages.length - 1) {
-      bookRef.current?.pageFlip().flipNext();
-    }
-  };
-
-  const goToPrevPage = () => {
-    if (currentPage > 0) {
-      bookRef.current?.pageFlip().flipPrev();
-    }
-  };
-
-  // Navegación con teclado
-  useEffect(() => {
-    if (!showPreview) return;
-
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') goToNextPage();
-      if (e.key === 'ArrowLeft') goToPrevPage();
-      if (e.key === 'Escape') handleClosePreview();
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [showPreview, currentPage, extractedPages.length]);
-
-  // Memoizar páginas
-  const memoizedPages = useMemo(() => {
-    return extractedPages.map((page, idx) => ({
-      ...page,
-      key: `page-${page.id}-${idx}`,
-    }));
-  }, [extractedPages]);
-
-  // Configuración del flipbook
-  const flipBookProps = useMemo(() => {
-    if (!isClient || !showPreview) return null;
-
-    return {
-      width: bookDimensions.width,
-      height: bookDimensions.height,
-      size: "stretch" as const,
-      minWidth: 315,
-      maxWidth: 1000,
-      minHeight: 400,
-      maxHeight: 1533,
-      maxShadowOpacity: 0.5,
-      showCover: true,
-      mobileScrollSupport: false,
-      onFlip: (e: any) => {
-        setCurrentPage(e.data);
-        setActivePage(e.data);
-      },
-      className: "demo-book",
-      style: {},
-      // ⬇️ PROPIEDADES QUE FALTABAN
-      startPage: 0,
-      drawShadow: true,
-      flippingTime: 1000,
-      usePortrait: true,
-      startZIndex: 0,
-      autoSize: true,
-      clickEventForward: true,
-      useMouseEvents: true,
-      swipeDistance: 30,
-      showPageCorners: true,
-      disableFlipByClick: false,
-      // ⬆️ FIN PROPIEDADES FALTANTES
-      children: memoizedPages.map((page, idx) => {
-        return (
-          <div className="demoPage" key={page.key}>
-            {page.image && (
-              <img
-                src={page.image}
-                alt={`Página ${idx + 1}`}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                  userSelect: 'none',
-                  pointerEvents: 'none',
-                }}
-              />
-            )}
-          </div>
-        );
-      }),
-    };
-  }, [isClient, showPreview, bookDimensions, memoizedPages]);
-
-  // ========== RENDER ==========
-
-  // ✅ MODO PREVIEW FLIPBOOK (pantalla completa)
-  if (showPreview && extractedPages.length > 0 && isClient) {
+  // MODO PREVIEW
+  if (showPreview && extractedPages.length > 0 && pdfDimensions) {
     return (
-      <div
-        ref={containerRef}
-        className="w-full h-screen relative bg-gradient-to-br from-slate-900 to-slate-800"
-        style={{ zIndex: 9999 }}
-      >
-        {/* Header */}
-        <div className="absolute top-0 left-0 right-0 z-[10000] bg-gradient-to-b from-black/60 to-transparent px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-white font-bold text-lg">
-                Preview: {titulo || 'Sin título'}
-              </h1>
-              <p className="text-white/70 text-sm">
-                {extractedPages.length} páginas
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleClosePreview}
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-lg transition-all flex items-center gap-2"
-              >
-                <ArrowLeft size={18} />
-                Volver al formulario
-              </button>
-
-              <button
-                onClick={handleSave}
-                disabled={isLoading || !titulo.trim()}
-                className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all flex items-center gap-2 disabled:opacity-50"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    Guardando...
-                  </>
-                ) : (
-                  <>
-                    <Save size={18} />
-                    Guardar Libro
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Flipbook centrado */}
-        <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 9998 }}>
-          <div
-            className="relative"
-            style={{
-              width: `${bookDimensions.width}px`,
-              height: `${bookDimensions.height}px`,
-            }}
-          >
-            <div className="drop-shadow-2xl">
-              {flipBookProps && (
-                <HTMLFlipBook {...flipBookProps} ref={bookRef} />
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Footer con controles */}
-        <div className="absolute bottom-0 left-0 right-0 z-[10000] bg-gradient-to-t from-black/60 to-transparent px-6 py-6">
-          <div className="flex items-center justify-center gap-6">
-            <button
-              onClick={goToPrevPage}
-              disabled={currentPage === 0}
-              className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-full transition-all disabled:opacity-30"
-            >
-              <ChevronLeft size={24} />
-            </button>
-
-            <div className="px-6 py-3 bg-white/10 backdrop-blur-sm text-white rounded-full font-medium">
-              {currentPage + 1} / {extractedPages.length}
-            </div>
-
-            <button
-              onClick={goToNextPage}
-              disabled={currentPage === extractedPages.length - 1}
-              className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-full transition-all disabled:opacity-30"
-            >
-              <ChevronRight size={24} />
-            </button>
-          </div>
-
-          <p className="text-center text-white/60 text-xs mt-3">
-            Usa las flechas ← → para navegar | ESC para volver
-          </p>
-        </div>
-      </div>
+      <PDFPreviewMode
+        pages={extractedPages}
+        title={titulo}
+        pdfDimensions={pdfDimensions}
+        isLoading={isLoading}
+        isSaveDisabled={!titulo.trim()}
+        onClose={handleClosePreview}
+        onSave={handleSave}
+      />
     );
   }
 
-  // ✅ MODO FORMULARIO (normal)
+  // MODO FORMULARIO
   return (
     <>
       <NavBar />
-
-      <div
+      
+      <div 
         className="fixed inset-0 bg-gray-50"
-        style={{
+        style={{ 
           paddingTop: '60px',
           height: '100vh',
           overflow: 'auto'
@@ -467,10 +224,10 @@ export function CreateBookPage() {
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
+            
             {/* COLUMNA IZQUIERDA: PDF */}
             <div className="space-y-6">
-
+              
               <div className="bg-white rounded-lg border-2 border-gray-200 p-6">
                 <h2 className="text-xl font-semibold mb-4">📄 Archivo PDF del Libro</h2>
                 <PDFUploadZone
@@ -490,11 +247,23 @@ export function CreateBookPage() {
                 </div>
               )}
 
+              {extractedPages.length > 0 && !showPreview && (
+                <div className="bg-white rounded-lg border-2 border-green-300 p-6">
+                  <button
+                    onClick={() => setShowPreview(true)}
+                    className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2"
+                  >
+                    <Eye size={20} />
+                    Ver Preview del Libro ({extractedPages.length} páginas)
+                  </button>
+                </div>
+              )}
+
             </div>
 
             {/* COLUMNA DERECHA: Metadatos */}
             <div className="space-y-6">
-
+              
               <div className="bg-white rounded-lg border-2 border-gray-200 p-6">
                 <label className="block text-sm font-semibold mb-2">Título *</label>
                 <input

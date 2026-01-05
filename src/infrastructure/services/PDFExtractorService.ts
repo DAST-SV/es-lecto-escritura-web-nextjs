@@ -13,6 +13,8 @@ export interface PDFExtractionResult {
   pages: Page[];
   totalPages: number;
   pdfTitle?: string;
+  pageWidth?: number;
+  pageHeight?: number;
 }
 
 export class PDFExtractorService {
@@ -30,13 +32,22 @@ export class PDFExtractorService {
     console.log(`📊 Total de páginas: ${totalPages}`);
 
     const pages: Page[] = [];
+    let pageWidth = 0;
+    let pageHeight = 0;
 
     // Extraer cada página
     for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
       console.log(`🔄 Procesando página ${pageNum}/${totalPages}`);
 
       const page = await pdf.getPage(pageNum);
-      const viewport = page.getViewport({ scale: 2.0 }); // Escala para calidad
+      const viewport = page.getViewport({ scale: 2.0 });
+
+      // Capturar dimensiones reales de la primera página
+      if (pageNum === 1) {
+        pageWidth = viewport.width / 2;
+        pageHeight = viewport.height / 2;
+        console.log(`📐 Dimensiones del PDF: ${pageWidth}x${pageHeight}`);
+      }
 
       // Crear canvas
       const canvas = document.createElement('canvas');
@@ -50,11 +61,11 @@ export class PDFExtractorService {
       canvas.height = viewport.height;
       canvas.width = viewport.width;
 
-      // ✅ CORRECCIÓN: Renderizar página en canvas con ambos parámetros
+      // Renderizar página en canvas
       await page.render({
         canvasContext: context,
         viewport: viewport,
-        canvas: canvas, // ⬅️ AGREGADO
+        canvas: canvas,
       }).promise;
 
       // Convertir canvas a Blob
@@ -62,7 +73,7 @@ export class PDFExtractorService {
         canvas.toBlob((b) => {
           if (b) resolve(b);
           else reject(new Error('No se pudo convertir canvas a blob'));
-        }, 'image/jpeg', 0.9);
+        }, 'image/jpeg', 0.95);
       });
 
       // Crear URL temporal
@@ -76,7 +87,7 @@ export class PDFExtractorService {
         text: '',
         image: imageUrl,
         background: 'blanco',
-        file: blob, // Guardar blob para subir después
+        file: blob,
       };
 
       pages.push(pageData);
@@ -92,6 +103,8 @@ export class PDFExtractorService {
       pages,
       totalPages,
       pdfTitle,
+      pageWidth,
+      pageHeight,
     };
   }
 

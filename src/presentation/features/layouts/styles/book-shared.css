@@ -1,34 +1,4 @@
 /**
- * Estilos para FlipBook - Configuración original perfecta
+ * UBICACIÓN: src/presentation/features/layouts/styles/book-shared.css
+ * Sombras perfectas en TODO el movimiento
  */
-
-.demo-book {
-  box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.5);
-  margin: 0 auto;
-  display: block;
-}
-
-.demoPage {
-  background-color: white;
-  color: #785e3a;
-  border: solid 1px #c2b5a3;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.demoPage img {
-  max-width: 100%;
-  max-height: 100%;
-}
-
-/* Animaciones suaves */
-.demo-book .page {
-  transition: transform 0.3s ease;
-}
-
-/* Sombras del libro */
-.demo-book .shadow {
-  transition: all 0.3s ease;
-}
