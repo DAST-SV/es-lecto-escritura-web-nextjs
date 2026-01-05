@@ -9,7 +9,7 @@ import React, { useState, useCallback } from 'react';
 import { Upload, FileText, X, Check, AlertCircle } from 'lucide-react';
 
 interface PDFUploadZoneProps {
-  onFileSelect: (file: File | null) => void;
+  onFileSelect: (file: File | null) => void | Promise<void>; // ⬅️ CORREGIDO: Aceptar async
   currentFile: File | null;
   error?: string;
 }
@@ -36,34 +36,34 @@ export function PDFUploadZone({
     return null;
   }, []);
 
-  const handleFile = useCallback((file: File) => {
+  const handleFile = useCallback(async (file: File) => { // ⬅️ CORREGIDO: async
     const error = validateFile(file);
     if (error) {
-      onFileSelect(null);
+      await onFileSelect(null); // ⬅️ CORREGIDO: await
       return;
     }
-    onFileSelect(file);
+    await onFileSelect(file); // ⬅️ CORREGIDO: await
   }, [validateFile, onFileSelect]);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => { // ⬅️ CORREGIDO: async
     e.preventDefault();
     setIsDragging(false);
 
     const file = e.dataTransfer.files[0];
     if (file) {
-      handleFile(file);
+      await handleFile(file); // ⬅️ CORREGIDO: await
     }
   }, [handleFile]);
 
-  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInput = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => { // ⬅️ CORREGIDO: async
     const file = e.target.files?.[0];
     if (file) {
-      handleFile(file);
+      await handleFile(file); // ⬅️ CORREGIDO: await
     }
   }, [handleFile]);
 
-  const handleRemove = useCallback(() => {
-    onFileSelect(null);
+  const handleRemove = useCallback(async () => { // ⬅️ CORREGIDO: async
+    await onFileSelect(null); // ⬅️ CORREGIDO: await
   }, [onFileSelect]);
 
   return (

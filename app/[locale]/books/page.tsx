@@ -8,10 +8,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { 
+import {
   BookOpen, Plus, Search, Filter, Grid, List,
-  Edit, Trash2, Eye, Loader2, AlertCircle, 
-  User, Calendar, BookMarked
+  Edit, Trash2, Eye, Loader2, AlertCircle,
+  User, Calendar, BookMarked,
+  Upload
 } from 'lucide-react';
 import { createClient } from '@/src/utils/supabase/client';
 import { GetBooksByUserUseCase } from '@/src/core/application/use-cases/books/GetBooksByUser.usecase';
@@ -108,11 +109,11 @@ export default function LibraryPage() {
     setDeletingBookId(bookToDelete.id_libro);
     try {
       await DeleteBookUseCase.execute(bookToDelete.id_libro);
-      
+
       // Actualizar lista local
       setAllBooks(prev => prev.filter(b => b.id_libro !== bookToDelete.id_libro));
       setBooks(prev => prev.filter(b => b.id_libro !== bookToDelete.id_libro));
-      
+
       toast.success('Libro eliminado correctamente');
       setShowDeleteModal(false);
       setBookToDelete(null);
@@ -157,7 +158,7 @@ export default function LibraryPage() {
   return (
     <UnifiedLayout>
       <Toaster position="top-right" />
-      
+
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 shadow-sm">
@@ -173,13 +174,23 @@ export default function LibraryPage() {
                 </p>
               </div>
 
-              <button
-                onClick={handleCreateNew}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all"
-              >
-                <Plus size={20} />
-                Crear Nuevo Libro
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => router.push(`/${locale}/books/import-pdf`)}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-900 font-medium rounded-xl shadow-lg hover:shadow-xl border-2 border-gray-300 transition-all"
+                >
+                  <Upload size={20} />
+                  Importar PDF
+                </button>
+
+                <button
+                  onClick={handleCreateNew}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all"
+                >
+                  <Plus size={20} />
+                  Crear Nuevo Libro
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -203,21 +214,19 @@ export default function LibraryPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg transition-colors ${
-                  viewMode === 'grid' 
-                    ? 'bg-indigo-100 text-indigo-600' 
+                className={`p-2 rounded-lg transition-colors ${viewMode === 'grid'
+                    ? 'bg-indigo-100 text-indigo-600'
                     : 'bg-white text-gray-600 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 <Grid size={20} />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg transition-colors ${
-                  viewMode === 'list' 
-                    ? 'bg-indigo-100 text-indigo-600' 
+                className={`p-2 rounded-lg transition-colors ${viewMode === 'list'
+                    ? 'bg-indigo-100 text-indigo-600'
                     : 'bg-white text-gray-600 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 <List size={20} />
               </button>
@@ -236,7 +245,7 @@ export default function LibraryPage() {
                 {searchQuery ? 'No se encontraron libros' : 'Tu biblioteca está vacía'}
               </h3>
               <p className="text-gray-600 mb-6">
-                {searchQuery 
+                {searchQuery
                   ? 'Intenta con otros términos de búsqueda'
                   : '¡Crea tu primer libro interactivo ahora!'}
               </p>
@@ -259,7 +268,7 @@ export default function LibraryPage() {
                   className="group bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300"
                 >
                   {/* Portada */}
-                  <div 
+                  <div
                     className="aspect-[4/3] relative overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 cursor-pointer"
                     onClick={() => handleRead(book.id_libro)}
                   >
@@ -274,7 +283,7 @@ export default function LibraryPage() {
                         <BookOpen size={48} className="text-indigo-300" />
                       </div>
                     )}
-                    
+
                     {/* Overlay en hover */}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                       <button
@@ -315,7 +324,7 @@ export default function LibraryPage() {
                     <h3 className="font-bold text-gray-900 text-lg line-clamp-1 mb-1">
                       {book.titulo}
                     </h3>
-                    
+
                     {book.autores.length > 0 && (
                       <p className="text-sm text-gray-600 flex items-center gap-1 mb-2">
                         <User size={14} />
@@ -341,7 +350,7 @@ export default function LibraryPage() {
                   className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex items-center gap-4 hover:shadow-md transition-shadow"
                 >
                   {/* Miniatura */}
-                  <div 
+                  <div
                     className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 cursor-pointer"
                     onClick={() => handleRead(book.id_libro)}
                   >
@@ -412,19 +421,19 @@ export default function LibraryPage() {
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertCircle size={32} className="text-red-600" />
               </div>
-              
+
               <h3 className="text-xl font-bold text-gray-900 mb-2">
                 ¿Eliminar este libro?
               </h3>
-              
+
               <p className="text-gray-600 mb-2">
                 Estás a punto de eliminar:
               </p>
-              
+
               <p className="font-semibold text-gray-900 mb-4">
                 "{bookToDelete.titulo}"
               </p>
-              
+
               <p className="text-sm text-red-600 mb-6">
                 Esta acción no se puede deshacer.
               </p>
