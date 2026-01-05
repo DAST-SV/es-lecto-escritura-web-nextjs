@@ -8,8 +8,8 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import HTMLFlipBook from 'react-pageflip';
-import { 
-  X, ChevronLeft, ChevronRight, Save, ArrowLeft, Loader2 
+import {
+  X, ChevronLeft, ChevronRight, Save, ArrowLeft, Loader2
 } from 'lucide-react';
 import NavBar from '@/src/components/nav/NavBar';
 import { BookPDFService } from '@/src/infrastructure/services/BookPDFService';
@@ -23,25 +23,25 @@ export function CreateBookPage() {
   const router = useRouter();
   const bookRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  
+
   // Estados del formulario
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [autores, setAutores] = useState<string[]>(['']);
   const [personajes, setPersonajes] = useState<string[]>(['']);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-  
+
   // Estados del preview
   const [extractedPages, setExtractedPages] = useState<Page[]>([]);
   const [isExtractingPages, setIsExtractingPages] = useState(false);
   const [showPreview, setShowPreview] = useState(false); // ✅ Estado para mostrar flipbook
-  
+
   // Estados del flipbook
   const [currentPage, setCurrentPage] = useState(0);
   const [bookDimensions, setBookDimensions] = useState({ width: 400, height: 520 });
   const [isClient, setIsClient] = useState(false);
   const [activePage, setActivePage] = useState(0);
-  
+
   // Estados de UI
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingPDF, setIsUploadingPDF] = useState(false);
@@ -90,13 +90,13 @@ export function CreateBookPage() {
 
     calculateDimensions();
     window.addEventListener('resize', calculateDimensions);
-    
+
     let resizeObserver: ResizeObserver | null = null;
     if (containerRef.current) {
       resizeObserver = new ResizeObserver(calculateDimensions);
       resizeObserver.observe(containerRef.current);
     }
-    
+
     return () => {
       window.removeEventListener('resize', calculateDimensions);
       if (resizeObserver) resizeObserver.disconnect();
@@ -135,7 +135,7 @@ export function CreateBookPage() {
       setShowPreview(false);
       return;
     }
-    
+
     setPdfFile(file);
     setPdfError('');
     setExtractedPages([]);
@@ -144,17 +144,17 @@ export function CreateBookPage() {
 
     try {
       console.log('📄 Extrayendo páginas del PDF...');
-      
+
       const { PDFExtractorService } = await import('@/src/infrastructure/services/PDFExtractorService');
       const result = await PDFExtractorService.extractPagesFromPDF(file);
-      
+
       setExtractedPages(result.pages);
       setTitulo(result.pdfTitle || ''); // Auto-llenar título
       console.log(`✅ ${result.pages.length} páginas extraídas`);
-      
+
       // ✅ Mostrar preview automáticamente
       setShowPreview(true);
-      
+
     } catch (err: any) {
       console.error('❌ Error extrayendo páginas:', err);
       setPdfError('Error al procesar el PDF');
@@ -168,7 +168,7 @@ export function CreateBookPage() {
     setShowPreview(false);
     setCurrentPage(0);
     setActivePage(0);
-    
+
     // Limpiar URLs temporales
     const { PDFExtractorService } = await import('@/src/infrastructure/services/PDFExtractorService');
     PDFExtractorService.cleanupBlobUrls(extractedPages);
@@ -234,13 +234,13 @@ export function CreateBookPage() {
       });
 
       console.log('✅ Libro creado exitosamente');
-      
+
       // Limpiar URLs temporales
       if (extractedPages.length > 0) {
         const { PDFExtractorService } = await import('@/src/infrastructure/services/PDFExtractorService');
         PDFExtractorService.cleanupBlobUrls(extractedPages);
       }
-      
+
       router.push(`/books/${bookId}/read`);
 
     } catch (err: any) {
@@ -294,61 +294,61 @@ export function CreateBookPage() {
     return {
       width: bookDimensions.width,
       height: bookDimensions.height,
+      size: "stretch" as const,
+      minWidth: 315,
+      maxWidth: 1000,
+      minHeight: 400,
+      maxHeight: 1533,
       maxShadowOpacity: 0.5,
-      drawShadow: true,
       showCover: true,
-      flippingTime: 700,
-      size: "fixed" as const,
-      className: "book-flipbook-container",
+      mobileScrollSupport: false,
       onFlip: (e: any) => {
         setCurrentPage(e.data);
         setActivePage(e.data);
       },
+      className: "demo-book",
       style: {},
+      // ⬇️ PROPIEDADES QUE FALTABAN
       startPage: 0,
-      minWidth: bookDimensions.width,
-      maxWidth: bookDimensions.width,
-      minHeight: bookDimensions.height,
-      maxHeight: bookDimensions.height,
-      usePortrait: false,
+      drawShadow: true,
+      flippingTime: 1000,
+      usePortrait: true,
       startZIndex: 0,
-      autoSize: false,
-      mobileScrollSupport: false,
+      autoSize: true,
       clickEventForward: true,
       useMouseEvents: true,
-      swipeDistance: 10,
+      swipeDistance: 30,
       showPageCorners: true,
       disableFlipByClick: false,
+      // ⬆️ FIN PROPIEDADES FALTANTES
       children: memoizedPages.map((page, idx) => {
-        const isActive = idx === activePage;
-        
         return (
-          <div className="page w-full h-full" key={page.key}>
-            <div className="page-inner w-full h-full bg-white">
-              {page.image && (
-                <img
-                  src={page.image}
-                  alt={`Página ${idx + 1}`}
-                  className="w-full h-full object-contain"
-                  style={{
-                    userSelect: 'none',
-                    pointerEvents: 'none',
-                  }}
-                />
-              )}
-            </div>
+          <div className="demoPage" key={page.key}>
+            {page.image && (
+              <img
+                src={page.image}
+                alt={`Página ${idx + 1}`}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  userSelect: 'none',
+                  pointerEvents: 'none',
+                }}
+              />
+            )}
           </div>
         );
       }),
     };
-  }, [isClient, showPreview, bookDimensions, memoizedPages, activePage]);
+  }, [isClient, showPreview, bookDimensions, memoizedPages]);
 
   // ========== RENDER ==========
 
   // ✅ MODO PREVIEW FLIPBOOK (pantalla completa)
   if (showPreview && extractedPages.length > 0 && isClient) {
     return (
-      <div 
+      <div
         ref={containerRef}
         className="w-full h-screen relative bg-gradient-to-br from-slate-900 to-slate-800"
         style={{ zIndex: 9999 }}
@@ -397,7 +397,7 @@ export function CreateBookPage() {
 
         {/* Flipbook centrado */}
         <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 9998 }}>
-          <div 
+          <div
             className="relative"
             style={{
               width: `${bookDimensions.width}px`,
@@ -448,10 +448,10 @@ export function CreateBookPage() {
   return (
     <>
       <NavBar />
-      
-      <div 
+
+      <div
         className="fixed inset-0 bg-gray-50"
-        style={{ 
+        style={{
           paddingTop: '60px',
           height: '100vh',
           overflow: 'auto'
@@ -467,10 +467,10 @@ export function CreateBookPage() {
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
+
             {/* COLUMNA IZQUIERDA: PDF */}
             <div className="space-y-6">
-              
+
               <div className="bg-white rounded-lg border-2 border-gray-200 p-6">
                 <h2 className="text-xl font-semibold mb-4">📄 Archivo PDF del Libro</h2>
                 <PDFUploadZone
@@ -494,7 +494,7 @@ export function CreateBookPage() {
 
             {/* COLUMNA DERECHA: Metadatos */}
             <div className="space-y-6">
-              
+
               <div className="bg-white rounded-lg border-2 border-gray-200 p-6">
                 <label className="block text-sm font-semibold mb-2">Título *</label>
                 <input
