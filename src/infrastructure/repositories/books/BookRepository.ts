@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: src/infrastructure/repositories/books/BookRepository.ts
- * ✅ CORREGIDO: Soporte completo para PDFs
+ * ✅ COMPLETO: Soporte para PDFs + Etiquetas + Todas las relaciones
  */
 
 import { supabaseAdmin } from '@/src/utils/supabase/admin';
@@ -17,7 +17,7 @@ interface BookData {
   titulo: string;
   descripcion: string;
   portada?: string;
-  pdfUrl?: string;  // ✅ AGREGADO
+  pdfUrl?: string;
   autores: string[];
   personajes: string[];
   categorias: number[];
@@ -25,7 +25,7 @@ interface BookData {
   etiquetas: number[];
   valores: number[];
   nivel: number;
-  pages?: PageData[];  // ✅ Ahora opcional (porque PDFs pueden no tener pages editables)
+  pages?: PageData[];
 }
 
 export class BookRepository {
@@ -42,7 +42,8 @@ export class BookRepository {
       titulo: bookData.titulo,
       pdfUrl: bookData.pdfUrl ? '✅ Tiene PDF' : '❌ Sin PDF',
       pagesCount: bookData.pages?.length || 0,
-      autoresCount: bookData.autores.length
+      autoresCount: bookData.autores.length,
+      etiquetasCount: bookData.etiquetas?.length || 0,
     });
 
     try {
@@ -55,7 +56,7 @@ export class BookRepository {
           title: bookData.titulo,
           description: bookData.descripcion,
           cover_url: bookData.portada || null,
-          pdf_url: bookData.pdfUrl || null,  // ✅ AGREGADO
+          pdf_url: bookData.pdfUrl || null,
           level_id: bookData.nivel || null,
           is_published: false,
         })
@@ -91,10 +92,10 @@ export class BookRepository {
         this.savePersonajes(libroId, bookData.personajes),
         this.saveCategorias(libroId, bookData.categorias),
         this.saveGeneros(libroId, bookData.generos),
-        this.saveEtiquetas(libroId, bookData.etiquetas),
+        this.saveEtiquetas(libroId, bookData.etiquetas),  // ✅ AGREGADO
         this.saveValores(libroId, bookData.valores),
       ]);
-      console.log('✅ Relaciones guardadas');
+      console.log('✅ Relaciones guardadas (incluyendo etiquetas)');
 
       return libroId;
     } catch (error) {
@@ -121,7 +122,6 @@ export class BookRepository {
         updated_at: new Date().toISOString(),
       };
 
-      // ✅ Solo actualizar pdf_url si se proporciona
       if (bookData.pdfUrl !== undefined) {
         updateData.pdf_url = bookData.pdfUrl;
       }
@@ -146,11 +146,11 @@ export class BookRepository {
         this.replacePersonajes(libroId, bookData.personajes),
         this.replaceCategorias(libroId, bookData.categorias),
         this.replaceGeneros(libroId, bookData.generos),
-        this.replaceEtiquetas(libroId, bookData.etiquetas),
+        this.replaceEtiquetas(libroId, bookData.etiquetas),  // ✅ AGREGADO
         this.replaceValores(libroId, bookData.valores),
       ]);
 
-      console.log('✅ Libro actualizado');
+      console.log('✅ Libro actualizado (incluyendo etiquetas)');
     } catch (error) {
       console.error('❌ Error en update:', error);
       throw error;
@@ -177,7 +177,7 @@ export class BookRepository {
       return null;
     }
 
-    // Obtener todas las relaciones en paralelo
+    // Obtener todas las relaciones en paralelo (incluyendo etiquetas)
     const [autores, personajes, categorias, generos, valores, etiquetas, nivel, paginas] = 
       await Promise.all([
         this.getAutores(libroId),
@@ -185,7 +185,7 @@ export class BookRepository {
         this.getCategorias(libroId),
         this.getGeneros(libroId),
         this.getValores(libroId),
-        this.getEtiquetas(libroId),
+        this.getEtiquetas(libroId),  // ✅ AGREGADO
         this.getNivel(libro.level_id),
         this.getPages(libroId),
       ]);
@@ -195,13 +195,13 @@ export class BookRepository {
       titulo: libro.title,
       descripcion: libro.description,
       portada: libro.cover_url,
-      pdfUrl: libro.pdf_url,  // ✅ AGREGADO
+      pdfUrl: libro.pdf_url,
       autores,
       personajes,
       categorias,
       generos,
       valores,
-      etiquetas,
+      etiquetas,  // ✅ AGREGADO
       nivel,
       paginas,
       fecha_creacion: libro.created_at,
@@ -219,7 +219,7 @@ export class BookRepository {
 
     const { data: libros, error } = await supabaseAdmin
       .from('books')
-      .select('id, title, description, cover_url, pdf_url, created_at')  // ✅ AGREGADO pdf_url
+      .select('id, title, description, cover_url, pdf_url, created_at')
       .eq('user_id', userId)
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
@@ -236,7 +236,7 @@ export class BookRepository {
           titulo: libro.title,
           descripcion: libro.description,
           portada: libro.cover_url,
-          pdfUrl: libro.pdf_url,  // ✅ AGREGADO
+          pdfUrl: libro.pdf_url,
           autores,
           fecha_creacion: libro.created_at,
         };
@@ -292,9 +292,7 @@ export class BookRepository {
   }
 
   private static async replacePages(libroId: string, pages: PageData[]): Promise<void> {
-    // Eliminar páginas existentes
     await supabaseAdmin.from('book_pages').delete().eq('book_id', libroId);
-    // Insertar nuevas
     if (pages.length > 0) {
       await this.savePages(libroId, pages);
     }
@@ -334,7 +332,6 @@ export class BookRepository {
       if (!nombre) continue;
 
       try {
-        // Buscar o crear autor
         let { data: existingAutor } = await supabaseAdmin
           .from('book_authors')
           .select('id')
@@ -356,7 +353,6 @@ export class BookRepository {
           autorId = newAutor.id;
         }
 
-        // Crear relación
         await supabaseAdmin
           .from('books_authors')
           .insert({ 
@@ -473,7 +469,7 @@ export class BookRepository {
 
   /**
    * ============================================
-   * CATEGORÍAS, GÉNEROS, ETIQUETAS, VALORES
+   * CATEGORÍAS
    * ============================================
    */
   
@@ -512,6 +508,12 @@ export class BookRepository {
     return categorias;
   }
 
+  /**
+   * ============================================
+   * GÉNEROS
+   * ============================================
+   */
+  
   private static async saveGeneros(libroId: string, generos: number[]): Promise<void> {
     if (!generos.length) return;
     const inserts = generos.map(genre_id => ({ book_id: libroId, genre_id }));
@@ -543,19 +545,29 @@ export class BookRepository {
     return generos;
   }
 
+  /**
+   * ============================================
+   * ETIQUETAS ✅ NUEVO
+   * ============================================
+   */
+  
   private static async saveEtiquetas(libroId: string, etiquetas: number[]): Promise<void> {
     if (!etiquetas.length) return;
+    
     const inserts = etiquetas.map((tag_id, idx) => ({ 
       book_id: libroId, 
       tag_id,
       is_primary: idx === 0
     }));
+    
     await supabaseAdmin.from('books_tags').insert(inserts);
+    console.log(`✅ Etiquetas guardadas: ${etiquetas.length}`);
   }
 
   private static async replaceEtiquetas(libroId: string, etiquetas: number[]): Promise<void> {
     await supabaseAdmin.from('books_tags').delete().eq('book_id', libroId);
     await this.saveEtiquetas(libroId, etiquetas);
+    console.log(`✅ Etiquetas reemplazadas: ${etiquetas.length}`);
   }
 
   private static async getEtiquetas(libroId: string): Promise<string[]> {
@@ -575,9 +587,17 @@ export class BookRepository {
         .single();
       if (tag?.name) etiquetas.push(tag.name);
     }
+    
+    console.log(`✅ Etiquetas recuperadas: ${etiquetas.length}`);
     return etiquetas;
   }
 
+  /**
+   * ============================================
+   * VALORES
+   * ============================================
+   */
+  
   private static async saveValores(libroId: string, valores: number[]): Promise<void> {
     if (!valores.length) return;
     const inserts = valores.map((value_id, idx) => ({ 
@@ -613,6 +633,12 @@ export class BookRepository {
     return valores;
   }
 
+  /**
+   * ============================================
+   * NIVEL
+   * ============================================
+   */
+  
   private static async getNivel(idNivel: number | null): Promise<any> {
     if (!idNivel) return null;
     const { data } = await supabaseAdmin

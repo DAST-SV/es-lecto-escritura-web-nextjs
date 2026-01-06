@@ -1,17 +1,15 @@
 /**
  * UBICACIÓN: src/presentation/pages/books/CreateBookPage.tsx
- * ✅ COMPLETO: Etiquetas agregadas + Selectores con búsqueda y paginación
+ * ✅ FINAL: Navbar visible + Ficha compacta + Upload integrado + Colores cálidos
  */
 
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { 
-  Loader2, Eye, X, Plus, BookOpen, Users, Tag, 
-  Star, FileText, Image, Save, Upload, AlertCircle,
-  Search, ChevronLeft, ChevronRight
+  Loader2, Save, Upload, AlertCircle, BookOpen, Tag, Camera, X, Eye
 } from 'lucide-react';
 import { createClient } from '@/src/utils/supabase/client';
 import UnifiedLayout from '@/src/components/nav/UnifiedLayout';
@@ -19,112 +17,16 @@ import { BookPDFService } from '@/src/infrastructure/services/BookPDFService';
 import { BookImageService } from '@/src/infrastructure/services/BookImageService';
 import { PDFPreviewMode } from '@/src/presentation/features/books/components/PDFPreview/PDFPreviewMode';
 import { CreateBookUseCase } from '@/src/core/application/use-cases/books/CreateBook.usecase';
+import { OptimizedSelector } from '@/src/presentation/features/books/components/Selectors/OptimizedSelector';
+import { AutoresInput } from '@/src/presentation/features/books/components/Inputs/AutoresInput';
+import { PersonajesInput } from '@/src/presentation/features/books/components/Inputs/PersonajesInput';
 import type { Page } from '@/src/core/domain/types';
 
-// ============================================
-// COMPONENTE OPTIMIZADO DE SELECTOR
-// ============================================
-interface CatalogItem {
-  id: number;
-  name: string;
-}
-
-interface OptimizedSelectorProps {
-  items: CatalogItem[];
-  selectedIds: number[];
-  onToggle: (id: number) => void;
-  label: string;
-  color: 'blue' | 'purple' | 'green' | 'pink' | 'orange';
-  maxSelections?: number;
-  required?: boolean;
-}
-
-const colorClasses = {
-  blue: { border: 'border-blue-500', bg: 'bg-blue-50', text: 'text-blue-700', chip: 'bg-blue-100 border-blue-300 text-blue-700' },
-  purple: { border: 'border-purple-500', bg: 'bg-purple-50', text: 'text-purple-700', chip: 'bg-purple-100 border-purple-300 text-purple-700' },
-  green: { border: 'border-green-500', bg: 'bg-green-50', text: 'text-green-700', chip: 'bg-green-100 border-green-300 text-green-700' },
-  pink: { border: 'border-pink-500', bg: 'bg-pink-50', text: 'text-pink-700', chip: 'bg-pink-100 border-pink-300 text-pink-700' },
-  orange: { border: 'border-orange-500', bg: 'bg-orange-50', text: 'text-orange-700', chip: 'bg-orange-100 border-orange-300 text-orange-700' }
-};
-
-function OptimizedSelector({ items, selectedIds, onToggle, label, color, maxSelections = 999, required = false }: OptimizedSelectorProps) {
-  const [search, setSearch] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  const colors = colorClasses[color];
-
-  const filteredItems = useMemo(() => {
-    if (!search.trim()) return items;
-    return items.filter(item => item.name.toLowerCase().includes(search.toLowerCase()));
-  }, [items, search]);
-
-  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
-  const currentItems = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  useEffect(() => { setCurrentPage(1); }, [search]);
-
-  return (
-    <div className="space-y-2">
-      <label className="text-xs font-medium text-gray-700 block">
-        {label} {required && '*'} ({selectedIds.length}/{maxSelections})
-      </label>
-      <div className="relative">
-        <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar..." 
-          className="w-full pl-7 pr-2 py-1.5 text-xs border border-gray-300 rounded focus:border-indigo-500 focus:outline-none" />
-      </div>
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
-        <div className="grid grid-cols-4 gap-1 p-2 bg-gray-50 overflow-y-auto" style={{ maxHeight: '180px' }}>
-          {currentItems.length === 0 ? (
-            <div className="col-span-4 text-center py-6 text-xs text-gray-400">No se encontraron resultados</div>
-          ) : currentItems.map(item => {
-            const isSelected = selectedIds.includes(item.id);
-            const canClick = isSelected || selectedIds.length < maxSelections;
-            return (
-              <button key={item.id} onClick={() => canClick && onToggle(item.id)} disabled={!canClick}
-                className={`px-2 py-1 text-xs rounded border transition-colors ${isSelected 
-                  ? `${colors.border} ${colors.bg} ${colors.text} font-medium` 
-                  : canClick ? 'border-gray-300 hover:border-gray-400 text-gray-700' : 'border-gray-200 text-gray-400 cursor-not-allowed'}`}>
-                {item.name}
-              </button>
-            );
-          })}
-        </div>
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-2 py-1.5 bg-white border-t border-gray-200">
-            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
-              className="p-1 text-gray-600 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed">
-              <ChevronLeft size={14} />
-            </button>
-            <span className="text-xs text-gray-600">Página {currentPage} de {totalPages}</span>
-            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
-              className="p-1 text-gray-600 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed">
-              <ChevronRight size={14} />
-            </button>
-          </div>
-        )}
-      </div>
-      {selectedIds.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {items.filter(item => selectedIds.includes(item.id)).map(item => (
-            <span key={item.id} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${colors.chip} text-xs`}>
-              {item.name}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ============================================
-// PÁGINA PRINCIPAL
-// ============================================
 export function CreateBookPage() {
   const router = useRouter();
   const locale = useLocale();
   const supabase = createClient();
-  
+
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [autores, setAutores] = useState<string[]>(['']);
@@ -138,54 +40,80 @@ export function CreateBookPage() {
   const [portadaFile, setPortadaFile] = useState<File | null>(null);
   const [portadaPreview, setPortadaPreview] = useState<string | null>(null);
   const [extractedPages, setExtractedPages] = useState<Page[]>([]);
-  const [isExtractingPages, setIsExtractingPages] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
   const [pdfDimensions, setPdfDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [isExtractingPages, setIsExtractingPages] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [pdfError, setPdfError] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
-  const [categorias, setCategorias] = useState<CatalogItem[]>([]);
-  const [generos, setGeneros] = useState<CatalogItem[]>([]);
-  const [etiquetas, setEtiquetas] = useState<CatalogItem[]>([]);
-  const [valores, setValores] = useState<CatalogItem[]>([]);
   const [niveles, setNiveles] = useState<Array<{ id: number; name: string }>>([]);
+  const [selectedLabels, setSelectedLabels] = useState({
+    categorias: [] as string[],
+    generos: [] as string[],
+    etiquetas: [] as string[],
+    valores: [] as string[]
+  });
+
+  const shouldShowPreview = 
+    titulo.trim() !== '' || 
+    descripcion.trim() !== '' || 
+    autores.some(a => a.trim()) ||
+    portadaPreview !== null ||
+    selectedNivel !== null ||
+    selectedCategorias.length > 0 ||
+    selectedGeneros.length > 0 ||
+    selectedEtiquetas.length > 0 ||
+    selectedValores.length > 0 ||
+    personajes.some(p => p.trim());
 
   useEffect(() => {
-    async function loadInitialData() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { router.push(`/${locale}/login`); return; }
-        setUserId(user.id);
-        const [{ data: cats }, { data: gens }, { data: tags }, { data: vals }, { data: levs }] = await Promise.all([
-          supabase.from('book_categories').select('id, name').order('name'),
-          supabase.from('book_genres').select('id, name').order('name'),
-          supabase.from('book_tags').select('id, name').order('name'),
-          supabase.from('book_values').select('id, name').order('name'),
-          supabase.from('book_levels').select('id, name').order('id')
-        ]);
-        setCategorias(cats || []);
-        setGeneros(gens || []);
-        setEtiquetas(tags || []);
-        setValores(vals || []);
-        setNiveles(levs || []);
-      } catch (err: any) {
-        setError('Error al cargar catálogos');
+    async function init() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push(`/${locale}/login`);
+        return;
       }
+      setUserId(user.id);
+
+      const { data: levs } = await supabase
+        .from('book_levels')
+        .select('id, name')
+        .order('id');
+      
+      setNiveles(levs || []);
     }
-    loadInitialData();
+    init();
   }, [supabase, router, locale]);
 
-  const addAutor = () => setAutores([...autores, '']);
-  const removeAutor = (idx: number) => autores.length > 1 && setAutores(autores.filter((_, i) => i !== idx));
-  const updateAutor = (idx: number, val: string) => { const u = [...autores]; u[idx] = val; setAutores(u); };
-  const addPersonaje = () => setPersonajes([...personajes, '']);
-  const removePersonaje = (idx: number) => setPersonajes(personajes.filter((_, i) => i !== idx));
-  const updatePersonaje = (idx: number, val: string) => { const u = [...personajes]; u[idx] = val; setPersonajes(u); };
-  
-  const toggleSelection = (id: number, arr: number[], setArr: React.Dispatch<React.SetStateAction<number[]>>) => {
-    setArr(arr.includes(id) ? arr.filter(x => x !== id) : [...arr, id]);
-  };
+  useEffect(() => {
+    async function loadLabels() {
+      const loadItemNames = async (table: string, ids: number[]) => {
+        if (ids.length === 0) return [];
+        const { data } = await supabase
+          .from(table)
+          .select('name')
+          .in('id', ids);
+        return data?.map(item => item.name) || [];
+      };
+
+      const [cats, gens, tags, vals] = await Promise.all([
+        loadItemNames('book_categories', selectedCategorias),
+        loadItemNames('book_genres', selectedGeneros),
+        loadItemNames('book_tags', selectedEtiquetas),
+        loadItemNames('book_values', selectedValores)
+      ]);
+
+      setSelectedLabels({
+        categorias: cats,
+        generos: gens,
+        etiquetas: tags,
+        valores: vals
+      });
+    }
+
+    loadLabels();
+  }, [selectedCategorias, selectedGeneros, selectedEtiquetas, selectedValores]);
 
   const handlePortadaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -200,37 +128,110 @@ export function CreateBookPage() {
   const handlePDFChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.type !== 'application/pdf') { setPdfError('Solo PDF'); return; }
+
+    if (file.type !== 'application/pdf') {
+      setPdfError('Solo PDF');
+      return;
+    }
+
+    const maxSize = 50 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setPdfError('Máx. 50MB');
+      return;
+    }
+
     setPdfFile(file);
     setPdfError('');
     setExtractedPages([]);
+
+    if (!titulo.trim()) {
+      setTitulo(file.name.replace('.pdf', ''));
+    }
+
     setIsExtractingPages(true);
     try {
-      if (!titulo.trim()) setTitulo(file.name.replace('.pdf', ''));
       const { PDFExtractorService } = await import('@/src/infrastructure/services/PDFExtractorService');
       const result = await PDFExtractorService.extractPagesFromPDF(file);
+      
       setExtractedPages(result.pages);
-      if (result.pageWidth && result.pageHeight) setPdfDimensions({ width: result.pageWidth, height: result.pageHeight });
-    } catch { setPdfError('Error al procesar PDF'); } finally { setIsExtractingPages(false); }
+      
+      if (result.pageWidth && result.pageHeight) {
+        setPdfDimensions({ 
+          width: result.pageWidth, 
+          height: result.pageHeight 
+        });
+      }
+    } catch (err) {
+      setPdfError('Error al procesar');
+    } finally {
+      setIsExtractingPages(false);
+    }
   };
 
-  const isFormValid = () => titulo.trim() && descripcion.trim() && autores.some(a => a.trim()) && pdfFile && selectedCategorias.length > 0 && selectedGeneros.length > 0 && selectedNivel !== null;
+  const toggleSelection = (
+    id: number, 
+    arr: number[], 
+    setArr: React.Dispatch<React.SetStateAction<number[]>>
+  ) => {
+    if (arr.includes(id)) {
+      setArr(arr.filter(x => x !== id));
+    } else {
+      setArr([...arr, id]);
+    }
+  };
+
+  const isFormValid = () => {
+    return (
+      titulo.trim() !== '' &&
+      descripcion.trim() !== '' &&
+      autores.some(a => a.trim()) &&
+      pdfFile !== null &&
+      selectedCategorias.length > 0 &&
+      selectedGeneros.length > 0 &&
+      selectedNivel !== null
+    );
+  };
 
   const handleSave = async () => {
     try {
-      if (!userId || !isFormValid()) return;
+      if (!userId || !isFormValid()) {
+        setError('Completa campos obligatorios');
+        return;
+      }
+
       setIsLoading(true);
       setError('');
+
       const bookId = crypto.randomUUID();
+
       let portadaUrl: string | undefined;
       if (portadaFile) {
-        const result = await BookImageService.uploadImage(portadaFile, userId, bookId, 'portada');
-        if (result.success && result.url) portadaUrl = result.url;
+        const result = await BookImageService.uploadImage(
+          portadaFile, 
+          userId, 
+          bookId, 
+          'portada'
+        );
+        if (result.success && result.url) {
+          portadaUrl = result.url;
+        }
       }
-      const { url: pdfUrl, error: pdfUploadError } = await BookPDFService.uploadPDF(pdfFile!, userId, bookId);
-      if (pdfUploadError || !pdfUrl) throw new Error(pdfUploadError || 'Error PDF');
+
+      const { url: pdfUrl, error: pdfUploadError } = await BookPDFService.uploadPDF(
+        pdfFile!, 
+        userId, 
+        bookId
+      );
+
+      if (pdfUploadError || !pdfUrl) {
+        throw new Error(pdfUploadError || 'Error PDF');
+      }
+
       await CreateBookUseCase.execute(userId, {
-        titulo, descripcion, portada: portadaUrl, pdfUrl,
+        titulo,
+        descripcion,
+        portada: portadaUrl,
+        pdfUrl,
         autores: autores.filter(a => a.trim()),
         personajes: personajes.filter(p => p.trim()),
         categorias: selectedCategorias,
@@ -239,276 +240,339 @@ export function CreateBookPage() {
         valores: selectedValores,
         nivel: selectedNivel || 1,
       });
+
       if (extractedPages.length > 0) {
         const { PDFExtractorService } = await import('@/src/infrastructure/services/PDFExtractorService');
         PDFExtractorService.cleanupBlobUrls(extractedPages);
       }
+
       router.push(`/${locale}/books/${bookId}/read`);
+
     } catch (err: any) {
-      setError(err.message || 'Error al crear');
-    } finally { setIsLoading(false); }
+      setError(err.message || 'Error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const getCategoryNames = () => categorias.filter(c => selectedCategorias.includes(c.id)).map(c => c.name);
-  const getGenreNames = () => generos.filter(g => selectedGeneros.includes(g.id)).map(g => g.name);
-  const getTagNames = () => etiquetas.filter(t => selectedEtiquetas.includes(t.id)).map(t => t.name);
-  const getValueNames = () => valores.filter(v => selectedValores.includes(v.id)).map(v => v.name);
-  const getLevelName = () => niveles.find(n => n.id === selectedNivel)?.name || '';
-
   if (showPreview && extractedPages.length > 0 && pdfDimensions) {
-    return <PDFPreviewMode pages={extractedPages} title={titulo} pdfDimensions={pdfDimensions} isLoading={isLoading} isSaveDisabled={!isFormValid()} onClose={() => setShowPreview(false)} onSave={handleSave} />;
+    return (
+      <PDFPreviewMode 
+        pages={extractedPages} 
+        title={titulo} 
+        pdfDimensions={pdfDimensions}
+        isLoading={isLoading}
+        isSaveDisabled={!isFormValid()}
+        onClose={() => setShowPreview(false)}
+        onSave={handleSave}
+      />
+    );
   }
 
   return (
-    <UnifiedLayout>
-      <div className="min-h-screen bg-gray-50">
-        <div className="sticky top-0 z-20 bg-white border-b border-gray-200 px-4 py-3 shadow-sm">
-          <div className="max-w-[1800px] mx-auto flex items-center justify-between">
+    <UnifiedLayout showNavbar={true}>
+      <div className="h-[calc(100vh-60px)] flex flex-col bg-gradient-to-br from-amber-50/30 via-white to-rose-50/30">
+        
+        {/* Header */}
+        <div className="flex-shrink-0 bg-white/80 backdrop-blur-sm border-b border-gray-200">
+          <div className="px-6 py-3 flex items-center justify-between">
             <div>
               <h1 className="text-lg font-bold text-gray-900">Crear Nuevo Libro</h1>
-              <p className="text-xs text-gray-500">Completa la información y ve el preview</p>
+              <p className="text-xs text-gray-500">Sistema de gestión editorial</p>
             </div>
-            <button onClick={handleSave} disabled={!isFormValid() || isLoading}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg font-medium transition-all disabled:opacity-50 flex items-center gap-2">
-              {isLoading ? <><Loader2 size={16} className="animate-spin" />Guardando...</> : <><Save size={16} />Guardar</>}
+            <button 
+              onClick={handleSave}
+              disabled={!isFormValid() || isLoading}
+              className="px-5 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                <>
+                  <Save size={14} />
+                  Guardar
+                </>
+              )}
             </button>
           </div>
         </div>
 
         {error && (
-          <div className="max-w-[1800px] mx-auto px-4 pt-4">
-            <div className="p-3 bg-red-50 border border-red-300 rounded-lg flex items-start gap-2">
-              <AlertCircle size={16} className="text-red-600 flex-shrink-0 mt-0.5" />
-              <div><p className="text-sm font-medium text-red-700">Error</p><p className="text-xs text-red-600">{error}</p></div>
+          <div className="flex-shrink-0 px-6 pt-3">
+            <div className="p-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+              <AlertCircle size={14} className="text-red-600" />
+              <p className="text-xs text-red-600">{error}</p>
             </div>
           </div>
         )}
 
-        <div className="max-w-[1800px] mx-auto p-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Contenido */}
+        <div className="flex-1 overflow-hidden px-6 py-4">
+          <div className="h-full grid grid-cols-2 gap-4">
             
-            <div className="space-y-3 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 100px)' }}>
+            {/* COLUMNA IZQUIERDA */}
+            <div className="overflow-y-auto pr-2 space-y-3">
               
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-                <h3 className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2"><Upload size={16} />Archivos</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-gray-700 block mb-1">Portada</label>
-                    {portadaPreview ? (
-                      <div className="relative">
-                        <img src={portadaPreview} alt="Portada" className="w-full h-32 object-cover rounded border" />
-                        <button onClick={() => { setPortadaFile(null); setPortadaPreview(null); }}
-                          className="absolute -top-1 -right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"><X size={12} /></button>
-                      </div>
-                    ) : (
-                      <label className="block cursor-pointer">
-                        <div className="h-32 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center hover:border-indigo-400 transition-colors">
-                          <Image size={20} className="text-gray-400 mb-1" /><span className="text-xs text-gray-500">Subir</span>
-                        </div>
-                        <input type="file" accept="image/*" onChange={handlePortadaChange} className="hidden" />
-                      </label>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-700 block mb-1">PDF *</label>
-                    {pdfFile ? (
-                      <div className="h-32 bg-green-50 border border-green-300 rounded p-2 flex flex-col justify-between">
-                        <div><FileText size={20} className="text-green-600 mb-1" />
-                          <p className="text-xs font-medium text-green-900 line-clamp-2">{pdfFile.name}</p></div>
-                        <button onClick={() => { setPdfFile(null); setExtractedPages([]); }} className="text-xs text-red-600 hover:text-red-700 font-medium">Quitar</button>
-                      </div>
-                    ) : (
-                      <label className="block cursor-pointer">
-                        <div className="h-32 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center hover:border-indigo-400 transition-colors">
-                          <Upload size={20} className="text-gray-400 mb-1" /><span className="text-xs text-gray-500">Subir PDF</span>
-                        </div>
-                        <input type="file" accept="application/pdf" onChange={handlePDFChange} className="hidden" />
-                      </label>
-                    )}
-                  </div>
+              {/* PDF */}
+              <section className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div className="px-3 py-2 border-b border-gray-100">
+                  <h3 className="text-xs font-semibold text-gray-900">Archivo PDF</h3>
                 </div>
-                {extractedPages.length > 0 && !isExtractingPages && (
-                  <button onClick={() => setShowPreview(true)}
-                    className="w-full mt-3 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg font-medium flex items-center justify-center gap-2">
-                    <Eye size={16} />Ver Preview PDF ({extractedPages.length} pág.)
-                  </button>
-                )}
-              </div>
-
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-                <h3 className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2"><BookOpen size={16} />Información Básica</h3>
-                <div className="space-y-2">
-                  <div>
-                    <label className="text-xs font-medium text-gray-700 block mb-1">Título *</label>
-                    <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Título del libro"
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:border-indigo-500 focus:outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-700 block mb-1">Descripción *</label>
-                    <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Sinopsis..." rows={3}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:border-indigo-500 focus:outline-none resize-none" />
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-xs font-medium text-gray-700">Autores *</label>
-                      <button onClick={addAutor} className="text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
-                        <Plus size={12} />Agregar
+                <div className="p-3">
+                  {pdfFile ? (
+                    <div className="flex items-center justify-between p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <Upload size={14} className="text-emerald-600 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-gray-900 truncate">{pdfFile.name}</p>
+                          <p className="text-[10px] text-gray-600">{(pdfFile.size / (1024 * 1024)).toFixed(1)} MB</p>
+                        </div>
+                      </div>
+                      <button onClick={() => { setPdfFile(null); setExtractedPages([]); }}
+                        className="p-1 hover:bg-red-100 rounded transition-colors flex-shrink-0">
+                        <X size={12} className="text-red-600" />
                       </button>
                     </div>
-                    <div className="space-y-1">
-                      {autores.map((autor, idx) => (
-                        <div key={idx} className="flex gap-1">
-                          <input type="text" value={autor} onChange={(e) => updateAutor(idx, e.target.value)} placeholder={`Autor ${idx + 1}`}
-                            className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:border-indigo-500 focus:outline-none" />
-                          {autores.length > 1 && (
-                            <button onClick={() => removeAutor(idx)} className="px-2 bg-red-500 text-white rounded hover:bg-red-600"><X size={12} /></button>
-                          )}
-                        </div>
-                      ))}
+                  ) : (
+                    <label className="block cursor-pointer">
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center hover:border-orange-400 hover:bg-orange-50/50 transition-all">
+                        <Upload size={18} className="text-gray-400 mb-1" />
+                        <span className="text-xs text-gray-500">Subir PDF</span>
+                        <span className="text-[10px] text-gray-400 mt-0.5">Máx. 50MB</span>
+                      </div>
+                      <input type="file" accept="application/pdf" onChange={handlePDFChange} className="hidden" />
+                    </label>
+                  )}
+                  {pdfError && <p className="text-[10px] text-red-600 mt-1">⚠️ {pdfError}</p>}
+                  {extractedPages.length > 0 && (
+                    <button onClick={() => setShowPreview(true)}
+                      className="w-full mt-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-md flex items-center justify-center gap-1.5 transition-all">
+                      <Eye size={12} />
+                      Preview ({extractedPages.length} pág.)
+                    </button>
+                  )}
+                  {isExtractingPages && (
+                    <div className="mt-2 text-center py-2">
+                      <Loader2 className="animate-spin mx-auto text-gray-600 mb-1" size={14} />
+                      <p className="text-[10px] text-gray-600">Procesando...</p>
                     </div>
-                  </div>
+                  )}
                 </div>
-              </div>
+              </section>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-                <h3 className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2"><Tag size={16} />Clasificación</h3>
-                <div className="space-y-3">
+              {/* Info Básica */}
+              <section className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div className="px-3 py-2 border-b border-gray-100">
+                  <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-1.5">
+                    <BookOpen size={13} />
+                    Información básica
+                  </h3>
+                </div>
+                <div className="p-3 space-y-2.5">
                   <div>
-                    <label className="text-xs font-medium text-gray-700 block mb-1">Nivel *</label>
-                    <div className="grid grid-cols-4 gap-1">
+                    <label className="text-[10px] font-medium text-gray-700 block mb-1">
+                      Título <span className="text-red-500">*</span>
+                    </label>
+                    <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Título del libro"
+                      className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-md focus:border-orange-400 focus:ring-1 focus:ring-orange-200 focus:outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-medium text-gray-700 block mb-1">
+                      Descripción <span className="text-red-500">*</span>
+                    </label>
+                    <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Sinopsis..." rows={3}
+                      className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-md focus:border-orange-400 focus:ring-1 focus:ring-orange-200 focus:outline-none resize-none" />
+                  </div>
+                  <AutoresInput autores={autores} onChange={setAutores} />
+                </div>
+              </section>
+
+              {/* Clasificación */}
+              <section className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div className="px-3 py-2 border-b border-gray-100">
+                  <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-1.5">
+                    <Tag size={13} />
+                    Clasificación
+                  </h3>
+                </div>
+                <div className="p-3 space-y-3">
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-700 block mb-1.5">
+                      Nivel <span className="text-red-500">*</span>
+                    </label>
+                    <div className="grid grid-cols-2 gap-1.5">
                       {niveles.map(nivel => (
                         <button key={nivel.id} onClick={() => setSelectedNivel(nivel.id)}
-                          className={`px-2 py-1 text-xs rounded border transition-colors ${selectedNivel === nivel.id
-                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-medium' : 'border-gray-300 hover:border-indigo-300 text-gray-700'}`}>
+                          className={`px-2.5 py-1.5 text-[11px] rounded-md border transition-all font-medium ${
+                            selectedNivel === nivel.id 
+                              ? 'border-amber-400 bg-amber-50 text-amber-900' 
+                              : 'border-gray-200 hover:border-gray-300 text-gray-700 hover:bg-gray-50'
+                          }`}>
                           {nivel.name}
                         </button>
                       ))}
                     </div>
                   </div>
-                  <OptimizedSelector items={categorias} selectedIds={selectedCategorias}
-                    onToggle={(id) => toggleSelection(id, selectedCategorias, setSelectedCategorias)}
-                    label="Categorías" color="blue" maxSelections={5} required />
-                  <OptimizedSelector items={generos} selectedIds={selectedGeneros}
-                    onToggle={(id) => toggleSelection(id, selectedGeneros, setSelectedGeneros)}
-                    label="Géneros" color="purple" maxSelections={3} required />
-                  <OptimizedSelector items={etiquetas} selectedIds={selectedEtiquetas}
-                    onToggle={(id) => toggleSelection(id, selectedEtiquetas, setSelectedEtiquetas)}
-                    label="Etiquetas" color="pink" maxSelections={10} />
-                  <OptimizedSelector items={valores} selectedIds={selectedValores}
-                    onToggle={(id) => toggleSelection(id, selectedValores, setSelectedValores)}
-                    label="Valores" color="green" maxSelections={5} />
-                </div>
-              </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2"><Users size={16} />Personajes</h3>
-                  <button onClick={addPersonaje} className="text-xs text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1">
-                    <Plus size={12} />Agregar
-                  </button>
+                  <OptimizedSelector table="book_categories" selectedIds={selectedCategorias}
+                    onToggle={(id) => toggleSelection(id, selectedCategorias, setSelectedCategorias)}
+                    label="Categorías" color="amber" maxSelections={5} required />
+
+                  <OptimizedSelector table="book_genres" selectedIds={selectedGeneros}
+                    onToggle={(id) => toggleSelection(id, selectedGeneros, setSelectedGeneros)}
+                    label="Géneros" color="rose" maxSelections={3} required />
+
+                  <OptimizedSelector table="book_tags" selectedIds={selectedEtiquetas}
+                    onToggle={(id) => toggleSelection(id, selectedEtiquetas, setSelectedEtiquetas)}
+                    label="Etiquetas" color="sky" maxSelections={10} />
+
+                  <OptimizedSelector table="book_values" selectedIds={selectedValores}
+                    onToggle={(id) => toggleSelection(id, selectedValores, setSelectedValores)}
+                    label="Valores" color="emerald" maxSelections={5} />
                 </div>
-                {personajes.length > 0 ? (
-                  <div className="space-y-1">
-                    {personajes.map((personaje, idx) => (
-                      <div key={idx} className="flex gap-1">
-                        <input type="text" value={personaje} onChange={(e) => updatePersonaje(idx, e.target.value)} placeholder={`Personaje ${idx + 1}`}
-                          className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:border-orange-500 focus:outline-none" />
-                        <button onClick={() => removePersonaje(idx)} className="px-2 bg-red-500 text-white rounded hover:bg-red-600"><X size={12} /></button>
-                      </div>
-                    ))}
-                  </div>
-                ) : <p className="text-xs text-gray-400 text-center py-4">Sin personajes</p>}
-              </div>
+              </section>
+
+              {/* Personajes */}
+              <section className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div className="px-3 py-2 border-b border-gray-100">
+                  <h3 className="text-xs font-semibold text-gray-900">Personajes</h3>
+                </div>
+                <div className="p-3">
+                  <PersonajesInput personajes={personajes} onChange={setPersonajes} />
+                </div>
+              </section>
 
             </div>
 
-            <div className="sticky top-20" style={{ maxHeight: 'calc(100vh - 100px)' }}>
-              <div className="bg-white rounded-lg shadow-lg border-2 border-gray-200 overflow-hidden">
-                <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-white"><Eye size={16} /><span className="text-sm font-bold">Preview Ficha Literaria</span></div>
-                  <span className="text-xs text-white/80">Tiempo real</span>
+            {/* COLUMNA DERECHA - Ficha compacta */}
+            <div className="overflow-hidden">
+              <div className="h-full bg-white rounded-lg border border-gray-200 shadow-sm flex flex-col">
+                <div className="flex-shrink-0 px-3 py-2 border-b border-gray-100 bg-gradient-to-r from-amber-50/50 to-rose-50/50">
+                  <h3 className="text-xs font-semibold text-gray-900">Ficha Literaria</h3>
                 </div>
-                <div className="p-4 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 160px)' }}>
-                  {titulo || descripcion || autores.some(a => a.trim()) ? (
+
+                <div className="flex-1 overflow-y-auto p-4">
+                  {shouldShowPreview ? (
                     <div className="space-y-3">
-                      <div className="flex gap-3">
+                      
+                      {/* Header con portada dinámica */}
+                      <div className="flex gap-3 pb-3 border-b border-gray-100">
                         <div className="flex-shrink-0">
                           {portadaPreview ? (
-                            <img src={portadaPreview} alt="Portada" className="w-24 h-32 object-cover rounded shadow-md" />
+                            <div className="relative group">
+                              <img src={portadaPreview} alt="Portada" className="w-24 h-32 object-cover rounded-md shadow-sm border border-gray-200" />
+                              <button 
+                                onClick={() => { setPortadaFile(null); setPortadaPreview(null); }}
+                                className="absolute -top-1.5 -right-1.5 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-all shadow-md"
+                              >
+                                <X size={10} />
+                              </button>
+                            </div>
                           ) : (
-                            <div className="w-24 h-32 bg-gray-200 rounded flex items-center justify-center"><BookOpen size={24} className="text-gray-400" /></div>
+                            <label className="block cursor-pointer">
+                              <div className="w-24 h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-md flex flex-col items-center justify-center border-2 border-dashed border-gray-300 hover:border-orange-400 hover:bg-orange-50/50 transition-all group">
+                                <Camera size={16} className="text-gray-400 group-hover:text-orange-500 mb-1" />
+                                <span className="text-[9px] text-gray-500 group-hover:text-orange-600">Subir</span>
+                              </div>
+                              <input type="file" accept="image/*" onChange={handlePortadaChange} className="hidden" />
+                            </label>
                           )}
                         </div>
+                        
                         <div className="flex-1 min-w-0">
-                          {titulo && <h2 className="text-lg font-bold text-gray-900 mb-1 line-clamp-2">{titulo}</h2>}
+                          {titulo && <h2 className="text-base font-bold text-gray-900 mb-1 line-clamp-2 leading-tight">{titulo}</h2>}
                           {autores.filter(a => a.trim()).length > 0 && (
-                            <p className="text-xs text-gray-600 mb-2">por {autores.filter(a => a.trim()).join(', ')}</p>
+                            <p className="text-[10px] text-gray-600 mb-1.5">{autores.filter(a => a.trim()).join(', ')}</p>
                           )}
-                          {selectedNivel && (
-                            <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs mb-2">
-                              <Star size={10} />{getLevelName()}
+                          {selectedNivel && niveles.find(n => n.id === selectedNivel) && (
+                            <div className="inline-block px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-[9px] font-medium mb-1.5">
+                              {niveles.find(n => n.id === selectedNivel)?.name}
                             </div>
                           )}
-                          {descripcion && <p className="text-xs text-gray-700 line-clamp-3">{descripcion}</p>}
+                          {descripcion && (
+                            <p className="text-[10px] text-gray-700 leading-snug line-clamp-2">{descripcion}</p>
+                          )}
                         </div>
                       </div>
+
+                      {/* Metadata compacta */}
                       {personajes.filter(p => p.trim()).length > 0 && (
-                        <div><h4 className="text-xs font-bold text-gray-900 mb-1">Personajes</h4>
+                        <div>
+                          <h4 className="text-[9px] font-semibold text-gray-900 mb-1.5 uppercase tracking-wide">Personajes</h4>
                           <div className="flex flex-wrap gap-1">
                             {personajes.filter(p => p.trim()).map((p, i) => (
-                              <span key={i} className="px-2 py-0.5 bg-orange-100 text-orange-800 rounded-full text-xs">{p}</span>
+                              <span key={i} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-[10px] border border-gray-200">{p}</span>
                             ))}
                           </div>
                         </div>
                       )}
-                      {selectedCategorias.length > 0 && (<div><h4 className="text-xs font-bold text-gray-900 mb-1">Categorías</h4>
+
+                      {selectedLabels.categorias.length > 0 && (
+                        <div>
+                          <h4 className="text-[9px] font-semibold text-gray-900 mb-1.5 uppercase tracking-wide">Categorías</h4>
                           <div className="flex flex-wrap gap-1">
-                            {getCategoryNames().map((name, i) => (
-                              <span key={i} className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs">{name}</span>
+                            {selectedLabels.categorias.map((name, i) => (
+                              <span key={i} className="px-2 py-0.5 bg-amber-50 text-amber-800 rounded text-[10px] border border-amber-200">{name}</span>
                             ))}
                           </div>
                         </div>
                       )}
-                      {selectedGeneros.length > 0 && (
-                        <div><h4 className="text-xs font-bold text-gray-900 mb-1">Géneros</h4>
+
+                      {selectedLabels.generos.length > 0 && (
+                        <div>
+                          <h4 className="text-[9px] font-semibold text-gray-900 mb-1.5 uppercase tracking-wide">Géneros</h4>
                           <div className="flex flex-wrap gap-1">
-                            {getGenreNames().map((name, i) => (
-                              <span key={i} className="px-2 py-0.5 bg-purple-100 text-purple-800 rounded-full text-xs">{name}</span>
+                            {selectedLabels.generos.map((name, i) => (
+                              <span key={i} className="px-2 py-0.5 bg-rose-50 text-rose-800 rounded text-[10px] border border-rose-200">{name}</span>
                             ))}
                           </div>
                         </div>
                       )}
-                      {selectedEtiquetas.length > 0 && (
-                        <div><h4 className="text-xs font-bold text-gray-900 mb-1">Etiquetas</h4>
+
+                      {selectedLabels.etiquetas.length > 0 && (
+                        <div>
+                          <h4 className="text-[9px] font-semibold text-gray-900 mb-1.5 uppercase tracking-wide">Etiquetas</h4>
                           <div className="flex flex-wrap gap-1">
-                            {getTagNames().map((name, i) => (
-                              <span key={i} className="px-2 py-0.5 bg-pink-100 text-pink-800 rounded-full text-xs">{name}</span>
+                            {selectedLabels.etiquetas.map((name, i) => (
+                              <span key={i} className="px-2 py-0.5 bg-sky-50 text-sky-800 rounded text-[10px] border border-sky-200">{name}</span>
                             ))}
                           </div>
                         </div>
                       )}
-                      {selectedValores.length > 0 && (
-                        <div><h4 className="text-xs font-bold text-gray-900 mb-1">Valores</h4>
+
+                      {selectedLabels.valores.length > 0 && (
+                        <div>
+                          <h4 className="text-[9px] font-semibold text-gray-900 mb-1.5 uppercase tracking-wide">Valores</h4>
                           <div className="flex flex-wrap gap-1">
-                            {getValueNames().map((name, i) => (
-                              <span key={i} className="px-2 py-0.5 bg-green-100 text-green-800 rounded-full text-xs">{name}</span>
+                            {selectedLabels.valores.map((name, i) => (
+                              <span key={i} className="px-2 py-0.5 bg-emerald-50 text-emerald-800 rounded text-[10px] border border-emerald-200">{name}</span>
                             ))}
                           </div>
                         </div>
                       )}
+
                     </div>
                   ) : (
-                    <div className="text-center py-12">
-                      <BookOpen size={48} className="mx-auto text-gray-300 mb-3" />
-                      <p className="text-sm text-gray-400">Completa el formulario</p>
-                      <p className="text-xs text-gray-400 mt-1">Verás el preview aquí</p>
+                    <div className="h-full flex items-center justify-center">
+                      <div className="text-center">
+                        <BookOpen size={40} className="mx-auto text-gray-300 mb-2" />
+                        <p className="text-xs text-gray-500 mb-1">Vista previa</p>
+                        <p className="text-[10px] text-gray-400 max-w-[200px] mx-auto">
+                          Completa el formulario
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
             </div>
+
           </div>
         </div>
+
       </div>
     </UnifiedLayout>
   );
