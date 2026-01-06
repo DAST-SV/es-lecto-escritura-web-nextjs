@@ -1,9 +1,9 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/PDFPreview/PDFPreviewMode.tsx
- * Versión Corregida: Tipado estricto + Sombras nativas preservadas
+ * ✅ CORREGIDO: Evita re-renders infinitos con FlipBook
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import type { Page } from '@/src/core/domain/types';
 import { PreviewHeader } from './PreviewHeader';
@@ -37,6 +37,7 @@ export function PDFPreviewMode({
         handleFlip,
     } = usePreviewControls({ pages, onClose });
 
+    // ✅ Memoizar páginas para evitar recreación
     const memoizedPages = useMemo(() => {
         return pages.map((page, idx) => ({
             ...page,
@@ -44,8 +45,9 @@ export function PDFPreviewMode({
         }));
     }, [pages]);
 
-    const flipBookProps = useMemo(() => {
-        if (!isClient) return null;
+    // ✅ Calcular dimensiones del libro
+    const bookDimensions = useMemo(() => {
+        if (!isClient) return { width: 400, height: 600 };
 
         const padding = 20;
         const availableHeight = window.innerHeight - padding * 2;
@@ -68,36 +70,26 @@ export function PDFPreviewMode({
             displayHeight = Math.round(pdfDimensions.height * scale);
         }
 
-        return {
-            width: displayWidth,
-            height: displayHeight,
-            size: "fixed" as const,
-            minWidth: displayWidth,
-            maxWidth: displayWidth,
-            minHeight: displayHeight,
-            maxHeight: displayHeight,
-            drawShadow: true,
-            maxShadowOpacity: 0.5,
-            showCover: true,
-            flippingTime: 1000,
-            usePortrait: isMobile,
-            startZIndex: 0,
-            autoSize: false,
-            startPage: 0,
-            clickEventForward: true,
-            useMouseEvents: true,
-            swipeDistance: 30,
-            showPageCorners: true,
-            disableFlipByClick: false,
-            onFlip: handleFlip,
-            className: "demo-book",
-            // Propiedades faltantes que causaban el error TS2739:
-            style: {}, 
-            mobileScrollSupport: false, 
-        };
-    }, [isClient, isMobile, pdfDimensions, handleFlip]);
+        return { width: displayWidth, height: displayHeight };
+    }, [isClient, isMobile, pdfDimensions]);
 
-    if (!isClient || !flipBookProps) {
+    // ✅ Renderizar páginas del FlipBook
+    const renderPages = useCallback(() => {
+        return memoizedPages.map((page) => (
+            <div className="demoPage" key={page.key}>
+                {page.image && (
+                    <img
+                        src={page.image}
+                        alt="Página"
+                        className="w-full h-full object-fill pointer-events-none select-none"
+                        draggable={false}
+                    />
+                )}
+            </div>
+        ));
+    }, [memoizedPages]);
+
+    if (!isClient) {
         return null;
     }
 
@@ -115,19 +107,34 @@ export function PDFPreviewMode({
 
             <div className="flex-1 flex items-center justify-center overflow-hidden">
                 <div className="relative">
-                    {/* @ts-ignore - Evita conflictos remanentes de tipos en v2.0.3 */}
-                    <HTMLFlipBook {...flipBookProps} ref={bookRef}>
-                        {memoizedPages.map((page) => (
-                            <div className="demoPage" key={page.key}>
-                                {page.image && (
-                                    <img
-                                        src={page.image}
-                                        alt="Página"
-                                        className="w-full h-full object-fill pointer-events-none select-none"
-                                    />
-                                )}
-                            </div>
-                        ))}
+                    <HTMLFlipBook
+                        ref={bookRef}
+                        width={bookDimensions.width}
+                        height={bookDimensions.height}
+                        size="fixed"
+                        minWidth={bookDimensions.width}
+                        maxWidth={bookDimensions.width}
+                        minHeight={bookDimensions.height}
+                        maxHeight={bookDimensions.height}
+                        drawShadow={true}
+                        maxShadowOpacity={0.5}
+                        showCover={true}
+                        flippingTime={1000}
+                        usePortrait={isMobile}
+                        startZIndex={0}
+                        autoSize={false}
+                        startPage={0}
+                        clickEventForward={true}
+                        useMouseEvents={true}
+                        swipeDistance={30}
+                        showPageCorners={true}
+                        disableFlipByClick={false}
+                        onFlip={handleFlip}
+                        className="demo-book"
+                        style={{}}
+                        mobileScrollSupport={false}
+                    >
+                        {renderPages()}
                     </HTMLFlipBook>
                 </div>
             </div>
