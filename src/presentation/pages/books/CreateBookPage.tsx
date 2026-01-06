@@ -1,11 +1,11 @@
 /**
  * UBICACIÓN: src/presentation/pages/books/CreateBookPage.tsx
- * ✅ SIN LOOPS + FICHA PROFESIONAL + UI MEJORADA
+ * ✅ VERSION FUNCIONANDO - Sin loops infinitos
  */
 
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Eye, X, Plus, Upload, Image as ImageIcon } from 'lucide-react';
 import NavBar from '@/src/components/nav/NavBar';
@@ -21,9 +21,7 @@ import { SelectFromTableAsync } from '@/src/presentation/features/books/componen
 
 export function CreateBookPage() {
   const router = useRouter();
-  const supabaseClient = createClient();
   const portadaInputRef = useRef<HTMLInputElement>(null);
-  const [userLoaded, setUserLoaded] = useState(false);
   
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
@@ -48,24 +46,30 @@ export function CreateBookPage() {
   const [pdfError, setPdfError] = useState('');
   const [error, setError] = useState('');
 
-  // ✅ CARGAR USUARIO - useCallback para evitar loops
-  const loadUser = useCallback(async () => {
-    if (userLoaded) return;
-    try {
-      const { data: { user } } = await supabaseClient.auth.getUser();
-      if (user) {
-        const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario';
-        setAutores([name]);
-        setUserLoaded(true);
+  // ✅ CARGAR USUARIO UNA SOLA VEZ
+  useEffect(() => {
+    let isMounted = true;
+    
+    const loadUser = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user && isMounted) {
+          const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario';
+          setAutores([name]);
+        }
+      } catch (err) {
+        console.error('Error loading user:', err);
       }
-    } catch (err) {
-      console.error('Error loading user:', err);
-    }
-  }, [userLoaded, supabaseClient]);
-
-  React.useEffect(() => {
+    };
+    
     loadUser();
-  }, [loadUser]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []); // ✅ Solo se ejecuta una vez
 
   const addAutor = () => setAutores([...autores, '']);
   const removeAutor = (index: number) => setAutores(autores.filter((_, i) => i !== index));
@@ -83,7 +87,7 @@ export function CreateBookPage() {
     setPersonajes(newPersonajes);
   };
 
-  const handlePortadaChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePortadaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
@@ -94,15 +98,15 @@ export function CreateBookPage() {
     const reader = new FileReader();
     reader.onload = (e) => setPortadaPreview(e.target?.result as string);
     reader.readAsDataURL(file);
-  }, []);
+  };
 
-  const removePortada = useCallback(() => {
+  const removePortada = () => {
     setPortadaFile(null);
     setPortadaPreview(null);
     if (portadaInputRef.current) portadaInputRef.current.value = '';
-  }, []);
+  };
 
-  const handlePDFSelect = useCallback(async (file: File | null) => {
+  const handlePDFSelect = async (file: File | null) => {
     if (!file) {
       setPdfFile(null);
       setExtractedPages([]);
@@ -129,7 +133,7 @@ export function CreateBookPage() {
     } finally {
       setIsExtractingPages(false);
     }
-  }, []);
+  };
 
   const validateForm = (): boolean => {
     if (!titulo.trim()) { setError('Título obligatorio'); return false; }
@@ -149,7 +153,8 @@ export function CreateBookPage() {
       setError('');
       if (!validateForm()) { setIsLoading(false); return; }
 
-      const { data: { user } } = await supabaseClient.auth.getUser();
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setError('Usuario no autenticado'); setIsLoading(false); return; }
 
       const bookId = crypto.randomUUID();
@@ -188,41 +193,7 @@ export function CreateBookPage() {
     }
   };
 
-  // ✅ RESOLVER METADATA PARA PREVIEW
-  const getMetadataForPreview = useCallback(async () => {
-    const metadata: any = {};
-    
-    try {
-      if (selectedCategorias.length > 0) {
-        const { data } = await supabaseClient.from('book_categories').select('name').in('id', selectedCategorias);
-        metadata.categorias = data?.map(d => d.name) || [];
-      }
-      if (selectedGeneros.length > 0) {
-        const { data } = await supabaseClient.from('book_genres').select('name').in('id', selectedGeneros);
-        metadata.generos = data?.map(d => d.name) || [];
-      }
-      if (selectedValores.length > 0) {
-        const { data } = await supabaseClient.from('book_values').select('name').in('id', selectedValores);
-        metadata.valores = data?.map(d => d.name) || [];
-      }
-      if (selectedEtiquetas.length > 0) {
-        const { data } = await supabaseClient.from('book_tags').select('name').in('id', selectedEtiquetas);
-        metadata.etiquetas = data?.map(d => d.name) || [];
-      }
-      if (selectedNivel) {
-        const { data } = await supabaseClient.from('book_levels').select('name').eq('id', selectedNivel).single();
-        metadata.nivel = data?.name || '';
-      }
-    } catch (err) {
-      console.error('Error resolving metadata:', err);
-    }
-    
-    return metadata;
-  }, [selectedCategorias, selectedGeneros, selectedValores, selectedEtiquetas, selectedNivel, supabaseClient]);
-
-  // ============================================
-  // PREVIEW PDF
-  // ============================================
+  // ✅ PREVIEW PDF
   if (showPDFPreview && extractedPages.length > 0 && pdfDimensions) {
     return (
       <PDFPreviewMode
@@ -237,190 +208,29 @@ export function CreateBookPage() {
     );
   }
 
-  // ============================================
-  // PREVIEW FICHA PROFESIONAL
-  // ============================================
+  // ✅ PREVIEW FICHA - Resolver metadata cuando se abre
   if (showFichaPreview) {
-    const [metadata, setMetadata] = React.useState<any>({});
-    
-    React.useEffect(() => {
-      getMetadataForPreview().then(setMetadata);
-    }, []);
-
-    return (
-      <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-6">
-        <div className="bg-gradient-to-br from-white via-gray-50 to-blue-50 rounded-2xl max-w-4xl w-full shadow-2xl overflow-hidden">
-          
-          {/* Header */}
-          <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur">
-                  <span className="text-2xl">📖</span>
-                </div>
-                <h2 className="text-xl font-bold text-white">Ficha Literaria</h2>
-              </div>
-              <button 
-                onClick={() => setShowFichaPreview(false)} 
-                className="p-2 bg-white/20 hover:bg-white/30 rounded-lg text-white backdrop-blur transition-all"
-              >
-                <X size={20} />
-              </button>
-            </div>
-          </div>
-
-          {/* Contenido */}
-          <div className="p-8 max-h-[80vh] overflow-y-auto">
-            <div className="grid grid-cols-5 gap-8">
-              
-              {/* PORTADA */}
-              <div className="col-span-2">
-                {portadaPreview ? (
-                  <div className="relative group">
-                    <img 
-                      src={portadaPreview} 
-                      alt={titulo} 
-                      className="w-full rounded-xl shadow-2xl object-cover"
-                      style={{ aspectRatio: '3/4' }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                ) : (
-                  <div className="w-full bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl flex items-center justify-center shadow-lg" style={{ aspectRatio: '3/4' }}>
-                    <ImageIcon size={64} className="text-gray-400" />
-                  </div>
-                )}
-              </div>
-
-              {/* INFO */}
-              <div className="col-span-3 space-y-4">
-                
-                {/* Título y Autores */}
-                <div className="bg-white rounded-xl p-5 shadow-lg">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{titulo || 'Sin título'}</h1>
-                  {autores.filter(a => a.trim()).length > 0 && (
-                    <p className="text-gray-600 text-base flex items-center gap-2">
-                      <span className="text-purple-600">✍️</span>
-                      {autores.filter(a => a.trim()).join(', ')}
-                    </p>
-                  )}
-                </div>
-
-                {/* Sinopsis */}
-                {descripcion && (
-                  <div className="bg-white rounded-xl p-5 shadow-lg">
-                    <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-2">Sinopsis</h3>
-                    <p className="text-gray-700 text-sm leading-relaxed">{descripcion}</p>
-                  </div>
-                )}
-
-                {/* Metadata Grid */}
-                <div className="grid grid-cols-2 gap-3">
-                  
-                  {/* Personajes */}
-                  {personajes.filter(p => p.trim()).length > 0 && (
-                    <div className="bg-white rounded-xl p-4 shadow-lg col-span-2">
-                      <h3 className="text-xs font-bold text-orange-600 uppercase tracking-wide mb-2">👥 Personajes</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {personajes.filter(p => p.trim()).map((p, i) => (
-                          <span key={i} className="px-3 py-1 bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 rounded-full text-xs font-medium shadow-sm">
-                            {p}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Categorías */}
-                  {metadata.categorias?.length > 0 && (
-                    <div className="bg-white rounded-xl p-4 shadow-lg">
-                      <h3 className="text-xs font-bold text-blue-600 uppercase tracking-wide mb-2">📚 Categorías</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {metadata.categorias.map((c: string, i: number) => (
-                          <span key={i} className="px-3 py-1 bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 rounded-full text-xs font-medium shadow-sm">
-                            {c}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Géneros */}
-                  {metadata.generos?.length > 0 && (
-                    <div className="bg-white rounded-xl p-4 shadow-lg">
-                      <h3 className="text-xs font-bold text-purple-600 uppercase tracking-wide mb-2">🎭 Géneros</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {metadata.generos.map((g: string, i: number) => (
-                          <span key={i} className="px-3 py-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 rounded-full text-xs font-medium shadow-sm">
-                            {g}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Nivel */}
-                  {metadata.nivel && (
-                    <div className="bg-white rounded-xl p-4 shadow-lg">
-                      <h3 className="text-xs font-bold text-indigo-600 uppercase tracking-wide mb-2">📊 Nivel</h3>
-                      <span className="inline-block px-3 py-1 bg-gradient-to-r from-indigo-100 to-blue-100 text-indigo-800 rounded-full text-xs font-medium shadow-sm">
-                        {metadata.nivel}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Valores */}
-                  {metadata.valores?.length > 0 && (
-                    <div className="bg-white rounded-xl p-4 shadow-lg">
-                      <h3 className="text-xs font-bold text-green-600 uppercase tracking-wide mb-2">💚 Valores</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {metadata.valores.slice(0, 3).map((v: string, i: number) => (
-                          <span key={i} className="px-3 py-1 bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 rounded-full text-xs font-medium shadow-sm">
-                            {v}
-                          </span>
-                        ))}
-                        {metadata.valores.length > 3 && (
-                          <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
-                            +{metadata.valores.length - 3}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Etiquetas */}
-                  {metadata.etiquetas?.length > 0 && (
-                    <div className="bg-white rounded-xl p-4 shadow-lg col-span-2">
-                      <h3 className="text-xs font-bold text-pink-600 uppercase tracking-wide mb-2">🏷️ Etiquetas</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {metadata.etiquetas.map((e: string, i: number) => (
-                          <span key={i} className="px-3 py-1 bg-gradient-to-r from-pink-100 to-rose-100 text-pink-800 rounded-full text-xs font-medium shadow-sm">
-                            {e}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <FichaPreview 
+      titulo={titulo}
+      descripcion={descripcion}
+      autores={autores}
+      personajes={personajes}
+      portadaPreview={portadaPreview}
+      selectedCategorias={selectedCategorias}
+      selectedGeneros={selectedGeneros}
+      selectedValores={selectedValores}
+      selectedEtiquetas={selectedEtiquetas}
+      selectedNivel={selectedNivel}
+      onClose={() => setShowFichaPreview(false)}
+    />;
   }
 
-  // ============================================
-  // FORMULARIO MEJORADO
-  // ============================================
   return (
     <>
       <NavBar />
       <div className="fixed inset-0 bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50" style={{ paddingTop: '60px', height: '100vh', overflow: 'auto' }}>
         <div className="container mx-auto p-4 max-w-6xl">
           
-          {/* Header */}
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">📚 Crear Libro</h1>
@@ -430,8 +240,7 @@ export function CreateBookPage() {
               onClick={() => setShowFichaPreview(true)} 
               className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 shadow-lg transition-all"
             >
-              <Eye size={16} />
-              Ver Preview
+              <Eye size={16} />Ver Preview
             </button>
           </div>
 
@@ -481,7 +290,6 @@ export function CreateBookPage() {
               {/* INFO */}
               <div className="col-span-9 space-y-4">
                 
-                {/* Título + Descripción */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-bold mb-2 text-gray-700">Título *</label>
@@ -505,10 +313,9 @@ export function CreateBookPage() {
                   </div>
                 </div>
 
-                {/* Autores + Personajes */}
                 <div className="grid grid-cols-2 gap-4">
                   
-                  {/* Autores */}
+                  {/* AUTORES */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-sm font-bold text-gray-700">Autores *</label>
@@ -540,7 +347,7 @@ export function CreateBookPage() {
                     </div>
                   </div>
 
-                  {/* Personajes */}
+                  {/* PERSONAJES */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-sm font-bold text-gray-700">Personajes</label>
@@ -612,8 +419,7 @@ export function CreateBookPage() {
                   onClick={() => setShowPDFPreview(true)} 
                   className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 shadow-md transition-all"
                 >
-                  <Eye size={16} />
-                  Ver Flipbook ({extractedPages.length} págs)
+                  <Eye size={16} />Ver Flipbook ({extractedPages.length} págs)
                 </button>
               )}
             </div>
@@ -638,9 +444,7 @@ export function CreateBookPage() {
                 Guardando libro...
               </>
             ) : (
-              <>
-                💾 Guardar Libro
-              </>
+              <>💾 Guardar Libro</>
             )}
           </button>
 
@@ -650,4 +454,204 @@ export function CreateBookPage() {
   );
 }
 
-export default CreateBookPage;
+// ✅ COMPONENTE SEPARADO PARA FICHA (evita re-renders)
+function FichaPreview({ 
+  titulo, descripcion, autores, personajes, portadaPreview,
+  selectedCategorias, selectedGeneros, selectedValores, selectedEtiquetas, selectedNivel,
+  onClose
+}: any) {
+  const [metadata, setMetadata] = useState<any>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      const supabase = createClient();
+      const meta: any = {};
+      
+      try {
+        if (selectedCategorias.length > 0) {
+          const { data } = await supabase.from('book_categories').select('name').in('id', selectedCategorias);
+          meta.categorias = data?.map(d => d.name) || [];
+        }
+        if (selectedGeneros.length > 0) {
+          const { data } = await supabase.from('book_genres').select('name').in('id', selectedGeneros);
+          meta.generos = data?.map(d => d.name) || [];
+        }
+        if (selectedValores.length > 0) {
+          const { data } = await supabase.from('book_values').select('name').in('id', selectedValores);
+          meta.valores = data?.map(d => d.name) || [];
+        }
+        if (selectedEtiquetas.length > 0) {
+          const { data } = await supabase.from('book_tags').select('name').in('id', selectedEtiquetas);
+          meta.etiquetas = data?.map(d => d.name) || [];
+        }
+        if (selectedNivel) {
+          const { data } = await supabase.from('book_levels').select('name').eq('id', selectedNivel).single();
+          meta.nivel = data?.name || '';
+        }
+      } catch (err) {
+        console.error('Error:', err);
+      }
+      
+      setMetadata(meta);
+      setLoading(false);
+    };
+    
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center">
+        <Loader2 size={48} className="animate-spin text-white" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-6">
+      <div className="bg-gradient-to-br from-white via-gray-50 to-blue-50 rounded-2xl max-w-4xl w-full shadow-2xl overflow-hidden">
+        
+        <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur">
+                <span className="text-2xl">📖</span>
+              </div>
+              <h2 className="text-xl font-bold text-white">Ficha Literaria</h2>
+            </div>
+            <button 
+              onClick={onClose} 
+              className="p-2 bg-white/20 hover:bg-white/30 rounded-lg text-white backdrop-blur transition-all"
+            >
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-8 max-h-[80vh] overflow-y-auto">
+          <div className="grid grid-cols-5 gap-8">
+            
+            <div className="col-span-2">
+              {portadaPreview ? (
+                <img 
+                  src={portadaPreview} 
+                  alt={titulo} 
+                  className="w-full rounded-xl shadow-2xl object-cover"
+                  style={{ aspectRatio: '3/4' }}
+                />
+              ) : (
+                <div className="w-full bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl flex items-center justify-center shadow-lg" style={{ aspectRatio: '3/4' }}>
+                  <ImageIcon size={64} className="text-gray-400" />
+                </div>
+              )}
+            </div>
+
+            <div className="col-span-3 space-y-4">
+              
+              <div className="bg-white rounded-xl p-5 shadow-lg">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">{titulo || 'Sin título'}</h1>
+                {autores.filter((a: string) => a.trim()).length > 0 && (
+                  <p className="text-gray-600 text-base flex items-center gap-2">
+                    <span className="text-purple-600">✍️</span>
+                    {autores.filter((a: string) => a.trim()).join(', ')}
+                  </p>
+                )}
+              </div>
+
+              {descripcion && (
+                <div className="bg-white rounded-xl p-5 shadow-lg">
+                  <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-2">Sinopsis</h3>
+                  <p className="text-gray-700 text-sm leading-relaxed">{descripcion}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                
+                {personajes.filter((p: string) => p.trim()).length > 0 && (
+                  <div className="bg-white rounded-xl p-4 shadow-lg col-span-2">
+                    <h3 className="text-xs font-bold text-orange-600 uppercase tracking-wide mb-2">👥 Personajes</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {personajes.filter((p: string) => p.trim()).map((p: string, i: number) => (
+                        <span key={i} className="px-3 py-1 bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 rounded-full text-xs font-medium shadow-sm">
+                          {p}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {metadata.categorias?.length > 0 && (
+                  <div className="bg-white rounded-xl p-4 shadow-lg">
+                    <h3 className="text-xs font-bold text-blue-600 uppercase tracking-wide mb-2">📚 Categorías</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {metadata.categorias.map((c: string, i: number) => (
+                        <span key={i} className="px-3 py-1 bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 rounded-full text-xs font-medium shadow-sm">
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {metadata.generos?.length > 0 && (
+                  <div className="bg-white rounded-xl p-4 shadow-lg">
+                    <h3 className="text-xs font-bold text-purple-600 uppercase tracking-wide mb-2">🎭 Géneros</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {metadata.generos.map((g: string, i: number) => (
+                        <span key={i} className="px-3 py-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 rounded-full text-xs font-medium shadow-sm">
+                          {g}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {metadata.nivel && (
+                  <div className="bg-white rounded-xl p-4 shadow-lg">
+                    <h3 className="text-xs font-bold text-indigo-600 uppercase tracking-wide mb-2">📊 Nivel</h3>
+                    <span className="inline-block px-3 py-1 bg-gradient-to-r from-indigo-100 to-blue-100 text-indigo-800 rounded-full text-xs font-medium shadow-sm">
+                      {metadata.nivel}
+                    </span>
+                  </div>
+                )}
+
+                {metadata.valores?.length > 0 && (
+                  <div className="bg-white rounded-xl p-4 shadow-lg">
+                    <h3 className="text-xs font-bold text-green-600 uppercase tracking-wide mb-2">💚 Valores</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {metadata.valores.slice(0, 3).map((v: string, i: number) => (
+                        <span key={i} className="px-3 py-1 bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 rounded-full text-xs font-medium shadow-sm">
+                          {v}
+                        </span>
+                      ))}
+                      {metadata.valores.length > 3 && (
+                        <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+                          +{metadata.valores.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {metadata.etiquetas?.length > 0 && (
+                  <div className="bg-white rounded-xl p-4 shadow-lg col-span-2">
+                    <h3 className="text-xs font-bold text-pink-600 uppercase tracking-wide mb-2">🏷️ Etiquetas</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {metadata.etiquetas.map((e: string, i: number) => (
+                        <span key={i} className="px-3 py-1 bg-gradient-to-r from-pink-100 to-rose-100 text-pink-800 rounded-full text-xs font-medium shadow-sm">
+                          {e}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
