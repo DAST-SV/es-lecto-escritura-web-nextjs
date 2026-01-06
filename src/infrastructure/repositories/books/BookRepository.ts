@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: src/infrastructure/repositories/books/BookRepository.ts
- * ✅ ACTUALIZADO: 100% compatible con schema books.*
+ * ✅ CORREGIDO: Soporte completo para PDFs
  */
 
 import { supabaseAdmin } from '@/src/utils/supabase/admin';
@@ -17,6 +17,7 @@ interface BookData {
   titulo: string;
   descripcion: string;
   portada?: string;
+  pdfUrl?: string;  // ✅ AGREGADO
   autores: string[];
   personajes: string[];
   categorias: number[];
@@ -24,7 +25,7 @@ interface BookData {
   etiquetas: number[];
   valores: number[];
   nivel: number;
-  pages: PageData[];
+  pages?: PageData[];  // ✅ Ahora opcional (porque PDFs pueden no tener pages editables)
 }
 
 export class BookRepository {
@@ -39,7 +40,8 @@ export class BookRepository {
     console.log('👤 Usuario:', userId);
     console.log('📖 Datos:', {
       titulo: bookData.titulo,
-      pagesCount: bookData.pages.length,
+      pdfUrl: bookData.pdfUrl ? '✅ Tiene PDF' : '❌ Sin PDF',
+      pagesCount: bookData.pages?.length || 0,
       autoresCount: bookData.autores.length
     });
 
@@ -53,6 +55,7 @@ export class BookRepository {
           title: bookData.titulo,
           description: bookData.descripcion,
           cover_url: bookData.portada || null,
+          pdf_url: bookData.pdfUrl || null,  // ✅ AGREGADO
           level_id: bookData.nivel || null,
           is_published: false,
         })
@@ -67,15 +70,19 @@ export class BookRepository {
       const libroId = libro.id;
       console.log('✅ Libro creado con ID:', libroId);
 
-      // 2️⃣ Guardar páginas (CRÍTICO - no puede fallar)
-      try {
-        await this.savePages(libroId, bookData.pages);
-        console.log('✅ Páginas guardadas');
-      } catch (pageError: any) {
-        console.error('❌ Error guardando páginas:', pageError);
-        // Rollback: eliminar libro
-        await supabaseAdmin.from('books').delete().eq('id', libroId);
-        throw new Error(`Error al guardar páginas: ${pageError.message}`);
+      // 2️⃣ Guardar páginas (SOLO si hay pages)
+      if (bookData.pages && bookData.pages.length > 0) {
+        try {
+          await this.savePages(libroId, bookData.pages);
+          console.log('✅ Páginas guardadas');
+        } catch (pageError: any) {
+          console.error('❌ Error guardando páginas:', pageError);
+          // Rollback: eliminar libro
+          await supabaseAdmin.from('books').delete().eq('id', libroId);
+          throw new Error(`Error al guardar páginas: ${pageError.message}`);
+        }
+      } else {
+        console.log('ℹ️ Libro sin páginas editables (PDF directo)');
       }
 
       // 3️⃣ Guardar relaciones (sin fallar si alguna falla)
@@ -106,23 +113,32 @@ export class BookRepository {
 
     try {
       // 1️⃣ Actualizar libro principal
+      const updateData: any = {
+        title: bookData.titulo,
+        description: bookData.descripcion,
+        cover_url: bookData.portada || null,
+        level_id: bookData.nivel || null,
+        updated_at: new Date().toISOString(),
+      };
+
+      // ✅ Solo actualizar pdf_url si se proporciona
+      if (bookData.pdfUrl !== undefined) {
+        updateData.pdf_url = bookData.pdfUrl;
+      }
+
       const { error: updateError } = await supabaseAdmin
         .from('books')
-        .update({
-          title: bookData.titulo,
-          description: bookData.descripcion,
-          cover_url: bookData.portada || null,
-          level_id: bookData.nivel || null,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', libroId);
 
       if (updateError) {
         throw new Error(`Error al actualizar libro: ${updateError.message}`);
       }
 
-      // 2️⃣ Reemplazar páginas
-      await this.replacePages(libroId, bookData.pages);
+      // 2️⃣ Reemplazar páginas (solo si se proporcionan)
+      if (bookData.pages) {
+        await this.replacePages(libroId, bookData.pages);
+      }
 
       // 3️⃣ Actualizar relaciones
       await Promise.allSettled([
@@ -179,6 +195,7 @@ export class BookRepository {
       titulo: libro.title,
       descripcion: libro.description,
       portada: libro.cover_url,
+      pdfUrl: libro.pdf_url,  // ✅ AGREGADO
       autores,
       personajes,
       categorias,
@@ -202,7 +219,7 @@ export class BookRepository {
 
     const { data: libros, error } = await supabaseAdmin
       .from('books')
-      .select('id, title, description, cover_url, created_at')
+      .select('id, title, description, cover_url, pdf_url, created_at')  // ✅ AGREGADO pdf_url
       .eq('user_id', userId)
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
@@ -219,6 +236,7 @@ export class BookRepository {
           titulo: libro.title,
           descripcion: libro.description,
           portada: libro.cover_url,
+          pdfUrl: libro.pdf_url,  // ✅ AGREGADO
           autores,
           fecha_creacion: libro.created_at,
         };
@@ -277,7 +295,9 @@ export class BookRepository {
     // Eliminar páginas existentes
     await supabaseAdmin.from('book_pages').delete().eq('book_id', libroId);
     // Insertar nuevas
-    await this.savePages(libroId, pages);
+    if (pages.length > 0) {
+      await this.savePages(libroId, pages);
+    }
   }
 
   private static async getPages(libroId: string): Promise<any[]> {
@@ -454,7 +474,6 @@ export class BookRepository {
   /**
    * ============================================
    * CATEGORÍAS, GÉNEROS, ETIQUETAS, VALORES
-   * (Métodos similares)
    * ============================================
    */
   

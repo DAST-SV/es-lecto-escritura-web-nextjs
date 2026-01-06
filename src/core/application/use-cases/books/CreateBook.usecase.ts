@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: src/core/application/use-cases/books/CreateBook.usecase.ts
- * Caso de uso: Crear un nuevo libro
+ * ✅ ACTUALIZADO: Soporte completo para PDFs
  */
 
 import { BookRepository } from '@/src/infrastructure/repositories/books/BookRepository';
@@ -17,6 +17,7 @@ interface CreateBookDTO {
   titulo: string;
   descripcion: string;
   portada?: string;
+  pdfUrl?: string;  // ✅ AGREGADO
   autores: string[];
   personajes: string[];
   categorias: number[];
@@ -24,7 +25,7 @@ interface CreateBookDTO {
   etiquetas: number[];
   valores: number[];
   nivel: number;
-  pages: PageData[];
+  pages?: PageData[];  // ✅ Ahora opcional
 }
 
 export class CreateBookUseCase {
@@ -34,8 +35,12 @@ export class CreateBookUseCase {
       throw new Error('El título es obligatorio');
     }
 
-    if (!bookData.pages || bookData.pages.length === 0) {
-      throw new Error('Debe haber al menos una página');
+    // ✅ Validar que haya PÁGINAS o PDF (al menos uno)
+    const hasPages = bookData.pages && bookData.pages.length > 0;
+    const hasPdf = bookData.pdfUrl && bookData.pdfUrl.trim() !== '';
+
+    if (!hasPages && !hasPdf) {
+      throw new Error('Debe haber al menos una página o un archivo PDF');
     }
 
     if (bookData.autores.length === 0) {
