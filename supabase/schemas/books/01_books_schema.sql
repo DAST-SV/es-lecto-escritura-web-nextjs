@@ -194,6 +194,7 @@ CREATE TABLE books (
     title VARCHAR(255) NOT NULL,
     description TEXT NULL,
     cover_url TEXT NULL,
+    pdf_url TEXT NULL,
     is_published BOOLEAN NOT NULL DEFAULT FALSE,
     is_featured BOOLEAN NOT NULL DEFAULT FALSE,
     view_count INTEGER NOT NULL DEFAULT 0,
@@ -219,6 +220,7 @@ COMMENT ON COLUMN books.level_id IS 'Nivel de lectura recomendado';
 COMMENT ON COLUMN books.title IS 'Título del libro';
 COMMENT ON COLUMN books.description IS 'Descripción o sinopsis del libro';
 COMMENT ON COLUMN books.cover_url IS 'URL de la imagen de portada';
+COMMENT ON COLUMN books.pdf_url IS 'URL del archivo PDF del libro';  -- ✅ NUEVO
 COMMENT ON COLUMN books.is_published IS 'Indica si el libro está visible públicamente';
 COMMENT ON COLUMN books.is_featured IS 'Indica si el libro está destacado en la plataforma';
 COMMENT ON COLUMN books.view_count IS 'Número de veces que se ha visualizado';
