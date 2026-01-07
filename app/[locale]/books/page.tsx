@@ -146,7 +146,7 @@ export default function BooksListPage() {
   };
 
   const handleEdit = (bookId: string) => {
-    router.push(`/${locale}/books/create?edit=${bookId}`);
+    router.push(`/${locale}/books/${bookId}/edit`);
   };
 
   const handleDeleteClick = (book: BookItem) => {
