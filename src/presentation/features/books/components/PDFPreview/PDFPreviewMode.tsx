@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/PDFPreview/PDFPreviewMode.tsx
- * ✅ CORREGIDO: Evita re-renders infinitos con FlipBook
+ * ✅ Modo lectura puro: Solo permite cerrar, sin guardar
  */
 
 import React, { useMemo, useCallback } from 'react';
@@ -14,20 +14,14 @@ interface PDFPreviewModeProps {
     pages: Page[];
     title: string;
     pdfDimensions: { width: number; height: number };
-    isLoading: boolean;
-    isSaveDisabled: boolean;
     onClose: () => void;
-    onSave: () => void;
 }
 
 export function PDFPreviewMode({
     pages,
     title,
     pdfDimensions,
-    isLoading,
-    isSaveDisabled,
     onClose,
-    onSave,
 }: PDFPreviewModeProps) {
     const {
         bookRef,
@@ -99,10 +93,7 @@ export function PDFPreviewMode({
                 title={title}
                 totalPages={pages.length}
                 isVisible={showControls}
-                isLoading={isLoading}
-                isSaveDisabled={isSaveDisabled}
                 onClose={onClose}
-                onSave={onSave}
             />
 
             <div className="flex-1 flex items-center justify-center overflow-hidden">

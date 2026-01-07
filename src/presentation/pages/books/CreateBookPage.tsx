@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/pages/books/CreateBookPage.tsx
- * ✅ FINAL: Navbar visible + Ficha compacta + Upload integrado + Colores cálidos
+ * ✅ Preview PDF sin botón guardar - solo modo lectura
  */
 
 'use client';
@@ -255,16 +255,14 @@ export function CreateBookPage() {
     }
   };
 
+  // ✅ Modo lectura: solo muestra el preview sin botón guardar
   if (showPreview && extractedPages.length > 0 && pdfDimensions) {
     return (
       <PDFPreviewMode 
         pages={extractedPages} 
         title={titulo} 
         pdfDimensions={pdfDimensions}
-        isLoading={isLoading}
-        isSaveDisabled={!isFormValid()}
         onClose={() => setShowPreview(false)}
-        onSave={handleSave}
       />
     );
   }
