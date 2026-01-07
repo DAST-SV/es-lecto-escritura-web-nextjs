@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: app/[locale]/books/[id]/read/page.tsx
- * ✅ USA BookReader (componente reutilizable)
+ * ✅ LEER LIBRO: Versión CORRECTA usando PDFPreviewMode directamente
  */
 
 'use client';
@@ -8,11 +8,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { createClient } from '@/src/utils/supabase/client';
-import { GetBookUseCase } from '@/src/core/application/use-cases/books/GetBook.usecase';
+import { PDFPreviewMode } from '@/src/presentation/features/books/components/PDFPreview/PDFPreviewMode';
 import { PDFExtractorService } from '@/src/infrastructure/services/PDFExtractorService';
-import { BookReader } from '@/src/presentation/features/books/components/BookReader/BookReader';
 import type { Page } from '@/src/core/domain/types';
 
 export default function ReadBookPage() {
@@ -29,10 +28,14 @@ export default function ReadBookPage() {
   const [bookTitle, setBookTitle] = useState('');
 
   useEffect(() => {
+    let isMounted = true;
+
     async function loadBook() {
       if (!bookId) {
-        setError('ID de libro no válido');
-        setIsLoading(false);
+        if (isMounted) {
+          setError('ID de libro no válido');
+          setIsLoading(false);
+        }
         return;
       }
 
@@ -40,86 +43,113 @@ export default function ReadBookPage() {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
-          setError('Debes iniciar sesión para leer libros');
-          setIsLoading(false);
+          if (isMounted) {
+            setError('Debes iniciar sesión para leer libros');
+            setIsLoading(false);
+          }
           return;
         }
 
-        const libro = await GetBookUseCase.execute(bookId);
+        console.log('📖 Cargando libro:', bookId);
 
-        if (!libro) {
-          setError('Libro no encontrado');
-          setIsLoading(false);
+        // Cargar datos del libro
+        const { data: libro, error: bookError } = await supabase
+          .from('books')
+          .select('id, title, pdf_url')
+          .eq('id', bookId)
+          .is('deleted_at', null)
+          .single();
+
+        if (bookError || !libro) {
+          console.error('❌ Error cargando libro:', bookError);
+          if (isMounted) {
+            setError('Libro no encontrado');
+            setIsLoading(false);
+          }
           return;
         }
 
-        if (!libro.pdfUrl) {
-          setError('Este libro no tiene un archivo PDF asociado');
-          setIsLoading(false);
+        if (!libro.pdf_url) {
+          if (isMounted) {
+            setError('Este libro no tiene un archivo PDF asociado');
+            setIsLoading(false);
+          }
           return;
         }
 
-        setBookTitle(libro.titulo || 'Libro');
+        if (isMounted) {
+          setBookTitle(libro.title || 'Libro sin título');
+        }
 
-        console.log('📖 Descargando PDF:', libro.pdfUrl);
+        console.log('📄 Descargando PDF:', libro.pdf_url);
         
-        const response = await fetch(libro.pdfUrl);
+        // Descargar PDF
+        const response = await fetch(libro.pdf_url);
         const blob = await response.blob();
         const file = new File([blob], 'libro.pdf', { type: 'application/pdf' });
 
-        console.log('📄 Extrayendo páginas...');
+        console.log('🔄 Extrayendo páginas del PDF...');
         const result = await PDFExtractorService.extractPagesFromPDF(file);
         
-        setExtractedPages(result.pages);
-        
-        if (result.pageWidth && result.pageHeight) {
-          setPdfDimensions({ 
-            width: result.pageWidth, 
-            height: result.pageHeight 
-          });
-        }
+        if (isMounted) {
+          setExtractedPages(result.pages);
+          
+          if (result.pageWidth && result.pageHeight) {
+            setPdfDimensions({ 
+              width: result.pageWidth, 
+              height: result.pageHeight 
+            });
+          }
 
-        console.log(`✅ ${result.pages.length} páginas extraídas`);
-        setIsLoading(false);
+          console.log(`✅ ${result.pages.length} páginas extraídas correctamente`);
+          setIsLoading(false);
+        }
 
       } catch (err: any) {
         console.error('❌ Error cargando libro:', err);
-        setError(err.message || 'Error al cargar el libro');
-        setIsLoading(false);
+        if (isMounted) {
+          setError(err.message || 'Error al cargar el libro');
+          setIsLoading(false);
+        }
       }
     }
 
     loadBook();
 
+    // Cleanup
     return () => {
+      isMounted = false;
       if (extractedPages.length > 0) {
         PDFExtractorService.cleanupBlobUrls(extractedPages);
       }
     };
-  }, [bookId, supabase]);
+  }, [bookId]);
 
   const handleClose = () => {
+    // Limpiar URLs de blobs antes de cerrar
     if (extractedPages.length > 0) {
       PDFExtractorService.cleanupBlobUrls(extractedPages);
     }
     router.push(`/${locale}/books`);
   };
 
+  // Loading state
   if (isLoading) {
     return (
-      <div className="w-full h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+      <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
         <div className="text-center">
           <Loader2 size={48} className="animate-spin text-indigo-400 mx-auto mb-4" />
-          <p className="text-white font-medium">Cargando libro...</p>
+          <p className="text-white font-medium text-lg">Cargando libro...</p>
           <p className="text-white/60 text-sm mt-2">Preparando páginas del PDF</p>
         </div>
       </div>
     );
   }
 
+  // Error state
   if (error) {
     return (
-      <div className="w-full h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4">
+      <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
           <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <AlertCircle size={40} className="text-red-600" />
@@ -132,10 +162,9 @@ export default function ReadBookPage() {
           <p className="text-gray-600 mb-6">{error}</p>
           
           <button
-            onClick={() => router.push(`/${locale}/books`)}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors w-full"
+            onClick={handleClose}
+            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors w-full"
           >
-            <ArrowLeft size={20} />
             Volver a biblioteca
           </button>
         </div>
@@ -143,9 +172,10 @@ export default function ReadBookPage() {
     );
   }
 
+  // Renderizar PDFPreviewMode
   if (extractedPages.length > 0 && pdfDimensions) {
     return (
-      <BookReader 
+      <PDFPreviewMode 
         pages={extractedPages}
         title={bookTitle}
         pdfDimensions={pdfDimensions}
