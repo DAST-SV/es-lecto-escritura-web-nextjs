@@ -1,443 +1,404 @@
 /**
- * UBICACIÓN: app/[locale]/admin/audit/page.tsx
- * 🔍 Página de auditoría de libros
+ * UBICACIÓN: app/[locale]/admin/page.tsx
+ * 🏠 Dashboard principal del panel de administración
  */
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import {
+  BookOpen,
+  Users,
   FileSearch,
+  TrendingUp,
   AlertCircle,
   CheckCircle,
-  Trash2,
-  RefreshCw,
-  Download,
-  ChevronDown,
-  ChevronUp,
-  BookOpen,
-  Image,
-  Link2,
-  XCircle,
+  Clock,
+  Database,
+  HardDrive,
+  Activity,
 } from 'lucide-react';
+import { createClient } from '@/src/utils/supabase/client';
 
-interface AuditSummary {
+interface DashboardStats {
   totalBooks: number;
   activeBooks: number;
   deletedBooks: number;
-  orphanedFiles: number;
-  brokenRelations: number;
-  duplicates: number;
-  issues: number;
+  totalUsers: number;
+  recentActivity: number;
+  storageUsed: string;
+  lastAudit: string | null;
+  systemHealth: 'healthy' | 'warning' | 'critical';
 }
 
-interface AuditDetails {
-  orphanedPDFs: string[];
-  orphanedImages: string[];
-  booksWithoutPDF: Array<{ id: string; title: string }>;
-  booksWithoutCover: Array<{ id: string; title: string }>;
-  brokenAuthorRelations: any[];
-  brokenCharacterRelations: any[];
-  brokenCategoryRelations: any[];
-  brokenGenreRelations: any[];
-  brokenTagRelations: any[];
-  brokenValueRelations: any[];
-  duplicateAuthors: Array<{ name: string; count: number; ids: string[] }>;
-  duplicateCharacters: Array<{ name: string; count: number; ids: string[] }>;
-  oldSoftDeletes: Array<{ id: string; title: string; deleted_at: string; days_ago: number }>;
-  booksWithoutRelations: Array<{ id: string; title: string; missing: string[] }>;
-}
+export default function AdminDashboard() {
+  const router = useRouter();
+  const locale = useLocale();
+  const supabase = createClient();
+  
+  const [stats, setStats] = useState<DashboardStats>({
+    totalBooks: 0,
+    activeBooks: 0,
+    deletedBooks: 0,
+    totalUsers: 0,
+    recentActivity: 0,
+    storageUsed: '-',
+    lastAudit: null,
+    systemHealth: 'healthy',
+  });
+  
+  const [isLoading, setIsLoading] = useState(true);
 
-interface AuditReport {
-  timestamp: string;
-  summary: AuditSummary;
-  details: AuditDetails;
-  recommendations: string[];
-}
+  useEffect(() => {
+    loadDashboardStats();
+  }, []);
 
-export default function AuditPage() {
-  const [report, setReport] = useState<AuditReport | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
-
-  const toggleSection = (section: string) => {
-    const newExpanded = new Set(expandedSections);
-    if (newExpanded.has(section)) {
-      newExpanded.delete(section);
-    } else {
-      newExpanded.add(section);
-    }
-    setExpandedSections(newExpanded);
-  };
-
-  const runAudit = async () => {
-    setIsLoading(true);
+  const loadDashboardStats = async () => {
     try {
-      const response = await fetch('/api/admin/audit-books-clean');
-      const data = await response.json();
-      setReport(data);
+      setIsLoading(true);
+
+      // Verificar autenticación
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push(`/${locale}/login`);
+        return;
+      }
+
+      // Obtener estadísticas de libros
+      const { data: books, error: booksError } = await supabase
+        .from('books')
+        .select('id, deleted_at, created_at');
+
+      if (!booksError && books) {
+        const now = new Date();
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        setStats(prev => ({
+          ...prev,
+          totalBooks: books.length,
+          activeBooks: books.filter(b => !b.deleted_at).length,
+          deletedBooks: books.filter(b => b.deleted_at).length,
+          recentActivity: books.filter(b => new Date(b.created_at) > sevenDaysAgo).length,
+        }));
+      }
+
+      // Obtener estadísticas de usuarios (si tienes acceso)
+      try {
+        const { count, error: usersError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+
+        if (!usersError && count !== null) {
+          setStats(prev => ({ ...prev, totalUsers: count }));
+        }
+      } catch (err) {
+        console.warn('No se pudieron cargar usuarios');
+      }
+
+      // Calcular salud del sistema
+      const healthStatus = calculateSystemHealth(
+        stats.activeBooks,
+        stats.deletedBooks
+      );
+
+      setStats(prev => ({ ...prev, systemHealth: healthStatus }));
+
     } catch (error) {
-      console.error('Error ejecutando auditoría:', error);
-      alert('Error al ejecutar la auditoría');
+      console.error('Error cargando estadísticas:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const runCleanup = async () => {
-    if (!confirm('¿Estás seguro? Esta acción eliminará archivos huérfanos y relaciones rotas.')) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/admin/audit-books-clean?action=cleanup', {
-        method: 'POST',
-      });
-      const data = await response.json();
-      alert('Limpieza completada');
-      runAudit();
-    } catch (error) {
-      console.error('Error ejecutando limpieza:', error);
-      alert('Error al ejecutar la limpieza');
-    } finally {
-      setIsLoading(false);
-    }
+  const calculateSystemHealth = (
+    active: number,
+    deleted: number
+  ): 'healthy' | 'warning' | 'critical' => {
+    if (deleted === 0) return 'healthy';
+    const ratio = deleted / (active + deleted);
+    if (ratio > 0.3) return 'critical';
+    if (ratio > 0.1) return 'warning';
+    return 'healthy';
   };
 
-  const downloadReport = () => {
-    if (!report) return;
-    const blob = new Blob([JSON.stringify(report, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `audit-report-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const getHealthStatus = (issues: number) => {
-    if (issues === 0) {
-      return {
-        color: 'text-green-600',
-        bg: 'bg-green-50',
-        border: 'border-green-200',
-        label: 'Saludable',
-        icon: CheckCircle,
-      };
-    } else if (issues < 10) {
-      return {
-        color: 'text-yellow-600',
-        bg: 'bg-yellow-50',
-        border: 'border-yellow-200',
-        label: 'Atención',
-        icon: AlertCircle,
-      };
-    } else {
-      return {
-        color: 'text-red-600',
-        bg: 'bg-red-50',
-        border: 'border-red-200',
-        label: 'Crítico',
-        icon: XCircle,
-      };
+  const getHealthColor = (status: string) => {
+    switch (status) {
+      case 'healthy':
+        return 'text-green-600 bg-green-50 border-green-200';
+      case 'warning':
+        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'critical':
+        return 'text-red-600 bg-red-50 border-red-200';
+      default:
+        return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
+
+  const getHealthIcon = (status: string) => {
+    switch (status) {
+      case 'healthy':
+        return <CheckCircle size={24} className="text-green-600" />;
+      case 'warning':
+        return <AlertCircle size={24} className="text-yellow-600" />;
+      case 'critical':
+        return <AlertCircle size={24} className="text-red-600" />;
+      default:
+        return <Activity size={24} className="text-gray-600" />;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando estadísticas...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <FileSearch size={28} />
-            Auditoría de Integridad
-          </h2>
-          <p className="text-gray-600 mt-1">
-            Verifica la integridad de datos, detecta archivos huérfanos y relaciones rotas
-          </p>
-        </div>
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
+        <p className="text-gray-600 mt-1">Vista general del sistema</p>
+      </div>
 
-        <div className="flex gap-2">
+      {/* System Health */}
+      <div className={`border rounded-lg p-6 ${getHealthColor(stats.systemHealth)}`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {getHealthIcon(stats.systemHealth)}
+            <div>
+              <h3 className="text-lg font-semibold">
+                Estado del Sistema:{' '}
+                {stats.systemHealth === 'healthy' && 'Saludable'}
+                {stats.systemHealth === 'warning' && 'Requiere Atención'}
+                {stats.systemHealth === 'critical' && 'Crítico'}
+              </h3>
+              <p className="text-sm mt-1">
+                {stats.systemHealth === 'healthy' && 'Todo funcionando correctamente'}
+                {stats.systemHealth === 'warning' && 'Hay elementos que requieren revisión'}
+                {stats.systemHealth === 'critical' && 'Se requiere mantenimiento urgente'}
+              </p>
+            </div>
+          </div>
           <button
-            onClick={runAudit}
-            disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            onClick={() => router.push(`/${locale}/admin/audit`)}
+            className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
           >
-            <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
-            {isLoading ? 'Ejecutando...' : 'Ejecutar Auditoría'}
+            Ver Auditoría
           </button>
-
-          {report && (
-            <button
-              onClick={downloadReport}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              <Download size={18} />
-              Descargar Reporte
-            </button>
-          )}
         </div>
       </div>
 
-      {/* Loading State */}
-      {isLoading && !report && (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Analizando base de datos...</p>
-          </div>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Total Books */}
+        <StatCard
+          title="Total de Libros"
+          value={stats.totalBooks}
+          icon={<BookOpen size={24} className="text-blue-600" />}
+          description={`${stats.activeBooks} activos`}
+          color="blue"
+        />
+
+        {/* Active Books */}
+        <StatCard
+          title="Libros Activos"
+          value={stats.activeBooks}
+          icon={<CheckCircle size={24} className="text-green-600" />}
+          description="Disponibles para lectura"
+          color="green"
+        />
+
+        {/* Deleted Books */}
+        <StatCard
+          title="En Papelera"
+          value={stats.deletedBooks}
+          icon={<AlertCircle size={24} className="text-orange-600" />}
+          description="Pueden restaurarse"
+          color="orange"
+        />
+
+        {/* Recent Activity */}
+        <StatCard
+          title="Actividad Reciente"
+          value={stats.recentActivity}
+          icon={<Clock size={24} className="text-purple-600" />}
+          description="Últimos 7 días"
+          color="purple"
+        />
+      </div>
+
+      {/* Quick Actions */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Acciones Rápidas</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <ActionCard
+            title="Auditoría de Integridad"
+            description="Verificar integridad de datos y archivos huérfanos"
+            icon={<FileSearch size={20} />}
+            onClick={() => router.push(`/${locale}/admin/audit`)}
+            color="blue"
+          />
+
+          <ActionCard
+            title="Gestión de Usuarios"
+            description="Ver y administrar usuarios del sistema"
+            icon={<Users size={20} />}
+            onClick={() => router.push(`/${locale}/admin/users`)}
+            color="purple"
+            comingSoon
+          />
+
+          <ActionCard
+            title="Base de Datos"
+            description="Mantenimiento y optimización de BD"
+            icon={<Database size={20} />}
+            onClick={() => router.push(`/${locale}/admin/database`)}
+            color="green"
+            comingSoon
+          />
+
+          <ActionCard
+            title="Analytics"
+            description="Estadísticas y reportes detallados"
+            icon={<TrendingUp size={20} />}
+            onClick={() => router.push(`/${locale}/admin/analytics`)}
+            color="orange"
+            comingSoon
+          />
+
+          <ActionCard
+            title="Gestión de Libros"
+            description="Administrar todos los libros del sistema"
+            icon={<BookOpen size={20} />}
+            onClick={() => router.push(`/${locale}/admin/books`)}
+            color="indigo"
+            comingSoon
+          />
+
+          <ActionCard
+            title="Almacenamiento"
+            description="Gestionar archivos y optimizar espacio"
+            icon={<HardDrive size={20} />}
+            onClick={() => router.push(`/${locale}/admin/storage`)}
+            color="pink"
+            comingSoon
+          />
         </div>
-      )}
+      </div>
 
-      {/* Empty State */}
-      {!report && !isLoading && (
-        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-          <FileSearch size={48} className="mx-auto text-gray-400" />
-          <h3 className="mt-4 text-lg font-semibold text-gray-900">
-            No hay auditoría ejecutada
-          </h3>
-          <p className="mt-2 text-gray-600">
-            Haz clic en "Ejecutar Auditoría" para comenzar el análisis
-          </p>
+      {/* System Info */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Información del Sistema</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <InfoRow label="Total de Libros" value={stats.totalBooks.toString()} />
+          <InfoRow label="Libros Activos" value={stats.activeBooks.toString()} />
+          <InfoRow label="En Papelera" value={stats.deletedBooks.toString()} />
+          <InfoRow label="Usuarios" value={stats.totalUsers > 0 ? stats.totalUsers.toString() : 'N/A'} />
+          <InfoRow label="Actividad (7 días)" value={stats.recentActivity.toString()} />
+          <InfoRow label="Última Auditoría" value={stats.lastAudit || 'Nunca ejecutada'} />
         </div>
-      )}
-
-      {/* Report */}
-      {report && report.summary && (
-        <div className="space-y-6">
-          {/* Health Status */}
-          {(() => {
-            const health = getHealthStatus(report.summary?.issues || 0);
-            const HealthIcon = health.icon;
-            return (
-              <div className={`${health.bg} ${health.border} border rounded-lg p-6`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <HealthIcon className={health.color} size={32} />
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-900">
-                        Estado: {health.label}
-                      </h3>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {report.summary?.issues || 0} issue{(report.summary?.issues || 0) !== 1 ? 's' : ''}{' '}
-                        encontrado{(report.summary?.issues || 0) !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-600">Última ejecución</p>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {new Date(report.timestamp).toLocaleString('es-SV', {
-                        dateStyle: 'medium',
-                        timeStyle: 'short',
-                      })}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Libros Totales</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-1">
-                    {report.summary?.totalBooks || 0}
-                  </p>
-                  <p className="text-sm text-green-600 mt-1">
-                    {report.summary?.activeBooks || 0} activos
-                  </p>
-                </div>
-                <BookOpen className="text-blue-600" size={32} />
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Archivos Huérfanos</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-1">
-                    {report.summary?.orphanedFiles || 0}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {report.details?.orphanedPDFs?.length || 0} PDFs +{' '}
-                    {report.details?.orphanedImages?.length || 0} imágenes
-                  </p>
-                </div>
-                <Image className="text-amber-600" size={32} />
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Relaciones Rotas</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-1">
-                    {report.summary?.brokenRelations || 0}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">En 6 tablas</p>
-                </div>
-                <Link2 className="text-red-600" size={32} />
-              </div>
-            </div>
-          </div>
-
-          {/* Recommendations */}
-          {report.recommendations && report.recommendations.length > 0 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                💡 Recomendaciones
-              </h3>
-              <ul className="space-y-2">
-                {report.recommendations.map((rec, i) => (
-                  <li key={i} className="flex items-start gap-2 text-gray-700">
-                    <span className="text-blue-600 font-semibold">{i + 1}.</span>
-                    <span>{rec}</span>
-                  </li>
-                ))}
-              </ul>
-              {(report.summary?.issues || 0) > 0 && (
-                <button
-                  onClick={runCleanup}
-                  disabled={isLoading}
-                  className="mt-4 flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
-                >
-                  <Trash2 size={18} />
-                  Ejecutar Limpieza Automática
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Detailed Sections */}
-          <div className="space-y-4">
-            {/* Orphaned PDFs */}
-            {report.details?.orphanedPDFs && report.details.orphanedPDFs.length > 0 && (
-              <DetailSection
-                title="PDFs Huérfanos"
-                count={report.details.orphanedPDFs.length}
-                icon="📄"
-                isExpanded={expandedSections.has('pdfs')}
-                onToggle={() => toggleSection('pdfs')}
-              >
-                <ul className="space-y-1">
-                  {report.details.orphanedPDFs.map((pdf, i) => (
-                    <li key={i} className="text-sm text-gray-700 font-mono bg-gray-50 p-2 rounded">
-                      {pdf}
-                    </li>
-                  ))}
-                </ul>
-              </DetailSection>
-            )}
-
-            {/* Orphaned Images */}
-            {report.details?.orphanedImages && report.details.orphanedImages.length > 0 && (
-              <DetailSection
-                title="Imágenes Huérfanas"
-                count={report.details.orphanedImages.length}
-                icon="🖼️"
-                isExpanded={expandedSections.has('images')}
-                onToggle={() => toggleSection('images')}
-              >
-                <ul className="space-y-1">
-                  {report.details.orphanedImages.map((img, i) => (
-                    <li key={i} className="text-sm text-gray-700 font-mono bg-gray-50 p-2 rounded">
-                      {img}
-                    </li>
-                  ))}
-                </ul>
-              </DetailSection>
-            )}
-
-            {/* Books Without PDF */}
-            {report.details?.booksWithoutPDF && report.details.booksWithoutPDF.length > 0 && (
-              <DetailSection
-                title="Libros Sin PDF"
-                count={report.details.booksWithoutPDF.length}
-                icon="📕"
-                isExpanded={expandedSections.has('nopdf')}
-                onToggle={() => toggleSection('nopdf')}
-              >
-                <ul className="space-y-2">
-                  {report.details.booksWithoutPDF.map((book, i) => (
-                    <li key={i} className="text-sm bg-gray-50 p-3 rounded">
-                      <p className="font-semibold text-gray-900">{book.title}</p>
-                      <p className="text-xs text-gray-500 font-mono">{book.id}</p>
-                    </li>
-                  ))}
-                </ul>
-              </DetailSection>
-            )}
-
-            {/* Duplicate Authors */}
-            {report.details?.duplicateAuthors && report.details.duplicateAuthors.length > 0 && (
-              <DetailSection
-                title="Autores Duplicados"
-                count={report.details.duplicateAuthors.length}
-                icon="👤"
-                isExpanded={expandedSections.has('dupauthors')}
-                onToggle={() => toggleSection('dupauthors')}
-              >
-                <ul className="space-y-2">
-                  {report.details.duplicateAuthors.map((dup, i) => (
-                    <li key={i} className="text-sm bg-gray-50 p-3 rounded">
-                      <p className="font-semibold text-gray-900">
-                        {dup.name} ({dup.count} veces)
-                      </p>
-                      <p className="text-xs text-gray-500 font-mono">
-                        IDs: {dup.ids.join(', ')}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              </DetailSection>
-            )}
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
 
-interface DetailSectionProps {
+// ============================================
+// COMPONENTS
+// ============================================
+
+interface StatCardProps {
   title: string;
-  count: number;
-  icon: string;
-  isExpanded: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
+  value: number;
+  icon: React.ReactNode;
+  description: string;
+  color: 'blue' | 'green' | 'orange' | 'purple';
 }
 
-function DetailSection({
-  title,
-  count,
-  icon,
-  isExpanded,
-  onToggle,
-  children,
-}: DetailSectionProps) {
+function StatCard({ title, value, icon, description, color }: StatCardProps) {
+  const colorClasses = {
+    blue: 'bg-blue-50 border-blue-200',
+    green: 'bg-green-50 border-green-200',
+    orange: 'bg-orange-50 border-orange-200',
+    purple: 'bg-purple-50 border-purple-200',
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">{icon}</span>
-          <div className="text-left">
-            <h3 className="font-semibold text-gray-900">{title}</h3>
-            <p className="text-sm text-gray-600">{count} encontrados</p>
+    <div className={`rounded-lg border p-6 ${colorClasses[color]}`}>
+      <div className="flex items-center justify-between mb-4">
+        {icon}
+        <span className="text-3xl font-bold text-gray-900">{value}</span>
+      </div>
+      <h3 className="text-sm font-semibold text-gray-900 mb-1">{title}</h3>
+      <p className="text-xs text-gray-600">{description}</p>
+    </div>
+  );
+}
+
+interface ActionCardProps {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+  color: 'blue' | 'green' | 'orange' | 'purple' | 'indigo' | 'pink';
+  comingSoon?: boolean;
+}
+
+function ActionCard({ title, description, icon, onClick, color, comingSoon }: ActionCardProps) {
+  const colorClasses = {
+    blue: 'hover:border-blue-400 hover:bg-blue-50',
+    green: 'hover:border-green-400 hover:bg-green-50',
+    orange: 'hover:border-orange-400 hover:bg-orange-50',
+    purple: 'hover:border-purple-400 hover:bg-purple-50',
+    indigo: 'hover:border-indigo-400 hover:bg-indigo-50',
+    pink: 'hover:border-pink-400 hover:bg-pink-50',
+  };
+
+  return (
+    <button
+      onClick={comingSoon ? undefined : onClick}
+      disabled={comingSoon}
+      className={`bg-white rounded-lg border border-gray-200 p-4 text-left transition-all ${
+        comingSoon 
+          ? 'opacity-50 cursor-not-allowed' 
+          : `${colorClasses[color]} cursor-pointer`
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <div className="flex-shrink-0 mt-1">{icon}</div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <h4 className="font-semibold text-gray-900 text-sm">{title}</h4>
+            {comingSoon && (
+              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+                Próximamente
+              </span>
+            )}
           </div>
+          <p className="text-xs text-gray-600">{description}</p>
         </div>
-        {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-      </button>
-      {isExpanded && <div className="p-4 border-t border-gray-200">{children}</div>}
+      </div>
+    </button>
+  );
+}
+
+interface InfoRowProps {
+  label: string;
+  value: string;
+}
+
+function InfoRow({ label, value }: InfoRowProps) {
+  return (
+    <div className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+      <span className="text-sm text-gray-600">{label}</span>
+      <span className="text-sm font-semibold text-gray-900">{value}</span>
     </div>
   );
 }

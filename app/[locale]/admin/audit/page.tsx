@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: app/[locale]/admin/audit/page.tsx
- * 🔍 Página de auditoría de libros
+ * ✅ Modales React profesionales - Sin alert() ni confirm()
  */
 
 'use client';
@@ -19,46 +19,143 @@ import {
   Image,
   Link2,
   XCircle,
+  Loader2,
+  X,
+  AlertTriangle,
+  Check,
 } from 'lucide-react';
-
-interface AuditSummary {
-  totalBooks: number;
-  activeBooks: number;
-  deletedBooks: number;
-  orphanedFiles: number;
-  brokenRelations: number;
-  duplicates: number;
-  issues: number;
-}
-
-interface AuditDetails {
-  orphanedPDFs: string[];
-  orphanedImages: string[];
-  booksWithoutPDF: Array<{ id: string; title: string }>;
-  booksWithoutCover: Array<{ id: string; title: string }>;
-  brokenAuthorRelations: any[];
-  brokenCharacterRelations: any[];
-  brokenCategoryRelations: any[];
-  brokenGenreRelations: any[];
-  brokenTagRelations: any[];
-  brokenValueRelations: any[];
-  duplicateAuthors: Array<{ name: string; count: number; ids: string[] }>;
-  duplicateCharacters: Array<{ name: string; count: number; ids: string[] }>;
-  oldSoftDeletes: Array<{ id: string; title: string; deleted_at: string; days_ago: number }>;
-  booksWithoutRelations: Array<{ id: string; title: string; missing: string[] }>;
-}
 
 interface AuditReport {
   timestamp: string;
-  summary: AuditSummary;
-  details: AuditDetails;
+  summary: {
+    totalBooks: number;
+    activeBooks: number;
+    deletedBooks: number;
+    orphanedFiles: number;
+    brokenRelations: number;
+    duplicates: number;
+    issues: number;
+  };
+  details: {
+    orphanedPDFs: string[];
+    orphanedImages: string[];
+    booksWithoutPDF: Array<{ id: string; title: string }>;
+    booksWithoutCover: Array<{ id: string; title: string }>;
+    brokenAuthorRelations: any[];
+    brokenCharacterRelations: any[];
+    duplicateAuthors: Array<{ name: string; count: number; ids: string[] }>;
+    duplicateCharacters: Array<{ name: string; count: number; ids: string[] }>;
+    oldSoftDeletes: Array<{ id: string; title: string; deleted_at: string; days_ago: number }>;
+    booksWithoutRelations: Array<{ id: string; title: string; missing: string[] }>;
+  };
   recommendations: string[];
+}
+
+interface CleanupResult {
+  success: boolean;
+  cleaned: number;
+  details: {
+    relations: number;
+    oldBooks: number;
+    orphanedPDFs: number;
+    orphanedImages: number;
+  };
 }
 
 export default function AuditPage() {
   const [report, setReport] = useState<AuditReport | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingAudit, setIsLoadingAudit] = useState(false);
+  const [isLoadingCleanup, setIsLoadingCleanup] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
+  
+  // Estados de modales
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [cleanupResult, setCleanupResult] = useState<CleanupResult | null>(null);
+
+  const runAudit = async () => {
+    setIsLoadingAudit(true);
+    setError(null);
+    
+    try {
+      console.log('🚀 Ejecutando auditoría...');
+      const response = await fetch('/api/admin/audit-books-clean');
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Error en auditoría');
+      }
+
+      const data = await response.json();
+      console.log('✅ Auditoría completada:', data);
+      setReport(data);
+    } catch (error: any) {
+      console.error('❌ Error:', error);
+      setError(error.message);
+    } finally {
+      setIsLoadingAudit(false);
+    }
+  };
+
+  const executeCleanup = async () => {
+    setShowConfirmModal(false);
+    setIsLoadingCleanup(true);
+    setError(null);
+    
+    try {
+      console.log('🧹 Ejecutando limpieza...');
+      
+      const response = await fetch('/api/admin/audit-books-clean', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      console.log('📦 Respuesta del servidor:', data);
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Error en limpieza');
+      }
+
+      // Guardar resultado y mostrar modal
+      setCleanupResult(data);
+      setShowResultModal(true);
+      
+      // ✅ IMPORTANTE: Re-ejecutar auditoría inmediatamente
+      console.log('🔄 Refrescando auditoría...');
+      await runAudit();
+      
+    } catch (error: any) {
+      console.error('❌ Error:', error);
+      setError(error.message);
+    } finally {
+      setIsLoadingCleanup(false);
+    }
+  };
+
+  const downloadReport = () => {
+    if (!report) return;
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `audit-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const getHealthStatus = (issues: number) => {
+    if (issues === 0) {
+      return { color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', label: 'Saludable', icon: CheckCircle };
+    } else if (issues < 10) {
+      return { color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200', label: 'Atención', icon: AlertCircle };
+    } else {
+      return { color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', label: 'Crítico', icon: XCircle };
+    }
+  };
 
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections);
@@ -70,364 +167,363 @@ export default function AuditPage() {
     setExpandedSections(newExpanded);
   };
 
-  const runAudit = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/admin/audit-books-clean');
-      const data = await response.json();
-      setReport(data);
-    } catch (error) {
-      console.error('Error ejecutando auditoría:', error);
-      alert('Error al ejecutar la auditoría');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const runCleanup = async () => {
-    if (!confirm('¿Estás seguro? Esta acción eliminará archivos huérfanos y relaciones rotas.')) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/admin/audit-books-clean?action=cleanup', {
-        method: 'POST',
-      });
-      const data = await response.json();
-      alert('Limpieza completada');
-      runAudit();
-    } catch (error) {
-      console.error('Error ejecutando limpieza:', error);
-      alert('Error al ejecutar la limpieza');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const downloadReport = () => {
-    if (!report) return;
-    const blob = new Blob([JSON.stringify(report, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `audit-report-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const getHealthStatus = (issues: number) => {
-    if (issues === 0) {
-      return {
-        color: 'text-green-600',
-        bg: 'bg-green-50',
-        border: 'border-green-200',
-        label: 'Saludable',
-        icon: CheckCircle,
-      };
-    } else if (issues < 10) {
-      return {
-        color: 'text-yellow-600',
-        bg: 'bg-yellow-50',
-        border: 'border-yellow-200',
-        label: 'Atención',
-        icon: AlertCircle,
-      };
-    } else {
-      return {
-        color: 'text-red-600',
-        bg: 'bg-red-50',
-        border: 'border-red-200',
-        label: 'Crítico',
-        icon: XCircle,
-      };
-    }
-  };
+  const isLoading = isLoadingAudit || isLoadingCleanup;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <FileSearch size={28} />
-            Auditoría de Integridad
-          </h2>
-          <p className="text-gray-600 mt-1">
-            Verifica la integridad de datos, detecta archivos huérfanos y relaciones rotas
-          </p>
-        </div>
+    <>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <FileSearch size={28} />
+              Auditoría de Integridad
+            </h2>
+            <p className="text-gray-600 mt-1">Detecta archivos huérfanos y relaciones rotas</p>
+          </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={runAudit}
-            disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
-            {isLoading ? 'Ejecutando...' : 'Ejecutar Auditoría'}
-          </button>
-
-          {report && (
+          <div className="flex gap-2">
             <button
-              onClick={downloadReport}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              onClick={runAudit}
+              disabled={isLoading}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
-              <Download size={18} />
-              Descargar Reporte
+              <RefreshCw size={18} className={isLoadingAudit ? 'animate-spin' : ''} />
+              {isLoadingAudit ? 'Ejecutando...' : 'Ejecutar Auditoría'}
             </button>
-          )}
-        </div>
-      </div>
 
-      {/* Loading State */}
-      {isLoading && !report && (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Analizando base de datos...</p>
+            {report && (
+              <button onClick={downloadReport} className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                <Download size={18} />
+                Descargar
+              </button>
+            )}
           </div>
         </div>
-      )}
 
-      {/* Empty State */}
-      {!report && !isLoading && (
-        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-          <FileSearch size={48} className="mx-auto text-gray-400" />
-          <h3 className="mt-4 text-lg font-semibold text-gray-900">
-            No hay auditoría ejecutada
-          </h3>
-          <p className="mt-2 text-gray-600">
-            Haz clic en "Ejecutar Auditoría" para comenzar el análisis
-          </p>
-        </div>
-      )}
+        {/* Error */}
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+            <AlertCircle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-900">Error</p>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
+            </div>
+            <button onClick={() => setError(null)} className="text-red-600 hover:text-red-700">
+              <X size={20} />
+            </button>
+          </div>
+        )}
 
-      {/* Report */}
-      {report && (
-        <div className="space-y-6">
-          {/* Health Status */}
-          {(() => {
-            const health = getHealthStatus(report.summary.issues);
-            const HealthIcon = health.icon;
-            return (
-              <div className={`${health.bg} ${health.border} border rounded-lg p-6`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <HealthIcon className={health.color} size={32} />
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-900">
-                        Estado: {health.label}
-                      </h3>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {report.summary.issues} issue{report.summary.issues !== 1 ? 's' : ''}{' '}
-                        encontrado{report.summary.issues !== 1 ? 's' : ''}
+        {/* Loading */}
+        {isLoadingAudit && !report && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Loader2 size={48} className="animate-spin text-blue-600 mx-auto mb-4" />
+              <p className="text-gray-600 font-medium">Analizando base de datos...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!report && !isLoading && !error && (
+          <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+            <FileSearch size={48} className="mx-auto text-gray-400" />
+            <h3 className="mt-4 text-lg font-semibold text-gray-900">No hay auditoría ejecutada</h3>
+            <p className="mt-2 text-gray-600">Haz clic en "Ejecutar Auditoría"</p>
+          </div>
+        )}
+
+        {/* Report */}
+        {report && (
+          <div className="space-y-6">
+            {/* Health Status */}
+            {(() => {
+              const health = getHealthStatus(report.summary.issues);
+              const HealthIcon = health.icon;
+              return (
+                <div className={`${health.bg} ${health.border} border rounded-lg p-6`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <HealthIcon className={health.color} size={32} />
+                      <div>
+                        <h3 className="text-xl font-semibold text-gray-900">Estado: {health.label}</h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {report.summary.issues} issue{report.summary.issues !== 1 ? 's' : ''} encontrado{report.summary.issues !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600">Última ejecución</p>
+                      <p className="text-lg font-semibold text-gray-900">
+                        {new Date(report.timestamp).toLocaleString('es-SV', { dateStyle: 'medium', timeStyle: 'short' })}
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-600">Última ejecución</p>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {new Date(report.timestamp).toLocaleString('es-SV', {
-                        dateStyle: 'medium',
-                        timeStyle: 'short',
-                      })}
+                </div>
+              );
+            })()}
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Libros Totales</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-1">{report.summary.totalBooks}</p>
+                    <p className="text-sm text-green-600 mt-1">{report.summary.activeBooks} activos</p>
+                  </div>
+                  <BookOpen className="text-blue-600" size={32} />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Archivos Huérfanos</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-1">{report.summary.orphanedFiles}</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {report.details.orphanedPDFs.length} PDFs + {report.details.orphanedImages.length} imágenes
                     </p>
                   </div>
+                  <Image className="text-amber-600" size={32} />
                 </div>
               </div>
-            );
-          })()}
 
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Libros Totales</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-1">
-                    {report.summary.totalBooks}
-                  </p>
-                  <p className="text-sm text-green-600 mt-1">
-                    {report.summary.activeBooks} activos
-                  </p>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Relaciones Rotas</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-1">{report.summary.brokenRelations}</p>
+                    <p className="text-sm text-gray-500 mt-1">En tablas pivot</p>
+                  </div>
+                  <Link2 className="text-red-600" size={32} />
                 </div>
-                <BookOpen className="text-blue-600" size={32} />
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Archivos Huérfanos</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-1">
-                    {report.summary.orphanedFiles}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {report.details.orphanedPDFs.length} PDFs +{' '}
-                    {report.details.orphanedImages.length} imágenes
-                  </p>
-                </div>
-                <Image className="text-amber-600" size={32} />
+            {/* Recommendations */}
+            {report.recommendations.length > 0 && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">💡 Recomendaciones</h3>
+                <ul className="space-y-2">
+                  {report.recommendations.map((rec, i) => (
+                    <li key={i} className="flex items-start gap-2 text-gray-700">
+                      <span className="text-blue-600 font-semibold">{i + 1}.</span>
+                      <span>{rec}</span>
+                    </li>
+                  ))}
+                </ul>
+                {report.summary.issues > 0 && (
+                  <button
+                    onClick={() => setShowConfirmModal(true)}
+                    disabled={isLoading}
+                    className="mt-4 flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+                  >
+                    {isLoadingCleanup ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        Limpiando...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 size={18} />
+                        Ejecutar Limpieza
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
-            </div>
+            )}
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Relaciones Rotas</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-1">
-                    {report.summary.brokenRelations}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">En 6 tablas</p>
-                </div>
-                <Link2 className="text-red-600" size={32} />
-              </div>
-            </div>
-          </div>
-
-          {/* Recommendations */}
-          {report.recommendations.length > 0 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                💡 Recomendaciones
-              </h3>
-              <ul className="space-y-2">
-                {report.recommendations.map((rec, i) => (
-                  <li key={i} className="flex items-start gap-2 text-gray-700">
-                    <span className="text-blue-600 font-semibold">{i + 1}.</span>
-                    <span>{rec}</span>
-                  </li>
-                ))}
-              </ul>
-              {report.summary.issues > 0 && (
-                <button
-                  onClick={runCleanup}
-                  disabled={isLoading}
-                  className="mt-4 flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+            {/* Details */}
+            <div className="space-y-4">
+              {report.details.orphanedImages.length > 0 && (
+                <DetailSection
+                  title="Imágenes Huérfanas"
+                  count={report.details.orphanedImages.length}
+                  icon="🖼️"
+                  isExpanded={expandedSections.has('images')}
+                  onToggle={() => toggleSection('images')}
                 >
-                  <Trash2 size={18} />
-                  Ejecutar Limpieza Automática
-                </button>
+                  <ul className="space-y-1">
+                    {report.details.orphanedImages.map((img, i) => (
+                      <li key={i} className="text-sm text-gray-700 font-mono bg-gray-50 p-2 rounded">{img}</li>
+                    ))}
+                  </ul>
+                </DetailSection>
+              )}
+
+              {report.details.orphanedPDFs.length > 0 && (
+                <DetailSection
+                  title="PDFs Huérfanos"
+                  count={report.details.orphanedPDFs.length}
+                  icon="📄"
+                  isExpanded={expandedSections.has('pdfs')}
+                  onToggle={() => toggleSection('pdfs')}
+                >
+                  <ul className="space-y-1">
+                    {report.details.orphanedPDFs.map((pdf, i) => (
+                      <li key={i} className="text-sm text-gray-700 font-mono bg-gray-50 p-2 rounded">{pdf}</li>
+                    ))}
+                  </ul>
+                </DetailSection>
               )}
             </div>
-          )}
-
-          {/* Detailed Sections */}
-          <div className="space-y-4">
-            {/* Orphaned PDFs */}
-            {report.details.orphanedPDFs.length > 0 && (
-              <DetailSection
-                title="PDFs Huérfanos"
-                count={report.details.orphanedPDFs.length}
-                icon="📄"
-                isExpanded={expandedSections.has('pdfs')}
-                onToggle={() => toggleSection('pdfs')}
-              >
-                <ul className="space-y-1">
-                  {report.details.orphanedPDFs.map((pdf, i) => (
-                    <li key={i} className="text-sm text-gray-700 font-mono bg-gray-50 p-2 rounded">
-                      {pdf}
-                    </li>
-                  ))}
-                </ul>
-              </DetailSection>
-            )}
-
-            {/* Orphaned Images */}
-            {report.details.orphanedImages.length > 0 && (
-              <DetailSection
-                title="Imágenes Huérfanas"
-                count={report.details.orphanedImages.length}
-                icon="🖼️"
-                isExpanded={expandedSections.has('images')}
-                onToggle={() => toggleSection('images')}
-              >
-                <ul className="space-y-1">
-                  {report.details.orphanedImages.map((img, i) => (
-                    <li key={i} className="text-sm text-gray-700 font-mono bg-gray-50 p-2 rounded">
-                      {img}
-                    </li>
-                  ))}
-                </ul>
-              </DetailSection>
-            )}
-
-            {/* Books Without PDF */}
-            {report.details.booksWithoutPDF.length > 0 && (
-              <DetailSection
-                title="Libros Sin PDF"
-                count={report.details.booksWithoutPDF.length}
-                icon="📕"
-                isExpanded={expandedSections.has('nopdf')}
-                onToggle={() => toggleSection('nopdf')}
-              >
-                <ul className="space-y-2">
-                  {report.details.booksWithoutPDF.map((book, i) => (
-                    <li key={i} className="text-sm bg-gray-50 p-3 rounded">
-                      <p className="font-semibold text-gray-900">{book.title}</p>
-                      <p className="text-xs text-gray-500 font-mono">{book.id}</p>
-                    </li>
-                  ))}
-                </ul>
-              </DetailSection>
-            )}
-
-            {/* Duplicate Authors */}
-            {report.details.duplicateAuthors.length > 0 && (
-              <DetailSection
-                title="Autores Duplicados"
-                count={report.details.duplicateAuthors.length}
-                icon="👤"
-                isExpanded={expandedSections.has('dupauthors')}
-                onToggle={() => toggleSection('dupauthors')}
-              >
-                <ul className="space-y-2">
-                  {report.details.duplicateAuthors.map((dup, i) => (
-                    <li key={i} className="text-sm bg-gray-50 p-3 rounded">
-                      <p className="font-semibold text-gray-900">
-                        {dup.name} ({dup.count} veces)
-                      </p>
-                      <p className="text-xs text-gray-500 font-mono">
-                        IDs: {dup.ids.join(', ')}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              </DetailSection>
-            )}
           </div>
-        </div>
+        )}
+      </div>
+
+      {/* Modal: Confirmación */}
+      {showConfirmModal && (
+        <Modal onClose={() => setShowConfirmModal(false)}>
+          <div className="text-center">
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-6">
+              <AlertTriangle className="h-8 w-8 text-red-600" />
+            </div>
+            
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">¿Ejecutar Limpieza?</h3>
+            
+            <p className="text-gray-600 mb-6">
+              Esta acción eliminará <strong>permanentemente</strong> los siguientes elementos:
+            </p>
+            
+            <div className="bg-gray-50 rounded-xl p-5 mb-6 text-left">
+              <ul className="space-y-3">
+                {report && report.details.orphanedPDFs.length > 0 && (
+                  <li className="flex items-center gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                      <span className="text-red-600 font-bold text-sm">{report.details.orphanedPDFs.length}</span>
+                    </div>
+                    <span className="text-gray-700">PDFs huérfanos</span>
+                  </li>
+                )}
+                {report && report.details.orphanedImages.length > 0 && (
+                  <li className="flex items-center gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                      <span className="text-red-600 font-bold text-sm">{report.details.orphanedImages.length}</span>
+                    </div>
+                    <span className="text-gray-700">Imágenes huérfanas</span>
+                  </li>
+                )}
+                {report && report.summary.brokenRelations > 0 && (
+                  <li className="flex items-center gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                      <span className="text-red-600 font-bold text-sm">{report.summary.brokenRelations}</span>
+                    </div>
+                    <span className="text-gray-700">Relaciones rotas</span>
+                  </li>
+                )}
+              </ul>
+            </div>
+
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <p className="text-sm text-red-800 font-semibold">
+                ⚠️ Esta acción NO se puede deshacer
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-semibold"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={executeCleanup}
+                className="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all font-semibold shadow-lg shadow-red-600/30"
+              >
+                Sí, Eliminar Todo
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
-    </div>
+
+      {/* Modal: Resultado */}
+      {showResultModal && cleanupResult && (
+        <Modal onClose={() => {
+          setShowResultModal(false);
+          // ✅ CRÍTICO: Ejecutar auditoría al cerrar el modal
+          runAudit();
+        }}>
+          <div className="text-center">
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">Limpieza Completada</h3>
+            
+            <p className="text-gray-600 mb-6">
+              Se eliminaron <strong className="text-green-600">{cleanupResult.cleaned}</strong> elementos del sistema
+            </p>
+            
+            <div className="bg-gray-50 rounded-xl p-5 mb-6">
+              <div className="space-y-4">
+                {cleanupResult.details.orphanedPDFs > 0 && (
+                  <div className="flex items-center justify-between py-2 border-b border-gray-200">
+                    <span className="text-gray-700 font-medium">PDFs eliminados</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold text-green-600">{cleanupResult.details.orphanedPDFs}</span>
+                      <Check className="text-green-600" size={20} />
+                    </div>
+                  </div>
+                )}
+                
+                {cleanupResult.details.orphanedImages > 0 && (
+                  <div className="flex items-center justify-between py-2 border-b border-gray-200">
+                    <span className="text-gray-700 font-medium">Imágenes eliminadas</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold text-green-600">{cleanupResult.details.orphanedImages}</span>
+                      <Check className="text-green-600" size={20} />
+                    </div>
+                  </div>
+                )}
+                
+                {cleanupResult.details.relations > 0 && (
+                  <div className="flex items-center justify-between py-2 border-b border-gray-200">
+                    <span className="text-gray-700 font-medium">Relaciones limpiadas</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold text-green-600">{cleanupResult.details.relations}</span>
+                      <Check className="text-green-600" size={20} />
+                    </div>
+                  </div>
+                )}
+                
+                {cleanupResult.details.oldBooks > 0 && (
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-gray-700 font-medium">Libros antiguos</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold text-green-600">{cleanupResult.details.oldBooks}</span>
+                      <Check className="text-green-600" size={20} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setShowResultModal(false);
+                // ✅ CRÍTICO: Ejecutar auditoría al cerrar
+                runAudit();
+              }}
+              className="w-full px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all font-semibold shadow-lg shadow-green-600/30"
+            >
+              Perfecto, Cerrar
+            </button>
+          </div>
+        </Modal>
+      )}
+    </>
   );
 }
 
-interface DetailSectionProps {
-  title: string;
-  count: number;
-  icon: string;
-  isExpanded: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}
-
-function DetailSection({
-  title,
-  count,
-  icon,
-  isExpanded,
-  onToggle,
-  children,
-}: DetailSectionProps) {
+function DetailSection({ title, count, icon, isExpanded, onToggle, children }: any) {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-      >
+      <button onClick={onToggle} className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
         <div className="flex items-center gap-3">
           <span className="text-2xl">{icon}</span>
           <div className="text-left">
@@ -438,6 +534,28 @@ function DetailSection({
         {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
       </button>
       {isExpanded && <div className="p-4 border-t border-gray-200">{children}</div>}
+    </div>
+  );
+}
+
+function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+          onClick={onClose}
+        />
+        <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 transform transition-all animate-in fade-in zoom-in duration-300">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
+          >
+            <X size={20} />
+          </button>
+          {children}
+        </div>
+      </div>
     </div>
   );
 }
