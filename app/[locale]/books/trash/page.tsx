@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: app/[locale]/books/trash/page.tsx
- * ✅ PAPELERA MEJORADA: Contador, selección múltiple, restaurar todos
+ * ✅ PAPELERA COMPLETA: Con vaciar papelera
  */
 
 'use client';
@@ -44,6 +44,7 @@ export default function TrashPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [bookToDelete, setBookToDelete] = useState<TrashedBook | null>(null);
+  const [showEmptyTrashModal, setShowEmptyTrashModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
@@ -177,6 +178,35 @@ export default function TrashPage() {
     }
   };
 
+  const handleEmptyTrash = async () => {
+    if (books.length === 0) return;
+
+    setIsProcessing(true);
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const book of books) {
+      try {
+        await HardDeleteBookUseCase.execute(book.id);
+        successCount++;
+      } catch (error) {
+        errorCount++;
+      }
+    }
+
+    if (successCount > 0) {
+      toast.success(`${successCount} ${successCount === 1 ? 'libro eliminado' : 'libros eliminados'} permanentemente`);
+      await loadTrashedBooks();
+    }
+
+    if (errorCount > 0) {
+      toast.error(`Error eliminando ${errorCount} ${errorCount === 1 ? 'libro' : 'libros'}`);
+    }
+
+    setShowEmptyTrashModal(false);
+    setIsProcessing(false);
+  };
+
   const getDaysInTrash = (deletedAt: string) => {
     const deleted = new Date(deletedAt);
     const now = new Date();
@@ -258,6 +288,15 @@ export default function TrashPage() {
                   >
                     <RotateCcw size={20} />
                     Restaurar todos
+                  </button>
+
+                  <button
+                    onClick={() => setShowEmptyTrashModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors"
+                    disabled={isProcessing}
+                  >
+                    <Trash2 size={20} />
+                    Vaciar papelera
                   </button>
                 </div>
               )}
@@ -384,7 +423,7 @@ export default function TrashPage() {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modal eliminar permanentemente UN libro */}
       {showDeleteModal && bookToDelete && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
@@ -435,6 +474,69 @@ export default function TrashPage() {
                   <>
                     <Trash2 size={16} />
                     Eliminar para siempre
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal VACIAR PAPELERA */}
+      {showEmptyTrashModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <AlertTriangle size={24} className="text-red-600" />
+              </div>
+              
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  ¿Vaciar papelera?
+                </h3>
+                <p className="text-gray-600 text-sm mb-3">
+                  Estás por eliminar <strong>TODOS los {books.length} libros</strong> de la papelera de forma permanente.
+                </p>
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-xs text-red-800 font-medium">
+                    ⚠️ Esta acción NO SE PUEDE DESHACER y eliminará todos los archivos asociados a estos libros.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowEmptyTrashModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+                disabled={isProcessing}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowEmptyTrashModal(false)}
+                disabled={isProcessing}
+                className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              
+              <button
+                onClick={handleEmptyTrash}
+                disabled={isProcessing}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Vaciando...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} />
+                    Vaciar papelera
                   </>
                 )}
               </button>
