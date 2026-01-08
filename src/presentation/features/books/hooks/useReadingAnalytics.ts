@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: src/presentation/features/books/hooks/useReadingAnalytics.ts
- * 🎯 Hook para integrar Analytics en el lector de libros
+ * 🎯 Hook para integrar Analytics en el lector de libros - VERSIÓN CORREGIDA
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
@@ -30,6 +30,7 @@ export function useReadingAnalytics({
   
   const sessionStartTimeRef = useRef<number>(Date.now());
   const lastPageRef = useRef<number>(1);
+  const hasCompletedRef = useRef<boolean>(false); // ✅ Evitar múltiples llamadas
 
   // ============================================
   // INICIAR SESIÓN AL MONTAR
@@ -59,13 +60,16 @@ export function useReadingAnalytics({
         handleEndSession();
       }
     };
-  }, [bookId]);
+  }, [bookId]); // ✅ Solo depende de bookId
 
   // ============================================
-  // TRACK CAMBIO DE PÁGINA
+  // TRACK CAMBIO DE PÁGINA - CORREGIDO
   // ============================================
   const trackPageChange = useCallback(async (newPage: number) => {
-    if (!sessionId || !isTracking) return;
+    if (!sessionId || !isTracking) {
+      console.warn('⚠️ No hay sesión activa para tracking');
+      return;
+    }
 
     try {
       // Guardar duración de la página anterior
@@ -82,33 +86,47 @@ export function useReadingAnalytics({
       setCurrentPage(newPage);
       lastPageRef.current = newPage;
 
-      // Actualizar progreso del usuario (cada 5 páginas o al completar)
-      if (userId && (newPage % 5 === 0 || newPage === totalPages)) {
-        const elapsedSeconds = Math.floor((Date.now() - sessionStartTimeRef.current) / 1000);
-        await BookReadingAnalyticsService.updateUserProgress(
-          userId,
-          bookId,
-          newPage,
-          totalPages,
-          elapsedSeconds
-        );
-      }
+      // ✅ CORREGIDO: Solo actualizar progreso si hay userId
+      if (userId) {
+        // Actualizar progreso cada 5 páginas o al completar
+        if (newPage % 5 === 0 || newPage === totalPages) {
+          const elapsedSeconds = Math.floor((Date.now() - sessionStartTimeRef.current) / 1000);
+          
+          try {
+            await BookReadingAnalyticsService.updateUserProgress(
+              userId,
+              bookId,
+              newPage,
+              totalPages,
+              elapsedSeconds
+            );
+          } catch (progressError) {
+            console.error('⚠️ Error actualizando progreso (no crítico):', progressError);
+            // ✅ No lanzar error, solo loguear
+          }
+        }
 
-      // Si completó el libro
-      if (newPage === totalPages && userId) {
-        await handleBookCompletion();
+        // Si completó el libro (y no lo había hecho antes)
+        if (newPage === totalPages && !hasCompletedRef.current) {
+          hasCompletedRef.current = true;
+          await handleBookCompletion();
+        }
       }
 
     } catch (error) {
       console.error('❌ Error tracking página:', error);
+      // ✅ No lanzar error para no romper la experiencia del usuario
     }
   }, [sessionId, userId, bookId, totalPages, isTracking]);
 
   // ============================================
-  // COMPLETAR LIBRO
+  // COMPLETAR LIBRO - CORREGIDO
   // ============================================
   const handleBookCompletion = async () => {
-    if (!userId) return;
+    if (!userId) {
+      console.warn('⚠️ No hay userId para marcar completado');
+      return;
+    }
 
     try {
       await BookReadingAnalyticsService.markBookAsCompleted(userId, bookId);
@@ -119,14 +137,18 @@ export function useReadingAnalytics({
       }
     } catch (error) {
       console.error('❌ Error marcando completado:', error);
+      // ✅ No lanzar error, solo loguear
     }
   };
 
   // ============================================
-  // FINALIZAR SESIÓN
+  // FINALIZAR SESIÓN - CORREGIDO
   // ============================================
   const handleEndSession = async () => {
-    if (!sessionId) return;
+    if (!sessionId) {
+      console.warn('⚠️ No hay sesión activa para finalizar');
+      return;
+    }
 
     try {
       // Guardar duración de la última página vista
@@ -142,6 +164,7 @@ export function useReadingAnalytics({
       console.log('✅ Sesión de lectura finalizada');
     } catch (error) {
       console.error('❌ Error finalizando sesión:', error);
+      // ✅ No lanzar error, solo loguear
     }
   };
 

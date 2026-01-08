@@ -1,13 +1,6 @@
 /**
  * UBICACIÓN: src/infrastructure/services/BookReadingAnalytics.service.ts
- * 📊 SISTEMA COMPLETO DE ANALYTICS DE LECTURA - NIVEL ENTERPRISE
- * 
- * Funcionalidades:
- * - Tracking de sesiones completas
- * - Tiempo por página
- * - Progreso del usuario
- * - Estadísticas agregadas
- * - Comparativas y rankings
+ * 📊 SISTEMA DE ANALYTICS - USANDO SUPABASE ADMIN COMO BOOKREPOSITORY
  */
 
 import { createClient } from '@/src/utils/supabase/client';
@@ -23,18 +16,9 @@ export interface ReadingSession {
   startTime: Date;
   endTime?: Date;
   totalPages: number;
-  pagesVisited: number[]; // Array de páginas visitadas (con duplicados)
+  pagesVisited: number[];
   currentPage: number;
   deviceType: 'desktop' | 'mobile' | 'tablet';
-}
-
-export interface PageViewData {
-  bookId: string;
-  sessionId: string;
-  pageNumber: number;
-  startTime: Date;
-  endTime?: Date;
-  interactions: number;
 }
 
 export interface UserProgress {
@@ -43,7 +27,7 @@ export interface UserProgress {
   currentPage: number;
   totalPages: number;
   completionPercentage: number;
-  totalReadingTime: number; // segundos
+  totalReadingTime: number;
   isCompleted: boolean;
   lastReadAt: Date;
 }
@@ -57,7 +41,7 @@ export interface BookStatistics {
   avgSessionDuration: number;
   totalReadingTime: number;
   mostViewedPage: number;
-  bounceRate: number; // % que leen <10% y se van
+  bounceRate: number;
   deviceBreakdown: {
     desktop: number;
     mobile: number;
@@ -68,9 +52,9 @@ export interface BookStatistics {
 export interface ReadingComparison {
   userTime: number;
   avgTime: number;
-  percentile: number; // 0-100
+  percentile: number;
   isFasterThanAverage: boolean;
-  speedRank: string; // "Muy rápido", "Rápido", "Promedio", "Lento"
+  speedRank: string;
 }
 
 // ============================================
@@ -86,9 +70,6 @@ export class BookReadingAnalyticsService {
   // 1. GESTIÓN DE SESIONES
   // ============================================
 
-  /**
-   * Inicia una nueva sesión de lectura
-   */
   static async startSession(
     bookId: string,
     totalPages: number,
@@ -107,16 +88,11 @@ export class BookReadingAnalyticsService {
       deviceType: this.detectDeviceType(),
     };
 
-    // Guardar en memoria (cliente)
     this.activeSessions.set(sessionId, session);
-
     console.log('📖 Sesión iniciada:', sessionId);
     return sessionId;
   }
 
-  /**
-   * Finaliza una sesión de lectura y guarda en DB
-   */
   static async endSession(sessionId: string): Promise<void> {
     const session = this.activeSessions.get(sessionId);
     if (!session) {
@@ -133,8 +109,9 @@ export class BookReadingAnalyticsService {
     const completionPercentage = (uniquePagesVisited.size / session.totalPages) * 100;
 
     try {
-      // Guardar en tabla book_reading_sessions
+      // ✅ USANDO EL MISMO PATRÓN QUE BOOKREPOSITORY
       const { error } = await this.supabase
+        
         .from('book_reading_sessions')
         .insert({
           book_id: session.bookId,
@@ -150,24 +127,21 @@ export class BookReadingAnalyticsService {
           device_type: session.deviceType,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error guardando sesión:', error.message, error);
+        throw error;
+      }
 
-      console.log('✅ Sesión guardada:', {
-        sessionId,
-        duration: `${Math.floor(durationSeconds / 60)}min ${durationSeconds % 60}s`,
-        completion: `${completionPercentage.toFixed(1)}%`,
-      });
+      console.log('✅ Sesión guardada:', sessionId);
 
-      // Si el usuario completó el libro, actualizar progreso
       if (session.userId && completionPercentage === 100) {
         await this.markBookAsCompleted(session.userId, session.bookId);
       }
 
-      // Limpiar memoria
       this.activeSessions.delete(sessionId);
 
-    } catch (error) {
-      console.error('❌ Error guardando sesión:', error);
+    } catch (error: any) {
+      console.error('❌ Error en endSession:', error.message || error);
       throw error;
     }
   }
@@ -176,9 +150,6 @@ export class BookReadingAnalyticsService {
   // 2. TRACKING DE PÁGINAS
   // ============================================
 
-  /**
-   * Registra que el usuario está viendo una página
-   */
   static async trackPageView(
     sessionId: string,
     pageNumber: number
@@ -186,22 +157,17 @@ export class BookReadingAnalyticsService {
     const session = this.activeSessions.get(sessionId);
     if (!session) return;
 
-    // Actualizar sesión en memoria
     session.currentPage = pageNumber;
     if (!session.pagesVisited.includes(pageNumber)) {
       session.pagesVisited.push(pageNumber);
     }
 
-    // Guardar timestamp de inicio de esta página
     const pageKey = `${sessionId}_${pageNumber}`;
     this.pageStartTimes.set(pageKey, new Date());
 
     console.log(`📄 Página ${pageNumber} vista`);
   }
 
-  /**
-   * Registra el tiempo que pasó en una página (cuando cambia de página)
-   */
   static async trackPageDuration(
     sessionId: string,
     pageNumber: number
@@ -216,7 +182,6 @@ export class BookReadingAnalyticsService {
       (endTime.getTime() - startTime.getTime()) / 1000
     );
 
-    // No guardar si el tiempo es muy corto (< 1 seg) o muy largo (> 10 min)
     if (durationSeconds < 1 || durationSeconds > 600) {
       this.pageStartTimes.delete(pageKey);
       return;
@@ -226,8 +191,8 @@ export class BookReadingAnalyticsService {
     if (!session) return;
 
     try {
-      // Guardar en tabla book_page_views
-      await this.supabase
+      const { error } = await this.supabase
+        
         .from('book_page_views')
         .insert({
           book_id: session.bookId,
@@ -237,13 +202,16 @@ export class BookReadingAnalyticsService {
           duration_seconds: durationSeconds,
         });
 
-      console.log(`⏱️ Página ${pageNumber}: ${durationSeconds}s`);
+      if (error) {
+        console.error('❌ Error guardando duración:', error.message, error);
+      } else {
+        console.log(`⏱️ Página ${pageNumber}: ${durationSeconds}s`);
+      }
       
-      // Limpiar memoria
       this.pageStartTimes.delete(pageKey);
 
-    } catch (error) {
-      console.error('❌ Error guardando duración de página:', error);
+    } catch (error: any) {
+      console.error('❌ Error en trackPageDuration:', error.message || error);
     }
   }
 
@@ -251,9 +219,6 @@ export class BookReadingAnalyticsService {
   // 3. PROGRESO DEL USUARIO
   // ============================================
 
-  /**
-   * Actualiza el progreso del usuario en un libro
-   */
   static async updateUserProgress(
     userId: string,
     bookId: string,
@@ -264,43 +229,84 @@ export class BookReadingAnalyticsService {
     const completionPercentage = (currentPage / totalPages) * 100;
 
     try {
-      const { error } = await this.supabase
+      // ✅ Verificar si existe
+      const { data: existing, error: fetchError } = await this.supabase
+        
         .from('user_book_progress')
-        .upsert({
-          user_id: userId,
-          book_id: bookId,
-          current_page: currentPage,
-          total_pages: totalPages,
-          completion_percentage: completionPercentage,
-          is_completed: completionPercentage === 100,
-          total_reading_time: readingTimeSeconds,
-          last_read_at: new Date().toISOString(),
-        }, {
-          onConflict: 'user_id,book_id',
-        });
+        .select('id, total_reading_time, completed_at')
+        .eq('user_id', userId)
+        .eq('book_id', bookId)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (fetchError) {
+        console.error('❌ Error verificando progreso:', fetchError.message, fetchError);
+        throw fetchError;
+      }
 
-      console.log('✅ Progreso actualizado:', {
-        page: `${currentPage}/${totalPages}`,
-        completion: `${completionPercentage.toFixed(1)}%`,
-      });
+      const isCompleted = completionPercentage >= 100;
+      const now = new Date().toISOString();
 
-    } catch (error) {
-      console.error('❌ Error actualizando progreso:', error);
+      if (existing) {
+        // Actualizar
+        const newTotalTime = (existing.total_reading_time || 0) + readingTimeSeconds;
+        
+        const { error: updateError } = await this.supabase
+          
+          .from('user_book_progress')
+          .update({
+            current_page: currentPage,
+            total_pages: totalPages,
+            completion_percentage: completionPercentage,
+            is_completed: isCompleted,
+            total_reading_time: newTotalTime,
+            last_read_at: now,
+            ...(isCompleted && !existing.completed_at ? { completed_at: now } : {})
+          })
+          .eq('user_id', userId)
+          .eq('book_id', bookId);
+
+        if (updateError) {
+          console.error('❌ Error actualizando progreso:', updateError.message, updateError);
+          throw updateError;
+        }
+      } else {
+        // Insertar
+        const { error: insertError } = await this.supabase
+          
+          .from('user_book_progress')
+          .insert({
+            user_id: userId,
+            book_id: bookId,
+            current_page: currentPage,
+            total_pages: totalPages,
+            completion_percentage: completionPercentage,
+            is_completed: isCompleted,
+            total_reading_time: readingTimeSeconds,
+            last_read_at: now,
+            ...(isCompleted ? { completed_at: now } : {})
+          });
+
+        if (insertError) {
+          console.error('❌ Error insertando progreso:', insertError.message, insertError);
+          throw insertError;
+        }
+      }
+
+      console.log('✅ Progreso actualizado');
+
+    } catch (error: any) {
+      console.error('❌ Error en updateUserProgress:', error.message || error);
       throw error;
     }
   }
 
-  /**
-   * Marca un libro como completado
-   */
   static async markBookAsCompleted(
     userId: string,
     bookId: string
   ): Promise<void> {
     try {
       const { error } = await this.supabase
+        
         .from('user_book_progress')
         .update({
           is_completed: true,
@@ -310,32 +316,38 @@ export class BookReadingAnalyticsService {
         .eq('user_id', userId)
         .eq('book_id', bookId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error marcando completado:', error.message, error);
+        throw error;
+      }
 
       console.log('🎉 ¡Libro completado!');
 
-    } catch (error) {
-      console.error('❌ Error marcando libro como completado:', error);
+    } catch (error: any) {
+      console.error('❌ Error en markBookAsCompleted:', error.message || error);
       throw error;
     }
   }
 
-  /**
-   * Obtiene el progreso del usuario en un libro
-   */
   static async getUserProgress(
     userId: string,
     bookId: string
   ): Promise<UserProgress | null> {
     try {
       const { data, error } = await this.supabase
+        
         .from('user_book_progress')
         .select('*')
         .eq('user_id', userId)
         .eq('book_id', bookId)
-        .single();
+        .maybeSingle();
 
-      if (error || !data) return null;
+      if (error) {
+        console.error('❌ Error obteniendo progreso:', error.message, error);
+        return null;
+      }
+
+      if (!data) return null;
 
       return {
         userId: data.user_id,
@@ -348,8 +360,8 @@ export class BookReadingAnalyticsService {
         lastReadAt: new Date(data.last_read_at),
       };
 
-    } catch (error) {
-      console.error('❌ Error obteniendo progreso:', error);
+    } catch (error: any) {
+      console.error('❌ Error en getUserProgress:', error.message || error);
       return null;
     }
   }
@@ -358,32 +370,28 @@ export class BookReadingAnalyticsService {
   // 4. ESTADÍSTICAS DEL LIBRO
   // ============================================
 
-  /**
-   * Obtiene estadísticas completas de un libro
-   */
   static async getBookStatistics(bookId: string): Promise<BookStatistics | null> {
     try {
-      // Estadísticas de sesiones
       const { data: sessions } = await this.supabase
+        
         .from('book_reading_sessions')
         .select('*')
         .eq('book_id', bookId);
 
       if (!sessions || sessions.length === 0) return null;
 
-      // Progreso de usuarios
       const { data: progress } = await this.supabase
+        
         .from('user_book_progress')
         .select('*')
         .eq('book_id', bookId);
 
-      // Vistas de páginas
       const { data: pageViews } = await this.supabase
+        
         .from('book_page_views')
         .select('page_number, duration_seconds')
         .eq('book_id', bookId);
 
-      // Calcular estadísticas
       const totalReaders = new Set(sessions.map(s => s.user_id).filter(Boolean)).size;
       const activeReaders = progress?.filter(p => !p.is_completed).length || 0;
       const completedReaders = progress?.filter(p => p.is_completed).length || 0;
@@ -392,7 +400,6 @@ export class BookReadingAnalyticsService {
       const avgSessionDuration = sessions.reduce((sum, s) => sum + s.duration_seconds, 0) / sessions.length;
       const totalReadingTime = sessions.reduce((sum, s) => sum + s.duration_seconds, 0);
 
-      // Página más vista
       const pageCounts = new Map<number, number>();
       pageViews?.forEach(pv => {
         pageCounts.set(pv.page_number, (pageCounts.get(pv.page_number) || 0) + 1);
@@ -400,11 +407,9 @@ export class BookReadingAnalyticsService {
       const mostViewedPage = Array.from(pageCounts.entries())
         .sort((a, b) => b[1] - a[1])[0]?.[0] || 1;
 
-      // Bounce rate (usuarios que leyeron <10% y se fueron)
       const bouncedSessions = sessions.filter(s => s.completion_percentage < 10).length;
       const bounceRate = (bouncedSessions / sessions.length) * 100;
 
-      // Breakdown de dispositivos
       const deviceCounts = { desktop: 0, mobile: 0, tablet: 0 };
       sessions.forEach(s => {
         if (s.device_type in deviceCounts) {
@@ -425,26 +430,23 @@ export class BookReadingAnalyticsService {
         deviceBreakdown: deviceCounts,
       };
 
-    } catch (error) {
-      console.error('❌ Error obteniendo estadísticas:', error);
+    } catch (error: any) {
+      console.error('❌ Error obteniendo estadísticas:', error.message || error);
       return null;
     }
   }
 
   // ============================================
-  // 5. COMPARATIVAS Y RANKINGS
+  // 5. COMPARATIVAS
   // ============================================
 
-  /**
-   * Compara el tiempo de lectura del usuario con otros
-   */
   static async compareReadingTime(
     userId: string,
     bookId: string
   ): Promise<ReadingComparison | null> {
     try {
-      // Tiempo del usuario
       const { data: userSessions } = await this.supabase
+        
         .from('book_reading_sessions')
         .select('duration_seconds')
         .eq('book_id', bookId)
@@ -454,8 +456,8 @@ export class BookReadingAnalyticsService {
 
       const userTime = userSessions.reduce((sum, s) => sum + s.duration_seconds, 0);
 
-      // Tiempo promedio de todos
       const { data: allSessions } = await this.supabase
+        
         .from('book_reading_sessions')
         .select('duration_seconds, user_id')
         .eq('book_id', bookId)
@@ -463,7 +465,6 @@ export class BookReadingAnalyticsService {
 
       if (!allSessions || allSessions.length === 0) return null;
 
-      // Agrupar por usuario (solo la suma total de cada usuario)
       const userTotals = new Map<string, number>();
       allSessions.forEach(s => {
         const current = userTotals.get(s.user_id) || 0;
@@ -473,11 +474,9 @@ export class BookReadingAnalyticsService {
       const times = Array.from(userTotals.values()).sort((a, b) => a - b);
       const avgTime = times.reduce((sum, t) => sum + t, 0) / times.length;
 
-      // Calcular percentil
       const fasterThanCount = times.filter(t => t > userTime).length;
       const percentile = (fasterThanCount / times.length) * 100;
 
-      // Clasificación
       let speedRank: string;
       if (percentile >= 90) speedRank = 'Muy rápido';
       else if (percentile >= 70) speedRank = 'Rápido';
@@ -493,8 +492,8 @@ export class BookReadingAnalyticsService {
         speedRank,
       };
 
-    } catch (error) {
-      console.error('❌ Error comparando tiempos:', error);
+    } catch (error: any) {
+      console.error('❌ Error comparando tiempos:', error.message || error);
       return null;
     }
   }
@@ -512,9 +511,6 @@ export class BookReadingAnalyticsService {
     return 'desktop';
   }
 
-  /**
-   * Formatea segundos a formato legible
-   */
   static formatDuration(seconds: number): string {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -529,9 +525,6 @@ export class BookReadingAnalyticsService {
     }
   }
 
-  /**
-   * Formatea fecha de manera amigable
-   */
   static formatDate(date: Date): string {
     return new Intl.DateTimeFormat('es-ES', {
       day: '2-digit',
