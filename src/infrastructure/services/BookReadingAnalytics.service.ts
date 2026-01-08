@@ -1,10 +1,7 @@
 /**
  * UBICACIÓN: src/infrastructure/services/BookReadingAnalytics.service.ts
- * 📊 SISTEMA DE ANALYTICS - USANDO API ROUTES
- * 
- * ✅ SOLUCIÓN: Llamar a API routes (server-side) desde el cliente
- * ✅ PATRÓN: Igual que user-types (fetch a /api/...)
- * ✅ VENTAJA: Las tablas siguen en books schema, organizadas y limpias
+ * 📊 SISTEMA DE ANALYTICS COMPLETO
+ * ✅ CORREGIDO: user_book_progress en vez de book_reading_progress
  */
 
 // ============================================
@@ -32,6 +29,29 @@ export interface UserProgress {
   totalReadingTime: number;
   isCompleted: boolean;
   lastReadAt: Date;
+}
+
+export interface ReadingComparison {
+  userTime: number;
+  avgTime: number;
+  percentile: number;
+  isFasterThanAverage: boolean;
+  speedRank: string;
+}
+
+export interface BookStatistics {
+  totalReaders: number;
+  activeReaders: number;
+  completedReaders: number;
+  avgCompletionRate: number;
+  mostViewedPage: number;
+  avgSessionDuration: number;
+  bounceRate: number;
+  deviceBreakdown: {
+    desktop: number;
+    mobile: number;
+    tablet: number;
+  };
 }
 
 // ============================================
@@ -81,18 +101,19 @@ export class BookReadingAnalyticsService {
       (session.endTime.getTime() - session.startTime.getTime()) / 1000
     );
 
-    // ✅ CORREGIDO: Siempre calcular porcentaje, nunca NULL
     const uniquePagesVisited = new Set(session.pagesVisited);
     const completionPercentage = session.totalPages > 0 
       ? Math.max(0, Math.min(100, (uniquePagesVisited.size / session.totalPages) * 100))
       : 0;
 
     try {
-      // ✅ Llamar a API route (server-side)
-      const response = await fetch('/api/analytics/sessions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { createClient } = await import('@/src/utils/supabase/client');
+      const supabase = createClient();
+
+      // Guardar sesión en Supabase
+      const { error } = await supabase
+        .from('book_reading_sessions')
+        .insert({
           book_id: session.bookId,
           user_id: session.userId || null,
           session_id: sessionId,
@@ -104,12 +125,10 @@ export class BookReadingAnalyticsService {
           unique_pages: uniquePagesVisited.size,
           completion_percentage: completionPercentage,
           device_type: session.deviceType,
-        }),
-      });
+        });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Error guardando sesión');
+      if (error) {
+        throw error;
       }
 
       console.log('✅ Sesión guardada:', sessionId);
@@ -122,7 +141,6 @@ export class BookReadingAnalyticsService {
 
     } catch (error: any) {
       console.error('❌ Error en endSession:', error.message || error);
-      // No lanzar error para no romper la experiencia del usuario
     }
   }
 
@@ -171,22 +189,22 @@ export class BookReadingAnalyticsService {
     if (!session) return;
 
     try {
-      // ✅ Llamar a API route
-      const response = await fetch('/api/analytics/page-views', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { createClient } = await import('@/src/utils/supabase/client');
+      const supabase = createClient();
+
+      // Guardar vista de página
+      const { error } = await supabase
+        .from('book_page_views')
+        .insert({
           book_id: session.bookId,
           session_id: sessionId,
           page_number: pageNumber,
           viewed_at: startTime.toISOString(),
           duration_seconds: durationSeconds,
-        }),
-      });
+        });
 
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('❌ Error guardando duración:', error.error);
+      if (error) {
+        console.error('❌ Error guardando duración:', error);
       } else {
         console.log(`⏱️ Página ${pageNumber}: ${durationSeconds}s`);
       }
@@ -213,31 +231,36 @@ export class BookReadingAnalyticsService {
     const isCompleted = completionPercentage >= 100;
 
     try {
-      // ✅ Llamar a API route
-      const response = await fetch('/api/analytics/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: userId,
-          book_id: bookId,
-          current_page: currentPage,
-          total_pages: totalPages,
-          completion_percentage: completionPercentage,
-          is_completed: isCompleted,
-          total_reading_time: readingTimeSeconds,
-        }),
-      });
+      const { createClient } = await import('@/src/utils/supabase/client');
+      const supabase = createClient();
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Error actualizando progreso');
+      // ✅ CORREGIDO: user_book_progress
+      const { error } = await supabase
+        .from('user_book_progress')
+        .upsert(
+          {
+            user_id: userId,
+            book_id: bookId,
+            current_page: currentPage,
+            total_pages: totalPages,
+            completion_percentage: completionPercentage,
+            is_completed: isCompleted,
+            total_reading_time: readingTimeSeconds,
+            last_read_at: new Date().toISOString(),
+          },
+          {
+            onConflict: 'user_id,book_id',
+          }
+        );
+
+      if (error) {
+        throw error;
       }
 
       console.log('✅ Progreso actualizado');
 
     } catch (error: any) {
       console.error('❌ Error en updateUserProgress:', error.message || error);
-      // No lanzar error para no romper la experiencia
     }
   }
 
@@ -258,19 +281,21 @@ export class BookReadingAnalyticsService {
     bookId: string
   ): Promise<UserProgress | null> {
     try {
-      const response = await fetch(
-        `/api/analytics/progress?user_id=${userId}&book_id=${bookId}`,
-        { method: 'GET' }
-      );
+      const { createClient } = await import('@/src/utils/supabase/client');
+      const supabase = createClient();
 
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('❌ Error obteniendo progreso:', error.error);
+      // ✅ CORREGIDO: user_book_progress
+      const { data, error } = await supabase
+        .from('user_book_progress')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('book_id', bookId)
+        .single();
+
+      if (error || !data) {
+        console.error('❌ Error obteniendo progreso:', error);
         return null;
       }
-
-      const data = await response.json();
-      if (!data) return null;
 
       return {
         userId: data.user_id,
@@ -286,6 +311,217 @@ export class BookReadingAnalyticsService {
     } catch (error: any) {
       console.error('❌ Error en getUserProgress:', error.message || error);
       return null;
+    }
+  }
+
+  // ============================================
+  // 4. COMPARACIONES Y ESTADÍSTICAS
+  // ============================================
+
+  static async compareReadingTime(
+    userId: string,
+    bookId: string
+  ): Promise<ReadingComparison> {
+    try {
+      const { createClient } = await import('@/src/utils/supabase/client');
+      const supabase = createClient();
+
+      // ✅ CORREGIDO: user_book_progress
+      const { data: userProgress } = await supabase
+        .from('user_book_progress')
+        .select('total_reading_time')
+        .eq('user_id', userId)
+        .eq('book_id', bookId)
+        .single();
+
+      const userTime = userProgress?.total_reading_time || 0;
+
+      // ✅ CORREGIDO: user_book_progress
+      const { data: allProgress } = await supabase
+        .from('user_book_progress')
+        .select('total_reading_time')
+        .eq('book_id', bookId)
+        .gt('total_reading_time', 0);
+
+      if (!allProgress || allProgress.length === 0) {
+        return {
+          userTime,
+          avgTime: userTime,
+          percentile: 50,
+          isFasterThanAverage: false,
+          speedRank: 'Único lector',
+        };
+      }
+
+      const totalTime = allProgress.reduce((sum, p) => sum + (p.total_reading_time || 0), 0);
+      const avgTime = Math.floor(totalTime / allProgress.length);
+
+      const slowerCount = allProgress.filter(p => (p.total_reading_time || 0) > userTime).length;
+      const percentile = Math.round((slowerCount / allProgress.length) * 100);
+
+      const isFasterThanAverage = userTime < avgTime;
+
+      let speedRank = 'Promedio';
+      if (percentile >= 90) speedRank = 'Top 10% más rápido';
+      else if (percentile >= 75) speedRank = 'Top 25% más rápido';
+      else if (percentile >= 50) speedRank = 'Más rápido que el promedio';
+      else if (percentile >= 25) speedRank = 'Más lento que el promedio';
+      else speedRank = 'Lector pausado';
+
+      return {
+        userTime,
+        avgTime,
+        percentile,
+        isFasterThanAverage,
+        speedRank,
+      };
+
+    } catch (error: any) {
+      console.error('❌ Error en compareReadingTime:', error.message || error);
+      
+      return {
+        userTime: 0,
+        avgTime: 0,
+        percentile: 50,
+        isFasterThanAverage: false,
+        speedRank: 'Sin datos',
+      };
+    }
+  }
+
+  static async getBookStatistics(
+    bookId: string
+  ): Promise<BookStatistics> {
+    try {
+      const { createClient } = await import('@/src/utils/supabase/client');
+      const supabase = createClient();
+
+      const { data: allSessions, count: totalReaders } = await supabase
+        .from('book_reading_sessions')
+        .select('user_id', { count: 'exact', head: false })
+        .eq('book_id', bookId);
+
+      const uniqueReaders = new Set(
+        allSessions?.map(s => s.user_id).filter(Boolean)
+      ).size;
+
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      const { count: activeReaders } = await supabase
+        .from('book_reading_sessions')
+        .select('user_id', { count: 'exact', head: true })
+        .eq('book_id', bookId)
+        .gte('started_at', sevenDaysAgo.toISOString());
+
+      // ✅ CORREGIDO: user_book_progress
+      const { count: completedReaders } = await supabase
+        .from('user_book_progress')
+        .select('*', { count: 'exact', head: true })
+        .eq('book_id', bookId)
+        .eq('is_completed', true);
+
+      // ✅ CORREGIDO: user_book_progress
+      const { data: progressData } = await supabase
+        .from('user_book_progress')
+        .select('completion_percentage')
+        .eq('book_id', bookId);
+
+      const avgCompletionRate = progressData && progressData.length > 0
+        ? progressData.reduce((sum, p) => sum + (p.completion_percentage || 0), 0) / progressData.length
+        : 0;
+
+      const { data: pageViews } = await supabase
+        .from('book_page_views')
+        .select('page_number')
+        .eq('book_id', bookId);
+
+      let mostViewedPage = 1;
+      if (pageViews && pageViews.length > 0) {
+        const pageCounts = pageViews.reduce((acc: Record<number, number>, view) => {
+          acc[view.page_number] = (acc[view.page_number] || 0) + 1;
+          return acc;
+        }, {});
+
+        mostViewedPage = Number(
+          Object.entries(pageCounts).sort(([,a], [,b]) => b - a)[0]?.[0] || 1
+        );
+      }
+
+      const { data: sessions } = await supabase
+        .from('book_reading_sessions')
+        .select('duration_seconds')
+        .eq('book_id', bookId)
+        .gt('duration_seconds', 0);
+
+      const avgSessionDuration = sessions && sessions.length > 0
+        ? Math.floor(
+            sessions.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) / sessions.length
+          )
+        : 0;
+
+      const { count: totalSessions } = await supabase
+        .from('book_reading_sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('book_id', bookId);
+
+      const { count: shortSessions } = await supabase
+        .from('book_reading_sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('book_id', bookId)
+        .lt('duration_seconds', 30);
+
+      const bounceRate = totalSessions && totalSessions > 0
+        ? ((shortSessions || 0) / totalSessions) * 100
+        : 0;
+
+      const { data: deviceData } = await supabase
+        .from('book_reading_sessions')
+        .select('device_type')
+        .eq('book_id', bookId);
+
+      const deviceBreakdown = {
+        desktop: 0,
+        mobile: 0,
+        tablet: 0,
+      };
+
+      if (deviceData) {
+        deviceData.forEach(d => {
+          if (d.device_type === 'desktop') deviceBreakdown.desktop++;
+          else if (d.device_type === 'mobile') deviceBreakdown.mobile++;
+          else if (d.device_type === 'tablet') deviceBreakdown.tablet++;
+        });
+      }
+
+      return {
+        totalReaders: uniqueReaders || 0,
+        activeReaders: activeReaders || 0,
+        completedReaders: completedReaders || 0,
+        avgCompletionRate: Math.round(avgCompletionRate),
+        mostViewedPage,
+        avgSessionDuration,
+        bounceRate: Math.round(bounceRate * 10) / 10,
+        deviceBreakdown,
+      };
+
+    } catch (error: any) {
+      console.error('❌ Error en getBookStatistics:', error.message || error);
+      
+      return {
+        totalReaders: 0,
+        activeReaders: 0,
+        completedReaders: 0,
+        avgCompletionRate: 0,
+        mostViewedPage: 1,
+        avgSessionDuration: 0,
+        bounceRate: 0,
+        deviceBreakdown: {
+          desktop: 0,
+          mobile: 0,
+          tablet: 0,
+        },
+      };
     }
   }
 

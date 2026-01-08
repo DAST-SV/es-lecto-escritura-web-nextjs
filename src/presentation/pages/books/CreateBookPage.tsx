@@ -246,7 +246,7 @@ export function CreateBookPage() {
         PDFExtractorService.cleanupBlobUrls(extractedPages);
       }
 
-      router.push(`/${locale}/books/${bookId}/read`);
+      router.push(`/${locale}/books`);
 
     } catch (err: any) {
       setError(err.message || 'Error');
