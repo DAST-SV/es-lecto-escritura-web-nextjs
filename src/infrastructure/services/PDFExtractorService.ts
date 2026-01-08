@@ -71,10 +71,12 @@ export class PDFExtractorService {
         const imageUrl = canvas.toDataURL('image/png');
 
         pages.push({
-          numero: pageNum,
-          tipo: 'image',
-          contenido: '',
-          imagen: imageUrl,
+          id: `page-${pageNum}`,
+          layout: 'ImageFullLayout',
+          title: '',
+          text: '',
+          image: imageUrl,
+          background: null,
         });
 
         console.log(`✅ Página ${pageNum}/${numPages} extraída`);
@@ -98,8 +100,8 @@ export class PDFExtractorService {
    */
   static cleanupBlobUrls(pages: Page[]) {
     pages.forEach((page) => {
-      if (page.imagen && page.imagen.startsWith('blob:')) {
-        URL.revokeObjectURL(page.imagen);
+      if (page.image && page.image.startsWith('blob:')) {
+        URL.revokeObjectURL(page.image);
       }
     });
   }
