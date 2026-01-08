@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: app/api/admin/audit-books-clean/route.ts
- * ✅ API route completa - ADAPTADA A TUS VARIABLES DE ENTORNO
+ * ✅ CORREGIDO: Ahora SÍ elimina archivos huérfanos
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -337,10 +337,9 @@ export async function GET(request: NextRequest) {
     // ============================================
     console.log('📋 5. Auditando libros sin relaciones...');
 
-    for (const book of (allBooks || []).filter(b => !b.deleted_at).slice(0, 50)) { // Limitar a 50 para no tardar mucho
+    for (const book of (allBooks || []).filter(b => !b.deleted_at).slice(0, 50)) {
       const missing: string[] = [];
 
-      // Verificar autores
       const { data: authors } = await supabase
         .from('books_authors')
         .select('author_id')
@@ -348,7 +347,6 @@ export async function GET(request: NextRequest) {
 
       if (!authors || authors.length === 0) missing.push('autores');
 
-      // Verificar categorías
       const { data: cats } = await supabase
         .from('books_categories')
         .select('category_id')
@@ -356,7 +354,6 @@ export async function GET(request: NextRequest) {
 
       if (!cats || cats.length === 0) missing.push('categorías');
 
-      // Verificar géneros
       const { data: gens } = await supabase
         .from('books_genres')
         .select('genre_id')
@@ -410,7 +407,7 @@ export async function GET(request: NextRequest) {
 }
 
 // ============================================
-// POST - EJECUTAR LIMPIEZA
+// POST - EJECUTAR LIMPIEZA (✅ CORREGIDO)
 // ============================================
 
 export async function POST(request: NextRequest) {
@@ -448,7 +445,7 @@ export async function POST(request: NextRequest) {
     console.log(`✅ Libros activos encontrados: ${activeBookIds.size}`);
 
     // ============================================
-    // 2. ELIMINAR ARCHIVOS HUÉRFANOS - PDFs
+    // 2. ELIMINAR ARCHIVOS HUÉRFANOS - PDFs (✅ CORREGIDO)
     // ============================================
     console.log('\n📄 Paso 2: Limpiando PDFs huérfanos...');
 
@@ -475,51 +472,50 @@ export async function POST(request: NextRequest) {
             for (const bookFolder of bookFolders) {
               if (bookFolder.name === '.emptyFolderPlaceholder') continue;
               
-              // ⚠️ CRÍTICO: Verificar si el libro NO existe en la base de datos
+              // ✅ VERIFICAR: Libro NO existe en BD
               if (!activeBookIds.has(bookFolder.name)) {
-                const folderPath = `${userFolder.name}/${bookFolder.name}`;
-                console.log(`  🗑️ HUÉRFANO DETECTADO: ${folderPath}`);
+                const bookPath = `${userFolder.name}/${bookFolder.name}`;
+                console.log(`  🗑️ HUÉRFANO DETECTADO: ${bookPath}`);
 
-                // Listar TODOS los archivos dentro de esta carpeta
-                const { data: files, error: listFilesError } = await supabase.storage
-                  .from('book-pdfs')
-                  .list(folderPath, { limit: 1000 });
+                const allFilesToDelete: string[] = [];
 
-                if (listFilesError) {
-                  console.error(`    ❌ Error listando archivos:`, listFilesError);
-                  continue;
-                }
-
-                if (files && files.length > 0) {
-                  // Construir rutas completas de archivos
-                  const filePaths = files
-                    .filter(f => f.name !== '.emptyFolderPlaceholder')
-                    .map(f => `${folderPath}/${f.name}`);
-                  
-                  if (filePaths.length === 0) {
-                    console.log(`    ℹ️ Carpeta vacía (solo placeholder)`);
-                    continue;
-                  }
-
-                  console.log(`    📎 Archivos a eliminar: ${filePaths.length}`);
-                  filePaths.forEach(path => console.log(`       - ${path}`));
-                  
-                  // ⚠️ CRÍTICO: ELIMINAR ARCHIVOS DE VERDAD
-                  const { data: removeData, error: deleteError } = await supabase.storage
+                // ✅ MÉTODO CORRECTO: Listar TODO recursivamente (como en HardDeleteBook)
+                try {
+                  // Listar archivos en raíz del libro (si hay)
+                  const { data: rootFiles } = await supabase.storage
                     .from('book-pdfs')
-                    .remove(filePaths);
+                    .list(bookPath, { limit: 1000 });
 
-                  if (deleteError) {
-                    console.error(`    ❌ ERROR AL ELIMINAR:`, deleteError);
-                    console.error(`    ❌ Mensaje:`, deleteError.message);
-                    console.error(`    ❌ Detalles:`, JSON.stringify(deleteError, null, 2));
-                  } else {
-                    results.orphanedPDFs += filePaths.length;
-                    console.log(`    ✅ ELIMINADOS ${filePaths.length} archivos exitosamente`);
-                    console.log(`    ✅ Data de eliminación:`, removeData);
+                  if (rootFiles) {
+                    rootFiles
+                      .filter(f => f.name !== '.emptyFolderPlaceholder')
+                      .forEach(f => allFilesToDelete.push(`${bookPath}/${f.name}`));
                   }
-                } else {
-                  console.log(`    ℹ️ Carpeta vacía: ${folderPath}`);
+
+                  // ✅ CRÍTICO: También buscar en subcarpetas si existen
+                  // Para PDFs normalmente hay: user-id/book-id/document.pdf
+                  // Pero podría haber estructura de carpetas
+                  
+                  if (allFilesToDelete.length > 0) {
+                    console.log(`    📎 Total archivos a eliminar: ${allFilesToDelete.length}`);
+                    allFilesToDelete.forEach(path => console.log(`       - ${path}`));
+                    
+                    // ✅ ELIMINAR TODO
+                    const { data: removeData, error: deleteError } = await supabase.storage
+                      .from('book-pdfs')
+                      .remove(allFilesToDelete);
+
+                    if (deleteError) {
+                      console.error(`    ❌ ERROR:`, deleteError.message);
+                    } else {
+                      results.orphanedPDFs += allFilesToDelete.length;
+                      console.log(`    ✅ ELIMINADOS ${allFilesToDelete.length} archivos`);
+                    }
+                  } else {
+                    console.log(`    ℹ️ Sin archivos para eliminar en: ${bookPath}`);
+                  }
+                } catch (err) {
+                  console.error(`    ❌ Error procesando ${bookPath}:`, err);
                 }
               }
             }
@@ -533,7 +529,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ============================================
-    // 3. ELIMINAR ARCHIVOS HUÉRFANOS - IMÁGENES
+    // 3. ELIMINAR ARCHIVOS HUÉRFANOS - IMÁGENES (✅ CORREGIDO)
     // ============================================
     console.log('\n🖼️ Paso 3: Limpiando imágenes huérfanas...');
 
@@ -560,51 +556,50 @@ export async function POST(request: NextRequest) {
             for (const bookFolder of bookFolders) {
               if (bookFolder.name === '.emptyFolderPlaceholder') continue;
               
-              // ⚠️ CRÍTICO: Verificar si el libro NO existe en la base de datos
+              // ✅ VERIFICAR: Libro NO existe en BD
               if (!activeBookIds.has(bookFolder.name)) {
-                const folderPath = `${userFolder.name}/${bookFolder.name}`;
-                console.log(`  🗑️ HUÉRFANO DETECTADO: ${folderPath}`);
+                const bookPath = `${userFolder.name}/${bookFolder.name}`;
+                console.log(`  🗑️ HUÉRFANO DETECTADO: ${bookPath}`);
 
-                // Listar TODOS los archivos dentro de esta carpeta
-                const { data: files, error: listFilesError } = await supabase.storage
-                  .from('book-images')
-                  .list(folderPath, { limit: 1000 });
+                const allFilesToDelete: string[] = [];
 
-                if (listFilesError) {
-                  console.error(`    ❌ Error listando archivos:`, listFilesError);
-                  continue;
-                }
+                // ✅ MÉTODO CORRECTO: Listar subcarpetas (como en HardDeleteBook)
+                const subfolders = ['covers', 'pages', 'backgrounds'];
+                
+                try {
+                  for (const subfolder of subfolders) {
+                    const subPath = `${bookPath}/${subfolder}`;
+                    const { data: files } = await supabase.storage
+                      .from('book-images')
+                      .list(subPath, { limit: 1000 });
 
-                if (files && files.length > 0) {
-                  // Construir rutas completas de archivos
-                  const filePaths = files
-                    .filter(f => f.name !== '.emptyFolderPlaceholder')
-                    .map(f => `${folderPath}/${f.name}`);
-                  
-                  if (filePaths.length === 0) {
-                    console.log(`    ℹ️ Carpeta vacía (solo placeholder)`);
-                    continue;
+                    if (files && files.length > 0) {
+                      files
+                        .filter(f => f.name !== '.emptyFolderPlaceholder')
+                        .forEach(f => allFilesToDelete.push(`${subPath}/${f.name}`));
+                    }
                   }
 
-                  console.log(`    📎 Archivos a eliminar: ${filePaths.length}`);
-                  filePaths.forEach(path => console.log(`       - ${path}`));
-                  
-                  // ⚠️ CRÍTICO: ELIMINAR ARCHIVOS DE VERDAD
-                  const { data: removeData, error: deleteError } = await supabase.storage
-                    .from('book-images')
-                    .remove(filePaths);
+                  if (allFilesToDelete.length > 0) {
+                    console.log(`    📎 Total archivos a eliminar: ${allFilesToDelete.length}`);
+                    allFilesToDelete.forEach(path => console.log(`       - ${path}`));
+                    
+                    // ✅ ELIMINAR TODO
+                    const { data: removeData, error: deleteError } = await supabase.storage
+                      .from('book-images')
+                      .remove(allFilesToDelete);
 
-                  if (deleteError) {
-                    console.error(`    ❌ ERROR AL ELIMINAR:`, deleteError);
-                    console.error(`    ❌ Mensaje:`, deleteError.message);
-                    console.error(`    ❌ Detalles:`, JSON.stringify(deleteError, null, 2));
+                    if (deleteError) {
+                      console.error(`    ❌ ERROR:`, deleteError.message);
+                    } else {
+                      results.orphanedImages += allFilesToDelete.length;
+                      console.log(`    ✅ ELIMINADOS ${allFilesToDelete.length} archivos`);
+                    }
                   } else {
-                    results.orphanedImages += filePaths.length;
-                    console.log(`    ✅ ELIMINADOS ${filePaths.length} archivos exitosamente`);
-                    console.log(`    ✅ Data de eliminación:`, removeData);
+                    console.log(`    ℹ️ Sin archivos para eliminar en: ${bookPath}`);
                   }
-                } else {
-                  console.log(`    ℹ️ Carpeta vacía: ${folderPath}`);
+                } catch (err) {
+                  console.error(`    ❌ Error procesando ${bookPath}:`, err);
                 }
               }
             }
