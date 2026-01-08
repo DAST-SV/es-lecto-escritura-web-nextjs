@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: app/[locale]/admin/audit/page.tsx
- * ✅ Modales React profesionales - Sin alert() ni confirm()
+ * ✅ TODO EN CLIENTE: Sin APIs, directo con Supabase
  */
 
 'use client';
@@ -24,6 +24,8 @@ import {
   AlertTriangle,
   Check,
 } from 'lucide-react';
+import { createClient } from '@/src/utils/supabase/client';
+import toast from 'react-hot-toast';
 
 interface AuditReport {
   timestamp: string;
@@ -43,94 +45,299 @@ interface AuditReport {
     booksWithoutCover: Array<{ id: string; title: string }>;
     brokenAuthorRelations: any[];
     brokenCharacterRelations: any[];
-    duplicateAuthors: Array<{ name: string; count: number; ids: string[] }>;
-    duplicateCharacters: Array<{ name: string; count: number; ids: string[] }>;
     oldSoftDeletes: Array<{ id: string; title: string; deleted_at: string; days_ago: number }>;
-    booksWithoutRelations: Array<{ id: string; title: string; missing: string[] }>;
   };
   recommendations: string[];
 }
 
-interface CleanupResult {
-  success: boolean;
-  cleaned: number;
-  details: {
-    relations: number;
-    oldBooks: number;
-    orphanedPDFs: number;
-    orphanedImages: number;
-  };
-}
-
 export default function AuditPage() {
+  const supabase = createClient();
+  
   const [report, setReport] = useState<AuditReport | null>(null);
   const [isLoadingAudit, setIsLoadingAudit] = useState(false);
   const [isLoadingCleanup, setIsLoadingCleanup] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   
-  // Estados de modales
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
-  const [cleanupResult, setCleanupResult] = useState<CleanupResult | null>(null);
+  const [cleanupResult, setCleanupResult] = useState<any>(null);
 
+  // ============================================
+  // EJECUTAR AUDITORÍA (Cliente)
+  // ============================================
   const runAudit = async () => {
     setIsLoadingAudit(true);
     setError(null);
     
     try {
-      console.log('🚀 Ejecutando auditoría...');
-      const response = await fetch('/api/admin/audit-books-clean');
-      
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Error en auditoría');
+      console.log('🚀 Ejecutando auditoría desde cliente...');
+
+      const newReport: AuditReport = {
+        timestamp: new Date().toISOString(),
+        summary: {
+          totalBooks: 0,
+          activeBooks: 0,
+          deletedBooks: 0,
+          orphanedFiles: 0,
+          brokenRelations: 0,
+          duplicates: 0,
+          issues: 0,
+        },
+        details: {
+          orphanedPDFs: [],
+          orphanedImages: [],
+          booksWithoutPDF: [],
+          booksWithoutCover: [],
+          brokenAuthorRelations: [],
+          brokenCharacterRelations: [],
+          oldSoftDeletes: [],
+        },
+        recommendations: [],
+      };
+
+      // 1. AUDITAR LIBROS
+      const { data: books } = await supabase
+        .from('books')
+        .select('id, title, cover_url, pdf_url, deleted_at, created_at');
+
+      if (books) {
+        newReport.summary.totalBooks = books.length;
+        newReport.summary.activeBooks = books.filter(b => !b.deleted_at).length;
+        newReport.summary.deletedBooks = books.filter(b => b.deleted_at).length;
+
+        // Libros sin PDF
+        const booksWithoutPDF = books
+          .filter(b => !b.deleted_at && !b.pdf_url)
+          .map(b => ({ id: b.id, title: b.title || 'Sin título' }));
+        newReport.details.booksWithoutPDF = booksWithoutPDF;
+
+        // Libros sin portada
+        const booksWithoutCover = books
+          .filter(b => !b.deleted_at && !b.cover_url)
+          .map(b => ({ id: b.id, title: b.title || 'Sin título' }));
+        newReport.details.booksWithoutCover = booksWithoutCover;
+
+        // Soft deletes antiguos (>30 días)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        const oldSoftDeletes = books
+          .filter(b => {
+            if (!b.deleted_at) return false;
+            return new Date(b.deleted_at) < thirtyDaysAgo;
+          })
+          .map(b => {
+            const daysAgo = Math.floor(
+              (Date.now() - new Date(b.deleted_at!).getTime()) / (1000 * 60 * 60 * 24)
+            );
+            return {
+              id: b.id,
+              title: b.title || 'Sin título',
+              deleted_at: b.deleted_at!,
+              days_ago: daysAgo,
+            };
+          });
+        newReport.details.oldSoftDeletes = oldSoftDeletes;
+
+        // 2. AUDITAR RELACIONES ROTAS
+        const activeBookIds = new Set(
+          books.filter(b => !b.deleted_at).map(b => b.id)
+        );
+
+        // Autores
+        const { data: authorRels } = await supabase
+          .from('books_authors')
+          .select('book_id, author_id');
+
+        const { data: validAuthors } = await supabase
+          .from('book_authors')
+          .select('id');
+
+        const validAuthorIds = new Set(validAuthors?.map(a => a.id) || []);
+
+        if (authorRels) {
+          for (const rel of authorRels) {
+            if (!activeBookIds.has(rel.book_id) || !validAuthorIds.has(rel.author_id)) {
+              newReport.details.brokenAuthorRelations.push(rel);
+            }
+          }
+        }
+
+        // Personajes
+        const { data: charRels } = await supabase
+          .from('books_characters')
+          .select('book_id, character_id');
+
+        const { data: validChars } = await supabase
+          .from('book_characters')
+          .select('id');
+
+        const validCharIds = new Set(validChars?.map(c => c.id) || []);
+
+        if (charRels) {
+          for (const rel of charRels) {
+            if (!activeBookIds.has(rel.book_id) || !validCharIds.has(rel.character_id)) {
+              newReport.details.brokenCharacterRelations.push(rel);
+            }
+          }
+        }
+
+        newReport.summary.brokenRelations = 
+          newReport.details.brokenAuthorRelations.length +
+          newReport.details.brokenCharacterRelations.length;
+
+        // 3. CALCULAR ISSUES
+        newReport.summary.issues =
+          newReport.details.booksWithoutPDF.length +
+          newReport.details.booksWithoutCover.length +
+          newReport.summary.orphanedFiles +
+          newReport.summary.brokenRelations +
+          newReport.details.oldSoftDeletes.length;
+
+        // 4. GENERAR RECOMENDACIONES
+        newReport.recommendations = generateRecommendations(newReport);
+
+        console.log('✅ Auditoría completada:', newReport);
+        setReport(newReport);
       }
 
-      const data = await response.json();
-      console.log('✅ Auditoría completada:', data);
-      setReport(data);
     } catch (error: any) {
       console.error('❌ Error:', error);
       setError(error.message);
+      toast.error('Error ejecutando auditoría');
     } finally {
       setIsLoadingAudit(false);
     }
   };
 
+  // ============================================
+  // EJECUTAR LIMPIEZA (Cliente)
+  // ============================================
   const executeCleanup = async () => {
     setShowConfirmModal(false);
     setIsLoadingCleanup(true);
     setError(null);
     
     try {
-      console.log('🧹 Ejecutando limpieza...');
-      
-      const response = await fetch('/api/admin/audit-books-clean', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      console.log('🧹 Ejecutando limpieza desde cliente...');
 
-      const data = await response.json();
-      console.log('📦 Respuesta del servidor:', data);
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Error en limpieza');
+      const results = {
+        relations: 0,
+        oldBooks: 0,
+        orphanedPDFs: 0,
+        orphanedImages: 0,
+      };
+
+      // 1. Obtener libros activos
+      const { data: books } = await supabase
+        .from('books')
+        .select('id')
+        .is('deleted_at', null);
+
+      const activeBookIds = new Set((books || []).map(b => b.id));
+
+      // 2. Limpiar relaciones rotas
+      const tables = [
+        'books_authors',
+        'books_characters',
+        'books_categories',
+        'books_genres',
+        'books_tags',
+        'books_values'
+      ];
+
+      for (const table of tables) {
+        const { data: rels } = await supabase
+          .from(table)
+          .select('book_id');
+
+        if (rels) {
+          const toDelete = [...new Set(
+            rels
+              .filter(r => !activeBookIds.has(r.book_id))
+              .map(r => r.book_id)
+          )];
+
+          if (toDelete.length > 0) {
+            const { error } = await supabase
+              .from(table)
+              .delete()
+              .in('book_id', toDelete);
+
+            if (!error) {
+              results.relations += toDelete.length;
+            }
+          }
+        }
       }
 
-      // Guardar resultado y mostrar modal
-      setCleanupResult(data);
+      // 3. Eliminar soft deletes antiguos (>90 días)
+      const ninetyDaysAgo = new Date();
+      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+      const { data: oldBooks } = await supabase
+        .from('books')
+        .select('id, title, deleted_at, user_id, pdf_url, cover_url')
+        .not('deleted_at', 'is', null)
+        .lt('deleted_at', ninetyDaysAgo.toISOString());
+
+      if (oldBooks && oldBooks.length > 0) {
+        // Eliminar archivos físicos primero
+        for (const book of oldBooks) {
+          // Eliminar PDFs
+          if (book.pdf_url && book.user_id) {
+            const { error: pdfError } = await supabase.storage
+              .from('book-pdfs')
+              .remove([`${book.user_id}/${book.id}`]);
+            
+            if (!pdfError) results.orphanedPDFs++;
+          }
+
+          // Eliminar imágenes
+          if (book.cover_url && book.user_id) {
+            const { error: imgError } = await supabase.storage
+              .from('book-images')
+              .remove([`${book.user_id}/${book.id}`]);
+            
+            if (!imgError) results.orphanedImages++;
+          }
+        }
+
+        // Eliminar registros de BD
+        const { error } = await supabase
+          .from('books')
+          .delete()
+          .in('id', oldBooks.map(b => b.id));
+
+        if (!error) {
+          results.oldBooks = oldBooks.length;
+        }
+      }
+
+      const totalCleaned = 
+        results.relations + 
+        results.oldBooks + 
+        results.orphanedPDFs + 
+        results.orphanedImages;
+
+      console.log('✅ Limpieza completada:', results);
+
+      setCleanupResult({
+        success: true,
+        cleaned: totalCleaned,
+        details: results,
+      });
       setShowResultModal(true);
-      
-      // ✅ IMPORTANTE: Re-ejecutar auditoría inmediatamente
-      console.log('🔄 Refrescando auditoría...');
+
+      // Refrescar auditoría
       await runAudit();
-      
+      toast.success('Limpieza completada exitosamente');
+
     } catch (error: any) {
       console.error('❌ Error:', error);
       setError(error.message);
+      toast.error('Error ejecutando limpieza');
     } finally {
       setIsLoadingCleanup(false);
     }
@@ -338,33 +545,33 @@ export default function AuditPage() {
 
             {/* Details */}
             <div className="space-y-4">
-              {report.details.orphanedImages.length > 0 && (
+              {report.details.booksWithoutPDF.length > 0 && (
                 <DetailSection
-                  title="Imágenes Huérfanas"
-                  count={report.details.orphanedImages.length}
-                  icon="🖼️"
-                  isExpanded={expandedSections.has('images')}
-                  onToggle={() => toggleSection('images')}
+                  title="Libros sin PDF"
+                  count={report.details.booksWithoutPDF.length}
+                  icon="📄"
+                  isExpanded={expandedSections.has('nopdf')}
+                  onToggle={() => toggleSection('nopdf')}
                 >
                   <ul className="space-y-1">
-                    {report.details.orphanedImages.map((img, i) => (
-                      <li key={i} className="text-sm text-gray-700 font-mono bg-gray-50 p-2 rounded">{img}</li>
+                    {report.details.booksWithoutPDF.map((book, i) => (
+                      <li key={i} className="text-sm text-gray-700 bg-gray-50 p-2 rounded">{book.title}</li>
                     ))}
                   </ul>
                 </DetailSection>
               )}
 
-              {report.details.orphanedPDFs.length > 0 && (
+              {report.details.booksWithoutCover.length > 0 && (
                 <DetailSection
-                  title="PDFs Huérfanos"
-                  count={report.details.orphanedPDFs.length}
-                  icon="📄"
-                  isExpanded={expandedSections.has('pdfs')}
-                  onToggle={() => toggleSection('pdfs')}
+                  title="Libros sin Portada"
+                  count={report.details.booksWithoutCover.length}
+                  icon="🖼️"
+                  isExpanded={expandedSections.has('nocover')}
+                  onToggle={() => toggleSection('nocover')}
                 >
                   <ul className="space-y-1">
-                    {report.details.orphanedPDFs.map((pdf, i) => (
-                      <li key={i} className="text-sm text-gray-700 font-mono bg-gray-50 p-2 rounded">{pdf}</li>
+                    {report.details.booksWithoutCover.map((book, i) => (
+                      <li key={i} className="text-sm text-gray-700 bg-gray-50 p-2 rounded">{book.title}</li>
                     ))}
                   </ul>
                 </DetailSection>
@@ -374,7 +581,7 @@ export default function AuditPage() {
         )}
       </div>
 
-      {/* Modal: Confirmación */}
+      {/* Modales (igual que antes) */}
       {showConfirmModal && (
         <Modal onClose={() => setShowConfirmModal(false)}>
           <div className="text-center">
@@ -385,43 +592,8 @@ export default function AuditPage() {
             <h3 className="text-2xl font-bold text-gray-900 mb-3">¿Ejecutar Limpieza?</h3>
             
             <p className="text-gray-600 mb-6">
-              Esta acción eliminará <strong>permanentemente</strong> los siguientes elementos:
+              Esta acción eliminará <strong>permanentemente</strong> los problemas detectados.
             </p>
-            
-            <div className="bg-gray-50 rounded-xl p-5 mb-6 text-left">
-              <ul className="space-y-3">
-                {report && report.details.orphanedPDFs.length > 0 && (
-                  <li className="flex items-center gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                      <span className="text-red-600 font-bold text-sm">{report.details.orphanedPDFs.length}</span>
-                    </div>
-                    <span className="text-gray-700">PDFs huérfanos</span>
-                  </li>
-                )}
-                {report && report.details.orphanedImages.length > 0 && (
-                  <li className="flex items-center gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                      <span className="text-red-600 font-bold text-sm">{report.details.orphanedImages.length}</span>
-                    </div>
-                    <span className="text-gray-700">Imágenes huérfanas</span>
-                  </li>
-                )}
-                {report && report.summary.brokenRelations > 0 && (
-                  <li className="flex items-center gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                      <span className="text-red-600 font-bold text-sm">{report.summary.brokenRelations}</span>
-                    </div>
-                    <span className="text-gray-700">Relaciones rotas</span>
-                  </li>
-                )}
-              </ul>
-            </div>
-
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-              <p className="text-sm text-red-800 font-semibold">
-                ⚠️ Esta acción NO se puede deshacer
-              </p>
-            </div>
 
             <div className="flex gap-3">
               <button
@@ -434,18 +606,16 @@ export default function AuditPage() {
                 onClick={executeCleanup}
                 className="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all font-semibold shadow-lg shadow-red-600/30"
               >
-                Sí, Eliminar Todo
+                Sí, Limpiar
               </button>
             </div>
           </div>
         </Modal>
       )}
 
-      {/* Modal: Resultado */}
       {showResultModal && cleanupResult && (
         <Modal onClose={() => {
           setShowResultModal(false);
-          // ✅ CRÍTICO: Ejecutar auditoría al cerrar el modal
           runAudit();
         }}>
           <div className="text-center">
@@ -456,57 +626,12 @@ export default function AuditPage() {
             <h3 className="text-2xl font-bold text-gray-900 mb-3">Limpieza Completada</h3>
             
             <p className="text-gray-600 mb-6">
-              Se eliminaron <strong className="text-green-600">{cleanupResult.cleaned}</strong> elementos del sistema
+              Se limpiaron <strong className="text-green-600">{cleanupResult.cleaned}</strong> elementos
             </p>
-            
-            <div className="bg-gray-50 rounded-xl p-5 mb-6">
-              <div className="space-y-4">
-                {cleanupResult.details.orphanedPDFs > 0 && (
-                  <div className="flex items-center justify-between py-2 border-b border-gray-200">
-                    <span className="text-gray-700 font-medium">PDFs eliminados</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-green-600">{cleanupResult.details.orphanedPDFs}</span>
-                      <Check className="text-green-600" size={20} />
-                    </div>
-                  </div>
-                )}
-                
-                {cleanupResult.details.orphanedImages > 0 && (
-                  <div className="flex items-center justify-between py-2 border-b border-gray-200">
-                    <span className="text-gray-700 font-medium">Imágenes eliminadas</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-green-600">{cleanupResult.details.orphanedImages}</span>
-                      <Check className="text-green-600" size={20} />
-                    </div>
-                  </div>
-                )}
-                
-                {cleanupResult.details.relations > 0 && (
-                  <div className="flex items-center justify-between py-2 border-b border-gray-200">
-                    <span className="text-gray-700 font-medium">Relaciones limpiadas</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-green-600">{cleanupResult.details.relations}</span>
-                      <Check className="text-green-600" size={20} />
-                    </div>
-                  </div>
-                )}
-                
-                {cleanupResult.details.oldBooks > 0 && (
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-gray-700 font-medium">Libros antiguos</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-green-600">{cleanupResult.details.oldBooks}</span>
-                      <Check className="text-green-600" size={20} />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
 
             <button
               onClick={() => {
                 setShowResultModal(false);
-                // ✅ CRÍTICO: Ejecutar auditoría al cerrar
                 runAudit();
               }}
               className="w-full px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all font-semibold shadow-lg shadow-green-600/30"
@@ -558,4 +683,38 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
       </div>
     </div>
   );
+}
+
+function generateRecommendations(report: AuditReport): string[] {
+  const recommendations: string[] = [];
+
+  if (report.summary.brokenRelations > 0) {
+    recommendations.push(
+      `Limpiar ${report.summary.brokenRelations} relaciones rotas en la base de datos`
+    );
+  }
+
+  if (report.details.oldSoftDeletes.length > 0) {
+    recommendations.push(
+      `Eliminar permanentemente ${report.details.oldSoftDeletes.length} libros en papelera hace más de 30 días`
+    );
+  }
+
+  if (report.details.booksWithoutPDF.length > 0) {
+    recommendations.push(
+      `Revisar ${report.details.booksWithoutPDF.length} libros sin archivo PDF`
+    );
+  }
+
+  if (report.details.booksWithoutCover.length > 0) {
+    recommendations.push(
+      `Agregar portadas a ${report.details.booksWithoutCover.length} libros`
+    );
+  }
+
+  if (recommendations.length === 0) {
+    recommendations.push('✅ ¡Todo está en orden! No se detectaron problemas');
+  }
+
+  return recommendations;
 }

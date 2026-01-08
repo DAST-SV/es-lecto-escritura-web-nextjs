@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: app/[locale]/books/[id]/read/page.tsx
- * ✅ VERSIÓN CON ANALYTICS INTEGRADO
+ * ✅ VERSIÓN CORREGIDA: Sin errores de servidor
  */
 
 'use client';
@@ -10,11 +10,26 @@ import { useParams, useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { Loader2, AlertCircle, BarChart3 } from 'lucide-react';
 import { createClient } from '@/src/utils/supabase/client';
-import { PDFPreviewMode } from '@/src/presentation/features/books/components/PDFPreview/PDFPreviewMode';
-import { PDFExtractorService } from '@/src/infrastructure/services/PDFExtractorService';
+import dynamic from 'next/dynamic';
 import { useReadingAnalytics } from '@/src/presentation/features/books/hooks/useReadingAnalytics';
 import type { Page } from '@/src/core/domain/types';
 import toast from 'react-hot-toast';
+
+// ✅ CRÍTICO: Cargar PDFPreviewMode dinámicamente solo en cliente
+const PDFPreviewMode = dynamic(
+  () => import('@/src/presentation/features/books/components/PDFPreview/PDFPreviewMode').then(mod => ({ default: mod.PDFPreviewMode })),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 size={48} className="animate-spin text-indigo-400 mx-auto mb-4" />
+          <p className="text-white font-medium text-lg">Cargando visor...</p>
+        </div>
+      </div>
+    )
+  }
+);
 
 export default function ReadBookPage() {
   const params = useParams();
@@ -31,7 +46,7 @@ export default function ReadBookPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
 
-  // ✅ ANALYTICS HOOK
+  // Analytics hook
   const {
     sessionId,
     isTracking,
@@ -43,7 +58,6 @@ export default function ReadBookPage() {
     totalPages: extractedPages.length,
     userId: userId || undefined,
     onComplete: () => {
-      // Mostrar modal de felicitación
       setShowCompletionModal(true);
     },
   });
@@ -52,7 +66,7 @@ export default function ReadBookPage() {
     let isMounted = true;
 
     async function loadBook() {
-      // ✅ Solo ejecutar en cliente
+      // Solo ejecutar en cliente
       if (typeof window === 'undefined') return;
 
       if (!bookId) {
@@ -72,7 +86,6 @@ export default function ReadBookPage() {
 
         console.log('📖 Cargando libro:', bookId);
 
-        // Cargar datos del libro
         const { data: libro, error: bookError } = await supabase
           .from('books')
           .select('id, title, pdf_url')
@@ -103,11 +116,13 @@ export default function ReadBookPage() {
 
         console.log('📄 Descargando PDF:', libro.pdf_url);
 
-        // Descargar PDF
         const response = await fetch(libro.pdf_url);
         const blob = await response.blob();
         const file = new File([blob], 'libro.pdf', { type: 'application/pdf' });
 
+        // ✅ Importar dinámicamente el servicio
+        const { PDFExtractorService } = await import('@/src/infrastructure/services/PDFExtractorService');
+        
         console.log('🔄 Extrayendo páginas del PDF...');
         const result = await PDFExtractorService.extractPagesFromPDF(file);
 
@@ -136,29 +151,29 @@ export default function ReadBookPage() {
 
     loadBook();
 
-    // Cleanup
     return () => {
       isMounted = false;
       if (extractedPages.length > 0) {
-        PDFExtractorService.cleanupBlobUrls(extractedPages);
+        // Cleanup dinámico
+        import('@/src/infrastructure/services/PDFExtractorService').then(({ PDFExtractorService }) => {
+          PDFExtractorService.cleanupBlobUrls(extractedPages);
+        });
       }
     };
   }, [bookId]);
 
   const handleClose = async () => {
-    // ✅ Finalizar sesión antes de cerrar
     await handleEndSession();
 
-    // Limpiar URLs de blobs antes de cerrar
     if (extractedPages.length > 0) {
+      const { PDFExtractorService } = await import('@/src/infrastructure/services/PDFExtractorService');
       PDFExtractorService.cleanupBlobUrls(extractedPages);
     }
     router.push(`/${locale}/books`);
   };
 
-  // ✅ Manejar cambio de página con tracking
   const handlePageFlip = (pageNumber: number) => {
-    trackPageChange(pageNumber + 1); // +1 porque el índice empieza en 0
+    trackPageChange(pageNumber + 1);
   };
 
   const handleViewStatistics = () => {
@@ -166,7 +181,6 @@ export default function ReadBookPage() {
     goToStatistics();
   };
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
@@ -179,7 +193,6 @@ export default function ReadBookPage() {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4">
@@ -205,11 +218,9 @@ export default function ReadBookPage() {
     );
   }
 
-  // Renderizar PDFPreviewMode
   if (extractedPages.length > 0 && pdfDimensions) {
     return (
       <>
-        {/* ✅ Indicador de tracking activo */}
         {isTracking && (
           <div className="fixed top-4 right-4 z-[10001] bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 shadow-lg">
             <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
@@ -222,10 +233,9 @@ export default function ReadBookPage() {
           title={bookTitle}
           pdfDimensions={pdfDimensions}
           onClose={handleClose}
-          onPageFlip={handlePageFlip} // ✅ Callback para tracking
+          onPageFlip={handlePageFlip}
         />
 
-        {/* ✅ Modal de completación */}
         {showCompletionModal && (
           <div className="fixed inset-0 z-[10002] bg-black/50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">

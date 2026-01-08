@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: app/[locale]/admin/page.tsx
- * 🏠 Dashboard principal del panel de administración
+ * 🏠 Dashboard con estadísticas completas trabajando directo con Supabase
  */
 
 'use client';
@@ -19,18 +19,50 @@ import {
   Database,
   HardDrive,
   Activity,
+  Eye,
+  Trash2,
+  BarChart3,
+  BookMarked,
 } from 'lucide-react';
 import { createClient } from '@/src/utils/supabase/client';
 
 interface DashboardStats {
+  // Libros
   totalBooks: number;
   activeBooks: number;
   deletedBooks: number;
+  publishedBooks: number;
+  featuredBooks: number;
+  booksWithoutPDF: number;
+  booksWithoutCover: number;
+  
+  // Usuarios y actividad
   totalUsers: number;
   recentActivity: number;
+  
+  // Estadísticas de lectura
+  totalReadingSessions: number;
+  totalReadingTime: number; // en segundos
+  avgSessionDuration: number;
+  mostReadBook: { id: string; title: string; sessions: number } | null;
+  
+  // Storage
   storageUsed: string;
+  
+  // Sistema
   lastAudit: string | null;
   systemHealth: 'healthy' | 'warning' | 'critical';
+  orphanedFiles: number;
+  brokenRelations: number;
+}
+
+interface RecentSession {
+  id: string;
+  book_title: string;
+  user_email: string;
+  start_time: string;
+  duration: number;
+  pages_read: number;
 }
 
 export default function AdminDashboard() {
@@ -42,13 +74,24 @@ export default function AdminDashboard() {
     totalBooks: 0,
     activeBooks: 0,
     deletedBooks: 0,
+    publishedBooks: 0,
+    featuredBooks: 0,
+    booksWithoutPDF: 0,
+    booksWithoutCover: 0,
     totalUsers: 0,
     recentActivity: 0,
+    totalReadingSessions: 0,
+    totalReadingTime: 0,
+    avgSessionDuration: 0,
+    mostReadBook: null,
     storageUsed: '-',
     lastAudit: null,
     systemHealth: 'healthy',
+    orphanedFiles: 0,
+    brokenRelations: 0,
   });
   
+  const [recentSessions, setRecentSessions] = useState<RecentSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -66,42 +109,134 @@ export default function AdminDashboard() {
         return;
       }
 
-      // Obtener estadísticas de libros
-      const { data: books, error: booksError } = await supabase
+      // ============================================
+      // 1. ESTADÍSTICAS DE LIBROS
+      // ============================================
+      const { data: books } = await supabase
         .from('books')
-        .select('id, deleted_at, created_at');
+        .select('id, title, deleted_at, created_at, is_published, is_featured, pdf_url, cover_url');
 
-      if (!booksError && books) {
+      if (books) {
         const now = new Date();
         const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        const activeBooks = books.filter(b => !b.deleted_at);
+        const deletedBooks = books.filter(b => b.deleted_at);
 
         setStats(prev => ({
           ...prev,
           totalBooks: books.length,
-          activeBooks: books.filter(b => !b.deleted_at).length,
-          deletedBooks: books.filter(b => b.deleted_at).length,
+          activeBooks: activeBooks.length,
+          deletedBooks: deletedBooks.length,
+          publishedBooks: activeBooks.filter(b => b.is_published).length,
+          featuredBooks: activeBooks.filter(b => b.is_featured).length,
+          booksWithoutPDF: activeBooks.filter(b => !b.pdf_url).length,
+          booksWithoutCover: activeBooks.filter(b => !b.cover_url).length,
           recentActivity: books.filter(b => new Date(b.created_at) > sevenDaysAgo).length,
         }));
       }
 
-      // Obtener estadísticas de usuarios (si tienes acceso)
+      // ============================================
+      // 2. ESTADÍSTICAS DE USUARIOS
+      // ============================================
       try {
-        const { count, error: usersError } = await supabase
+        const { count } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true });
 
-        if (!usersError && count !== null) {
+        if (count !== null) {
           setStats(prev => ({ ...prev, totalUsers: count }));
         }
       } catch (err) {
         console.warn('No se pudieron cargar usuarios');
       }
 
-      // Calcular salud del sistema
-      const healthStatus = calculateSystemHealth(
-        stats.activeBooks,
-        stats.deletedBooks
-      );
+      // ============================================
+      // 3. ESTADÍSTICAS DE LECTURA
+      // ============================================
+      const { data: sessions } = await supabase
+        .from('reading_sessions')
+        .select('id, book_id, user_id, start_time, end_time, duration, pages_read');
+
+      if (sessions) {
+        const totalDuration = sessions.reduce((acc, s) => acc + (s.duration || 0), 0);
+        const avgDuration = sessions.length > 0 ? totalDuration / sessions.length : 0;
+
+        // Libro más leído
+        const bookCounts = new Map<string, number>();
+        sessions.forEach(s => {
+          bookCounts.set(s.book_id, (bookCounts.get(s.book_id) || 0) + 1);
+        });
+
+        let mostReadBookId: string | null = null;
+        let maxCount = 0;
+        bookCounts.forEach((count, bookId) => {
+          if (count > maxCount) {
+            maxCount = count;
+            mostReadBookId = bookId;
+          }
+        });
+
+        let mostReadBook = null;
+        if (mostReadBookId && books) {
+          const book = books.find(b => b.id === mostReadBookId);
+          if (book) {
+            mostReadBook = {
+              id: book.id,
+              title: book.title || 'Sin título',
+              sessions: maxCount,
+            };
+          }
+        }
+
+        setStats(prev => ({
+          ...prev,
+          totalReadingSessions: sessions.length,
+          totalReadingTime: totalDuration,
+          avgSessionDuration: avgDuration,
+          mostReadBook,
+        }));
+
+        // Sesiones recientes (últimas 10)
+        const { data: recentSessionsData } = await supabase
+          .from('reading_sessions')
+          .select(`
+            id,
+            start_time,
+            duration,
+            pages_read,
+            book:books(title),
+            user:profiles(email)
+          `)
+          .order('start_time', { ascending: false })
+          .limit(10);
+
+        if (recentSessionsData) {
+          setRecentSessions(
+            recentSessionsData.map((s: any) => ({
+              id: s.id,
+              book_title: s.book?.title || 'Desconocido',
+              user_email: s.user?.email || 'Anónimo',
+              start_time: s.start_time,
+              duration: s.duration || 0,
+              pages_read: s.pages_read || 0,
+            }))
+          );
+        }
+      }
+
+      // ============================================
+      // 4. CALCULAR SALUD DEL SISTEMA
+      // ============================================
+      const healthIssues = 
+        stats.booksWithoutPDF + 
+        stats.booksWithoutCover + 
+        stats.orphanedFiles + 
+        stats.brokenRelations;
+
+      let healthStatus: 'healthy' | 'warning' | 'critical' = 'healthy';
+      if (healthIssues > 50) healthStatus = 'critical';
+      else if (healthIssues > 10) healthStatus = 'warning';
 
       setStats(prev => ({ ...prev, systemHealth: healthStatus }));
 
@@ -112,15 +247,13 @@ export default function AdminDashboard() {
     }
   };
 
-  const calculateSystemHealth = (
-    active: number,
-    deleted: number
-  ): 'healthy' | 'warning' | 'critical' => {
-    if (deleted === 0) return 'healthy';
-    const ratio = deleted / (active + deleted);
-    if (ratio > 0.3) return 'critical';
-    if (ratio > 0.1) return 'warning';
-    return 'healthy';
+  const formatDuration = (seconds: number): string => {
+    if (seconds < 60) return `${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
   };
 
   const getHealthColor = (status: string) => {
@@ -196,44 +329,179 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Total Books */}
-        <StatCard
-          title="Total de Libros"
-          value={stats.totalBooks}
-          icon={<BookOpen size={24} className="text-blue-600" />}
-          description={`${stats.activeBooks} activos`}
-          color="blue"
-        />
+      {/* Stats Grid - Libros */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">📚 Estadísticas de Libros</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            title="Total de Libros"
+            value={stats.totalBooks}
+            icon={<BookOpen size={24} className="text-blue-600" />}
+            description={`${stats.activeBooks} activos`}
+            color="blue"
+          />
 
-        {/* Active Books */}
-        <StatCard
-          title="Libros Activos"
-          value={stats.activeBooks}
-          icon={<CheckCircle size={24} className="text-green-600" />}
-          description="Disponibles para lectura"
-          color="green"
-        />
+          <StatCard
+            title="Publicados"
+            value={stats.publishedBooks}
+            icon={<CheckCircle size={24} className="text-green-600" />}
+            description="Visibles públicamente"
+            color="green"
+          />
 
-        {/* Deleted Books */}
-        <StatCard
-          title="En Papelera"
-          value={stats.deletedBooks}
-          icon={<AlertCircle size={24} className="text-orange-600" />}
-          description="Pueden restaurarse"
-          color="orange"
-        />
+          <StatCard
+            title="Destacados"
+            value={stats.featuredBooks}
+            icon={<BookMarked size={24} className="text-purple-600" />}
+            description="En portada"
+            color="purple"
+          />
 
-        {/* Recent Activity */}
-        <StatCard
-          title="Actividad Reciente"
-          value={stats.recentActivity}
-          icon={<Clock size={24} className="text-purple-600" />}
-          description="Últimos 7 días"
-          color="purple"
-        />
+          <StatCard
+            title="En Papelera"
+            value={stats.deletedBooks}
+            icon={<Trash2 size={24} className="text-orange-600" />}
+            description="Pueden restaurarse"
+            color="orange"
+          />
+        </div>
       </div>
+
+      {/* Stats Grid - Lecturas */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">📖 Estadísticas de Lectura</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            title="Sesiones Totales"
+            value={stats.totalReadingSessions}
+            icon={<Eye size={24} className="text-indigo-600" />}
+            description="Lecturas registradas"
+            color="indigo"
+          />
+
+          <StatCard
+            title="Tiempo Total"
+            value={formatDuration(stats.totalReadingTime)}
+            icon={<Clock size={24} className="text-blue-600" />}
+            description="De lectura"
+            color="blue"
+            isString
+          />
+
+          <StatCard
+            title="Duración Promedio"
+            value={formatDuration(Math.round(stats.avgSessionDuration))}
+            icon={<TrendingUp size={24} className="text-green-600" />}
+            description="Por sesión"
+            color="green"
+            isString
+          />
+
+          <StatCard
+            title="Usuarios Activos"
+            value={stats.totalUsers}
+            icon={<Users size={24} className="text-purple-600" />}
+            description="En el sistema"
+            color="purple"
+          />
+        </div>
+      </div>
+
+      {/* Libro más leído */}
+      {stats.mostReadBook && (
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-6 border border-indigo-200">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+              <BookOpen className="text-indigo-600" size={24} />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">📈 Libro Más Leído</h3>
+              <p className="text-sm text-gray-600">El favorito de los usuarios</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg p-4">
+            <p className="text-xl font-bold text-gray-900">{stats.mostReadBook.title}</p>
+            <p className="text-sm text-gray-600 mt-1">
+              {stats.mostReadBook.sessions} {stats.mostReadBook.sessions === 1 ? 'sesión' : 'sesiones'} de lectura
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Sesiones Recientes */}
+      {recentSessions.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">⏱️ Sesiones de Lectura Recientes</h3>
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Libro
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Usuario
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Duración
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Páginas
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Fecha
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {recentSessions.map((session) => (
+                    <tr key={session.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {session.book_title}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {session.user_email}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatDuration(session.duration)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {session.pages_read}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(session.start_time).toLocaleDateString('es-SV')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Alertas del Sistema */}
+      {(stats.booksWithoutPDF > 0 || stats.booksWithoutCover > 0) && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-amber-900 mb-3 flex items-center gap-2">
+            <AlertCircle size={20} />
+            Atención Requerida
+          </h3>
+          <div className="space-y-2">
+            {stats.booksWithoutPDF > 0 && (
+              <p className="text-sm text-amber-800">
+                • {stats.booksWithoutPDF} {stats.booksWithoutPDF === 1 ? 'libro sin PDF' : 'libros sin PDF'}
+              </p>
+            )}
+            {stats.booksWithoutCover > 0 && (
+              <p className="text-sm text-amber-800">
+                • {stats.booksWithoutCover} {stats.booksWithoutCover === 1 ? 'libro sin portada' : 'libros sin portada'}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div>
@@ -257,53 +525,13 @@ export default function AdminDashboard() {
           />
 
           <ActionCard
-            title="Base de Datos"
-            description="Mantenimiento y optimización de BD"
-            icon={<Database size={20} />}
-            onClick={() => router.push(`/${locale}/admin/database`)}
+            title="Analytics Avanzados"
+            description="Estadísticas y reportes detallados"
+            icon={<BarChart3 size={20} />}
+            onClick={() => router.push(`/${locale}/admin/analytics`)}
             color="green"
             comingSoon
           />
-
-          <ActionCard
-            title="Analytics"
-            description="Estadísticas y reportes detallados"
-            icon={<TrendingUp size={20} />}
-            onClick={() => router.push(`/${locale}/admin/analytics`)}
-            color="orange"
-            comingSoon
-          />
-
-          <ActionCard
-            title="Gestión de Libros"
-            description="Administrar todos los libros del sistema"
-            icon={<BookOpen size={20} />}
-            onClick={() => router.push(`/${locale}/admin/books`)}
-            color="indigo"
-            comingSoon
-          />
-
-          <ActionCard
-            title="Almacenamiento"
-            description="Gestionar archivos y optimizar espacio"
-            icon={<HardDrive size={20} />}
-            onClick={() => router.push(`/${locale}/admin/storage`)}
-            color="pink"
-            comingSoon
-          />
-        </div>
-      </div>
-
-      {/* System Info */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Información del Sistema</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <InfoRow label="Total de Libros" value={stats.totalBooks.toString()} />
-          <InfoRow label="Libros Activos" value={stats.activeBooks.toString()} />
-          <InfoRow label="En Papelera" value={stats.deletedBooks.toString()} />
-          <InfoRow label="Usuarios" value={stats.totalUsers > 0 ? stats.totalUsers.toString() : 'N/A'} />
-          <InfoRow label="Actividad (7 días)" value={stats.recentActivity.toString()} />
-          <InfoRow label="Última Auditoría" value={stats.lastAudit || 'Nunca ejecutada'} />
         </div>
       </div>
     </div>
@@ -316,25 +544,29 @@ export default function AdminDashboard() {
 
 interface StatCardProps {
   title: string;
-  value: number;
+  value: number | string;
   icon: React.ReactNode;
   description: string;
-  color: 'blue' | 'green' | 'orange' | 'purple';
+  color: 'blue' | 'green' | 'orange' | 'purple' | 'indigo';
+  isString?: boolean;
 }
 
-function StatCard({ title, value, icon, description, color }: StatCardProps) {
+function StatCard({ title, value, icon, description, color, isString }: StatCardProps) {
   const colorClasses = {
     blue: 'bg-blue-50 border-blue-200',
     green: 'bg-green-50 border-green-200',
     orange: 'bg-orange-50 border-orange-200',
     purple: 'bg-purple-50 border-purple-200',
+    indigo: 'bg-indigo-50 border-indigo-200',
   };
 
   return (
     <div className={`rounded-lg border p-6 ${colorClasses[color]}`}>
       <div className="flex items-center justify-between mb-4">
         {icon}
-        <span className="text-3xl font-bold text-gray-900">{value}</span>
+        <span className={`text-3xl font-bold text-gray-900 ${isString ? 'text-2xl' : ''}`}>
+          {value}
+        </span>
       </div>
       <h3 className="text-sm font-semibold text-gray-900 mb-1">{title}</h3>
       <p className="text-xs text-gray-600">{description}</p>
@@ -386,19 +618,5 @@ function ActionCard({ title, description, icon, onClick, color, comingSoon }: Ac
         </div>
       </div>
     </button>
-  );
-}
-
-interface InfoRowProps {
-  label: string;
-  value: string;
-}
-
-function InfoRow({ label, value }: InfoRowProps) {
-  return (
-    <div className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
-      <span className="text-sm text-gray-600">{label}</span>
-      <span className="text-sm font-semibold text-gray-900">{value}</span>
-    </div>
   );
 }
