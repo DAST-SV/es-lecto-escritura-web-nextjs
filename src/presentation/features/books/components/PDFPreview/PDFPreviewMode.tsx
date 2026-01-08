@@ -9,7 +9,6 @@ import HTMLFlipBook from 'react-pageflip';
 import type { Page } from '@/src/core/domain/types';
 import { PreviewHeader } from './PreviewHeader';
 import { usePreviewControls } from './usePreviewControls';
-import '@/src/presentation/features/layouts/styles/book-shared.css';
 
 interface PDFPreviewModeProps {
     pages: Page[];
