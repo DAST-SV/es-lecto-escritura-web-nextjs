@@ -1,6 +1,6 @@
 /**
  * UBICACIÓN: app/[locale]/books/[id]/read/page.tsx
- * ✅ LEER LIBRO: Versión CORRECTA usando PDFPreviewMode directamente
+ * ✅ VERSIÓN CON ANALYTICS INTEGRADO
  */
 
 'use client';
@@ -8,11 +8,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, BarChart3 } from 'lucide-react';
 import { createClient } from '@/src/utils/supabase/client';
 import { PDFPreviewMode } from '@/src/presentation/features/books/components/PDFPreview/PDFPreviewMode';
 import { PDFExtractorService } from '@/src/infrastructure/services/PDFExtractorService';
+import { useReadingAnalytics } from '@/src/presentation/features/books/hooks/useReadingAnalytics';
 import type { Page } from '@/src/core/domain/types';
+import toast from 'react-hot-toast';
 
 export default function ReadBookPage() {
   const params = useParams();
@@ -26,6 +28,25 @@ export default function ReadBookPage() {
   const [extractedPages, setExtractedPages] = useState<Page[]>([]);
   const [pdfDimensions, setPdfDimensions] = useState<{ width: number; height: number } | null>(null);
   const [bookTitle, setBookTitle] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+
+  // ✅ ANALYTICS HOOK
+  const {
+    sessionId,
+    isTracking,
+    trackPageChange,
+    handleEndSession,
+    goToStatistics,
+  } = useReadingAnalytics({
+    bookId,
+    totalPages: extractedPages.length,
+    userId: userId || undefined,
+    onComplete: () => {
+      // Mostrar modal de felicitación
+      setShowCompletionModal(true);
+    },
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -42,12 +63,8 @@ export default function ReadBookPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
-        if (!user) {
-          if (isMounted) {
-            setError('Debes iniciar sesión para leer libros');
-            setIsLoading(false);
-          }
-          return;
+        if (user && isMounted) {
+          setUserId(user.id);
         }
 
         console.log('📖 Cargando libro:', bookId);
@@ -125,12 +142,25 @@ export default function ReadBookPage() {
     };
   }, [bookId]);
 
-  const handleClose = () => {
+  const handleClose = async () => {
+    // ✅ Finalizar sesión antes de cerrar
+    await handleEndSession();
+    
     // Limpiar URLs de blobs antes de cerrar
     if (extractedPages.length > 0) {
       PDFExtractorService.cleanupBlobUrls(extractedPages);
     }
     router.push(`/${locale}/books`);
+  };
+
+  // ✅ Manejar cambio de página con tracking
+  const handlePageFlip = (pageNumber: number) => {
+    trackPageChange(pageNumber + 1); // +1 porque el índice empieza en 0
+  };
+
+  const handleViewStatistics = () => {
+    setShowCompletionModal(false);
+    goToStatistics();
   };
 
   // Loading state
@@ -175,12 +205,59 @@ export default function ReadBookPage() {
   // Renderizar PDFPreviewMode
   if (extractedPages.length > 0 && pdfDimensions) {
     return (
-      <PDFPreviewMode 
-        pages={extractedPages}
-        title={bookTitle}
-        pdfDimensions={pdfDimensions}
-        onClose={handleClose}
-      />
+      <>
+        {/* ✅ Indicador de tracking activo */}
+        {isTracking && (
+          <div className="fixed top-4 right-4 z-[10001] bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 shadow-lg">
+            <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+            Registrando lectura
+          </div>
+        )}
+
+        <PDFPreviewMode 
+          pages={extractedPages}
+          title={bookTitle}
+          pdfDimensions={pdfDimensions}
+          onClose={handleClose}
+          onPageFlip={handlePageFlip} // ✅ Callback para tracking
+        />
+
+        {/* ✅ Modal de completación */}
+        {showCompletionModal && (
+          <div className="fixed inset-0 z-[10002] bg-black/50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <BarChart3 size={40} className="text-green-600" />
+              </div>
+              
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                ¡Felicitaciones! 🎉
+              </h2>
+              
+              <p className="text-gray-600 mb-6">
+                Has completado <strong>"{bookTitle}"</strong>
+              </p>
+
+              <div className="space-y-3">
+                <button
+                  onClick={handleViewStatistics}
+                  className="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <BarChart3 size={20} />
+                  Ver estadísticas
+                </button>
+                
+                <button
+                  onClick={() => setShowCompletionModal(false)}
+                  className="w-full px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors"
+                >
+                  Continuar leyendo
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 

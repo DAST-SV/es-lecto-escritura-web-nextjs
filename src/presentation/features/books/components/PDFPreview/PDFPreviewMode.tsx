@@ -1,6 +1,7 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/PDFPreview/PDFPreviewMode.tsx
  * ✅ Modo lectura puro: Solo permite cerrar, sin guardar
+ * 📊 ACTUALIZADO: Soporte para analytics con onPageFlip
  */
 
 import React, { useMemo, useCallback } from 'react';
@@ -15,6 +16,7 @@ interface PDFPreviewModeProps {
     title: string;
     pdfDimensions: { width: number; height: number };
     onClose: () => void;
+    onPageFlip?: (pageNumber: number) => void; // ✅ AGREGADO: Callback para analytics
 }
 
 export function PDFPreviewMode({
@@ -22,6 +24,7 @@ export function PDFPreviewMode({
     title,
     pdfDimensions,
     onClose,
+    onPageFlip, // ✅ AGREGADO
 }: PDFPreviewModeProps) {
     const {
         bookRef,
@@ -30,6 +33,16 @@ export function PDFPreviewMode({
         isMobile,
         handleFlip,
     } = usePreviewControls({ pages, onClose });
+
+    // ✅ Wrapper para manejar flip + callback de analytics
+    const handleFlipWithCallback = useCallback((e: any) => {
+        handleFlip(e);
+        
+        // Llamar callback de analytics si existe
+        if (onPageFlip && e?.data !== undefined) {
+            onPageFlip(e.data);
+        }
+    }, [handleFlip, onPageFlip]);
 
     // ✅ Memoizar páginas para evitar recreación
     const memoizedPages = useMemo(() => {
@@ -120,7 +133,7 @@ export function PDFPreviewMode({
                         swipeDistance={30}
                         showPageCorners={true}
                         disableFlipByClick={false}
-                        onFlip={handleFlip}
+                        onFlip={handleFlipWithCallback} // ✅ ACTUALIZADO: Usar wrapper
                         className="demo-book"
                         style={{}}
                         mobileScrollSupport={false}
