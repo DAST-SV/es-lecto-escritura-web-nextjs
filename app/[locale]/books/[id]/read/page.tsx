@@ -52,6 +52,9 @@ export default function ReadBookPage() {
     let isMounted = true;
 
     async function loadBook() {
+      // ✅ Solo ejecutar en cliente
+      if (typeof window === 'undefined') return;
+
       if (!bookId) {
         if (isMounted) {
           setError('ID de libro no válido');
@@ -62,7 +65,7 @@ export default function ReadBookPage() {
 
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        
+
         if (user && isMounted) {
           setUserId(user.id);
         }
@@ -99,7 +102,7 @@ export default function ReadBookPage() {
         }
 
         console.log('📄 Descargando PDF:', libro.pdf_url);
-        
+
         // Descargar PDF
         const response = await fetch(libro.pdf_url);
         const blob = await response.blob();
@@ -107,14 +110,14 @@ export default function ReadBookPage() {
 
         console.log('🔄 Extrayendo páginas del PDF...');
         const result = await PDFExtractorService.extractPagesFromPDF(file);
-        
+
         if (isMounted) {
           setExtractedPages(result.pages);
-          
+
           if (result.pageWidth && result.pageHeight) {
-            setPdfDimensions({ 
-              width: result.pageWidth, 
-              height: result.pageHeight 
+            setPdfDimensions({
+              width: result.pageWidth,
+              height: result.pageHeight
             });
           }
 
@@ -145,7 +148,7 @@ export default function ReadBookPage() {
   const handleClose = async () => {
     // ✅ Finalizar sesión antes de cerrar
     await handleEndSession();
-    
+
     // Limpiar URLs de blobs antes de cerrar
     if (extractedPages.length > 0) {
       PDFExtractorService.cleanupBlobUrls(extractedPages);
@@ -184,13 +187,13 @@ export default function ReadBookPage() {
           <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <AlertCircle size={40} className="text-red-600" />
           </div>
-          
+
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             No se puede leer el libro
           </h2>
-          
+
           <p className="text-gray-600 mb-6">{error}</p>
-          
+
           <button
             onClick={handleClose}
             className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors w-full"
@@ -214,7 +217,7 @@ export default function ReadBookPage() {
           </div>
         )}
 
-        <PDFPreviewMode 
+        <PDFPreviewMode
           pages={extractedPages}
           title={bookTitle}
           pdfDimensions={pdfDimensions}
@@ -229,11 +232,11 @@ export default function ReadBookPage() {
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <BarChart3 size={40} className="text-green-600" />
               </div>
-              
+
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
                 ¡Felicitaciones! 🎉
               </h2>
-              
+
               <p className="text-gray-600 mb-6">
                 Has completado <strong>"{bookTitle}"</strong>
               </p>
@@ -246,7 +249,7 @@ export default function ReadBookPage() {
                   <BarChart3 size={20} />
                   Ver estadísticas
                 </button>
-                
+
                 <button
                   onClick={() => setShowCompletionModal(false)}
                   className="w-full px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors"

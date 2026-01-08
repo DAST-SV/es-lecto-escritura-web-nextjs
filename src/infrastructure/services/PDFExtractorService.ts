@@ -1,7 +1,10 @@
 /**
  * UBICACIÓN: src/infrastructure/services/PDFExtractorService.ts
  * Servicio para extraer páginas de PDF como imágenes
+ * ✅ IMPORTANTE: Solo funciona en el navegador (client-side)
  */
+
+'use client';
 
 import { pdfjs } from 'react-pdf';
 import type { Page } from '@/src/core/domain/types';

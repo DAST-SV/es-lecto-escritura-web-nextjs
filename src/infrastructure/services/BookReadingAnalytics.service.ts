@@ -1,9 +1,11 @@
 /**
  * UBICACIÓN: src/infrastructure/services/BookReadingAnalytics.service.ts
- * 📊 SISTEMA DE ANALYTICS - USANDO SUPABASE ADMIN COMO BOOKREPOSITORY
+ * 📊 SISTEMA DE ANALYTICS - USANDO API ROUTES
+ * 
+ * ✅ SOLUCIÓN: Llamar a API routes (server-side) desde el cliente
+ * ✅ PATRÓN: Igual que user-types (fetch a /api/...)
+ * ✅ VENTAJA: Las tablas siguen en books schema, organizadas y limpias
  */
-
-import { createClient } from '@/src/utils/supabase/client';
 
 // ============================================
 // INTERFACES
@@ -32,37 +34,11 @@ export interface UserProgress {
   lastReadAt: Date;
 }
 
-export interface BookStatistics {
-  bookId: string;
-  totalReaders: number;
-  activeReaders: number;
-  completedReaders: number;
-  avgCompletionRate: number;
-  avgSessionDuration: number;
-  totalReadingTime: number;
-  mostViewedPage: number;
-  bounceRate: number;
-  deviceBreakdown: {
-    desktop: number;
-    mobile: number;
-    tablet: number;
-  };
-}
-
-export interface ReadingComparison {
-  userTime: number;
-  avgTime: number;
-  percentile: number;
-  isFasterThanAverage: boolean;
-  speedRank: string;
-}
-
 // ============================================
 // CLASE PRINCIPAL
 // ============================================
 
 export class BookReadingAnalyticsService {
-  private static supabase = createClient();
   private static activeSessions = new Map<string, ReadingSession>();
   private static pageStartTimes = new Map<string, Date>();
 
@@ -105,15 +81,18 @@ export class BookReadingAnalyticsService {
       (session.endTime.getTime() - session.startTime.getTime()) / 1000
     );
 
+    // ✅ CORREGIDO: Siempre calcular porcentaje, nunca NULL
     const uniquePagesVisited = new Set(session.pagesVisited);
-    const completionPercentage = (uniquePagesVisited.size / session.totalPages) * 100;
+    const completionPercentage = session.totalPages > 0 
+      ? Math.max(0, Math.min(100, (uniquePagesVisited.size / session.totalPages) * 100))
+      : 0;
 
     try {
-      // ✅ USANDO EL MISMO PATRÓN QUE BOOKREPOSITORY
-      const { error } = await this.supabase
-        
-        .from('book_reading_sessions')
-        .insert({
+      // ✅ Llamar a API route (server-side)
+      const response = await fetch('/api/analytics/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           book_id: session.bookId,
           user_id: session.userId || null,
           session_id: sessionId,
@@ -125,11 +104,12 @@ export class BookReadingAnalyticsService {
           unique_pages: uniquePagesVisited.size,
           completion_percentage: completionPercentage,
           device_type: session.deviceType,
-        });
+        }),
+      });
 
-      if (error) {
-        console.error('❌ Error guardando sesión:', error.message, error);
-        throw error;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error guardando sesión');
       }
 
       console.log('✅ Sesión guardada:', sessionId);
@@ -142,7 +122,7 @@ export class BookReadingAnalyticsService {
 
     } catch (error: any) {
       console.error('❌ Error en endSession:', error.message || error);
-      throw error;
+      // No lanzar error para no romper la experiencia del usuario
     }
   }
 
@@ -191,19 +171,22 @@ export class BookReadingAnalyticsService {
     if (!session) return;
 
     try {
-      const { error } = await this.supabase
-        
-        .from('book_page_views')
-        .insert({
+      // ✅ Llamar a API route
+      const response = await fetch('/api/analytics/page-views', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           book_id: session.bookId,
           session_id: sessionId,
           page_number: pageNumber,
           viewed_at: startTime.toISOString(),
           duration_seconds: durationSeconds,
-        });
+        }),
+      });
 
-      if (error) {
-        console.error('❌ Error guardando duración:', error.message, error);
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('❌ Error guardando duración:', error.error);
       } else {
         console.log(`⏱️ Página ${pageNumber}: ${durationSeconds}s`);
       }
@@ -227,76 +210,34 @@ export class BookReadingAnalyticsService {
     readingTimeSeconds: number
   ): Promise<void> {
     const completionPercentage = (currentPage / totalPages) * 100;
+    const isCompleted = completionPercentage >= 100;
 
     try {
-      // ✅ Verificar si existe
-      const { data: existing, error: fetchError } = await this.supabase
-        
-        .from('user_book_progress')
-        .select('id, total_reading_time, completed_at')
-        .eq('user_id', userId)
-        .eq('book_id', bookId)
-        .maybeSingle();
+      // ✅ Llamar a API route
+      const response = await fetch('/api/analytics/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          book_id: bookId,
+          current_page: currentPage,
+          total_pages: totalPages,
+          completion_percentage: completionPercentage,
+          is_completed: isCompleted,
+          total_reading_time: readingTimeSeconds,
+        }),
+      });
 
-      if (fetchError) {
-        console.error('❌ Error verificando progreso:', fetchError.message, fetchError);
-        throw fetchError;
-      }
-
-      const isCompleted = completionPercentage >= 100;
-      const now = new Date().toISOString();
-
-      if (existing) {
-        // Actualizar
-        const newTotalTime = (existing.total_reading_time || 0) + readingTimeSeconds;
-        
-        const { error: updateError } = await this.supabase
-          
-          .from('user_book_progress')
-          .update({
-            current_page: currentPage,
-            total_pages: totalPages,
-            completion_percentage: completionPercentage,
-            is_completed: isCompleted,
-            total_reading_time: newTotalTime,
-            last_read_at: now,
-            ...(isCompleted && !existing.completed_at ? { completed_at: now } : {})
-          })
-          .eq('user_id', userId)
-          .eq('book_id', bookId);
-
-        if (updateError) {
-          console.error('❌ Error actualizando progreso:', updateError.message, updateError);
-          throw updateError;
-        }
-      } else {
-        // Insertar
-        const { error: insertError } = await this.supabase
-          
-          .from('user_book_progress')
-          .insert({
-            user_id: userId,
-            book_id: bookId,
-            current_page: currentPage,
-            total_pages: totalPages,
-            completion_percentage: completionPercentage,
-            is_completed: isCompleted,
-            total_reading_time: readingTimeSeconds,
-            last_read_at: now,
-            ...(isCompleted ? { completed_at: now } : {})
-          });
-
-        if (insertError) {
-          console.error('❌ Error insertando progreso:', insertError.message, insertError);
-          throw insertError;
-        }
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error actualizando progreso');
       }
 
       console.log('✅ Progreso actualizado');
 
     } catch (error: any) {
       console.error('❌ Error en updateUserProgress:', error.message || error);
-      throw error;
+      // No lanzar error para no romper la experiencia
     }
   }
 
@@ -305,27 +246,10 @@ export class BookReadingAnalyticsService {
     bookId: string
   ): Promise<void> {
     try {
-      const { error } = await this.supabase
-        
-        .from('user_book_progress')
-        .update({
-          is_completed: true,
-          completion_percentage: 100,
-          completed_at: new Date().toISOString(),
-        })
-        .eq('user_id', userId)
-        .eq('book_id', bookId);
-
-      if (error) {
-        console.error('❌ Error marcando completado:', error.message, error);
-        throw error;
-      }
-
+      await this.updateUserProgress(userId, bookId, 100, 100, 0);
       console.log('🎉 ¡Libro completado!');
-
     } catch (error: any) {
       console.error('❌ Error en markBookAsCompleted:', error.message || error);
-      throw error;
     }
   }
 
@@ -334,19 +258,18 @@ export class BookReadingAnalyticsService {
     bookId: string
   ): Promise<UserProgress | null> {
     try {
-      const { data, error } = await this.supabase
-        
-        .from('user_book_progress')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('book_id', bookId)
-        .maybeSingle();
+      const response = await fetch(
+        `/api/analytics/progress?user_id=${userId}&book_id=${bookId}`,
+        { method: 'GET' }
+      );
 
-      if (error) {
-        console.error('❌ Error obteniendo progreso:', error.message, error);
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('❌ Error obteniendo progreso:', error.error);
         return null;
       }
 
+      const data = await response.json();
       if (!data) return null;
 
       return {
@@ -362,138 +285,6 @@ export class BookReadingAnalyticsService {
 
     } catch (error: any) {
       console.error('❌ Error en getUserProgress:', error.message || error);
-      return null;
-    }
-  }
-
-  // ============================================
-  // 4. ESTADÍSTICAS DEL LIBRO
-  // ============================================
-
-  static async getBookStatistics(bookId: string): Promise<BookStatistics | null> {
-    try {
-      const { data: sessions } = await this.supabase
-        
-        .from('book_reading_sessions')
-        .select('*')
-        .eq('book_id', bookId);
-
-      if (!sessions || sessions.length === 0) return null;
-
-      const { data: progress } = await this.supabase
-        
-        .from('user_book_progress')
-        .select('*')
-        .eq('book_id', bookId);
-
-      const { data: pageViews } = await this.supabase
-        
-        .from('book_page_views')
-        .select('page_number, duration_seconds')
-        .eq('book_id', bookId);
-
-      const totalReaders = new Set(sessions.map(s => s.user_id).filter(Boolean)).size;
-      const activeReaders = progress?.filter(p => !p.is_completed).length || 0;
-      const completedReaders = progress?.filter(p => p.is_completed).length || 0;
-
-      const avgCompletionRate = sessions.reduce((sum, s) => sum + s.completion_percentage, 0) / sessions.length;
-      const avgSessionDuration = sessions.reduce((sum, s) => sum + s.duration_seconds, 0) / sessions.length;
-      const totalReadingTime = sessions.reduce((sum, s) => sum + s.duration_seconds, 0);
-
-      const pageCounts = new Map<number, number>();
-      pageViews?.forEach(pv => {
-        pageCounts.set(pv.page_number, (pageCounts.get(pv.page_number) || 0) + 1);
-      });
-      const mostViewedPage = Array.from(pageCounts.entries())
-        .sort((a, b) => b[1] - a[1])[0]?.[0] || 1;
-
-      const bouncedSessions = sessions.filter(s => s.completion_percentage < 10).length;
-      const bounceRate = (bouncedSessions / sessions.length) * 100;
-
-      const deviceCounts = { desktop: 0, mobile: 0, tablet: 0 };
-      sessions.forEach(s => {
-        if (s.device_type in deviceCounts) {
-          deviceCounts[s.device_type as keyof typeof deviceCounts]++;
-        }
-      });
-
-      return {
-        bookId,
-        totalReaders,
-        activeReaders,
-        completedReaders,
-        avgCompletionRate,
-        avgSessionDuration,
-        totalReadingTime,
-        mostViewedPage,
-        bounceRate,
-        deviceBreakdown: deviceCounts,
-      };
-
-    } catch (error: any) {
-      console.error('❌ Error obteniendo estadísticas:', error.message || error);
-      return null;
-    }
-  }
-
-  // ============================================
-  // 5. COMPARATIVAS
-  // ============================================
-
-  static async compareReadingTime(
-    userId: string,
-    bookId: string
-  ): Promise<ReadingComparison | null> {
-    try {
-      const { data: userSessions } = await this.supabase
-        
-        .from('book_reading_sessions')
-        .select('duration_seconds')
-        .eq('book_id', bookId)
-        .eq('user_id', userId);
-
-      if (!userSessions || userSessions.length === 0) return null;
-
-      const userTime = userSessions.reduce((sum, s) => sum + s.duration_seconds, 0);
-
-      const { data: allSessions } = await this.supabase
-        
-        .from('book_reading_sessions')
-        .select('duration_seconds, user_id')
-        .eq('book_id', bookId)
-        .not('user_id', 'is', null);
-
-      if (!allSessions || allSessions.length === 0) return null;
-
-      const userTotals = new Map<string, number>();
-      allSessions.forEach(s => {
-        const current = userTotals.get(s.user_id) || 0;
-        userTotals.set(s.user_id, current + s.duration_seconds);
-      });
-
-      const times = Array.from(userTotals.values()).sort((a, b) => a - b);
-      const avgTime = times.reduce((sum, t) => sum + t, 0) / times.length;
-
-      const fasterThanCount = times.filter(t => t > userTime).length;
-      const percentile = (fasterThanCount / times.length) * 100;
-
-      let speedRank: string;
-      if (percentile >= 90) speedRank = 'Muy rápido';
-      else if (percentile >= 70) speedRank = 'Rápido';
-      else if (percentile >= 30) speedRank = 'Promedio';
-      else if (percentile >= 10) speedRank = 'Lento';
-      else speedRank = 'Muy lento';
-
-      return {
-        userTime,
-        avgTime,
-        percentile,
-        isFasterThanAverage: userTime < avgTime,
-        speedRank,
-      };
-
-    } catch (error: any) {
-      console.error('❌ Error comparando tiempos:', error.message || error);
       return null;
     }
   }
