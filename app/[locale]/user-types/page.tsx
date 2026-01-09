@@ -1,73 +1,56 @@
+/**
+ * ============================================
+ * ARCHIVO 8: app/[locale]/user-types/page.tsx
+ * ✅ ARQUITECTURA LIMPIA COMPLETA
+ * ============================================
+ */
+
 'use client';
-import React, { useState, useEffect } from "react";
-import TiposUsuariosList from '@/src/components/user-types/TiposUsuariosList';
-import { UserType } from '@/src/components/user-types/types';
-import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
-import ModalNuevoTipo from "@/src/components/user-types/ModalNuevoTipo";
-import ModalEditarTipo from "@/src/components/user-types/ModalEditarTipo";
-import ModalEliminarTipo from "@/src/components/user-types/ModalEliminarTipo";
-export default function Page() {
-  const [tipos, setTipos] = useState<UserType[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  
-  // Estados de los modales
+
+import React, { useState } from 'react';
+import UnifiedLayout from '@/src/components/nav/UnifiedLayout';
+import { useUserTypes } from '@/src/presentation/features/user-types/hooks/useUserTypes';
+import {
+  UserTypesList,
+  CreateUserTypeModal,
+  EditUserTypeModal,
+  DeleteUserTypeModal,
+} from '@/src/presentation/features/user-types/components';
+import { UserType } from '@/src/core/domain/entities/UserType';
+
+export default function UserTypesPage() {
+  const {
+    userTypes,
+    loading,
+    error,
+    createUserType,
+    updateUserType,
+    deleteUserType,
+    refresh,
+  } = useUserTypes();
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedTipo, setSelectedTipo] = useState<UserType | null>(null);
+  const [selectedUserType, setSelectedUserType] = useState<UserType | null>(null);
 
-  const fetchTipos = async () => {
-    try {
-      const res = await fetch(`/api/users/usertypes`, {
-        method: 'GET',
-        cache: 'no-store',
-      });
-
-      if (!res.ok) {
-        throw new Error(`Error ${res.status}: No se pudieron cargar los tipos de usuario`);
-      }
-
-      const data: UserType[] = await res.json();
-      setTipos(data);
-    } catch (err: any) {
-      setError(err.message || "Error inesperado");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTipos();
-  }, []);
-
-  // Handlers para los modales
-  const handleOpenEditModal = (tipo: UserType) => {
-    setSelectedTipo(tipo);
+  const handleOpenEdit = (userType: UserType) => {
+    setSelectedUserType(userType);
     setShowEditModal(true);
   };
 
-  const handleOpenDeleteModal = (tipo: UserType) => {
-    setSelectedTipo(tipo);
+  const handleOpenDelete = (userType: UserType) => {
+    setSelectedUserType(userType);
     setShowDeleteModal(true);
-  };
-
-  const handleCreated = () => {
-    fetchTipos();
-  };
-
-  const handleUpdated = () => {
-    fetchTipos();
-  };
-
-  const handleDeleted = () => {
-    fetchTipos();
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-lg font-medium text-slate-600">Cargando...</div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+          <p className="text-lg font-medium text-slate-600">Cargando tipos de usuario...</p>
+        </div>
       </div>
     );
   }
@@ -75,10 +58,10 @@ export default function Page() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-screen text-red-600">
-        <p className="text-lg font-medium">{error}</p>
+        <p className="text-lg font-medium mb-4">{error}</p>
         <button
-          onClick={() => window.location.reload()}
-          className="mt-4 px-5 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors cursor-pointer"
+          onClick={refresh}
+          className="px-5 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-semibold"
         >
           Reintentar
         </button>
@@ -94,40 +77,37 @@ export default function Page() {
       }
       mainClassName="h-full w-full flex flex-col bg-gradient-to-b from-blue-400 via-blue-300 to-green-300 p-2 sm:p-4 lg:p-6"
     >
-      <TiposUsuariosList
-        tipos={tipos}
-        onOpenCreateModal={() => setShowCreateModal(true)}
-        onOpenEditModal={handleOpenEditModal}
-        onOpenDeleteModal={handleOpenDeleteModal}
+      <UserTypesList
+        userTypes={userTypes}
+        onOpenCreate={() => setShowCreateModal(true)}
+        onOpenEdit={handleOpenEdit}
+        onOpenDelete={handleOpenDelete}
       />
 
-      {/* Modal Crear */}
-      <ModalNuevoTipo
+      <CreateUserTypeModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onCreated={handleCreated}
+        onCreate={createUserType}
       />
 
-      {/* Modal Editar */}
-      <ModalEditarTipo
+      <EditUserTypeModal
         isOpen={showEditModal}
         onClose={() => {
           setShowEditModal(false);
-          setSelectedTipo(null);
+          setSelectedUserType(null);
         }}
-        onUpdated={handleUpdated}
-        tipo={selectedTipo}
+        onUpdate={updateUserType}
+        userType={selectedUserType}
       />
 
-      {/* Modal Eliminar */}
-      <ModalEliminarTipo
+      <DeleteUserTypeModal
         isOpen={showDeleteModal}
         onClose={() => {
           setShowDeleteModal(false);
-          setSelectedTipo(null);
+          setSelectedUserType(null);
         }}
-        onDeleted={handleDeleted}
-        tipo={selectedTipo}
+        onDelete={deleteUserType}
+        userType={selectedUserType}
       />
     </UnifiedLayout>
   );
