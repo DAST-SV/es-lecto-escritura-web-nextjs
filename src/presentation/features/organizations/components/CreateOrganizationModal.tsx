@@ -1,24 +1,16 @@
 // ============================================
 // src/presentation/features/organizations/components/CreateOrganizationModal.tsx
-// ✅ VERSIÓN CORREGIDA - SIN ERRORES
+// ✅ CORREGIDO: Regex pattern y validación
 // ============================================
 
 'use client';
 
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { OrganizationType } from '@/src/core/domain/entities/Organization';
-
-// ✅ DECLARAR AQUÍ (no importar desde otro archivo)
-const organizationTypeLabels: Record<OrganizationType, string> = {
-  educational_institution: '🏫 Institución Educativa',
-  family: '👨‍👩‍👧‍👦 Familia',
-  group: '👥 Grupo',
-  couple: '💑 Pareja',
-  individual: '👤 Individual',
-  library: '📚 Biblioteca',
-  community_center: '🏢 Centro Comunitario',
-};
+import { 
+  OrganizationType, 
+  organizationTypeLabels 
+} from '@/src/core/domain/entities/Organization';
 
 interface CreateOrganizationModalProps {
   isOpen: boolean;
@@ -64,9 +56,11 @@ export function CreateOrganizationModal({
   const generateSlug = (name: string) => {
     return name
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Quitar acentos
+      .replace(/[^a-z0-9\s-]/g, '') // Solo letras, números, espacios y guiones
+      .replace(/\s+/g, '-') // Espacios a guiones
+      .replace(/-+/g, '-') // Múltiples guiones a uno
+      .replace(/^-|-$/g, '') // Quitar guiones al inicio/final
       .trim();
   };
 
@@ -78,10 +72,28 @@ export function CreateOrganizationModal({
     }));
   };
 
+  const validateSlug = (slug: string): boolean => {
+    // Validar: solo letras minúsculas, números y guiones
+    return /^[a-z0-9]+([a-z0-9-]*[a-z0-9]+)?$/.test(slug);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Validaciones adicionales
+    if (!validateSlug(formData.slug)) {
+      setError('El slug solo puede contener letras minúsculas, números y guiones (sin espacios)');
+      setLoading(false);
+      return;
+    }
+
+    if (formData.slug.length < 3) {
+      setError('El slug debe tener al menos 3 caracteres');
+      setLoading(false);
+      return;
+    }
 
     try {
       await onCreate({
@@ -133,7 +145,6 @@ export function CreateOrganizationModal({
               required
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             >
-              {/* ✅ CORREGIDO: Usar Object.entries correctamente */}
               {(Object.entries(organizationTypeLabels) as [OrganizationType, string][]).map(([key, label]) => (
                 <option key={key} value={key}>
                   {label}
@@ -158,7 +169,7 @@ export function CreateOrganizationModal({
             />
           </div>
 
-          {/* Slug */}
+          {/* Slug - SIN PATTERN ATTRIBUTE */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Slug (URL) <span className="text-red-500">*</span>
@@ -166,12 +177,18 @@ export function CreateOrganizationModal({
             <input
               type="text"
               value={formData.slug}
-              onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
+              onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value.toLowerCase() }))}
               required
-              pattern="^[a-z0-9-]+$"
+              minLength={3}
+              maxLength={100}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
-            <p className="text-xs text-slate-500 mt-1">Solo letras minúsculas, números y guiones</p>
+            <p className="text-xs text-slate-500 mt-1">
+              Solo letras minúsculas, números y guiones (sin espacios). Ejemplo: mi-organizacion-2024
+            </p>
+            {formData.slug && !validateSlug(formData.slug) && (
+              <p className="text-xs text-red-500 mt-1">⚠️ Slug inválido</p>
+            )}
           </div>
 
           {/* Description */}

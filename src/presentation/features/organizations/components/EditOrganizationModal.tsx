@@ -1,20 +1,16 @@
 // ============================================
-// src/presentation/features/organizations/components/EditOrganizationModal.tsx
+// EditOrganizationModal.tsx
+// ✅ ARCHIVO SEPARADO PARA CLARIDAD
 // ============================================
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { Organization, OrganizationType } from '@/src/core/domain/entities/Organization';
-
-const organizationTypeLabels: Record<OrganizationType, string> = {
-  educational_institution: '🏫 Institución Educativa',
-  family: '👨‍👩‍👧‍👦 Familia',
-  group: '👥 Grupo',
-  couple: '💑 Pareja',
-  individual: '👤 Individual',
-  library: '📚 Biblioteca',
-  community_center: '🏢 Centro Comunitario',
-};
+import { Search, Building2, Users, Plus, Edit2, Trash2, Shield } from 'lucide-react';
+import { 
+  Organization, 
+  OrganizationType,
+  organizationTypeLabels 
+} from '@/src/core/domain/entities/Organization';
 
 interface EditOrganizationModalProps {
   isOpen: boolean;

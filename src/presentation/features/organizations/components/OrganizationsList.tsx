@@ -1,24 +1,17 @@
 // ============================================
 // src/presentation/features/organizations/components/OrganizationsList.tsx
-// ✅ VERSIÓN CORREGIDA - SIN ERRORES
+// ✅ CORREGIDO: Importar desde entities
 // ============================================
 
 'use client';
 
 import React, { useState } from 'react';
 import { Search, Building2, Users, Plus, Edit2, Trash2, Shield } from 'lucide-react';
-import { Organization, OrganizationType } from '@/src/core/domain/entities/Organization';
-
-// ✅ DECLARAR AQUÍ
-const organizationTypeLabels: Record<OrganizationType, string> = {
-  educational_institution: '🏫 Institución Educativa',
-  family: '👨‍👩‍👧‍👦 Familia',
-  group: '👥 Grupo',
-  couple: '💑 Pareja',
-  individual: '👤 Individual',
-  library: '📚 Biblioteca',
-  community_center: '🏢 Centro Comunitario',
-};
+import { 
+  Organization, 
+  OrganizationType,
+  organizationTypeLabels 
+} from '@/src/core/domain/entities/Organization';
 
 interface OrganizationsListProps {
   organizations: Organization[];
@@ -146,7 +139,6 @@ function OrganizationCard({ organization, onEdit, onDelete, onViewMembers }: Org
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="font-bold text-slate-800 text-lg">{organization.name}</h3>
-            {/* ✅ CORREGIDO: Eliminar prop 'title' */}
             {organization.isVerified && (
               <Shield className="w-4 h-4 text-emerald-600" />
             )}

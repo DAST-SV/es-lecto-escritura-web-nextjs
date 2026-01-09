@@ -1,5 +1,6 @@
 // ============================================
-// 2. src/core/domain/repositories/IUserTypeRepository.ts
+// src/core/domain/repositories/IUserTypeRepository.ts
+// ✅ CORREGIDO: Cambiar 'nombre' por 'name'
 // ============================================
 
 import { UserType } from '../entities/UserType';
@@ -7,8 +8,8 @@ import { UserType } from '../entities/UserType';
 export interface IUserTypeRepository {
   findAll(): Promise<UserType[]>;
   findById(id: number): Promise<UserType | null>;
-  create(data: { nombre: string; descripcion: string | null }): Promise<UserType>;
-  update(id: number, data: { nombre: string; descripcion: string | null }): Promise<UserType>;
+  create(data: { name: string; description: string | null }): Promise<UserType>;
+  update(id: number, data: { name: string; description: string | null }): Promise<UserType>;
   delete(id: number): Promise<void>;
-  existsByName(nombre: string, excludeId?: number): Promise<boolean>;
+  existsByName(name: string, excludeId?: number): Promise<boolean>;
 }

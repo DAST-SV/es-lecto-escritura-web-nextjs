@@ -1,6 +1,6 @@
 // ============================================
 // src/core/domain/entities/Organization.ts
-// ✅ NUEVA ENTIDAD: Reemplaza UserType
+// ✅ CORREGIDO: Sincronizado con 01_app.sql
 // ============================================
 
 export type OrganizationType = 
@@ -28,6 +28,36 @@ export type MembershipStatus =
   | 'suspended'
   | 'pending'
   | 'expired';
+
+// ✅ LABELS para UI
+export const organizationTypeLabels: Record<OrganizationType, string> = {
+  educational_institution: '🏫 Institución Educativa',
+  family: '👨‍👩‍👧‍👦 Familia',
+  group: '👥 Grupo',
+  couple: '💑 Pareja',
+  individual: '👤 Individual',
+  library: '📚 Biblioteca',
+  community_center: '🏢 Centro Comunitario',
+};
+
+export const userRoleLabels: Record<UserRole, string> = {
+  super_admin: '👑 Super Admin',
+  org_admin: '⭐ Administrador',
+  teacher: '👨‍🏫 Docente',
+  parent: '👨‍👩‍👧 Padre/Tutor',
+  student: '🎓 Estudiante',
+  reader: '📖 Lector',
+  librarian: '📚 Bibliotecario',
+  coordinator: '🎯 Coordinador',
+};
+
+export const membershipStatusLabels: Record<MembershipStatus, string> = {
+  active: '✅ Activo',
+  inactive: '⏸️ Inactivo',
+  suspended: '🚫 Suspendido',
+  pending: '⏳ Pendiente',
+  expired: '⌛ Expirado',
+};
 
 export class Organization {
   constructor(
@@ -148,7 +178,7 @@ export class Organization {
       this.timezone,
       this.maxMembers,
       this.settings,
-      false, // isActive = false
+      false,
       this.isVerified,
       this.verifiedAt,
       this.logoUrl,
@@ -156,7 +186,7 @@ export class Organization {
       this.createdBy,
       this.createdAt,
       new Date(),
-      new Date() // deletedAt = now
+      new Date()
     );
   }
 
@@ -381,7 +411,7 @@ export class OrganizationMember {
       new Date(),
       invitedBy || null,
       crypto.randomUUID(),
-      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 días
+      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       new Date(),
       new Date(),
       null

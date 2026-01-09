@@ -1,28 +1,28 @@
-/**
- * ============================================
- * ARCHIVO 4: src/presentation/features/user-types/components/CreateUserTypeModal.tsx
- * ============================================
- */
+// ============================================
+// src/presentation/features/user-types/components/CreateUserTypeModal.tsx
+// ✅ CORREGIDO: 'name' en lugar de 'nombre'
+// ============================================
 
 import { useState } from 'react';
+import { X } from 'lucide-react';
 
 interface CreateUserTypeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (data: { nombre: string; descripcion: string | null }) => Promise<void>;
+  onCreate: (data: { name: string; description: string | null }) => Promise<void>;
 }
 
 export function CreateUserTypeModal({ isOpen, onClose, onCreate }: CreateUserTypeModalProps) {
-  const [nombre, setNombre] = useState('');
-  const [descripcion, setDescripcion] = useState('');
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   if (!isOpen) return null;
 
   const handleClose = () => {
-    setNombre('');
-    setDescripcion('');
+    setName('');
+    setDescription('');
     setError('');
     onClose();
   };
@@ -33,7 +33,7 @@ export function CreateUserTypeModal({ isOpen, onClose, onCreate }: CreateUserTyp
     setError('');
 
     try {
-      await onCreate({ nombre, descripcion: descripcion || null });
+      await onCreate({ name, description: description || null });
       handleClose();
     } catch (err: any) {
       setError(err.message);
@@ -45,7 +45,12 @@ export function CreateUserTypeModal({ isOpen, onClose, onCreate }: CreateUserTyp
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
-        <h2 className="text-xl font-bold text-slate-800 mb-4">Nuevo Tipo de Usuario</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-slate-800">Nuevo Tipo de Usuario</h2>
+          <button onClick={handleClose} className="p-1 hover:bg-slate-100 rounded">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -60,8 +65,8 @@ export function CreateUserTypeModal({ isOpen, onClose, onCreate }: CreateUserTyp
             </label>
             <input
               type="text"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               required
               minLength={3}
               maxLength={50}
@@ -72,10 +77,10 @@ export function CreateUserTypeModal({ isOpen, onClose, onCreate }: CreateUserTyp
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Descripción</label>
             <textarea
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              maxLength={200}
+              maxLength={500}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none resize-none"
             />
           </div>

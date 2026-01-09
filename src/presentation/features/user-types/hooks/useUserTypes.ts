@@ -1,5 +1,6 @@
 // ============================================
-// 11. src/presentation/features/user-types/hooks/useUserTypes.ts
+// src/presentation/features/user-types/hooks/useUserTypes.ts
+// ✅ CORREGIDO: Usar 'name' en lugar de 'nombre'
 // ============================================
 
 import { useState, useEffect } from 'react';
@@ -26,32 +27,55 @@ export function useUserTypes() {
       const useCase = new GetAllUserTypesUseCase(repository);
       const result = await useCase.execute();
       setUserTypes(result);
+      console.log('✅ Tipos de usuario cargados:', result);
     } catch (err: any) {
+      console.error('❌ Error al cargar tipos de usuario:', err);
       setError(err.message || 'Error al cargar tipos de usuario');
     } finally {
       setLoading(false);
     }
   };
 
-  const createUserType = async (data: { nombre: string; descripcion: string | null }) => {
-    const useCase = new CreateUserTypeUseCase(repository);
-    await useCase.execute(data);
-    await fetchUserTypes();
+  const createUserType = async (data: { name: string; description: string | null }) => {
+    try {
+      console.log('📝 Creando tipo de usuario:', data);
+      const useCase = new CreateUserTypeUseCase(repository);
+      await useCase.execute(data);
+      await fetchUserTypes();
+      console.log('✅ Tipo de usuario creado exitosamente');
+    } catch (err: any) {
+      console.error('❌ Error al crear tipo de usuario:', err);
+      throw err;
+    }
   };
 
   const updateUserType = async (
     id: number,
-    data: { nombre: string; descripcion: string | null }
+    data: { name: string; description: string | null }
   ) => {
-    const useCase = new UpdateUserTypeUseCase(repository);
-    await useCase.execute(id, data);
-    await fetchUserTypes();
+    try {
+      console.log('📝 Actualizando tipo de usuario:', id, data);
+      const useCase = new UpdateUserTypeUseCase(repository);
+      await useCase.execute(id, data);
+      await fetchUserTypes();
+      console.log('✅ Tipo de usuario actualizado exitosamente');
+    } catch (err: any) {
+      console.error('❌ Error al actualizar tipo de usuario:', err);
+      throw err;
+    }
   };
 
   const deleteUserType = async (id: number) => {
-    const useCase = new DeleteUserTypeUseCase(repository);
-    await useCase.execute(id);
-    await fetchUserTypes();
+    try {
+      console.log('🗑️ Eliminando tipo de usuario:', id);
+      const useCase = new DeleteUserTypeUseCase(repository);
+      await useCase.execute(id);
+      await fetchUserTypes();
+      console.log('✅ Tipo de usuario eliminado exitosamente');
+    } catch (err: any) {
+      console.error('❌ Error al eliminar tipo de usuario:', err);
+      throw err;
+    }
   };
 
   useEffect(() => {

@@ -13,9 +13,10 @@ import {
   AddMemberUseCase,
   RemoveMemberUseCase,
   UpdateMemberRoleUseCase,
+  UpdateOrganizationDTO,
+  CreateOrganizationDTO,
 } from '@/src/core/application/use-cases/organizations';
-import { Organization, OrganizationType, UserRole } from '@/src/core/domain/entities/Organization';
-import type { CreateOrganizationDTO, UpdateOrganizationDTO } from '@/src/core/application/use-cases/organizations/CreateOrganization.usecase';
+import { Organization, UserRole } from '@/src/core/domain/entities/Organization';
 
 const repository = new SupabaseOrganizationRepository();
 

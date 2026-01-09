@@ -1,9 +1,7 @@
-/**
- * ============================================
- * ARCHIVO 3: src/presentation/features/user-types/components/UserTypesList.tsx
- * ✅ Componente de lista (refactorizado)
- * ============================================
- */
+// ============================================
+// src/presentation/features/user-types/components/UserTypesList.tsx
+// ✅ CORREGIDO: Cambiar 'nombre' por 'name'
+// ============================================
 
 import React, { useState } from 'react';
 import { Search, Edit2, Trash2, Plus, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -27,8 +25,8 @@ export function UserTypesList({
   const [currentPage, setCurrentPage] = useState(1);
 
   const filteredData = userTypes.filter(item =>
-    item.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.descripcion && item.descripcion.toLowerCase().includes(searchTerm.toLowerCase()))
+    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -97,6 +95,9 @@ export function UserTypesList({
               <th className="px-4 py-2 text-center font-bold text-slate-700 text-xs uppercase border border-gray-300">
                 Descripción
               </th>
+              <th className="px-4 py-2 text-center font-bold text-slate-700 text-xs uppercase border border-gray-300 w-32">
+                Estado
+              </th>
               <th className="px-4 py-2 text-center font-bold text-slate-700 text-xs uppercase border border-gray-300 w-24">
                 Acciones
               </th>
@@ -110,10 +111,21 @@ export function UserTypesList({
                     {tipo.id}
                   </td>
                   <td className="px-4 py-2 font-semibold text-slate-800 text-xs text-center border border-gray-300">
-                    {tipo.nombre}
+                    {tipo.name}
                   </td>
                   <td className="px-4 py-2 text-slate-600 text-xs text-center border border-gray-300">
-                    {tipo.descripcion || 'Sin descripción'}
+                    {tipo.description || 'Sin descripción'}
+                  </td>
+                  <td className="px-4 py-2 border border-gray-300">
+                    <div className="flex justify-center">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        tipo.isActive 
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        {tipo.isActive ? '✅ Activo' : '⏸️ Inactivo'}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-4 py-2 border border-gray-300">
                     <div className="flex gap-1.5 justify-center">
@@ -137,7 +149,7 @@ export function UserTypesList({
               ))
             ) : (
               <tr>
-                <td colSpan={4} className="px-3 py-8 text-center">
+                <td colSpan={5} className="px-3 py-8 text-center">
                   <div className="text-4xl mb-2">🔍</div>
                   <p className="text-sm font-bold text-slate-400">No se encontraron resultados</p>
                 </td>

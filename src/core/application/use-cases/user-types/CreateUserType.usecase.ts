@@ -1,5 +1,6 @@
 // ============================================
-// 5. src/core/application/use-cases/user-types/CreateUserType.usecase.ts
+// src/core/application/use-cases/user-types/CreateUserType.usecase.ts
+// ✅ CORREGIDO
 // ============================================
 
 import { IUserTypeRepository } from '@/src/core/domain/repositories/IUserTypeRepository';
@@ -8,17 +9,17 @@ import { UserType } from '@/src/core/domain/entities/UserType';
 export class CreateUserTypeUseCase {
   constructor(private repository: IUserTypeRepository) {}
 
-  async execute(data: { nombre: string; descripcion: string | null }): Promise<UserType> {
-    const userType = UserType.create(data.nombre, data.descripcion);
+  async execute(data: { name: string; description: string | null }): Promise<UserType> {
+    const userType = UserType.create(data.name, data.description);
 
-    const exists = await this.repository.existsByName(data.nombre);
+    const exists = await this.repository.existsByName(data.name);
     if (exists) {
-      throw new Error(`Ya existe un tipo de usuario con el nombre "${data.nombre}"`);
+      throw new Error(`Ya existe un tipo de usuario con el nombre "${data.name}"`);
     }
 
     return await this.repository.create({
-      nombre: userType.nombre,
-      descripcion: userType.descripcion
+      name: userType.name,
+      description: userType.description
     });
   }
 }

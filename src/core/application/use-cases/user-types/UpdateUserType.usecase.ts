@@ -1,16 +1,17 @@
 // ============================================
-// 6. src/core/application/use-cases/user-types/UpdateUserType.usecase.ts
+// src/core/application/use-cases/user-types/UpdateUserType.usecase.ts
+// ✅ CORREGIDO
 // ============================================
 
-import { IUserTypeRepository } from '@/src/core/domain/repositories/IUserTypeRepository';
-import { UserType } from '@/src/core/domain/entities/UserType';
+import { UserType } from "@/src/core/domain/entities/UserType";
+import { IUserTypeRepository } from "@/src/core/domain/repositories/IUserTypeRepository";
 
 export class UpdateUserTypeUseCase {
   constructor(private repository: IUserTypeRepository) {}
 
   async execute(
     id: number,
-    data: { nombre: string; descripcion: string | null }
+    data: { name: string; description: string | null }
   ): Promise<UserType> {
     if (!id || id <= 0) {
       throw new Error('ID inválido');
@@ -23,14 +24,14 @@ export class UpdateUserTypeUseCase {
 
     const updated = existing.update(data);
 
-    const nameExists = await this.repository.existsByName(data.nombre, id);
+    const nameExists = await this.repository.existsByName(data.name, id);
     if (nameExists) {
-      throw new Error(`Ya existe otro tipo de usuario con el nombre "${data.nombre}"`);
+      throw new Error(`Ya existe otro tipo de usuario con el nombre "${data.name}"`);
     }
 
     return await this.repository.update(id, {
-      nombre: updated.nombre,
-      descripcion: updated.descripcion
+      name: updated.name,
+      description: updated.description
     });
   }
 }
