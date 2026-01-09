@@ -1,6 +1,6 @@
 // ============================================
 // src/presentation/features/user-types/hooks/useUserTypes.ts
-// ✅ CORREGIDO: Usar 'name' en lugar de 'nombre'
+// ✅ CON RESTORE
 // ============================================
 
 import { useState, useEffect } from 'react';
@@ -11,6 +11,7 @@ import {
   UpdateUserTypeUseCase,
   DeleteUserTypeUseCase,
 } from '@/src/core/application/use-cases/user-types';
+import { RestoreUserTypeUseCase } from '@/src/core/application/use-cases/user-types/RestoreUserType.usecase';
 import { UserType } from '@/src/core/domain/entities/UserType';
 
 const repository = new SupabaseUserTypeRepository();
@@ -67,13 +68,38 @@ export function useUserTypes() {
 
   const deleteUserType = async (id: number) => {
     try {
-      console.log('🗑️ Eliminando tipo de usuario:', id);
+      console.log('🗑️ Eliminando tipo de usuario (soft delete):', id);
       const useCase = new DeleteUserTypeUseCase(repository);
       await useCase.execute(id);
       await fetchUserTypes();
-      console.log('✅ Tipo de usuario eliminado exitosamente');
+      console.log('✅ Tipo de usuario eliminado (soft delete)');
     } catch (err: any) {
       console.error('❌ Error al eliminar tipo de usuario:', err);
+      throw err;
+    }
+  };
+
+  const restoreUserType = async (id: number) => {
+    try {
+      console.log('♻️ Restaurando tipo de usuario:', id);
+      const useCase = new RestoreUserTypeUseCase(repository);
+      await useCase.execute(id);
+      await fetchUserTypes();
+      console.log('✅ Tipo de usuario restaurado exitosamente');
+    } catch (err: any) {
+      console.error('❌ Error al restaurar tipo de usuario:', err);
+      throw err;
+    }
+  };
+
+  const hardDeleteUserType = async (id: number) => {
+    try {
+      console.log('🗑️ Eliminando tipo de usuario PERMANENTEMENTE:', id);
+      await repository.hardDelete(id);
+      await fetchUserTypes();
+      console.log('✅ Tipo de usuario eliminado permanentemente');
+    } catch (err: any) {
+      console.error('❌ Error al eliminar permanentemente:', err);
       throw err;
     }
   };
@@ -89,6 +115,8 @@ export function useUserTypes() {
     createUserType,
     updateUserType,
     deleteUserType,
+    restoreUserType,
+    hardDeleteUserType,
     refresh: fetchUserTypes,
   };
 }

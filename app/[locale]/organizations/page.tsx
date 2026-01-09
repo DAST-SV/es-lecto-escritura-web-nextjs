@@ -1,6 +1,6 @@
 // ============================================
 // app/[locale]/organizations/page.tsx
-// ✅ PÁGINA COMPLETA CON CLEAN ARCHITECTURE
+// ✅ CON LAYOUT 100VH PERFECTO
 // ============================================
 
 'use client';
@@ -10,15 +10,15 @@ import { useRouter } from 'next/navigation';
 import UnifiedLayout from '@/src/components/nav/UnifiedLayout';
 import { useOrganizations } from '@/src/presentation/features/organizations/hooks/useOrganizations';
 import {
-  OrganizationsList,
   CreateOrganizationModal,
   EditOrganizationModal,
   DeleteOrganizationModal,
   MembersModal,
 } from '@/src/presentation/features/organizations/components';
-import { Organization } from '@/src/core/domain/entities/Organization';
+import { Organization, organizationTypeLabels } from '@/src/core/domain/entities/Organization';
 import { createClient } from '@/src/utils/supabase/client';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { DataTable, Column } from '@/src/presentation/components/shared/DataTable';
+import { Loader2, AlertCircle, Users, Shield } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function OrganizationsPage() {
@@ -142,6 +142,90 @@ export default function OrganizationsPage() {
     }
   };
 
+  // Columnas para la tabla
+  const columns: Column<Organization>[] = [
+    {
+      key: 'name',
+      label: 'Nombre',
+      render: (item) => (
+        <div className="flex items-center gap-2">
+          <div>
+            <div className="flex items-center gap-1">
+              <span className="font-semibold text-slate-800">{item.name}</span>
+              {item.isVerified && <Shield className="w-3 h-3 text-emerald-600" />}
+            </div>
+            <span className="text-xs text-slate-500">@{item.slug}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'type',
+      label: 'Tipo',
+      width: '200px',
+      align: 'center',
+      render: (item) => (
+        <span className="inline-block px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">
+          {organizationTypeLabels[item.organizationType]}
+        </span>
+      ),
+    },
+    {
+      key: 'contact',
+      label: 'Contacto',
+      align: 'center',
+      render: (item) => (
+        <div className="text-xs text-slate-600">
+          {item.email && <div>✉️ {item.email}</div>}
+          {item.phone && <div>📞 {item.phone}</div>}
+          {!item.email && !item.phone && <span className="text-slate-400">Sin datos</span>}
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      label: 'Estado',
+      width: '100px',
+      align: 'center',
+      render: (item) => (
+        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+          item.isActive 
+            ? 'bg-emerald-100 text-emerald-700' 
+            : 'bg-slate-100 text-slate-500'
+        }`}>
+          {item.isActive ? 'Activa' : 'Inactiva'}
+        </span>
+      ),
+    },
+    {
+      key: 'members',
+      label: 'Miembros',
+      width: '100px',
+      align: 'center',
+      render: (item) => (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleViewMembers(item);
+          }}
+          className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors text-xs font-medium flex items-center gap-1 mx-auto"
+        >
+          <Users className="w-3 h-3" />
+          Ver
+        </button>
+      ),
+    },
+  ];
+
+  // Función de búsqueda
+  const handleSearch = (term: string) => {
+    return organizations.filter(org =>
+      org.name.toLowerCase().includes(term.toLowerCase()) ||
+      org.slug.toLowerCase().includes(term.toLowerCase()) ||
+      (org.description && org.description.toLowerCase().includes(term.toLowerCase()))
+    );
+  };
+
   // Loading user
   if (isLoadingUser) {
     return (
@@ -199,12 +283,18 @@ export default function OrganizationsPage() {
     >
       <Toaster position="top-right" />
       
-      <OrganizationsList
-        organizations={organizations}
-        onOpenCreate={() => setShowCreateModal(true)}
-        onOpenEdit={handleOpenEdit}
-        onOpenDelete={handleOpenDelete}
-        onViewMembers={handleViewMembers}
+      <DataTable
+        title="Organizaciones"
+        data={organizations}
+        columns={columns}
+        onSearch={handleSearch}
+        onEdit={handleOpenEdit}
+        onDelete={handleOpenDelete}
+        onCreate={() => setShowCreateModal(true)}
+        getItemKey={(item) => item.id}
+        isDeleted={(item) => !!item.deletedAt}
+        showTrash={true}
+        createButtonText="Nueva Organización"
       />
 
       {userId && (

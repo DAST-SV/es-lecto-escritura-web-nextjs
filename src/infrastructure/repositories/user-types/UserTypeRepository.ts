@@ -1,6 +1,6 @@
 // ============================================
 // src/infrastructure/repositories/user-types/UserTypeRepository.ts
-// ✅ CORREGIDO: Sincronizado con SQL (user_types table)
+// ✅ CON SOFT DELETE Y RESTORE
 // ============================================
 
 import { supabaseAdmin } from '@/src/utils/supabase/admin';
@@ -10,7 +10,7 @@ import { UserType } from '@/src/core/domain/entities/UserType';
 export class SupabaseUserTypeRepository implements IUserTypeRepository {
   
   async findAll(): Promise<UserType[]> {
-    console.log('🔍 Listando tipos de usuario');
+    console.log('🔍 Listando tipos de usuario (incluyendo eliminados)');
 
     const { data, error } = await supabaseAdmin
       .schema('app')
@@ -61,7 +61,8 @@ export class SupabaseUserTypeRepository implements IUserTypeRepository {
         description: data.description,
         is_active: true,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        deleted_at: null
       })
       .select()
       .single();
@@ -103,7 +104,52 @@ export class SupabaseUserTypeRepository implements IUserTypeRepository {
   }
 
   async delete(id: number): Promise<void> {
-    console.log('🗑️ Eliminando tipo de usuario:', id);
+    console.log('🗑️ Eliminando tipo de usuario (soft delete):', id);
+
+    const { error } = await supabaseAdmin
+      .schema('app')
+      .from('user_types')
+      .update({
+        is_active: false,
+        deleted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('❌ Error al eliminar tipo de usuario:', error);
+      throw new Error(`Error al eliminar tipo de usuario: ${error.message}`);
+    }
+
+    console.log('✅ Tipo de usuario eliminado (soft delete)');
+  }
+
+  async restore(id: number): Promise<UserType> {
+    console.log('♻️ Restaurando tipo de usuario:', id);
+
+    const { data: restored, error } = await supabaseAdmin
+      .schema('app')
+      .from('user_types')
+      .update({
+        is_active: true,
+        deleted_at: null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Error al restaurar tipo de usuario:', error);
+      throw new Error(`Error al restaurar tipo de usuario: ${error.message}`);
+    }
+
+    console.log('✅ Tipo de usuario restaurado:', restored);
+    return UserType.fromDatabase(restored);
+  }
+
+  async hardDelete(id: number): Promise<void> {
+    console.log('🗑️ Eliminando tipo de usuario PERMANENTEMENTE:', id);
 
     const { error } = await supabaseAdmin
       .schema('app')
@@ -112,11 +158,11 @@ export class SupabaseUserTypeRepository implements IUserTypeRepository {
       .eq('id', id);
 
     if (error) {
-      console.error('❌ Error al eliminar tipo de usuario:', error);
-      throw new Error(`Error al eliminar tipo de usuario: ${error.message}`);
+      console.error('❌ Error al eliminar permanentemente:', error);
+      throw new Error(`Error al eliminar permanentemente: ${error.message}`);
     }
 
-    console.log('✅ Tipo de usuario eliminado');
+    console.log('✅ Tipo de usuario eliminado permanentemente');
   }
 
   async existsByName(name: string, excludeId?: number): Promise<boolean> {
@@ -126,7 +172,8 @@ export class SupabaseUserTypeRepository implements IUserTypeRepository {
       .schema('app')
       .from('user_types')
       .select('id', { count: 'exact', head: true })
-      .ilike('name', name);
+      .ilike('name', name)
+      .is('deleted_at', null);
 
     if (excludeId) {
       query = query.neq('id', excludeId);

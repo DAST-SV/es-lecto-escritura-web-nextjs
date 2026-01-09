@@ -1,16 +1,17 @@
 // ============================================
 // src/core/domain/entities/UserType.ts
-// ✅ CORREGIDO: Sincronizado con 01_app.sql (tabla user_types)
+// ✅ CON SOFT DELETE
 // ============================================
 
 export class UserType {
   constructor(
     public readonly id: number,
-    public readonly name: string, // ✅ Cambiado de 'nombre' a 'name'
+    public readonly name: string,
     public readonly description: string | null,
-    public readonly isActive: boolean, // ✅ Agregado
+    public readonly isActive: boolean,
     public readonly createdAt?: Date,
-    public readonly updatedAt?: Date
+    public readonly updatedAt?: Date,
+    public readonly deletedAt?: Date | null
   ) {
     this.validate();
   }
@@ -40,7 +41,32 @@ export class UserType {
       data.description ?? this.description,
       this.isActive,
       this.createdAt,
-      new Date()
+      new Date(),
+      this.deletedAt
+    );
+  }
+
+  public softDelete(): UserType {
+    return new UserType(
+      this.id,
+      this.name,
+      this.description,
+      false, // Marcar como inactivo
+      this.createdAt,
+      new Date(),
+      new Date() // Marcar fecha de eliminación
+    );
+  }
+
+  public restore(): UserType {
+    return new UserType(
+      this.id,
+      this.name,
+      this.description,
+      true, // Reactivar
+      this.createdAt,
+      new Date(),
+      null // Limpiar fecha de eliminación
     );
   }
 
@@ -51,7 +77,8 @@ export class UserType {
       description: this.description,
       is_active: this.isActive,
       created_at: this.createdAt,
-      updated_at: this.updatedAt
+      updated_at: this.updatedAt,
+      deleted_at: this.deletedAt
     };
   }
 
@@ -62,7 +89,8 @@ export class UserType {
       data.description,
       data.is_active ?? true,
       data.created_at ? new Date(data.created_at) : undefined,
-      data.updated_at ? new Date(data.updated_at) : undefined
+      data.updated_at ? new Date(data.updated_at) : undefined,
+      data.deleted_at ? new Date(data.deleted_at) : null
     );
   }
 

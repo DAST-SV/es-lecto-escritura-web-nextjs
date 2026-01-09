@@ -270,11 +270,33 @@ CREATE TABLE app.user_types (
     description TEXT,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ
 );
 
 -- Comentarios
 COMMENT ON TABLE app.user_types IS 'Tabla legacy de tipos de usuario (mantener para compatibilidad)';
+COMMENT ON COLUMN app.user_types.deleted_at IS 'Fecha de eliminación (soft delete)';
+
+-- Índices
+CREATE INDEX idx_user_types_deleted_at 
+ON app.user_types(deleted_at) 
+WHERE deleted_at IS NULL;
+
+-- Vistas
+CREATE OR REPLACE VIEW app.v_active_user_types AS
+SELECT 
+  id,
+  name,
+  description,
+  is_active,
+  created_at,
+  updated_at
+FROM app.user_types
+WHERE deleted_at IS NULL
+ORDER BY id;
+
+COMMENT ON VIEW app.v_active_user_types IS 'Vista de tipos de usuario activos (no eliminados)';
 
 -- ============================================================================
 -- TRIGGERS

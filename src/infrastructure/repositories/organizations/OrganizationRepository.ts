@@ -1,6 +1,6 @@
 // ============================================
 // src/infrastructure/repositories/organizations/OrganizationRepository.ts
-// ✅ CORREGIDO: Soft delete, filtros y sincronización con SQL
+// ✅ CORREGIDO: Query de findByUserId y soft delete completo
 // ============================================
 
 import { supabaseAdmin } from '@/src/utils/supabase/admin';
@@ -31,6 +31,22 @@ export class SupabaseOrganizationRepository implements IOrganizationRepository {
     }
 
     console.log('✅ Organización creada:', created);
+
+    // ✅ AGREGAR AUTOMÁTICAMENTE AL CREADOR COMO MIEMBRO
+    try {
+      const member = OrganizationMember.create(
+        created.id,
+        created.created_by,
+        'org_admin',
+        null
+      );
+
+      await this.addMember(member);
+      console.log('✅ Creador agregado como miembro admin');
+    } catch (memberError) {
+      console.error('⚠️ Error al agregar creador como miembro:', memberError);
+    }
+
     return Organization.fromDatabase(created);
   }
 
@@ -78,7 +94,6 @@ export class SupabaseOrganizationRepository implements IOrganizationRepository {
       throw new Error(`Error al buscar organización: ${error.message}`);
     }
 
-    // ✅ NO filtrar por deleted_at aquí - permitir ver eliminadas
     console.log('✅ Organización encontrada:', data);
     return data ? Organization.fromDatabase(data) : null;
   }
@@ -104,33 +119,43 @@ export class SupabaseOrganizationRepository implements IOrganizationRepository {
   async findByUserId(userId: string): Promise<Organization[]> {
     console.log('🔍 Buscando organizaciones del usuario:', userId);
 
-    // ✅ Query corregido con LEFT JOIN
-    const { data, error } = await supabaseAdmin
+    // ✅ QUERY CORREGIDO: Primero obtener IDs de organizaciones
+    const { data: memberData, error: memberError } = await supabaseAdmin
       .schema('app')
       .from('organization_members')
-      .select(`
-        organization_id,
-        organizations!inner (*)
-      `)
+      .select('organization_id')
       .eq('user_id', userId)
       .is('deleted_at', null);
 
-    if (error) {
-      console.error('❌ Error al buscar organizaciones del usuario:', error);
-      throw new Error(`Error al buscar organizaciones del usuario: ${error.message}`);
+    if (memberError) {
+      console.error('❌ Error al buscar membresías:', memberError);
+      throw new Error(`Error al buscar organizaciones del usuario: ${memberError.message}`);
     }
 
-    if (!data || data.length === 0) {
+    if (!memberData || memberData.length === 0) {
       console.log('⚠️ Usuario sin organizaciones');
       return [];
     }
 
-    console.log(`✅ ${data.length} organizaciones encontradas para el usuario`);
+    const orgIds = memberData.map(m => m.organization_id);
+    console.log('📋 IDs de organizaciones encontradas:', orgIds);
 
-    // ✅ Filtrar organizaciones que no estén eliminadas
-    return data
-      .filter((row: any) => row.organizations && !row.organizations.deleted_at)
-      .map((row: any) => Organization.fromDatabase(row.organizations));
+    // ✅ Ahora obtener las organizaciones completas
+    const { data: orgsData, error: orgsError } = await supabaseAdmin
+      .schema('app')
+      .from('organizations')
+      .select('*')
+      .in('id', orgIds)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
+
+    if (orgsError) {
+      console.error('❌ Error al obtener organizaciones:', orgsError);
+      throw new Error(`Error al obtener organizaciones: ${orgsError.message}`);
+    }
+
+    console.log(`✅ ${orgsData?.length || 0} organizaciones encontradas para el usuario`);
+    return (orgsData || []).map(Organization.fromDatabase);
   }
 
   async hardDelete(id: string): Promise<void> {
