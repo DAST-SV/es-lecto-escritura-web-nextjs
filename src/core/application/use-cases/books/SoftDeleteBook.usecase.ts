@@ -3,7 +3,7 @@
  * ✅ SOFT DELETE: Marca el libro como eliminado (deleted_at)
  */
 
-import { createClient } from '@/src/utils/supabase/client';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 
 export class SoftDeleteBookUseCase {
   static async execute(bookId: string): Promise<void> {

@@ -7,8 +7,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Search, ChevronLeft, ChevronRight, Info, X } from 'lucide-react';
-import { createClient } from '@/src/utils/supabase/client';
-
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 export interface CatalogItem {
   id: number;
   name: string;

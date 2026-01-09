@@ -24,7 +24,7 @@ import {
   BarChart3,
   BookMarked,
 } from 'lucide-react';
-import { createClient } from '@/src/utils/supabase/client';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 
 interface DashboardStats {
   // Libros

@@ -1,12 +1,12 @@
 // Importación de dependencias necesarias
 import { NextIntlClientProvider } from 'next-intl'; // Proveedor para la internacionalización
-import { routing } from '@/src/i18n/routing'; // Rutas de localización definidas en la aplicación
 import { notFound } from 'next/navigation'; // Función para redirigir a una página 404
 import { getTranslations, setRequestLocale } from 'next-intl/server'; // Funciones para obtener traducciones y establecer el locale
 import { Metadata } from 'next'; // Tipo para la metadata de la página
 import { ReactNode, Suspense } from 'react'; // Componentes de React para manejar la carga y los hijos
 import "../globals.css"; // Estilos globales de la aplicación
 import Loading from './loading';
+import { routing } from '@/src/infrastructure/config/routing.config';
 
 // Definición de las propiedades que recibe el layout
 interface LayoutProps {

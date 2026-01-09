@@ -24,7 +24,7 @@ import {
   AlertTriangle,
   Check,
 } from 'lucide-react';
-import { createClient } from '@/src/utils/supabase/client';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 import toast from 'react-hot-toast';
 
 interface AuditReport {

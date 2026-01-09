@@ -1,11 +1,9 @@
-// ============================================
-// 7. src/infrastructure/config/supabase.config.ts
-// ============================================
+// src/infrastructure/config/supabase.config.ts
 import { createBrowserClient } from '@supabase/ssr';
 import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
+// ✅ Cliente para browser (componentes cliente)
 export function createClient() {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,8 +11,13 @@ export function createClient() {
   );
 }
 
+// ✅ Cliente para servidor (Server Components/Actions)
+// IMPORTANTE: Esta función debe estar en un archivo separado o solo usarse en servidor
 export async function createServerSupabaseClient() {
+  // ❌ NO importar cookies aquí, hacerlo donde se use
+  const { cookies } = await import('next/headers');
   const cookieStore = await cookies();
+  
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
@@ -35,6 +38,7 @@ export async function createServerSupabaseClient() {
   );
 }
 
+// ✅ Admin client (solo servidor)
 export const supabaseAdmin = createSupabaseClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!

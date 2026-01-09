@@ -20,7 +20,7 @@ import {
   CheckSquare,
   Square
 } from 'lucide-react';
-import { createClient } from '@/src/utils/supabase/client';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 import { RestoreBookUseCase } from '@/src/core/application/use-cases/books/RestoreBook.usecase';
 import { HardDeleteBookUseCase } from '@/src/core/application/use-cases/books/HardDeleteBook.usecase';
 import { UnifiedLayout } from '@/src/presentation/features/navigation';

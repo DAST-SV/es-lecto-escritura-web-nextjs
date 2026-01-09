@@ -22,7 +22,7 @@ import {
   X,
   Archive
 } from 'lucide-react';
-import { createClient } from '@/src/utils/supabase/client';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 import { SoftDeleteBookUseCase } from '@/src/core/application/use-cases/books/SoftDeleteBook.usecase';
 import { UnifiedLayout } from '@/src/presentation/features/navigation';
 import toast, { Toaster } from 'react-hot-toast';

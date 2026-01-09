@@ -3,7 +3,8 @@
  * ✅ COMPLETO: Soporte para PDFs + Etiquetas + Todas las relaciones
  */
 
-import { supabaseAdmin } from '@/src/utils/supabase/admin';
+import { supabaseAdmin } from "../../config/supabase.config";
+
 
 interface PageData {
   layout: string;

@@ -3,9 +3,9 @@
 // ✅ CORREGIDO: Query de findByUserId y soft delete completo
 // ============================================
 
-import { supabaseAdmin } from '@/src/utils/supabase/admin';
 import { IOrganizationRepository } from '@/src/core/domain/repositories/IOrganizationRepository';
 import { Organization, OrganizationMember } from '@/src/core/domain/entities/Organization';
+import { supabaseAdmin } from '../../config/supabase.config';
 
 export class SupabaseOrganizationRepository implements IOrganizationRepository {
   

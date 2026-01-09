@@ -1,7 +1,9 @@
-// ============================================
-// 3. middleware.ts → src/infrastructure/middleware/i18n.middleware.ts
-// ============================================
 // middleware.ts (ROOT)
-import { middleware as i18nMiddleware } from '@/src/infrastructure/middleware/i18n.middleware';
-export { middleware } from '@/src/infrastructure/middleware/i18n.middleware';
-export { config } from '@/src/infrastructure/middleware/i18n.middleware';
+import { middleware } from '@/src/infrastructure/middleware/i18n.middleware';
+
+export { middleware };
+
+// ✅ Definir config directamente aquí (no re-exportar)
+export const config = {
+  matcher: ['/((?!api|_next|.*\\..*).*)']
+};

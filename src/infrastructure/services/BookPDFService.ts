@@ -3,7 +3,7 @@
  * ✅ Servicio para subir PDFs a Supabase Storage
  */
 
-import { createClient } from '@/src/utils/supabase/client';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 
 const BUCKET_NAME = 'book-pdfs';
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB

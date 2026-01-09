@@ -3,7 +3,7 @@
  * ✅ RESTORE: Restaura un libro de la papelera
  */
 
-import { createClient } from '@/src/utils/supabase/client';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 
 export class RestoreBookUseCase {
   static async execute(bookId: string): Promise<void> {

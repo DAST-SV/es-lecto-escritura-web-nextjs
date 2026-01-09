@@ -12,7 +12,7 @@ import {
   ArrowLeft, Loader2, Clock, TrendingUp, Users, Target,
   Zap, Calendar, Trophy, BarChart3
 } from 'lucide-react';
-import { createClient } from '@/src/utils/supabase/client';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 import { BookReadingAnalyticsService } from '@/src/infrastructure/services/BookReadingAnalytics.service';
 import { UnifiedLayout } from '@/src/presentation/features/navigation';
 

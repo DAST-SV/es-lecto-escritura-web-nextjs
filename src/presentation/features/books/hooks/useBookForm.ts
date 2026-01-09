@@ -8,13 +8,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { createClient } from '@/src/utils/supabase/client';
 import { BookPDFService } from '@/src/infrastructure/services/BookPDFService';
 import { BookImageService } from '@/src/infrastructure/services/BookImageService';
 import { CreateBookUseCase } from '@/src/core/application/use-cases/books/CreateBook.usecase';
 import { UpdateBookUseCase } from '@/src/core/application/use-cases/books/UpdateBook.usecase';
 import type { Page } from '@/src/core/domain/types';
 import toast from 'react-hot-toast';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 
 interface UseBookFormProps {
   bookId?: string; // Si existe, es modo edición

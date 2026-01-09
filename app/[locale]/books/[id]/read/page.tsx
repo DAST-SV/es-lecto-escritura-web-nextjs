@@ -9,7 +9,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { Loader2, AlertCircle, BarChart3 } from 'lucide-react';
-import { createClient } from '@/src/utils/supabase/client';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 import dynamic from 'next/dynamic';
 import { useReadingAnalytics } from '@/src/presentation/features/books/hooks/useReadingAnalytics';
 import type { Page } from '@/src/core/domain/types';

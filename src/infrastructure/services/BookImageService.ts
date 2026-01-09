@@ -3,7 +3,7 @@
  * ✅ CORREGIDO: Mejor manejo de errores y verificación de bucket
  */
 
-import { createClient } from '@/src/utils/supabase/client';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 
 const BUCKET_NAME = 'book-images';
 

@@ -16,7 +16,7 @@ import {
   MembersModal,
 } from '@/src/presentation/features/organizations/components';
 import { Organization, organizationTypeLabels } from '@/src/core/domain/entities/Organization';
-import { createClient } from '@/src/utils/supabase/client';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 import { DataTable, Column } from '@/src/presentation/components/shared/DataTable';
 import { Loader2, AlertCircle, Users, Shield } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';

@@ -3,9 +3,9 @@
 // ✅ CON SOFT DELETE Y RESTORE
 // ============================================
 
-import { supabaseAdmin } from '@/src/utils/supabase/admin';
 import { IUserTypeRepository } from '@/src/core/domain/repositories/IUserTypeRepository';
 import { UserType } from '@/src/core/domain/entities/UserType';
+import { supabaseAdmin } from '../../config/supabase.config';
 
 export class SupabaseUserTypeRepository implements IUserTypeRepository {
   
