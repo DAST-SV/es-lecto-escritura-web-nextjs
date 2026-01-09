@@ -80,24 +80,6 @@ eslectoescritura/
 │   └── features/
 │           └── hooks/
 │
-├── 🧩 src/components/               # Componentes compartidos
-│
-├── 🛠️ src/utils/                    # Utilidades
-│   └── supabase/
-│       ├── client.ts               # Cliente Supabase
-│       ├── admin.ts                # Admin client
-│       ├── middleware.ts           # Middleware sesión
-│       └── actions/
-│           └── auth.ts             # Acciones auth
-│
-├── 🗄️ supabase/                     # BASE DE DATOS
-│   └── schemas/books/
-│       ├── 01_books_schema.sql              # Schema principal
-│       ├── 02_books_triggers_rls.sql        # Triggers y RLS
-│       ├── 04_storage_bucket_setup.sql      # Storage
-│       ├── 05_expose_books_schema.sql       # Exposición
-│       └── 06_reading_analytics_schema.sql  # Analytics
-│
 ├── middleware.ts                    # Middleware Next.js
 ├── next.config.mjs                  # Config Next.js
 ├── tailwind.config.ts              # Config Tailwind

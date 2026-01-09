@@ -1,7 +1,6 @@
 // ============================================
 // src/infrastructure/repositories/SupabaseAuthRepository.ts
 // ============================================
-import { createClient } from '@/src/utils/supabase/client';
 import type { User, Session, SupabaseClient } from '@supabase/supabase-js';
 import {
   IAuthRepository,

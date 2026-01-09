@@ -1,7 +1,7 @@
 "use client";
 
+import { Cloud } from '@/src/presentation/components/ui/Cloud';
 import React from 'react';
-import { Cloud } from '@/src/components/ui/Cloud';
 
 export function LoginBackground() {
   return (

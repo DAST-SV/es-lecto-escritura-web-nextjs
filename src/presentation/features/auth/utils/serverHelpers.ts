@@ -2,7 +2,6 @@
 // src/presentation/features/auth/utils/serverHelpers.ts
 // Helpers para usar en Server Components
 // ============================================
-import { createClient } from '@/src/utils/supabase/server';
 import type { User } from '@supabase/supabase-js';
 
 /**

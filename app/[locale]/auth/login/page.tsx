@@ -7,7 +7,6 @@
 import React, { useActionState } from 'react';
 import { useTranslations } from 'next-intl';
 import { UnifiedLayout } from '@/src/presentation/features/navigation';
-import { AuthState, login } from '@/src/utils/supabase/actions/auth';
 import { 
   LoginBackground,
   ErrorMessage,

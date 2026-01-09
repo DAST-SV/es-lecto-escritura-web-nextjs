@@ -5,8 +5,8 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { GoogleIcon, SocialIcon } from '@/src/components/ui/SocialIcon';
-import { loginWithProvider } from '@/src/utils/supabase/actions/auth';
+import { GoogleIcon, SocialIcon } from '@/src/presentation/components/ui/SocialIcon';
+import { loginWithProvider } from '@/src/presentation/actions/auth.actions';
 
 interface SocialLoginSectionProps {
   connectWithText: string;

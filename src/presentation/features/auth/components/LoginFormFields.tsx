@@ -6,7 +6,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Lock, Mail } from 'lucide-react';
-import { Button, Input } from '@/src/components/ui';
+import { Input, Button } from '@/src/presentation/components/ui';
 
 interface LoginFormFieldsProps {
   emailPlaceholder: string;
