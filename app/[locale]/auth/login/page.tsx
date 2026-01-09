@@ -1,7 +1,6 @@
 // ============================================
 // app/[locale]/auth/login/page.tsx
-// ✅ ESTE ARCHIVO NO NECESITA CAMBIOS
-// Sigue usando Server Actions, lo cual es correcto
+// ✅ CORREGIDO: Imports desde arquitectura limpia
 // ============================================
 'use client';
 
@@ -9,11 +8,13 @@ import React, { useActionState } from 'react';
 import { useTranslations } from 'next-intl';
 import { UnifiedLayout } from '@/src/presentation/features/navigation';
 import { AuthState, login } from '@/src/utils/supabase/actions/auth';
-import LoginBackground from '@/src/components/auth/LoginBackground';
-import ErrorMessage from '@/src/components/auth/ErrorMessage';
-import SocialLoginSection from '@/src/components/auth/SocialLoginSectionProps';
-import FormDivider from '@/src/components/auth/FormDivider';
-import LoginFormFields from '@/src/components/auth/LoginFormFields';
+import { 
+  LoginBackground,
+  ErrorMessage,
+  SocialLoginSection,
+  FormDivider,
+  LoginFormFields 
+} from '@/src/presentation/features/auth/components';
 
 export default function LoginPage() {
   const t = useTranslations('auth');
