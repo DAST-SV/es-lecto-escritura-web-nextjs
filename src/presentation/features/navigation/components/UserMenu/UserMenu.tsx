@@ -1,13 +1,14 @@
-// ============================================================================
+// ============================================
 // src/presentation/features/navigation/components/UserMenu/UserMenu.tsx
-// ============================================================================
+// ACTUALIZADO para usar tipos de Supabase
+// ============================================
 "use client";
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuthNavigation } from '../../hooks/useAuth'; // 👈 CAMBIO AQUÍ
 import { UserMenuProps } from '../../types/navigation.types';
 
 const UserMenu: React.FC<UserMenuProps> = ({ 
@@ -16,7 +17,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
 }) => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout } = useAuthNavigation(); // 👈 CAMBIO AQUÍ
   const router = useRouter();
 
   if (loading || !user) {
@@ -45,6 +46,10 @@ const UserMenu: React.FC<UserMenuProps> = ({
     ? "p-1 rounded-full"
     : "cursor-pointer w-9 h-9 rounded-full bg-white bg-opacity-95 shadow-sm flex items-center justify-center transition-transform duration-200 hover:scale-110";
 
+  // 👇 USA PROPIEDADES NATIVAS DE SUPABASE
+  const displayAvatar = user.user_metadata?.avatar_url || userAvatar;
+  const displayName = user.user_metadata?.full_name || user.email;
+
   return (
     <div className="relative">
       <motion.button
@@ -55,7 +60,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
         aria-label="User menu"
       >
         <img
-          src={user.avatarUrl}
+          src={displayAvatar}
           alt="User avatar"
           className={`cursor-pointer ${avatarClasses}`}
         />
@@ -76,6 +81,10 @@ const UserMenu: React.FC<UserMenuProps> = ({
               transition={{ duration: 0.2 }}
               className="absolute right-0 mt-2 w-48 bg-white/90 backdrop-blur-md rounded-lg shadow-lg z-50 py-2"
             >
+              <div className="px-4 py-2 border-b border-gray-200">
+                <p className="text-sm font-semibold text-gray-700">{displayName}</p>
+                <p className="text-xs text-gray-500">{user.email}</p>
+              </div>
               <button className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
                 <Settings size={16} className="mr-2" />
                 Configuración

@@ -1,6 +1,7 @@
-// ============================================================================
+// ============================================
 // src/presentation/features/navigation/components/NavBar/NavBar.tsx
-// ============================================================================
+// ACTUALIZADO para usar el nuevo hook
+// ============================================
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -8,7 +9,7 @@ import BrandLogo from "../BrandLogo";
 import MobileMenu from "./MobileMenu";
 import DesktopNavigation from "./DesktopNavigation";
 import MobileToggleButton from "./MobileToggleButton";
-import { useAuth } from '../../hooks/useAuth';
+import { useAuthNavigation } from '../../hooks/useAuth'; // 👈 CAMBIO AQUÍ
 import { useNavigation } from '../../hooks/useNavigation';
 import { NavBarProps } from '../../types/navigation.types';
 
@@ -21,7 +22,7 @@ const NavBar: React.FC<NavBarProps> = ({ brandName, userAvatar }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuthNavigation(); // 👈 CAMBIO AQUÍ
   const { navigationItems } = useNavigation(!!user);
 
   useEffect(() => {
@@ -54,7 +55,7 @@ const NavBar: React.FC<NavBarProps> = ({ brandName, userAvatar }) => {
 
         <DesktopNavigation
           navItems={navItems}
-          userAvatar={defaultUserAvatar}
+          userAvatar={user?.user_metadata?.avatar_url || defaultUserAvatar}
           onLogout={logout}
           isAuthenticated={!!user}
         />
@@ -68,7 +69,7 @@ const NavBar: React.FC<NavBarProps> = ({ brandName, userAvatar }) => {
       <MobileMenu
         isOpen={isMobileOpen}
         navItems={navItems}
-        userAvatar={defaultUserAvatar}
+        userAvatar={user?.user_metadata?.avatar_url || defaultUserAvatar}
         onLogout={logout}
         isAuthenticated={!!user}
       />

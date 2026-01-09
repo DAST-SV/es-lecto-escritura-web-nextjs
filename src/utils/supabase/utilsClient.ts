@@ -1,48 +1,60 @@
-import { createClient } from '@/src/utils/supabase/client'
+// ============================================
+// src/utils/supabase/utilsClient.ts
+// MIGRADO a arquitectura limpia
+// ============================================
+"use client";
 
+import { SupabaseAuthRepository } from '@/src/infrastructure/repositories/SupabaseAuthRepository';
+import { GetCurrentUser } from '@/src/core/application/use-cases/auth/GetCurrentUser';
+import { CheckAuthentication } from '@/src/core/application/use-cases/auth/CheckAuthentication';
+import type { User } from '@supabase/supabase-js';
 
 /**
- * Crea un cliente de Supabase para el navegador.
+ * Obtener el usuario actual
  */
-export const supabase = createClient()
+export async function getCurrentUser(): Promise<User | null> {
+  const repository = new SupabaseAuthRepository();
+  const useCase = new GetCurrentUser(repository);
+  return await useCase.execute();
+}
 
 /**
- * Obtener el ID del usuario actual desde la sesión en el navegador.
- * Retorna null si no hay usuario logueado.
+ * Obtener el ID del usuario actual
  */
 export async function getUserId(): Promise<string | null> {
-  const { data: sessionData } = await supabase.auth.getSession();
-  console.log("Session:", sessionData); // <-- revisá si aquí ya viene null
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  console.log("User:", userData, "Error:", userError);
-
-  if (userError || !userData.user) return null;
-  return userData.user.id;
+  const user = await getCurrentUser();
+  return user?.id || null;
 }
 
-
 /**
- * Obtener el email del usuario actual desde la sesión en el navegador.
- * Retorna null si no hay usuario logueado.
+ * Obtener el email del usuario actual
  */
 export async function getUserEmail(): Promise<string | null> {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError || !userData.user) return null;
-  return userData.user.email || "";
+  const user = await getCurrentUser();
+  return user?.email || null;
 }
 
 /**
- * Verifica si hay un usuario logueado.
+ * Verificar si hay un usuario autenticado
  */
 export async function isLoggedIn(): Promise<boolean> {
-  const { data: userData } = await supabase.auth.getUser();
-  return !!userData.user;
+  const repository = new SupabaseAuthRepository();
+  const useCase = new CheckAuthentication(repository);
+  return await useCase.execute();
 }
 
+/**
+ * Obtener avatar del usuario
+ */
+export async function getUserAvatar(): Promise<string | null> {
+  const user = await getCurrentUser();
+  return user?.user_metadata?.avatar_url || null;
+}
 
-// Helper para obtener usuario actual
-export const getCurrentUser = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
-};
-
+/**
+ * Obtener nombre completo del usuario
+ */
+export async function getUserFullName(): Promise<string | null> {
+  const user = await getCurrentUser();
+  return user?.user_metadata?.full_name || user?.email || null;
+}

@@ -1,13 +1,12 @@
 // ============================================
-// src/core/application/use-cases/auth/GetCurrentUser.ts
+// src/core/application/use-cases/auth/CheckAuthentication.ts
 // ============================================
-import type { User } from '@supabase/supabase-js';
 import { IAuthRepository } from '@/src/core/domain/repositories/IAuthRepository';
 
-export class GetCurrentUser {
+export class CheckAuthentication {
   constructor(private readonly authRepository: IAuthRepository) {}
 
-  async execute(): Promise<User | null> {
-    return await this.authRepository.getCurrentUser();
+  async execute(): Promise<boolean> {
+    return await this.authRepository.isAuthenticated();
   }
 }

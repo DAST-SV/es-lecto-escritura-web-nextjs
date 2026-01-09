@@ -1,16 +1,16 @@
 // ============================================
 // src/presentation/features/navigation/hooks/useAuth.ts
+// Hook SIMPLIFICADO para navegación
 // ============================================
-
 "use client";
 
 import { useState, useEffect } from 'react';
-import { User } from '@/src/core/domain/entities/User';
+import type { User } from '@supabase/supabase-js';
 import { GetCurrentUser } from '@/src/core/application/use-cases/auth/GetCurrentUser';
 import { Logout } from '@/src/core/application/use-cases/auth/Logout';
 import { SupabaseAuthRepository } from '@/src/infrastructure/repositories/SupabaseAuthRepository';
 
-export const useAuth = () => {
+export const useAuthNavigation = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 

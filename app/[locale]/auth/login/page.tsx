@@ -1,3 +1,8 @@
+// ============================================
+// app/[locale]/auth/login/page.tsx
+// ✅ ESTE ARCHIVO NO NECESITA CAMBIOS
+// Sigue usando Server Actions, lo cual es correcto
+// ============================================
 'use client';
 
 import React, { useActionState } from 'react';
@@ -24,7 +29,6 @@ export default function LoginPage() {
       <div className="relative z-20 w-full max-w-md mx-auto">
         <div className="bg-white rounded-2xl shadow-2xl p-4 border-3 border-yellow-300">
           <div className="text-center mb-4">
-            {/* Brand Title */}
             <h1 
               className="text-gray-700" 
               style={{ fontFamily: 'Comic Sans MS, cursive' }}
@@ -32,17 +36,11 @@ export default function LoginPage() {
               ESLECTOESCRITURA
             </h1>
 
-            {/* Error Message */}
             <ErrorMessage error={state.error} />
-
-            {/* Social Login Section */}
             <SocialLoginSection connectWithText={t('form.connect_with')} />
-
-            {/* Form Divider */}
             <FormDivider text={t('form.or_use_email')} />
           </div>
 
-          {/* Form Fields with action */}
           <LoginFormFields
             emailPlaceholder={t('form.email_placeholder')}
             passwordPlaceholder={t('form.password_placeholder')}
