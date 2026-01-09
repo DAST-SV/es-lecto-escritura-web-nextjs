@@ -23,7 +23,7 @@ import {
 import { createClient } from '@/src/utils/supabase/client';
 import { RestoreBookUseCase } from '@/src/core/application/use-cases/books/RestoreBook.usecase';
 import { HardDeleteBookUseCase } from '@/src/core/application/use-cases/books/HardDeleteBook.usecase';
-import UnifiedLayout from '@/src/components/nav/UnifiedLayout';
+import { UnifiedLayout } from '@/src/presentation/features/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface TrashedBook {

@@ -53,29 +53,6 @@ Este proyecto implementa **Clean Architecture** con separación clara de respons
 eslectoescritura/
 ├── 📱 app/                          # Next.js App Router
 │   └── [locale]/                    # Rutas internacionalizadas
-│       ├── admin/                   # Panel de administración
-│       │   ├── audit/              # 🔍 Auditoría de integridad
-│       │   ├── layout.tsx          # Layout del admin
-│       │   └── page.tsx            # 📊 Dashboard
-│       │
-│       ├── auth/
-│       │   └── login/              # 🔐 Autenticación
-│       │
-│       ├── books/                   # 📚 Gestión de libros
-│       │   ├── [id]/
-│       │   │   ├── edit/          # ✏️ Editar libro
-│       │   │   ├── read/          # 📖 Lector de libros
-│       │   │   └── statistics/    # 📊 Estadísticas
-│       │   ├── create/            # ➕ Crear libro
-│       │   ├── trash/             # 🗑️ Papelera
-│       │   └── page.tsx           # 📋 Lista de libros
-│       │
-│       ├── catalog/                # 🌐 Catálogo público
-│       ├── categoria/[slug]/       # 📂 Categorías
-│       ├── diary/                  # 📔 Diario personal
-│       ├── library/                # 📚 Biblioteca
-│       ├── pages-games/            # 🎮 Juegos
-│       ├── user-types/             # 👥 Tipos de usuario
 │       ├── error/                  # ❌ Errores
 │       ├── layout.tsx              # 🎨 Layout principal
 │       ├── loading.tsx             # ⏳ Loading
@@ -90,61 +67,20 @@ eslectoescritura/
 │   │   ├── errors/                # Errores de dominio
 │   │   │   └── DomainError.ts
 │   │   └── repositories/          # Interfaces
-│   │       └── IBookRepository.ts
 │   │
 │   └── application/                # CASOS DE USO
 │       └── use-cases/
-│           ├── audit/
-│           │   └── AuditBooks.usecase.ts
-│           └── books/
-│               ├── CreateBook.usecase.ts
-│               ├── UpdateBook.usecase.ts
-│               ├── DeleteBook.usecase.ts
-│               ├── GetBook.usecase.ts
-│               ├── GetBooksByUser.usecase.ts
-│               ├── SoftDeleteBook.usecase.ts
-│               ├── HardDeleteBook.usecase.ts
-│               └── RestoreBook.usecase.ts
 │
 ├── 🔧 src/infrastructure/           # CAPA DE INFRAESTRUCTURA
 │   ├── repositories/
-│   │   ├── audit/
-│   │   │   └── AuditRepository.ts
-│   │   └── books/
-│   │       └── BookRepository.ts   # Implementación Supabase
 │   │
 │   └── services/
-│       ├── BookImageService.ts     # 🖼️ Gestión de imágenes
-│       ├── BookPDFService.ts       # 📄 Gestión de PDFs
-│       ├── PDFExtractorService.ts  # 🔄 Extracción de páginas
-│       └── BookReadingAnalytics.service.ts  # 📊 Analytics
 │
 ├── 🎨 src/presentation/             # CAPA DE PRESENTACIÓN
 │   └── features/
-│       └── books/
-│           ├── components/
-│           │   ├── BookForm/
-│           │   │   └── BookFormView.tsx
-│           │   ├── Inputs/
-│           │   │   ├── AutoresInput.tsx
-│           │   │   └── PersonajesInput.tsx
-│           │   ├── Selectors/
-│           │   │   └── OptimizedSelector.tsx
-│           │   └── PDFPreview/
-│           │       ├── PDFPreviewMode.tsx
-│           │       ├── PreviewHeader.tsx
-│           │       └── usePreviewControls.ts
-│           │
 │           └── hooks/
-│               ├── useBookForm.ts
-│               └── useReadingAnalytics.ts
 │
 ├── 🧩 src/components/               # Componentes compartidos
-│   ├── nav/                        # Navegación
-│   ├── auth/                       # Autenticación
-│   ├── user-types/                 # Gestión de usuarios
-│   ├── games/                      # Juegos interactivos
-│   └── sections/                   # Secciones públicas
 │
 ├── 🛠️ src/utils/                    # Utilidades
 │   └── supabase/

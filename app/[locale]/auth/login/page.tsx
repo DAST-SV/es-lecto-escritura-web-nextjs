@@ -2,7 +2,7 @@
 
 import React, { useActionState } from 'react';
 import { useTranslations } from 'next-intl';
-import UnifiedLayout from '@/src/components/nav/UnifiedLayout';
+import { UnifiedLayout } from '@/src/presentation/features/navigation';
 import { AuthState, login } from '@/src/utils/supabase/actions/auth';
 import LoginBackground from '@/src/components/auth/LoginBackground';
 import ErrorMessage from '@/src/components/auth/ErrorMessage';

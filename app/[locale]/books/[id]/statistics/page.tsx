@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/src/utils/supabase/client';
 import { BookReadingAnalyticsService } from '@/src/infrastructure/services/BookReadingAnalytics.service';
-import UnifiedLayout from '@/src/components/nav/UnifiedLayout';
+import { UnifiedLayout } from '@/src/presentation/features/navigation';
 
 export default function BookStatisticsPage() {
   const params = useParams();

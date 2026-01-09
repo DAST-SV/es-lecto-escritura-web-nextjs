@@ -11,7 +11,7 @@ import { useLocale } from 'next-intl';
 import { 
   Loader2, Save, Upload, AlertCircle, BookOpen, Tag, Camera, X, Eye, ArrowLeft
 } from 'lucide-react';
-import UnifiedLayout from '@/src/components/nav/UnifiedLayout';
+import { UnifiedLayout } from '@/src/presentation/features/navigation';
 import { PDFPreviewMode } from '@/src/presentation/features/books/components/PDFPreview/PDFPreviewMode';
 import { OptimizedSelector } from '@/src/presentation/features/books/components/Selectors/OptimizedSelector';
 import { AutoresInput } from '@/src/presentation/features/books/components/Inputs/AutoresInput';

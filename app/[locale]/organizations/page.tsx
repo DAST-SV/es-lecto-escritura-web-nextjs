@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import UnifiedLayout from '@/src/components/nav/UnifiedLayout';
+import { UnifiedLayout } from '@/src/presentation/features/navigation';
 import { useOrganizations } from '@/src/presentation/features/organizations/hooks/useOrganizations';
 import {
   CreateOrganizationModal,

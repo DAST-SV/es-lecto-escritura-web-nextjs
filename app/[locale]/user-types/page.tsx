@@ -6,7 +6,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import UnifiedLayout from '@/src/components/nav/UnifiedLayout';
+import { UnifiedLayout } from '@/src/presentation/features/navigation';
 import { useUserTypes } from '@/src/presentation/features/user-types/hooks/useUserTypes';
 import {
   CreateUserTypeModal,
