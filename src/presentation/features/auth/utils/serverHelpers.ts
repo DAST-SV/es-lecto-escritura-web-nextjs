@@ -1,15 +1,16 @@
 // ============================================
 // src/presentation/features/auth/utils/serverHelpers.ts
-// Helpers para usar en Server Components
+// ✅ CORREGIDO: Import de createClient agregado
 // ============================================
 import type { User } from '@supabase/supabase-js';
+import { createServerSupabaseClient } from '@/src/infrastructure/config/supabase.config'; // ✅ Import agregado
 
 /**
  * Obtener usuario actual en Server Component
  * NO uses casos de uso aquí, usa Supabase directamente
  */
 export async function getCurrentUserServer(): Promise<User | null> {
-  const supabase = await createClient();
+  const supabase = await createServerSupabaseClient(); // ✅ Función correcta
   const { data, error } = await supabase.auth.getUser();
   
   if (error || !data.user) {

@@ -1,9 +1,14 @@
 // ============================================
-// 4. src/infrastructure/middleware/auth.middleware.ts
+// src/infrastructure/middleware/auth.middleware.ts
+// ✅ CORREGIDO: Import explícito de routing
 // ============================================
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { i18nConfig, isLocale, type Locale } from '@/src/infrastructure/config/i18n.config';
+import { routing } from '@/src/infrastructure/config/routing.config';
+
+// Definir el tipo explícitamente
+type RoutingPathnames = typeof routing.pathnames;
 
 const PUBLIC_ROUTE_KEYS: string[] = [
   '/',
@@ -16,7 +21,10 @@ const PUBLIC_ROUTE_KEYS: string[] = [
 
 function getAllTranslatedPaths(routeKey: string): string[] {
   const paths: string[] = [routeKey];
-  const translations = routing.pathnames[routeKey];
+  
+  // Type assertion para acceder a routing.pathnames
+  const pathnames = routing.pathnames as Record<string, any>;
+  const translations = pathnames[routeKey];
   
   if (translations && typeof translations === 'object') {
     Object.values(translations).forEach((path) => {
@@ -82,7 +90,8 @@ export async function updateSession(request: NextRequest, response: NextResponse
 
   if (!publicRoute && !user) {
     const loginUrl = request.nextUrl.clone();
-    const loginPath = routing.pathnames['/auth/login'][locale];
+    const pathnames = routing.pathnames as Record<string, any>;
+    const loginPath = pathnames['/auth/login']?.[locale] || '/auth/login';
     const fullLoginPath = `/${locale}${loginPath}`;
 
     if (pathname === fullLoginPath || pathname === `${fullLoginPath}/`) {
@@ -109,7 +118,8 @@ export async function updateSession(request: NextRequest, response: NextResponse
 
   if (isAuthPage && user) {
     const libraryUrl = request.nextUrl.clone();
-    const libraryPath = routing.pathnames['/library'][locale];
+    const pathnames = routing.pathnames as Record<string, any>;
+    const libraryPath = pathnames['/library']?.[locale] || '/library';
     const fullLibraryPath = `/${locale}${libraryPath}`;
     
     if (pathname === fullLibraryPath || pathname === `${fullLibraryPath}/`) {

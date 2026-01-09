@@ -1,5 +1,6 @@
 // ============================================
-// 10. src/presentation/actions/auth.actions.ts
+// src/presentation/actions/auth.actions.ts
+// ✅ CORREGIDO: Manejo correcto de tipos AuthError
 // ============================================
 'use server'
 
@@ -23,8 +24,10 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
   });
 
   if (result.error) {
-    const translatedError = await TranslationService.translateAuthError(result.error);
-    return { ...result, error: translatedError };
+    // ✅ Extraer el mensaje del error de Supabase
+    const errorMessage = result.error.message || 'Error desconocido';
+    const translatedError = await TranslationService.translateAuthError(errorMessage);
+    return { error: translatedError };
   }
 
   revalidatePath('/', 'layout');
@@ -48,8 +51,10 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
   });
 
   if (result.error) {
-    const translatedError = await TranslationService.translateAuthError(result.error);
-    return { ...result, error: translatedError };
+    // ✅ Extraer el mensaje del error de Supabase
+    const errorMessage = result.error.message || 'Error desconocido';
+    const translatedError = await TranslationService.translateAuthError(errorMessage);
+    return { error: translatedError };
   }
 
   revalidatePath('/', 'layout');
@@ -70,9 +75,12 @@ export async function loginWithProvider(provider: OAuthProvider) {
   const redirectTo = `${baseUrl}/auth/callback?next=${encodeURIComponent(finalDestination)}`;
 
   try {
-    const authUrl = await loginWithProviderUseCase.execute(provider, redirectTo);
-    redirect(authUrl);
+    const authUrlResponse = await loginWithProviderUseCase.execute(provider, redirectTo);
+    // ✅ authUrlResponse es { url: string }, extraemos la propiedad url
+    redirect(authUrlResponse.url);
   } catch (error) {
-    throw new Error(await TranslationService.translateAuthError(error instanceof Error ? error.message : 'Unknown error'));
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const translatedError = await TranslationService.translateAuthError(errorMessage);
+    throw new Error(translatedError);
   }
 }
