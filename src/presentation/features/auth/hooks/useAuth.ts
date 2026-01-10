@@ -15,11 +15,13 @@ import { LoginWithProvider } from '@/src/core/application/use-cases/auth/LoginWi
 import { SupabaseAuthRepository } from '@/src/infrastructure/repositories/SupabaseAuthRepository';
 import type { LoginCredentials, SignupCredentials, OAuthProvider } from '@/src/core/domain/repositories/IAuthRepository';
 import { DomainAuthError } from '@/src/core/domain/errors/AuthError';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 
 export const useAuth = () => {
   const [authState, setAuthState] = useState<AuthState>(AuthState.initial());
-
-  const authRepository = new SupabaseAuthRepository();
+  
+  const supabase = createClient(); // ✅ Cliente browser
+  const authRepository = new SupabaseAuthRepository(supabase);
   const getCurrentUser = new GetCurrentUser(authRepository);
   const loginUseCase = new Login(authRepository);
   const signupUseCase = new Signup(authRepository);

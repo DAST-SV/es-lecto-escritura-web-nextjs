@@ -1,6 +1,6 @@
 // ============================================
 // src/presentation/actions/auth.actions.ts
-// ✅ CORREGIDO: Manejo correcto de tipos AuthError
+// ✅ SOLUCIÓN: Usar createServerSupabaseClient
 // ============================================
 'use server'
 
@@ -8,14 +8,15 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { getLocale } from "next-intl/server";
 import { headers } from 'next/headers';
+import { createServerSupabaseClient } from '@/src/infrastructure/config/supabase.config'; // ✅
 import { SupabaseAuthRepository } from '@/src/infrastructure/repositories/SupabaseAuthRepository';
 import { Login, Signup, LoginWithProvider } from '@/src/core/application/use-cases/auth';
 import { TranslationService } from '@/src/infrastructure/services/i18n/TranslationService';
 import type { AuthState, OAuthProvider } from '@/src/core/domain/types/Auth.types';
 
-const authRepository = new SupabaseAuthRepository();
-
 export async function login(prevState: AuthState, formData: FormData): Promise<AuthState> {
+  const supabase = await createServerSupabaseClient(); // ✅ Cliente servidor
+  const authRepository = new SupabaseAuthRepository(supabase); // ✅ Inyectar
   const loginUseCase = new Login(authRepository);
 
   const result = await loginUseCase.execute({
@@ -24,7 +25,6 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
   });
 
   if (result.error) {
-    // ✅ Extraer el mensaje del error de Supabase
     const errorMessage = result.error.message || 'Error desconocido';
     const translatedError = await TranslationService.translateAuthError(errorMessage);
     return { error: translatedError };
@@ -43,6 +43,8 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
 }
 
 export async function signup(prevState: AuthState, formData: FormData): Promise<AuthState> {
+  const supabase = await createServerSupabaseClient(); // ✅
+  const authRepository = new SupabaseAuthRepository(supabase); // ✅
   const signupUseCase = new Signup(authRepository);
 
   const result = await signupUseCase.execute({
@@ -51,7 +53,6 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
   });
 
   if (result.error) {
-    // ✅ Extraer el mensaje del error de Supabase
     const errorMessage = result.error.message || 'Error desconocido';
     const translatedError = await TranslationService.translateAuthError(errorMessage);
     return { error: translatedError };
@@ -63,6 +64,8 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
 }
 
 export async function loginWithProvider(provider: OAuthProvider) {
+  const supabase = await createServerSupabaseClient(); // ✅
+  const authRepository = new SupabaseAuthRepository(supabase); // ✅
   const loginWithProviderUseCase = new LoginWithProvider(authRepository);
   
   const locale = await getLocale();
@@ -76,7 +79,6 @@ export async function loginWithProvider(provider: OAuthProvider) {
 
   try {
     const authUrlResponse = await loginWithProviderUseCase.execute(provider, redirectTo);
-    // ✅ authUrlResponse es { url: string }, extraemos la propiedad url
     redirect(authUrlResponse.url);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

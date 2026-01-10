@@ -186,6 +186,9 @@ importers:
       '@types/react-select':
         specifier: ^5.0.1
         version: 5.0.1(@types/react@19.1.12)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      baseline-browser-mapping:
+        specifier: ^2.9.14
+        version: 2.9.14
       supabase:
         specifier: ^2.40.7
         version: 2.40.7
@@ -1149,6 +1152,10 @@ packages:
   babel-plugin-macros@3.1.0:
     resolution: {integrity: sha512-Cg7TFGpIr01vOQNODXOOaGz2NpCU5gl8x1qJFbb6hbZxR7XrcE2vtbAsTAbJ7/xwJtUuJEw8K8Zr/AE0LHlesg==}
     engines: {node: '>=10', npm: '>=6'}
+
+  baseline-browser-mapping@2.9.14:
+    resolution: {integrity: sha512-B0xUquLkiGLgHhpPBqvl7GWegWBUNuujQ6kXd/r1U38ElPT6Ok8KZ8e+FpUGEc2ZoRQUzq/aUnaKFc/svWUGSg==}
+    hasBin: true
 
   bin-links@5.0.0:
     resolution: {integrity: sha512-sdleLVfCjBtgO5cNjA2HVRvWBJAHs4zwenaCPMNJAJU0yNxpzj80IpjOIimkpkr+mhlA+how5poQtt53PygbHA==}
@@ -2840,6 +2847,8 @@ snapshots:
       '@babel/runtime': 7.28.4
       cosmiconfig: 7.1.0
       resolve: 1.22.10
+
+  baseline-browser-mapping@2.9.14: {}
 
   bin-links@5.0.0:
     dependencies:

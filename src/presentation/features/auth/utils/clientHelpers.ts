@@ -1,11 +1,12 @@
 // ============================================
 // src/presentation/features/auth/utils/clientHelpers.ts
-// Helpers para usar en Client Components
 // ============================================
 "use client";
 
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 import { SupabaseAuthRepository } from '@/src/infrastructure/repositories/SupabaseAuthRepository';
 import { GetCurrentUser } from '@/src/core/application/use-cases/auth/GetCurrentUser';
+import { CheckAuthentication } from '@/src/core/application/use-cases/auth/CheckAuthentication';
 import type { User } from '@supabase/supabase-js';
 
 /**
@@ -13,7 +14,8 @@ import type { User } from '@supabase/supabase-js';
  * Aquí SÍ usamos casos de uso
  */
 export async function getCurrentUserClient(): Promise<User | null> {
-  const repository = new SupabaseAuthRepository();
+  const supabase = createClient(); // ✅ Cliente browser
+  const repository = new SupabaseAuthRepository(supabase); // ✅ Inyectar
   const useCase = new GetCurrentUser(repository);
   return await useCase.execute();
 }
@@ -22,6 +24,8 @@ export async function getCurrentUserClient(): Promise<User | null> {
  * Verificar si hay usuario autenticado en Client Component
  */
 export async function isAuthenticatedClient(): Promise<boolean> {
-  const user = await getCurrentUserClient();
-  return user !== null;
+  const supabase = createClient(); // ✅ Cliente browser
+  const repository = new SupabaseAuthRepository(supabase); // ✅ Inyectar
+  const useCase = new CheckAuthentication(repository);
+  return await useCase.execute();
 }

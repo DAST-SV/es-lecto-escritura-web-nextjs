@@ -16,11 +16,11 @@ export class Login {
       }
 
       return result;
-    } catch (error) {
+    } catch (error : DomainAuthError | any) {
       if (error instanceof DomainAuthError) {
         throw error;
       }
-      throw new DomainAuthError('Error inesperado al iniciar sesión', undefined, error);
+      throw new DomainAuthError(error.message, undefined, error);
     }
   }
 }

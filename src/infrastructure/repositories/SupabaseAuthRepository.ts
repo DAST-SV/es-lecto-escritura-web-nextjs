@@ -1,6 +1,5 @@
 // ============================================
 // src/infrastructure/repositories/SupabaseAuthRepository.ts
-// ✅ CORREGIDO: Import correcto de createClient
 // ============================================
 import type { User, Session, SupabaseClient } from '@supabase/supabase-js';
 import {
@@ -11,15 +10,8 @@ import {
   AuthResult,
 } from '@/src/core/domain/repositories/IAuthRepository';
 
-// ✅ Import directo de la función
-import { createClient } from '@/src/infrastructure/config/supabase.config';
-
 export class SupabaseAuthRepository implements IAuthRepository {
-  private supabase: SupabaseClient;
-
-  constructor() {
-    this.supabase = createClient();
-  }
+  constructor(private supabase: SupabaseClient) {}
 
   async getCurrentUser(): Promise<User | null> {
     const { data, error } = await this.supabase.auth.getUser();
