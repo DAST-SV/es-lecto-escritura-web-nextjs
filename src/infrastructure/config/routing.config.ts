@@ -1,13 +1,18 @@
 // ============================================
-// 6. src/infrastructure/config/routing.config.ts
+// src/infrastructure/config/routing.config.ts
 // ============================================
 import { defineRouting } from 'next-intl/routing';
+import { createNavigation } from 'next-intl/navigation';
 import { i18nConfig } from './i18n.config';
 
 export const routing = defineRouting({
   locales: i18nConfig.locales,
   defaultLocale: i18nConfig.defaultLocale,
   pathnames: {
+    '/': {
+      en: '/',
+      es: '/'
+    },
     '/auth/login': {
       en: '/auth/login',
       es: '/auth/ingresar'
@@ -39,6 +44,14 @@ export const routing = defineRouting({
     '/diary/my-diaries': {
       en: '/diary/my-diaries',
       es: '/diario/mis-diarios'
+    },
+    '/test-supabase': {
+      en: '/test-supabase',
+      es: '/test-supabase',
+      fr: '/test-supabase'
     }
   }
 });
+
+// ✅ Exportar las funciones de navegación
+export const { Link, redirect, usePathname, useRouter } = createNavigation(routing);

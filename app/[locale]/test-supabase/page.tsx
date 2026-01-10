@@ -1,11 +1,10 @@
-"use client";
-import React from 'react';
-import { UnifiedLayout } from '@/src/presentation/features/navigation';
+
+'use client';
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 import { useLocale } from 'next-intl';
 import { Link } from '@/src/infrastructure/config/routing.config';
 
-const HomePage: React.FC = () => {
+export default function TestSupabasePage() {
   const { t, loading } = useSupabaseTranslations('test');
   const { t: tCommon } = useSupabaseTranslations('common');
   const locale = useLocale();
@@ -176,5 +175,3 @@ const HomePage: React.FC = () => {
     </div>
   );
 }
-
-export default HomePage;
