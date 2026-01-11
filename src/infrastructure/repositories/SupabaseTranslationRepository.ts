@@ -1,79 +1,165 @@
-/////////////////////////////////////////////////////////////////////
-/// src/infrastructure/repositories/SupabaseTranslationRepository.ts
-/////////////////////////////////////////////////////////////////////
+// ============================================
+// src/infrastructure/repositories/SupabaseTranslationRepository.ts
+// Implementación: Repositorio de Traducciones con Supabase
+// ============================================
 
-// Implementación concreta del repositorio
-import { ITranslationRepository } from '@/src/core/domain/repositories/ITranslationRepository';
-import { Translation, Language } from '@/src/core/domain/entities/Translation';
 import { createClient } from '@/src/infrastructure/config/supabase.config';
+import {
+  TranslationRepository,
+  CreateTranslationDTO,
+  UpdateTranslationDTO,
+  BulkCreateTranslationDTO,
+} from '@/src/core/domain/repositories/TranslationRepository';
+import { Translation } from '@/src/core/domain/entities/Translation';
 
-export class SupabaseTranslationRepository implements ITranslationRepository {
+export class SupabaseTranslationRepository implements TranslationRepository {
   private supabase = createClient();
 
-  async getTranslationsByNamespace(
-    namespace: string,
-    languageCode: string
-  ): Promise<Translation[]> {
+  async findAll(): Promise<Translation[]> {
     const { data, error } = await this.supabase
       .from('translations')
       .select('*')
-      .eq('namespace_slug', namespace)
-      .eq('language_code', languageCode)
-      .eq('is_active', true);
+      .order('namespace_slug', { ascending: true })
+      .order('translation_key', { ascending: true });
 
     if (error) {
-      console.error('Error loading translations:', error);
-      throw new Error(`Failed to load translations: ${error.message}`);
+      throw new Error(`Error fetching translations: ${error.message}`);
     }
 
-    return (data || []).map(item => ({
-      id: item.id,
-      namespaceSlug: item.namespace_slug,
-      translationKey: item.translation_key,
-      languageCode: item.language_code,
-      value: item.value,
-      isActive: item.is_active,
-      createdAt: new Date(item.created_at),
-      updatedAt: new Date(item.updated_at)
-    }));
+    return (data || []).map(Translation.fromDatabase);
   }
 
-  async getActiveLanguages(): Promise<Language[]> {
+  async findById(id: string): Promise<Translation | null> {
     const { data, error } = await this.supabase
-      .from('languages')
+      .from('translations')
       .select('*')
-      .eq('is_active', true)
-      .order('order_index');
-
-    if (error) {
-      console.error('Error loading languages:', error);
-      throw new Error(`Failed to load languages: ${error.message}`);
-    }
-
-    return (data || []).map(item => ({
-      code: item.code,
-      name: item.name,
-      nativeName: item.native_name,
-      flagEmoji: item.flag_emoji,
-      isDefault: item.is_default,
-      isActive: item.is_active,
-      orderIndex: item.order_index
-    }));
-  }
-
-  async getDefaultLanguage(): Promise<string> {
-    const { data, error } = await this.supabase
-      .from('languages')
-      .select('code')
-      .eq('is_default', true)
-      .eq('is_active', true)
-      .limit(1)
+      .eq('id', id)
       .single();
 
-    if (error || !data) {
-      return 'es'; // Fallback
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw new Error(`Error fetching translation: ${error.message}`);
     }
 
-    return data.code;
+    return Translation.fromDatabase(data);
+  }
+
+  async findByNamespace(namespaceSlug: string): Promise<Translation[]> {
+    const { data, error } = await this.supabase
+      .from('translations')
+      .select('*')
+      .eq('namespace_slug', namespaceSlug)
+      .order('translation_key', { ascending: true });
+
+    if (error) {
+      throw new Error(`Error fetching translations by namespace: ${error.message}`);
+    }
+
+    return (data || []).map(Translation.fromDatabase);
+  }
+
+  async findByLanguage(languageCode: string): Promise<Translation[]> {
+    const { data, error } = await this.supabase
+      .from('translations')
+      .select('*')
+      .eq('language_code', languageCode)
+      .order('namespace_slug', { ascending: true })
+      .order('translation_key', { ascending: true });
+
+    if (error) {
+      throw new Error(`Error fetching translations by language: ${error.message}`);
+    }
+
+    return (data || []).map(Translation.fromDatabase);
+  }
+
+  async findByKey(
+    namespaceSlug: string,
+    translationKey: string,
+    languageCode: string
+  ): Promise<Translation | null> {
+    const { data, error } = await this.supabase
+      .from('translations')
+      .select('*')
+      .eq('namespace_slug', namespaceSlug)
+      .eq('translation_key', translationKey)
+      .eq('language_code', languageCode)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw new Error(`Error fetching translation: ${error.message}`);
+    }
+
+    return Translation.fromDatabase(data);
+  }
+
+  async create(dto: CreateTranslationDTO): Promise<Translation> {
+    const { data, error } = await this.supabase
+      .from('translations')
+      .insert({
+        namespace_slug: dto.namespaceSlug,
+        translation_key: dto.translationKey,
+        language_code: dto.languageCode,
+        value: dto.value,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Error creating translation: ${error.message}`);
+    }
+
+    return Translation.fromDatabase(data);
+  }
+
+  async createBulk(dto: BulkCreateTranslationDTO): Promise<Translation[]> {
+    const insertData = dto.translations.map(t => ({
+      namespace_slug: dto.namespaceSlug,
+      translation_key: dto.translationKey,
+      language_code: t.languageCode,
+      value: t.value,
+    }));
+
+    const { data, error } = await this.supabase
+      .from('translations')
+      .insert(insertData)
+      .select();
+
+    if (error) {
+      throw new Error(`Error creating bulk translations: ${error.message}`);
+    }
+
+    return (data || []).map(Translation.fromDatabase);
+  }
+
+  async update(id: string, dto: UpdateTranslationDTO): Promise<Translation> {
+    const updateData: any = {};
+    if (dto.value !== undefined) updateData.value = dto.value;
+    if (dto.isActive !== undefined) updateData.is_active = dto.isActive;
+
+    const { data, error } = await this.supabase
+      .from('translations')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Error updating translation: ${error.message}`);
+    }
+
+    return Translation.fromDatabase(data);
+  }
+
+  async delete(id: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('translations')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(`Error deleting translation: ${error.message}`);
+    }
   }
 }

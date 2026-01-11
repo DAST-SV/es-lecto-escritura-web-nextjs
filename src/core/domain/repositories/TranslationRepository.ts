@@ -1,10 +1,9 @@
 // ============================================
-// src/core/domain/repositories/ITranslationRepository.ts
-// Repositorio: Traducciones (CORREGIDO)
+// src/core/domain/repositories/TranslationRepository.ts
+// Repositorio: Traducciones
 // ============================================
 
 import { Translation } from '../entities/Translation';
-import { Language } from '../entities/Language'; // ✅ IMPORTAR DESDE Language.ts
 
 export interface CreateTranslationDTO {
   namespaceSlug: string;
@@ -27,7 +26,7 @@ export interface BulkCreateTranslationDTO {
   }[];
 }
 
-export interface ITranslationRepository {
+export interface TranslationRepository {
   findAll(): Promise<Translation[]>;
   findById(id: string): Promise<Translation | null>;
   findByNamespace(namespaceSlug: string): Promise<Translation[]>;

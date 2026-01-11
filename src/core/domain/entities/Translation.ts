@@ -1,32 +1,47 @@
-////////////////////////////////////////////////////////////
-/// src/core/domain/entities/Translation.ts
-////////////////////////////////////////////////////////////
-// Entidad de dominio: Translation
-export interface Translation {
-  id: string;
-  namespaceSlug: string;
-  translationKey: string;
-  languageCode: string;
-  value: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
+// ============================================
+// src/core/domain/entities/Translation.ts
+// Entidad: Traducción
+// ============================================
 
-export interface Language {
-  code: string;
-  name: string;
-  nativeName: string;
-  flagEmoji: string;
-  isDefault: boolean;
-  isActive: boolean;
-  orderIndex: number;
-}
+export class Translation {
+  constructor(
+    public readonly id: string,
+    public readonly namespaceSlug: string,
+    public readonly translationKey: string,
+    public readonly languageCode: string,
+    public readonly value: string,
+    public readonly isActive: boolean,
+    public readonly createdAt: Date,
+    public readonly updatedAt: Date
+  ) {}
 
-export interface TranslationNamespace {
-  id: string;
-  slug: string;
-  name: string;
-  description?: string;
-  isActive: boolean;
+  /**
+   * Factory: Crear desde base de datos
+   */
+  static fromDatabase(data: any): Translation {
+    return new Translation(
+      data.id,
+      data.namespace_slug,
+      data.translation_key,
+      data.language_code,
+      data.value,
+      data.is_active ?? true,
+      new Date(data.created_at),
+      new Date(data.updated_at)
+    );
+  }
+
+  /**
+   * Obtener clave completa (namespace.key)
+   */
+  getFullKey(): string {
+    return `${this.namespaceSlug}.${this.translationKey}`;
+  }
+
+  /**
+   * Verificar si está activa
+   */
+  isActiveTranslation(): boolean {
+    return this.isActive;
+  }
 }
