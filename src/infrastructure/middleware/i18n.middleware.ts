@@ -13,7 +13,7 @@ let routesCache: Record<string, any> | null = null;
 let cacheTimestamp: number = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
-async function getRoutes() {
+async function getRoutes(): Promise<Record<string, any>> {
   const now = Date.now();
   
   // Usar cache si está fresco
@@ -21,11 +21,27 @@ async function getRoutes() {
     return routesCache;
   }
 
-  // Cargar rutas dinámicas
-  routesCache = await DynamicRoutingService.loadAllRoutes();
-  cacheTimestamp = now;
-  
-  return routesCache;
+  try {
+    // Cargar rutas dinámicas
+    routesCache = await DynamicRoutingService.loadAllRoutes();
+    cacheTimestamp = now;
+    
+    console.log('✅ Rutas cargadas:', Object.keys(routesCache).length);
+    return routesCache;
+  } catch (error) {
+    console.error('❌ Error cargando rutas, usando fallback:', error);
+    
+    // Fallback: rutas básicas hardcoded
+    return {
+      '/': { es: '/', en: '/', fr: '/' },
+      '/auth/login': { es: '/auth/ingresar', en: '/auth/login', fr: '/auth/connexion' },
+      '/auth/register': { es: '/auth/registro', en: '/auth/register', fr: '/auth/inscription' },
+      '/library': { es: '/biblioteca', en: '/library', fr: '/bibliotheque' },
+      '/my-world': { es: '/mi-mundo', en: '/my-world', fr: '/mon-monde' },
+      '/my-progress': { es: '/mi-progreso', en: '/my-progress', fr: '/mes-progres' },
+      '/test-supabase': { es: '/test-supabase', en: '/test-supabase', fr: '/test-supabase' },
+    };
+  }
 }
 
 export async function middleware(request: NextRequest) {
@@ -39,7 +55,9 @@ export async function middleware(request: NextRequest) {
   });
 
   const response = handleI18nRouting(request);
-  return await updateSession(request, response);
+  
+  // ✅ Pasar pathnames al middleware de auth
+  return await updateSession(request, response, pathnames);
 }
 
 export const config = {

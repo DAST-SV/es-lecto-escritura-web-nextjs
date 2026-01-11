@@ -1,14 +1,10 @@
 // ============================================
 // src/infrastructure/middleware/auth.middleware.ts
-// ✅ CORREGIDO: Import explícito de routing
+// ✅ ACTUALIZADO: Compatible con rutas dinámicas
 // ============================================
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { i18nConfig, isLocale, type Locale } from '@/src/infrastructure/config/i18n.config';
-import { routing } from '@/src/infrastructure/config/routing.config';
-
-// Definir el tipo explícitamente
-type RoutingPathnames = typeof routing.pathnames;
 
 const PUBLIC_ROUTE_KEYS: string[] = [
   '/',
@@ -16,14 +12,16 @@ const PUBLIC_ROUTE_KEYS: string[] = [
   '/auth/login',
   '/auth/register',
   '/auth/callback',
-  '/error'
+  '/error',
+  '/test-supabase',
 ];
 
-function getAllTranslatedPaths(routeKey: string): string[] {
+function getAllTranslatedPaths(
+  routeKey: string,
+  pathnames: Record<string, any>
+): string[] {
   const paths: string[] = [routeKey];
   
-  // Type assertion para acceder a routing.pathnames
-  const pathnames = routing.pathnames as Record<string, any>;
   const translations = pathnames[routeKey];
   
   if (translations && typeof translations === 'object') {
@@ -37,7 +35,11 @@ function getAllTranslatedPaths(routeKey: string): string[] {
   return paths;
 }
 
-function isPublicPath(pathname: string, locale: Locale): boolean {
+function isPublicPath(
+  pathname: string,
+  locale: Locale,
+  pathnames: Record<string, any>
+): boolean {
   const pathnameWithoutLocale = pathname.startsWith(`/${locale}`)
     ? pathname.slice(`/${locale}`.length) || '/'
     : pathname;
@@ -47,7 +49,7 @@ function isPublicPath(pathname: string, locale: Locale): boolean {
   }
 
   return PUBLIC_ROUTE_KEYS.some((routeKey) => {
-    const allPaths = getAllTranslatedPaths(routeKey);
+    const allPaths = getAllTranslatedPaths(routeKey, pathnames);
     return allPaths.some((path) => {
       if (pathnameWithoutLocale === path || pathnameWithoutLocale === `${path}/`) {
         return true;
@@ -60,7 +62,11 @@ function isPublicPath(pathname: string, locale: Locale): boolean {
   });
 }
 
-export async function updateSession(request: NextRequest, response: NextResponse) {
+export async function updateSession(
+  request: NextRequest,
+  response: NextResponse,
+  pathnames: Record<string, any> = {}
+) {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
@@ -86,11 +92,13 @@ export async function updateSession(request: NextRequest, response: NextResponse
   const segments = pathname.split('/').filter(Boolean);
   const maybeLocale = segments[0];
   const locale: Locale = isLocale(maybeLocale) ? maybeLocale : i18nConfig.defaultLocale;
-  const publicRoute = isPublicPath(pathname, locale);
+  const publicRoute = isPublicPath(pathname, locale, pathnames);
 
+  // Si no es ruta pública y no hay usuario, redirigir a login
   if (!publicRoute && !user) {
     const loginUrl = request.nextUrl.clone();
-    const pathnames = routing.pathnames as Record<string, any>;
+    
+    // Obtener ruta de login traducida
     const loginPath = pathnames['/auth/login']?.[locale] || '/auth/login';
     const fullLoginPath = `/${locale}${loginPath}`;
 
@@ -103,8 +111,9 @@ export async function updateSession(request: NextRequest, response: NextResponse
     return NextResponse.redirect(loginUrl);
   }
 
-  const loginPaths = getAllTranslatedPaths('/auth/login');
-  const registerPaths = getAllTranslatedPaths('/auth/register');
+  // Obtener todas las rutas de autenticación
+  const loginPaths = getAllTranslatedPaths('/auth/login', pathnames);
+  const registerPaths = getAllTranslatedPaths('/auth/register', pathnames);
   const authPaths = [...loginPaths, ...registerPaths];
   
   const pathnameWithoutLocale = pathname.startsWith(`/${locale}`)
@@ -116,9 +125,9 @@ export async function updateSession(request: NextRequest, response: NextResponse
     pathnameWithoutLocale === `${authPath}/`
   );
 
+  // Si está autenticado y en página de auth, redirigir a biblioteca
   if (isAuthPage && user) {
     const libraryUrl = request.nextUrl.clone();
-    const pathnames = routing.pathnames as Record<string, any>;
     const libraryPath = pathnames['/library']?.[locale] || '/library';
     const fullLibraryPath = `/${locale}${libraryPath}`;
     

@@ -1,9 +1,10 @@
 // ============================================
 // src/core/domain/value-objects/Locale.ts
+// ✅ CORREGIDO: Soporte para FR
 // ============================================
 
 export class Locale {
-  private static readonly SUPPORTED_LOCALES = ['es', 'en'] as const;
+  private static readonly SUPPORTED_LOCALES = ['es', 'en', 'fr'] as const; // ✅ Agregado 'fr'
   
   constructor(public readonly code: string) {
     if (!Locale.isSupported(code)) {
