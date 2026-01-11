@@ -1,0 +1,315 @@
+{
+  "layout": {
+    "meta": {
+      "title": "EsLectoescritura",
+      "description": "Our literacy platform is designed to support children, youth, and adults in the comprehensive development of reading and writing skills by combining proven pedagogical methods with cutting-edge interactive technology. Through playful activities, personalized exercises, and progress tracking, users can improve their reading comprehension, expand their vocabulary, perfect their spelling, and develop fluency in writing."
+    }
+  },
+  "nav": {
+    "about": {
+      "text": "About",
+      "href": "/about",
+      "title": "Learn more about us"
+    },
+    "virtualTour": {
+      "text": "Virtual Tour",
+      "href": "/tour",
+      "title": "Explore our virtual tour"
+    },
+    "auth": {
+      "login": {
+        "text": "Log In",
+        "href": "/login",
+        "title": "Access your account"
+      },
+      "register": {
+        "text": "Sign Up",
+        "href": "/register",
+        "title": "Create a new account"
+      }
+    },
+    "back": {
+      "text": "Back",
+      "title": "Go back to previous page"
+    },
+    "home": {
+      "text": "Home",
+      "href": "/",
+      "title": "Go to homepage"
+    },
+    "profile": {
+      "text": "Profile",
+      "href": "/profile",
+      "title": "View my profile"
+    },
+    "settings": {
+      "text": "Settings",
+      "href": "/settings",
+      "title": "Adjust settings"
+    },
+    "logout": {
+      "text": "Log Out",
+      "href": "/logout",
+      "title": "Sign out of my account"
+    },
+    "myDiary": {
+      "text": "My Diary",
+      "href": "/diario",
+      "title": "View your diary"
+    },
+    "library": {
+      "text": "Library",
+      "href": "/library",
+      "title": "Library"
+    },
+    "myWorld": {
+      "text": "My World",
+      "href": "/my-world",
+      "title": "My World"
+    },
+    "myProgress": {
+      "text": "My Progress",
+      "href": "/my-progress",
+      "title": "See your progress"
+    },
+    "myBooks": {
+      "text": "My Books",
+      "href": "/mis-libros",
+      "title": "See your books"
+    },
+    "createBook": {
+      "text": "Create Book",
+      "href": "/create-book",
+      "title": "Start creating a new book"
+    },
+    "explore": {
+      "text": "Explore",
+      "href": "/explorar",
+      "title": "Discover new content"
+    },
+    "myReadings": {
+      "text": "My Readings",
+      "href": "/mis-lecturas",
+      "title": "Track your readings"
+    },
+    "activities": {
+      "text": "Activities",
+      "href": "/actividades",
+      "title": "See your activities"
+    },
+    "book": {
+      "create": {
+        "text": "Create Book",
+        "href": "/books/create",
+        "title": "Start creating a new book"
+      }
+    },
+    "diary": {
+      "myDiaries": {
+        "text": "My Personal Diaries",
+        "href": "/diary/my-diaries",
+        "title": "View my personal diaries"
+      },
+      "create": {
+        "text": "Create Personal Diary",
+        "href": "/diary/create",
+        "title": "Start creating a new personal diary"
+      },
+      "view": {
+        "text": "View Personal Diary",
+        "href": "/diary/view",
+        "title": "View my personal diary"
+      },
+      "edit": {
+        "text": "Edit Personal Diary",
+        "href": "/diary/edit",
+        "title": "Edit my personal diary"
+      },
+      "delete": {
+        "text": "Delete Personal Diary",
+        "href": "/diary/delete",
+        "title": "Delete my personal diary"
+      }
+    }
+  },
+  "content": {
+    "cover": {
+      "text": "Cover",
+      "alt": "Cover image"
+    },
+    "description": "Main content description"
+  },
+  "lang": {
+    "selectLanguage": {
+      "text": "Select Language",
+      "aria-label": "Change language"
+    },
+    "currentLanguage": "Current language"
+  },
+  "welcome": {
+    "title": "Welcome",
+    "subtitle": "We're glad to see you",
+    "description": "Explore our application and enjoy all its features"
+  },
+  "buttons": {
+    "save": {
+      "text": "Save",
+      "aria-label": "Save changes"
+    },
+    "cancel": {
+      "text": "Cancel",
+      "aria-label": "Cancel operation"
+    },
+    "delete": {
+      "text": "Delete",
+      "aria-label": "Delete item"
+    },
+    "edit": {
+      "text": "Edit",
+      "aria-label": "Edit item"
+    },
+    "submit": {
+      "text": "Submit",
+      "aria-label": "Submit form"
+    }
+  },
+  "auth": {
+    "errors": {
+      "invalid_credentials": "Invalid login credentials. Please check your email and password.",
+      "email_not_confirmed": "Please confirm your email before signing in.",
+      "user_not_found": "No account found with this email.",
+      "invalid_email": "Invalid email format.",
+      "weak_password": "Password must be at least 6 characters long.",
+      "email_already_registered": "An account with this email already exists.",
+      "too_many_requests": "Too many attempts. Please try again later.",
+      "generic_error": "An unexpected error occurred. Please try again."
+    },
+    "form": {
+      "or_use_email": "or use your email",
+      "email_placeholder": "Your email address",
+      "password_placeholder": "Your password",
+      "remember_me": "Remember me",
+      "forgot_password": "Forgot your password?",
+      "login_button": "LOGIN TO LEARN! 📚",
+      "connect_with": "Connect with:"
+    }
+  },
+  "errors": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "minLength": "Must be at least {{count}} characters long"
+  },
+  "cta": {
+    "title": "Ready to transform reading?",
+    "description": "Join thousands of educators who are already improving their students' reading comprehension.",
+    "button": "Get Started Now"
+  },
+  "features": {
+    "title": "Why are we different from other educational platforms?",
+    "tabs": [
+      {
+        "id": "our_difference",
+        "label": "Our Difference",
+        "title": "Our Difference",
+        "content": "🚀 We blend technology with culture. Here, you'll find not only universal materials but also stories, legends, and proverbs unique to our region. Each story comes to life with dynamic activities, games, and challenges that motivate continued reading."
+      },
+      {
+        "id": "for_students",
+        "label": "For Students",
+        "title": "For Students",
+        "content": "✨ Children and young people progress through levels designed for their age, earn badges, unlock achievements, and personalize their own avatar. Each reading becomes a challenge that turns into a game."
+      },
+      {
+        "id": "for_parents",
+        "label": "For Parents",
+        "title": "For Parents",
+        "content": "👨‍👩‍👧 Access clear and easy-to-understand reports on your child's progress. Discover how much time they read, which categories they enjoy most, and how they advance in reading comprehension."
+      },
+      {
+        "id": "for_teachers",
+        "label": "For Teachers",
+        "title": "For Teachers",
+        "content": "👩‍🏫 Monitor each student and your entire class in one place. Create challenges, assign readings, review reading comprehension, and download reports to help reinforce learning."
+      },
+      {
+        "id": "plans_and_pricing",
+        "label": "Plans and Pricing",
+        "title": "Plans and Pricing",
+        "content": "💡 Access free trial activities. Subscribe to unlock exclusive content, additional games, and comprehensive progress tracking."
+      }
+    ],
+    "button": "Learn More",
+    "stats": [
+      {
+        "number": "1000+",
+        "label": "Active Students"
+      },
+      {
+        "number": "95%",
+        "label": "Improved Comprehension"
+      },
+      {
+        "number": "50+",
+        "label": "Partner Institutions"
+      }
+    ]
+  },
+  "hero": {
+    "slides": [
+      {
+        "title": "ESReadWrite",
+        "icon": "🌟",
+        "description": "Learning to read and write has never been so fun. Explore stories, fables, poems and more, while you play, level up and earn rewards for your effort. A platform made for students, families and teachers who believe in the power of reading!",
+        "button": "Start Adventure"
+      },
+      {
+        "title": "Stories",
+        "icon": "📖",
+        "description": "Immerse yourself in a world of adventures, magic and unforgettable characters. Stories invite you to imagine, dream and learn while enjoying every page.",
+        "button": "Explore Stories"
+      },
+      {
+        "title": "Fables",
+        "icon": "🦊",
+        "description": "Short stories with great teachings. Fables, through animals and fun situations, transmit values that you will never forget.",
+        "button": "Discover Fables"
+      },
+      {
+        "title": "Poems",
+        "icon": "✒️",
+        "description": "Let words come to life in verses full of rhythm, emotion and beauty. Poetry invites you to feel and dream.",
+        "button": "Read Poems"
+      },
+      {
+        "title": "Legends",
+        "icon": "🏞️",
+        "description": "Discover the stories that are part of our history and culture. Legends hold mysteries, traditions and unique learnings.",
+        "button": "Know Legends"
+      },
+      {
+        "title": "Riddles",
+        "icon": "❓",
+        "description": "Test your wit with fun puzzles that will challenge your mind and make your imagination soar.",
+        "button": "Solve Riddles"
+      },
+      {
+        "title": "Comics",
+        "icon": "💬",
+        "description": "Illustrated stories full of color and fun. Learn and laugh while accompanying unique characters on their adventures.",
+        "button": "View Comics"
+      },
+      {
+        "title": "Tongue Twisters",
+        "icon": "👅",
+        "description": "Challenge your pronunciation and have fun playing with words. The faster you try, the more fun it will be!",
+        "button": "Practice Tongue Twisters"
+      },
+      {
+        "title": "Sayings",
+        "icon": "🗣️",
+        "description": "Small phrases with great truths. Sayings contain the wisdom of generations in few words.",
+        "button": "Learn Sayings"
+      }
+    ]
+  }
+}
