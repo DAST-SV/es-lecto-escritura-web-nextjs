@@ -1,24 +1,17 @@
+// ============================================
+// PASO 7: Componente de prueba actualizado
+// app/[locale]/test-supabase/page.tsx (actualizar imports)
+// ============================================
 
 'use client';
-import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
+import { useTranslations } from 'next-intl'; // ✅ Cambiar a este
 import { useLocale } from 'next-intl';
 import { Link } from '@/src/infrastructure/config/routing.config';
 
 export default function TestSupabasePage() {
-  const { t, loading } = useSupabaseTranslations('test');
-  const { t: tCommon } = useSupabaseTranslations('common');
+  const t = useTranslations('test'); // ✅ Ahora carga desde Supabase
+  const tCommon = useTranslations('common');
   const locale = useLocale();
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-700 font-semibold">Cargando traducciones desde Supabase...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
@@ -50,73 +43,19 @@ export default function TestSupabasePage() {
         {/* Navegación común */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Navegación (namespace: common)
+            Navegación (desde Supabase)
           </h2>
           <nav className="flex gap-4">
-            <a href="#home" className="px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold transition-colors">
+            <Link href="/" className="px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold transition-colors">
               {tCommon('nav.home')}
-            </a>
-            <a href="#about" className="px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold transition-colors">
-              {tCommon('nav.about')}
-            </a>
-            <a href="#contact" className="px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold transition-colors">
-              {tCommon('nav.contact')}
-            </a>
+            </Link>
+            <Link href="/library" className="px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold transition-colors">
+              Biblioteca
+            </Link>
+            <Link href="/my-world" className="px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold transition-colors">
+              Mi Mundo
+            </Link>
           </nav>
-        </div>
-
-        {/* Arquitectura */}
-        <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl shadow-xl p-8 text-white">
-          <h3 className="text-2xl font-bold mb-4">🏛️ Arquitectura Limpia (DDD)</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4">
-              <h4 className="font-bold mb-2">🎯 Dominio</h4>
-              <p className="text-sm">Entidades + Repositorios (interfaces)</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4">
-              <h4 className="font-bold mb-2">🔧 Infraestructura</h4>
-              <p className="text-sm">Implementación Supabase</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4">
-              <h4 className="font-bold mb-2">🎨 Presentación</h4>
-              <p className="text-sm">Hooks + Componentes React</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Info técnica */}
-        <div className="bg-gray-900 text-white rounded-2xl shadow-xl p-8">
-          <h3 className="text-xl font-bold mb-4">📊 Estado del Sistema</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Idioma:</span>
-                <span className="text-green-400 font-mono">{locale}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Fuente:</span>
-                <span className="text-green-400 font-mono">Supabase</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Namespace test:</span>
-                <span className="text-green-400 font-mono">✓ Activo</span>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Cache:</span>
-                <span className="text-green-400 font-mono">✓ Memoria</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Arquitectura:</span>
-                <span className="text-green-400 font-mono">DDD</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Repository:</span>
-                <span className="text-green-400 font-mono">Supabase</span>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Cambiar idioma */}
@@ -161,14 +100,31 @@ export default function TestSupabasePage() {
           </div>
         </div>
 
-        {/* Volver */}
-        <div className="text-center">
-          <Link 
-            href="/" 
-            className="inline-block px-8 py-3 bg-gray-800 text-white font-bold rounded-xl hover:bg-gray-700 transition-all"
-          >
-            ← Volver al inicio
-          </Link>
+        {/* Estado */}
+        <div className="bg-gray-900 text-white rounded-2xl shadow-xl p-8">
+          <h3 className="text-xl font-bold mb-4">📊 Sistema Dinámico</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Fuente:</span>
+                <span className="text-green-400 font-mono">✅ Supabase</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Traducciones:</span>
+                <span className="text-green-400 font-mono">✅ Dinámicas</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Rutas:</span>
+                <span className="text-green-400 font-mono">✅ Dinámicas</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Cache:</span>
+                <span className="text-green-400 font-mono">✅ 5 min</span>
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>
