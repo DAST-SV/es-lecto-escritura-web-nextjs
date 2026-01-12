@@ -1,6 +1,6 @@
 // ============================================
 // src/infrastructure/repositories/SupabaseTranslationRepository.ts
-// ✅ CORREGIDO: Todas las referencias a translation_key cambiadas a key_name
+// ✅ CORRECCIÓN: Sin namespace_slug directo, obtenerlo via JOIN
 // ============================================
 
 import { createClient } from '@/src/infrastructure/config/supabase.config';
@@ -17,35 +17,35 @@ export class SupabaseTranslationRepository implements TranslationRepository {
 
   async findAll(): Promise<Translation[]> {
     const { data, error } = await this.supabase
+      .schema('app')
       .from('translations')
       .select(`
         *,
-        translation_keys!inner (
+        translation_key:translation_keys!inner (
           namespace_slug,
           key_name
         )
       `)
-      .order('namespace_slug', { ascending: true })
-      .order('key_name', { ascending: true });
+      .order('created_at', { ascending: false });
 
     if (error) {
       throw new Error(`Error fetching translations: ${error.message}`);
     }
 
-    // ✅ CORRECCIÓN: Mapear correctamente desde la base de datos
     return (data || []).map((row: any) => Translation.fromDatabase({
       ...row,
-      namespace_slug: row.translation_keys?.namespace_slug,
-      key_name: row.translation_keys?.key_name,
+      namespace_slug: row.translation_key?.namespace_slug,
+      key_name: row.translation_key?.key_name,
     }));
   }
 
   async findById(id: string): Promise<Translation | null> {
     const { data, error } = await this.supabase
+      .schema('app')
       .from('translations')
       .select(`
         *,
-        translation_keys!inner (
+        translation_key:translation_keys!inner (
           namespace_slug,
           key_name
         )
@@ -58,62 +58,60 @@ export class SupabaseTranslationRepository implements TranslationRepository {
       throw new Error(`Error fetching translation: ${error.message}`);
     }
 
-    // ✅ CORRECCIÓN: Mapear correctamente
     return Translation.fromDatabase({
       ...data,
-      namespace_slug: data.translation_keys?.namespace_slug,
-      key_name: data.translation_keys?.key_name,
+      namespace_slug: data.translation_key?.namespace_slug,
+      key_name: data.translation_key?.key_name,
     });
   }
 
   async findByNamespace(namespaceSlug: string): Promise<Translation[]> {
     const { data, error } = await this.supabase
+      .schema('app')
       .from('translations')
       .select(`
         *,
-        translation_keys!inner (
+        translation_key:translation_keys!inner (
           namespace_slug,
           key_name
         )
       `)
-      .eq('translation_keys.namespace_slug', namespaceSlug)
-      .order('key_name', { ascending: true });
+      .eq('translation_key.namespace_slug', namespaceSlug)
+      .order('created_at', { ascending: false });
 
     if (error) {
       throw new Error(`Error fetching translations by namespace: ${error.message}`);
     }
 
-    // ✅ CORRECCIÓN: Mapear correctamente
     return (data || []).map((row: any) => Translation.fromDatabase({
       ...row,
-      namespace_slug: row.translation_keys?.namespace_slug,
-      key_name: row.translation_keys?.key_name,
+      namespace_slug: row.translation_key?.namespace_slug,
+      key_name: row.translation_key?.key_name,
     }));
   }
 
   async findByLanguage(languageCode: string): Promise<Translation[]> {
     const { data, error } = await this.supabase
+      .schema('app')
       .from('translations')
       .select(`
         *,
-        translation_keys!inner (
+        translation_key:translation_keys!inner (
           namespace_slug,
           key_name
         )
       `)
       .eq('language_code', languageCode)
-      .order('namespace_slug', { ascending: true })
-      .order('key_name', { ascending: true });
+      .order('created_at', { ascending: false });
 
     if (error) {
       throw new Error(`Error fetching translations by language: ${error.message}`);
     }
 
-    // ✅ CORRECCIÓN: Mapear correctamente
     return (data || []).map((row: any) => Translation.fromDatabase({
       ...row,
-      namespace_slug: row.translation_keys?.namespace_slug,
-      key_name: row.translation_keys?.key_name,
+      namespace_slug: row.translation_key?.namespace_slug,
+      key_name: row.translation_key?.key_name,
     }));
   }
 
@@ -124,10 +122,11 @@ export class SupabaseTranslationRepository implements TranslationRepository {
   ): Promise<Translation | null> {
     // Primero encontrar la translation_key
     const { data: keyData, error: keyError } = await this.supabase
+      .schema('app')
       .from('translation_keys')
       .select('id')
       .eq('namespace_slug', namespaceSlug)
-      .eq('key_name', translationKey)  // ✅ CORRECCIÓN: key_name
+      .eq('key_name', translationKey)
       .single();
 
     if (keyError || !keyData) {
@@ -136,10 +135,11 @@ export class SupabaseTranslationRepository implements TranslationRepository {
 
     // Luego buscar la traducción
     const { data, error } = await this.supabase
+      .schema('app')
       .from('translations')
       .select(`
         *,
-        translation_keys!inner (
+        translation_key:translation_keys!inner (
           namespace_slug,
           key_name
         )
@@ -153,21 +153,21 @@ export class SupabaseTranslationRepository implements TranslationRepository {
       throw new Error(`Error fetching translation: ${error.message}`);
     }
 
-    // ✅ CORRECCIÓN: Mapear correctamente
     return Translation.fromDatabase({
       ...data,
-      namespace_slug: data.translation_keys?.namespace_slug,
-      key_name: data.translation_keys?.key_name,
+      namespace_slug: data.translation_key?.namespace_slug,
+      key_name: data.translation_key?.key_name,
     });
   }
 
   async create(dto: CreateTranslationDTO): Promise<Translation> {
     // Primero encontrar la translation_key
     const { data: keyData, error: keyError } = await this.supabase
+      .schema('app')
       .from('translation_keys')
-      .select('id')
+      .select('id, namespace_slug, key_name')
       .eq('namespace_slug', dto.namespaceSlug)
-      .eq('key_name', dto.translationKey)  // ✅ CORRECCIÓN: key_name
+      .eq('key_name', dto.translationKey)
       .single();
 
     if (keyError || !keyData) {
@@ -175,40 +175,35 @@ export class SupabaseTranslationRepository implements TranslationRepository {
     }
 
     const { data, error } = await this.supabase
+      .schema('app')
       .from('translations')
       .insert({
         translation_key_id: keyData.id,
         language_code: dto.languageCode,
         value: dto.value,
       })
-      .select(`
-        *,
-        translation_keys!inner (
-          namespace_slug,
-          key_name
-        )
-      `)
+      .select()
       .single();
 
     if (error) {
       throw new Error(`Error creating translation: ${error.message}`);
     }
 
-    // ✅ CORRECCIÓN: Mapear correctamente
     return Translation.fromDatabase({
       ...data,
-      namespace_slug: data.translation_keys?.namespace_slug,
-      key_name: data.translation_keys?.key_name,
+      namespace_slug: keyData.namespace_slug,
+      key_name: keyData.key_name,
     });
   }
 
   async createBulk(dto: BulkCreateTranslationDTO): Promise<Translation[]> {
     // Primero encontrar la translation_key
     const { data: keyData, error: keyError } = await this.supabase
+      .schema('app')
       .from('translation_keys')
-      .select('id')
+      .select('id, namespace_slug, key_name')
       .eq('namespace_slug', dto.namespaceSlug)
-      .eq('key_name', dto.translationKey)  // ✅ CORRECCIÓN: key_name
+      .eq('key_name', dto.translationKey)
       .single();
 
     if (keyError || !keyData) {
@@ -222,25 +217,19 @@ export class SupabaseTranslationRepository implements TranslationRepository {
     }));
 
     const { data, error } = await this.supabase
+      .schema('app')
       .from('translations')
       .insert(insertData)
-      .select(`
-        *,
-        translation_keys!inner (
-          namespace_slug,
-          key_name
-        )
-      `);
+      .select();
 
     if (error) {
       throw new Error(`Error creating bulk translations: ${error.message}`);
     }
 
-    // ✅ CORRECCIÓN: Mapear correctamente
     return (data || []).map((row: any) => Translation.fromDatabase({
       ...row,
-      namespace_slug: row.translation_keys?.namespace_slug,
-      key_name: row.translation_keys?.key_name,
+      namespace_slug: keyData.namespace_slug,
+      key_name: keyData.key_name,
     }));
   }
 
@@ -250,12 +239,13 @@ export class SupabaseTranslationRepository implements TranslationRepository {
     if (dto.isActive !== undefined) updateData.is_active = dto.isActive;
 
     const { data, error } = await this.supabase
+      .schema('app')
       .from('translations')
       .update(updateData)
       .eq('id', id)
       .select(`
         *,
-        translation_keys!inner (
+        translation_key:translation_keys!inner (
           namespace_slug,
           key_name
         )
@@ -266,16 +256,16 @@ export class SupabaseTranslationRepository implements TranslationRepository {
       throw new Error(`Error updating translation: ${error.message}`);
     }
 
-    // ✅ CORRECCIÓN: Mapear correctamente
     return Translation.fromDatabase({
       ...data,
-      namespace_slug: data.translation_keys?.namespace_slug,
-      key_name: data.translation_keys?.key_name,
+      namespace_slug: data.translation_key?.namespace_slug,
+      key_name: data.translation_key?.key_name,
     });
   }
 
   async delete(id: string): Promise<void> {
     const { error } = await this.supabase
+      .schema('app')
       .from('translations')
       .delete()
       .eq('id', id);

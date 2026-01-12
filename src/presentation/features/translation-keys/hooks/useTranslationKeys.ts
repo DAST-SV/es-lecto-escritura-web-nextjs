@@ -19,6 +19,7 @@ export function useTranslationKeys() {
       setError(null);
       
       const { data, error: fetchError } = await supabase
+        .schema('app')
         .from('translation_keys')
         .select(`
           *,
@@ -62,6 +63,7 @@ export function useTranslationKeys() {
   }) => {
     try {
       const { data, error: createError } = await supabase
+        .schema('app')
         .from('translation_keys')
         .insert({
           namespace_slug: dto.namespaceSlug,
@@ -127,6 +129,7 @@ export function useTranslationKeys() {
   const deleteKey = useCallback(async (id: string) => {
     try {
       const { error: deleteError } = await supabase
+        .schema('app')
         .from('translation_keys')
         .delete()
         .eq('id', id);

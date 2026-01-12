@@ -1,9 +1,6 @@
 // ============================================
-// PAQUETE 1: ENTIDADES (Domain Entities)
-// ============================================
-
-// ============================================
 // src/core/domain/entities/TranslationKey.ts
+// ✅ Entidad de clave de traducción
 // ============================================
 
 export interface TranslationKeyData {
@@ -15,8 +12,8 @@ export interface TranslationKeyData {
   description?: string;
   context?: string;
   defaultValue?: string;
-  isActive: boolean;
   isSystemKey: boolean;
+  isActive: boolean;
   translationCount?: number;
   createdAt: Date;
   updatedAt: Date;
@@ -34,14 +31,21 @@ export class TranslationKey {
     public readonly description: string | undefined,
     public readonly context: string | undefined,
     public readonly defaultValue: string | undefined,
-    public readonly isActive: boolean,
     public readonly isSystemKey: boolean,
+    public readonly isActive: boolean,
     public readonly translationCount: number,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
     public readonly createdBy: string | undefined,
     public readonly updatedBy: string | undefined
   ) {}
+
+  /**
+   * Obtener la clave completa (namespace.keyName)
+   */
+  getFullKey(): string {
+    return `${this.namespaceSlug}.${this.keyName}`;
+  }
 
   static fromDatabase(data: any): TranslationKey {
     return new TranslationKey(
@@ -53,8 +57,8 @@ export class TranslationKey {
       data.description,
       data.context,
       data.default_value,
-      data.is_active ?? true,
       data.is_system_key ?? false,
+      data.is_active ?? true,
       data.translation_count ?? 0,
       new Date(data.created_at),
       new Date(data.updated_at),
@@ -72,8 +76,8 @@ export class TranslationKey {
       description: this.description,
       context: this.context,
       default_value: this.defaultValue,
-      is_active: this.isActive,
       is_system_key: this.isSystemKey,
+      is_active: this.isActive,
       created_at: this.createdAt.toISOString(),
       updated_at: this.updatedAt.toISOString(),
       created_by: this.createdBy,
