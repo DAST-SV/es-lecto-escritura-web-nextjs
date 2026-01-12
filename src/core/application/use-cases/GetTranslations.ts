@@ -19,7 +19,7 @@ export class GetTranslationsUseCase {
     translations
       .filter((translation: Translation) => translation.languageCode === languageCode)
       .forEach((translation: Translation) => {
-        result[translation.translationKey] = translation.value;
+        result[translation.keyName] = translation.value;
       });
     
     return result;

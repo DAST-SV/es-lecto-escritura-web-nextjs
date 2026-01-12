@@ -45,10 +45,10 @@ export function EditTranslationModal({
           disabled: true,
         },
         {
-          name: 'translationKey',
+          name: 'keyName',
           label: 'Clave',
           type: 'text',
-          value: translation.translationKey,
+          value: translation.keyName,
           disabled: true,
         },
         {

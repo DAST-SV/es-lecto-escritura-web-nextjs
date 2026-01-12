@@ -1,5 +1,6 @@
 // ============================================
 // src/core/domain/entities/Route.ts
+// ✅ CORREGIDO: Con métodos getTranslation, getTranslatedPath, getTranslatedName
 // ============================================
 
 export interface RouteTranslation {
@@ -47,6 +48,29 @@ export class Route {
     public readonly updatedAt: Date,
     public readonly deletedAt: Date | undefined
   ) {}
+
+  /**
+   * ✅ NUEVO: Obtener traducción para un idioma específico
+   */
+  getTranslation(languageCode: string): RouteTranslation | undefined {
+    return this.translations.find(t => t.languageCode === languageCode);
+  }
+
+  /**
+   * ✅ NUEVO: Obtener ruta traducida o pathname por defecto
+   */
+  getTranslatedPath(languageCode: string): string {
+    const translation = this.getTranslation(languageCode);
+    return translation?.translatedPath || this.pathname;
+  }
+
+  /**
+   * ✅ NUEVO: Obtener nombre traducido o displayName por defecto
+   */
+  getTranslatedName(languageCode: string): string {
+    const translation = this.getTranslation(languageCode);
+    return translation?.translatedName || this.displayName;
+  }
 
   static fromDatabase(data: any): Route {
     return new Route(

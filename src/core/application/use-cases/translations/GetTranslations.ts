@@ -1,5 +1,6 @@
 // ============================================
-// 1. src/core/application/use-cases/translations/GetTranslations.ts
+// src/core/application/use-cases/translations/GetTranslations.ts
+// ✅ CORREGIDO: usar keyName en lugar de translationKey
 // ============================================
 import { ITranslationRepository } from '@/src/core/domain/repositories/ITranslationRepository';
 import { Translation } from '@/src/core/domain/entities/Translation';
@@ -15,7 +16,8 @@ export class GetTranslationsUseCase {
     translations
       .filter((t: Translation) => t.languageCode === languageCode)
       .forEach((t: Translation) => {
-        result[t.translationKey] = t.value;
+        // ✅ CORRECCIÓN: usar keyName en lugar de translationKey
+        result[t.keyName] = t.value;
       });
     
     return result;

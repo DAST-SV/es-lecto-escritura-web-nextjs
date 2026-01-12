@@ -1,6 +1,6 @@
 // ============================================
 // app/[locale]/admin/translation-keys/page.tsx
-// CRUD: Gestión de CLAVES de Traducción
+// ✅ CORREGIDO: Tipos explícitos
 // ============================================
 
 'use client';
@@ -43,7 +43,16 @@ export default function TranslationKeysPage() {
     setShowDeleteModal(true);
   };
 
-  const handleCreate = async (data: any) => {
+  // ✅ CORRECCIÓN: Tipo explícito para data
+  const handleCreate = async (data: {
+    namespaceSlug: string;
+    keyName: string;
+    categoryId?: string;
+    description?: string;
+    context?: string;
+    defaultValue?: string;
+    isSystemKey?: boolean;
+  }) => {
     try {
       await createKey(data);
       toast.success('Clave creada exitosamente');
@@ -54,7 +63,15 @@ export default function TranslationKeysPage() {
     }
   };
 
-  const handleUpdate = async (id: string, data: any) => {
+  // ✅ CORRECCIÓN: Tipo explícito para data
+  const handleUpdate = async (id: string, data: {
+    keyName?: string;
+    categoryId?: string;
+    description?: string;
+    context?: string;
+    defaultValue?: string;
+    isActive?: boolean;
+  }) => {
     try {
       await updateKey(id, data);
       toast.success('Clave actualizada exitosamente');

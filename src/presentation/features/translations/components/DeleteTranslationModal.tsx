@@ -34,7 +34,7 @@ export function DeleteTranslationModal({
       itemName={translation.getFullKey()}
       itemDetails={[
         { label: 'Namespace', value: translation.namespaceSlug },
-        { label: 'Clave', value: translation.translationKey },
+        { label: 'Clave', value: translation.keyName },
         { label: 'Idioma', value: translation.languageCode.toUpperCase() },
         { label: 'Valor', value: translation.value },
       ]}

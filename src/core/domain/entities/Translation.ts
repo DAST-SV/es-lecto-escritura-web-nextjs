@@ -1,5 +1,6 @@
 // ============================================
 // src/core/domain/entities/Translation.ts
+// ✅ CORREGIDO: Con método getFullKey()
 // ============================================
 
 export interface TranslationData {
@@ -37,12 +38,19 @@ export class Translation {
     public readonly updatedBy: string | undefined
   ) {}
 
+  /**
+   * ✅ NUEVO: Obtener la clave completa (namespace.key)
+   */
+  getFullKey(): string {
+    return `${this.namespaceSlug}.${this.keyName}`;
+  }
+
   static fromDatabase(data: any): Translation {
     return new Translation(
       data.id,
       data.translation_key_id,
       data.namespace_slug,
-      data.key_name,
+      data.key_name,  // ✅ CORRECCIÓN: key_name no translation_key
       data.language_code,
       data.value,
       data.is_active ?? true,

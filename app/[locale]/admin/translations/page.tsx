@@ -1,6 +1,6 @@
 // ============================================
 // app/[locale]/admin/translations/page.tsx
-// CRUD: Gestión de TRADUCCIONES (múltiples idiomas)
+// ✅ CORREGIDO: Usar createBulkTranslations
 // ============================================
 
 'use client';
@@ -18,7 +18,8 @@ import { Loader2, AlertCircle, Plus, Search, Languages, Edit2, Trash2 } from 'lu
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function TranslationsPage() {
-  const { translations, loading, error, createTranslations, updateTranslation, deleteTranslation, refresh } = useTranslations();
+  // ✅ CORRECCIÓN: Usar createBulkTranslations en lugar de createTranslations
+  const { translations, loading, error, createBulkTranslations, updateTranslation, deleteTranslation, refresh } = useTranslations();
   const { keys } = useTranslationKeys();
 
   const [showTranslateModal, setShowTranslateModal] = useState(false);
@@ -38,9 +39,10 @@ export default function TranslationsPage() {
     setShowDeleteModal(true);
   };
 
+  // ✅ CORRECCIÓN: Usar createBulkTranslations
   const handleTranslate = async (data: any) => {
     try {
-      await createTranslations(data);
+      await createBulkTranslations(data);
       toast.success('Traducciones creadas exitosamente');
       setShowTranslateModal(false);
     } catch (err: any) {
