@@ -1,6 +1,6 @@
 // ============================================
 // src/infrastructure/repositories/SupabaseRouteRepository.ts
-// Implementación: Repositorio de Rutas con Supabase
+// CORREGIDO: Usa schema app.routes
 // ============================================
 
 import { createClient } from '@/src/infrastructure/config/supabase.config';
@@ -9,42 +9,47 @@ import {
   CreateRouteDTO,
   UpdateRouteDTO,
 } from '@/src/core/domain/repositories/RouteRepository';
-import { Route, RouteTranslation } from '@/src/core/domain/entities/Route';
+import { Route } from '@/src/core/domain/entities/Route';
 
 export class SupabaseRouteRepository implements RouteRepository {
   private supabase = createClient();
 
-  /**
-   * Obtener todas las rutas (incluyendo eliminadas)
-   */
   async findAll(): Promise<Route[]> {
     const { data, error } = await this.supabase
-      .from('routes')
+      .from('routes') // ✅ Supabase detecta app.routes automáticamente
       .select(`
         *,
-        translations:route_translations(*)
+        route_translations (
+          language_code,
+          translated_path,
+          translated_name,
+          translated_description
+        )
       `)
       .order('menu_order', { ascending: true });
 
     if (error) {
+      console.error('❌ Error fetching routes:', error);
       throw new Error(`Error fetching routes: ${error.message}`);
     }
 
     return (data || []).map(route => Route.fromDatabase({
       ...route,
-      translations: route.translations || []
+      translations: route.route_translations || []
     }));
   }
 
-  /**
-   * Buscar ruta por ID
-   */
   async findById(id: string): Promise<Route | null> {
     const { data, error } = await this.supabase
       .from('routes')
       .select(`
         *,
-        translations:route_translations(*)
+        route_translations (
+          language_code,
+          translated_path,
+          translated_name,
+          translated_description
+        )
       `)
       .eq('id', id)
       .single();
@@ -56,22 +61,23 @@ export class SupabaseRouteRepository implements RouteRepository {
 
     return Route.fromDatabase({
       ...data,
-      translations: data.translations || []
+      translations: data.route_translations || []
     });
   }
 
-  /**
-   * Buscar ruta por pathname
-   */
   async findByPathname(pathname: string): Promise<Route | null> {
     const { data, error } = await this.supabase
       .from('routes')
       .select(`
         *,
-        translations:route_translations(*)
+        route_translations (
+          language_code,
+          translated_path,
+          translated_name,
+          translated_description
+        )
       `)
       .eq('pathname', pathname)
-      .is('deleted_at', null)
       .single();
 
     if (error) {
@@ -81,16 +87,13 @@ export class SupabaseRouteRepository implements RouteRepository {
 
     return Route.fromDatabase({
       ...data,
-      translations: data.translations || []
+      translations: data.route_translations || []
     });
   }
 
-  /**
-   * Crear nueva ruta
-   */
   async create(dto: CreateRouteDTO): Promise<Route> {
-    // 1. Crear la ruta
-    const { data: routeData, error: routeError } = await this.supabase
+    // 1. Crear ruta
+    const { data: route, error: routeError } = await this.supabase
       .from('routes')
       .insert({
         pathname: dto.pathname,
@@ -114,7 +117,7 @@ export class SupabaseRouteRepository implements RouteRepository {
     // 2. Crear traducciones
     if (dto.translations && dto.translations.length > 0) {
       const translationsData = dto.translations.map(t => ({
-        route_id: routeData.id,
+        route_id: route.id,
         language_code: t.languageCode,
         translated_path: t.translatedPath,
         translated_name: t.translatedName,
@@ -130,17 +133,17 @@ export class SupabaseRouteRepository implements RouteRepository {
       }
     }
 
-    // 3. Retornar ruta con traducciones
-    return this.findById(routeData.id) as Promise<Route>;
+    // 3. Obtener ruta completa
+    const created = await this.findById(route.id);
+    if (!created) {
+      throw new Error('Route created but not found');
+    }
+
+    return created;
   }
 
-  /**
-   * Actualizar ruta
-   */
   async update(id: string, dto: UpdateRouteDTO): Promise<Route> {
-    // 1. Actualizar ruta
     const updateData: any = {};
-    
     if (dto.pathname !== undefined) updateData.pathname = dto.pathname;
     if (dto.displayName !== undefined) updateData.display_name = dto.displayName;
     if (dto.description !== undefined) updateData.description = dto.description;
@@ -152,16 +155,16 @@ export class SupabaseRouteRepository implements RouteRepository {
     if (dto.menuOrder !== undefined) updateData.menu_order = dto.menuOrder;
     if (dto.parentRouteId !== undefined) updateData.parent_route_id = dto.parentRouteId;
 
-    const { error: routeError } = await this.supabase
+    const { error } = await this.supabase
       .from('routes')
       .update(updateData)
       .eq('id', id);
 
-    if (routeError) {
-      throw new Error(`Error updating route: ${routeError.message}`);
+    if (error) {
+      throw new Error(`Error updating route: ${error.message}`);
     }
 
-    // 2. Actualizar traducciones si vienen
+    // Actualizar traducciones si están presentes
     if (dto.translations && dto.translations.length > 0) {
       // Eliminar traducciones existentes
       await this.supabase
@@ -183,20 +186,18 @@ export class SupabaseRouteRepository implements RouteRepository {
         .insert(translationsData);
     }
 
-    // 3. Retornar ruta actualizada
-    return this.findById(id) as Promise<Route>;
+    const updated = await this.findById(id);
+    if (!updated) {
+      throw new Error('Route not found after update');
+    }
+
+    return updated;
   }
 
-  /**
-   * Eliminar ruta (soft delete)
-   */
   async delete(id: string): Promise<void> {
     const { error } = await this.supabase
       .from('routes')
-      .update({ 
-        deleted_at: new Date().toISOString(),
-        is_active: false
-      })
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
 
     if (error) {
@@ -204,16 +205,10 @@ export class SupabaseRouteRepository implements RouteRepository {
     }
   }
 
-  /**
-   * Restaurar ruta
-   */
   async restore(id: string): Promise<void> {
     const { error } = await this.supabase
       .from('routes')
-      .update({ 
-        deleted_at: null,
-        is_active: true
-      })
+      .update({ deleted_at: null })
       .eq('id', id);
 
     if (error) {
@@ -221,17 +216,7 @@ export class SupabaseRouteRepository implements RouteRepository {
     }
   }
 
-  /**
-   * Eliminar ruta permanentemente
-   */
   async hardDelete(id: string): Promise<void> {
-    // 1. Eliminar traducciones primero (CASCADE debería hacerlo, pero por si acaso)
-    await this.supabase
-      .from('route_translations')
-      .delete()
-      .eq('route_id', id);
-
-    // 2. Eliminar ruta
     const { error } = await this.supabase
       .from('routes')
       .delete()

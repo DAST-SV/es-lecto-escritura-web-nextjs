@@ -1,12 +1,11 @@
 // ============================================
 // app/[locale]/admin/routes/page.tsx
-// Página: Gestión de Rutas
+// ESTILO ADMIN PROFESIONAL
 // ============================================
 
 'use client';
 
 import React, { useState } from 'react';
-import { UnifiedLayout } from '@/src/presentation/features/navigation';
 import { useRoutes } from '@/src/presentation/features/routes/hooks/useRoutes';
 import {
   CreateRouteModal,
@@ -14,8 +13,7 @@ import {
   DeleteRouteModal,
 } from '@/src/presentation/features/routes/components';
 import { Route } from '@/src/core/domain/entities/Route';
-import { DataTable, Column } from '@/src/presentation/components/shared/DataTable';
-import { Loader2, AlertCircle, Lock, Globe } from 'lucide-react';
+import { Loader2, AlertCircle, Lock, Globe, Plus, Search, Filter, Edit2, Trash2, RotateCcw } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function RoutesPage() {
@@ -35,6 +33,8 @@ export default function RoutesPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showDeleted, setShowDeleted] = useState(false);
 
   const handleOpenEdit = (route: Route) => {
     setSelectedRoute(route);
@@ -95,211 +95,212 @@ export default function RoutesPage() {
     }
   };
 
-  const handleBulkRestore = async (items: Route[]) => {
-    try {
-      for (const item of items) {
-        await restoreRoute(item.id);
-      }
-      toast.success(`${items.length} rutas restauradas`);
-    } catch (err: any) {
-      toast.error(err.message || 'Error al restaurar rutas');
-    }
-  };
-
-  const handleBulkDelete = async (items: Route[]) => {
-    if (!confirm(`¿Está seguro de eliminar permanentemente ${items.length} rutas? Esta acción no se puede deshacer.`)) {
-      return;
-    }
+  // Filtrar rutas
+  const filteredRoutes = routes.filter(route => {
+    const matchesSearch = 
+      route.pathname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      route.displayName.toLowerCase().includes(searchTerm.toLowerCase());
     
-    try {
-      for (const item of items) {
-        await hardDeleteRoute(item.id);
-      }
-      toast.success(`${items.length} rutas eliminadas permanentemente`);
-    } catch (err: any) {
-      toast.error(err.message || 'Error al eliminar rutas');
-    }
-  };
-
-  // Columnas para la tabla
-  const columns: Column<Route>[] = [
-    {
-      key: 'pathname',
-      label: 'Ruta',
-      width: '200px',
-      align: 'left',
-      render: (item) => (
-        <span className="font-mono font-semibold text-blue-600">{item.pathname}</span>
-      ),
-    },
-    {
-      key: 'displayName',
-      label: 'Nombre',
-      align: 'left',
-      render: (item) => (
-        <span className="font-semibold text-slate-800">{item.displayName}</span>
-      ),
-    },
-    {
-      key: 'translations',
-      label: 'Traducciones',
-      width: '150px',
-      align: 'center',
-      render: (item) => (
-        <div className="flex justify-center gap-1">
-          {item.translations.map(t => (
-            <span 
-              key={t.languageCode}
-              className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-medium"
-            >
-              {t.languageCode.toUpperCase()}
-            </span>
-          ))}
-          {item.translations.length === 0 && (
-            <span className="text-slate-400 text-xs">Sin traducciones</span>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: 'access',
-      label: 'Acceso',
-      width: '120px',
-      align: 'center',
-      render: (item) => (
-        <div className="flex justify-center">
-          {item.isPublic ? (
-            <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium flex items-center gap-1">
-              <Globe size={12} />
-              Público
-            </span>
-          ) : (
-            <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs font-medium flex items-center gap-1">
-              <Lock size={12} />
-              Privado
-            </span>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: 'permissions',
-      label: 'Permisos',
-      width: '150px',
-      align: 'center',
-      render: (item) => (
-        <div className="text-center">
-          {item.requiresPermissions.length > 0 ? (
-            <span className="text-xs text-slate-600">
-              {item.requiresPermissions.length} permiso(s)
-            </span>
-          ) : (
-            <span className="text-xs text-slate-400">Sin permisos</span>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: 'menu',
-      label: 'Menú',
-      width: '100px',
-      align: 'center',
-      render: (item) => (
-        <div className="flex justify-center">
-          {item.showInMenu ? (
-            <span className="text-green-600 text-xs">✓ Sí</span>
-          ) : (
-            <span className="text-slate-400 text-xs">− No</span>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: 'status',
-      label: 'Estado',
-      width: '120px',
-      align: 'center',
-      render: (item) => (
-        <div className="flex justify-center">
-          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-            item.isActive 
-              ? 'bg-emerald-100 text-emerald-700'
-              : 'bg-slate-100 text-slate-600'
-          }`}>
-            {item.isActive ? '✅ Activo' : '⏸️ Inactivo'}
-          </span>
-        </div>
-      ),
-    },
-  ];
-
-  // Función de búsqueda
-  const handleSearch = (term: string) => {
-    return routes.filter(item =>
-      item.pathname.toLowerCase().includes(term.toLowerCase()) ||
-      item.displayName.toLowerCase().includes(term.toLowerCase()) ||
-      (item.description && item.description.toLowerCase().includes(term.toLowerCase()))
-    );
-  };
+    const matchesDeleted = showDeleted ? !!route.deletedAt : !route.deletedAt;
+    
+    return matchesSearch && matchesDeleted;
+  });
 
   if (loading && routes.length === 0) {
     return (
-      <UnifiedLayout showNavbar={true}>
-        <div className="h-screen flex items-center justify-center bg-gradient-to-b from-blue-400 via-blue-300 to-green-300">
-          <div className="text-center">
-            <Loader2 size={48} className="animate-spin text-teal-600 mx-auto mb-4" />
-            <p className="text-gray-600 font-medium">Cargando rutas...</p>
-          </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Loader2 size={48} className="animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600 font-medium">Cargando rutas...</p>
         </div>
-      </UnifiedLayout>
+      </div>
     );
   }
 
   if (error && routes.length === 0) {
     return (
-      <UnifiedLayout showNavbar={true}>
-        <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-b from-red-400 via-red-300 to-orange-300">
-          <AlertCircle size={64} className="text-red-500 mb-4" />
-          <h2 className="text-xl font-bold text-red-700 mb-2">Error al cargar</h2>
-          <p className="text-gray-600 mb-6 max-w-md text-center">{error}</p>
-          <button
-            onClick={refresh}
-            className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-semibold shadow-md"
-          >
-            Reintentar
-          </button>
-        </div>
-      </UnifiedLayout>
+      <div className="flex flex-col items-center justify-center h-64">
+        <AlertCircle size={64} className="text-red-500 mb-4" />
+        <h2 className="text-xl font-bold text-red-700 mb-2">Error al cargar</h2>
+        <p className="text-gray-600 mb-6 max-w-md text-center">{error}</p>
+        <button
+          onClick={refresh}
+          className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold"
+        >
+          Reintentar
+        </button>
+      </div>
     );
   }
 
   return (
-    <UnifiedLayout
-      brandName="Gestión de Rutas"
-      backgroundComponent={
-        <div className="absolute inset-0 z-0 bg-gradient-to-b from-blue-400 via-blue-300 to-green-300" />
-      }
-      mainClassName="h-full w-full flex flex-col bg-gradient-to-b from-blue-400 via-blue-300 to-green-300 p-2 sm:p-4 lg:p-6"
-    >
+    <div className="space-y-6">
       <Toaster position="top-right" />
       
-      <DataTable
-        title="Rutas del Sistema"
-        data={routes}
-        columns={columns}
-        onSearch={handleSearch}
-        onEdit={handleOpenEdit}
-        onDelete={handleOpenDelete}
-        onRestore={handleRestore}
-        onBulkRestore={handleBulkRestore}
-        onBulkDelete={handleBulkDelete}
-        onCreate={() => setShowCreateModal(true)}
-        getItemKey={(item) => item.id}
-        isDeleted={(item) => !!item.deletedAt}
-        showTrash={true}
-        createButtonText="Nueva Ruta"
-      />
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Gestión de Rutas</h2>
+          <p className="text-gray-600 mt-1">Administra las rutas y permisos del sistema</p>
+        </div>
 
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <Plus size={20} />
+          Nueva Ruta
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="flex items-center gap-4">
+          <div className="flex-1 relative">
+            <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar rutas..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <button
+            onClick={() => setShowDeleted(!showDeleted)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+              showDeleted
+                ? 'bg-orange-50 border-orange-200 text-orange-700'
+                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <Filter size={18} />
+            {showDeleted ? 'Papelera' : 'Activos'}
+          </button>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Ruta
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Nombre
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Traducciones
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Acceso
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Permisos
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Menú
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Acciones
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {filteredRoutes.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                  No se encontraron rutas
+                </td>
+              </tr>
+            ) : (
+              filteredRoutes.map((route) => (
+                <tr key={route.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <code className="text-sm font-mono font-semibold text-blue-600">
+                      {route.pathname}
+                    </code>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-sm font-medium text-gray-900">{route.displayName}</span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex justify-center gap-1">
+                      {route.translations.map(t => (
+                        <span key={t.languageCode} className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-medium">
+                          {t.languageCode.toUpperCase()}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    {route.isPublic ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                        <Globe size={12} />
+                        Público
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
+                        <Lock size={12} />
+                        Privado
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
+                    {route.requiresPermissions.length > 0 ? (
+                      <span>{route.requiresPermissions.length} permiso(s)</span>
+                    ) : (
+                      <span className="text-gray-400">Sin permisos</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    {route.showInMenu ? (
+                      <span className="text-green-600">✓ Sí</span>
+                    ) : (
+                      <span className="text-gray-400">− No</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      {route.deletedAt ? (
+                        <button
+                          onClick={() => handleRestore(route)}
+                          className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                          title="Restaurar"
+                        >
+                          <RotateCcw size={18} />
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleOpenEdit(route)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Editar"
+                          >
+                            <Edit2 size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleOpenDelete(route)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Eliminar"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Modals */}
       <CreateRouteModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
@@ -325,6 +326,6 @@ export default function RoutesPage() {
         onDelete={handleDelete}
         route={selectedRoute}
       />
-    </UnifiedLayout>
+    </div>
   );
 }
