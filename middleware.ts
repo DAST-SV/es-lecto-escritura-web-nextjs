@@ -1,5 +1,7 @@
 // ============================================
-// middleware.ts (ROOT) - SOLUCIÓN RBAC SIN LOOPS
+// middleware.ts - VERSIÓN CORREGIDA
+// Solo verifica rutas privadas (las que están en DB)
+// Rutas públicas se controlan estáticamente aquí
 // ============================================
 
 import createMiddleware from 'next-intl/middleware';
@@ -8,42 +10,40 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { routing } from '@/src/infrastructure/config/routing.config';
 
 // ============================================
-// CONFIGURACIÓN
+// RUTAS PÚBLICAS (CONTROL ESTÁTICO)
 // ============================================
 
-// Rutas completamente públicas (sin login ni verificación de permisos)
 const PUBLIC_ROUTES = [
   '/',
   '/about',
   '/acerca-de',
   '/a-propos',
+  '/chi-siamo',
   '/error',
   '/forbidden',
+  '/admin/users/permissions',
 ];
 
-// Rutas de autenticación (públicas pero tratadas especialmente)
 const AUTH_ROUTES = [
   '/auth/login',
   '/auth/ingresar',
   '/auth/connexion',
+  '/auth/accesso',
   '/auth/register',
   '/auth/registro',
   '/auth/inscription',
+  '/auth/registrazione',
   '/auth/callback',
 ];
 
-// Cache de rutas dinámicas (5 minutos)
+// ============================================
+// CACHE DE RUTAS DINÁMICAS
+// ============================================
+
 let routesCache: Record<string, any> | null = null;
 let cacheTimestamp: number = 0;
-const CACHE_TTL = 5 * 60 * 1000;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
-// ============================================
-// FUNCIONES AUXILIARES
-// ============================================
-
-/**
- * Cargar rutas dinámicas desde Supabase
- */
 async function loadRoutes(): Promise<Record<string, any>> {
   const now = Date.now();
   
@@ -55,81 +55,69 @@ async function loadRoutes(): Promise<Record<string, any>> {
     const { DynamicRoutingService } = await import('@/src/infrastructure/services/routing/DynamicRoutingService');
     routesCache = await DynamicRoutingService.loadAllRoutes();
     cacheTimestamp = now;
-    
     return routesCache;
   } catch (error) {
     console.error('❌ Error cargando rutas:', error);
-    
-    // Fallback
     return {
-      '/': { es: '/', en: '/', fr: '/' },
-      '/auth/login': { es: '/auth/ingresar', en: '/auth/login', fr: '/auth/connexion' },
-      '/auth/register': { es: '/auth/registro', en: '/auth/register', fr: '/auth/inscription' },
-      '/library': { es: '/biblioteca', en: '/library', fr: '/bibliotheque' },
-      '/my-world': { es: '/mi-mundo', en: '/my-world', fr: '/mon-monde' },
+      '/': { es: '/', en: '/', fr: '/', it: '/' },
+      '/library': { es: '/biblioteca', en: '/library', fr: '/bibliotheque', it: '/biblioteca' },
+      '/my-world': { es: '/mi-mundo', en: '/my-world', fr: '/mon-monde', it: '/mio-mondo' },
     };
   }
 }
 
-/**
- * Limpiar pathname (sin locale)
- */
+// ============================================
+// FUNCIONES AUXILIARES
+// ============================================
+
 function cleanPathname(pathname: string, locale: string): string {
   return pathname.startsWith(`/${locale}`)
     ? pathname.slice(`/${locale}`.length) || '/'
     : pathname;
 }
 
-/**
- * Verificar si es ruta pública
- */
 function isPublicRoute(pathname: string, locale: string): boolean {
   const cleanPath = cleanPathname(pathname, locale);
-  
-  return PUBLIC_ROUTES.some(route => {
-    return cleanPath === route || 
-           cleanPath === `${route}/` ||
-           cleanPath.startsWith(`${route}/`);
-  });
+  return PUBLIC_ROUTES.some(route => 
+    cleanPath === route || 
+    cleanPath === `${route}/` ||
+    cleanPath.startsWith(`${route}/`)
+  );
 }
 
-/**
- * Verificar si es ruta de autenticación
- */
 function isAuthRoute(pathname: string, locale: string): boolean {
   const cleanPath = cleanPathname(pathname, locale);
-  
-  return AUTH_ROUTES.some(route => {
-    return cleanPath === route || 
-           cleanPath === `${route}/` ||
-           cleanPath.startsWith(route);
-  });
+  return AUTH_ROUTES.some(route => 
+    cleanPath === route || 
+    cleanPath === `${route}/` ||
+    cleanPath.startsWith(route)
+  );
 }
 
-/**
- * Obtener ruta de login según locale
- */
 function getLoginPath(locale: string): string {
   const loginPaths: Record<string, string> = {
     es: '/auth/ingresar',
     en: '/auth/login',
     fr: '/auth/connexion',
+    it: '/auth/accesso',
   };
   return loginPaths[locale] || loginPaths['es'];
 }
 
 /**
- * Verificar acceso usando función de Supabase
+ * Verificar acceso a ruta privada (solo rutas en DB)
  */
 async function canAccessRoute(
   supabase: any,
-  userId: string | null,
-  pathname: string
+  userId: string,
+  pathname: string,
+  languageCode: string = 'es'
 ): Promise<boolean> {
   try {
     const { data, error } = await supabase.rpc('can_access_route', {
       p_user_id: userId,
       p_pathname: pathname,
+      p_language_code: languageCode,
       p_organization_id: null,
     });
 
@@ -149,7 +137,7 @@ async function canAccessRoute(
 // MIDDLEWARE PRINCIPAL
 // ============================================
 
-export async function middleware(request: NextRequest) {
+export default async function middleware(request: NextRequest) {
   // 1. Cargar rutas dinámicas
   const pathnames = await loadRoutes();
   
@@ -161,7 +149,26 @@ export async function middleware(request: NextRequest) {
 
   const response = handleI18nRouting(request);
   
-  // 3. Crear cliente Supabase
+  // 3. Extraer locale y pathname
+  const { pathname } = request.nextUrl;
+  const segments = pathname.split('/').filter(Boolean);
+  const maybeLocale = segments[0];
+  const locale = ['es', 'en', 'fr', 'it'].includes(maybeLocale) ? maybeLocale : 'es';
+  const cleanPath = cleanPathname(pathname, locale);
+
+  // 4. RUTAS PÚBLICAS → Permitir (sin verificar DB)
+  if (isPublicRoute(pathname, locale)) {
+    console.log(`✅ Ruta pública: ${pathname}`);
+    return response;
+  }
+
+  // 5. RUTAS DE AUTH → Permitir
+  if (isAuthRoute(pathname, locale)) {
+    console.log(`✅ Ruta de autenticación: ${pathname}`);
+    return response;
+  }
+
+  // 6. Crear cliente Supabase (solo para rutas privadas)
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
@@ -182,44 +189,10 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // 4. Obtener usuario
+  // 7. Obtener usuario
   const { data: { user } } = await supabase.auth.getUser();
-  
-  // 5. Extraer locale y pathname limpio
-  const { pathname } = request.nextUrl;
-  const segments = pathname.split('/').filter(Boolean);
-  const maybeLocale = segments[0];
-  const locale = ['es', 'en', 'fr'].includes(maybeLocale) ? maybeLocale : 'es';
-  const cleanPath = cleanPathname(pathname, locale);
 
-  // 6. RUTAS PÚBLICAS: Permitir acceso sin verificación
-  if (isPublicRoute(pathname, locale)) {
-    console.log(`✅ Ruta pública: ${pathname}`);
-    return response;
-  }
-
-  // 7. RUTAS DE AUTH: Permitir acceso (evitar loops)
-  if (isAuthRoute(pathname, locale)) {
-    console.log(`✅ Ruta de autenticación: ${pathname}`);
-    
-    // Si ya está autenticado y en ruta de login/register, redirigir a inicio
-    if (user && (cleanPath.includes('/login') || 
-                 cleanPath.includes('/ingresar') || 
-                 cleanPath.includes('/connexion') ||
-                 cleanPath.includes('/register') ||
-                 cleanPath.includes('/registro') ||
-                 cleanPath.includes('/inscription'))) {
-      console.log(`➡️ Usuario autenticado en ruta de auth, redirigiendo a inicio`);
-      const homeUrl = request.nextUrl.clone();
-      homeUrl.pathname = `/${locale}/`;
-      homeUrl.search = ''; // Limpiar query params
-      return NextResponse.redirect(homeUrl);
-    }
-    
-    return response;
-  }
-
-  // 8. RUTAS PRIVADAS SIN USUARIO: Redirigir a login
+  // 8. Si no hay usuario → Login
   if (!user) {
     const loginUrl = request.nextUrl.clone();
     const loginPath = getLoginPath(locale);
@@ -230,11 +203,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 9. VERIFICAR PERMISOS (usuario autenticado en ruta privada)
-  const hasAccess = await canAccessRoute(supabase, user.id, cleanPath);
+  // 9. Verificar permisos en DB
+  const hasAccess = await canAccessRoute(supabase, user.id, cleanPath, locale);
 
   if (!hasAccess) {
-    console.log(`🚫 Acceso denegado: ${pathname} (user: ${user.email})`);
+    console.log(`🚫 Acceso denegado: ${pathname} (user: ${user.email}, idioma: ${locale})`);
     
     const forbiddenUrl = request.nextUrl.clone();
     forbiddenUrl.pathname = `/${locale}/forbidden`;
@@ -243,8 +216,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(forbiddenUrl);
   }
 
-  // 10. TODO OK: Permitir acceso
-  console.log(`✅ Acceso permitido: ${pathname} (user: ${user.email})`);
+  // 10. Acceso permitido
+  console.log(`✅ Acceso permitido: ${pathname} (user: ${user.email}, idioma: ${locale})`);
   return response;
 }
 
