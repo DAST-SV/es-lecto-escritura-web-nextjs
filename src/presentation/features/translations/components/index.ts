@@ -6,3 +6,4 @@ export { CreateTranslationModal } from './CreateTranslationModal';
 export { BulkCreateTranslationModal } from './BulkCreateTranslationModal';
 export { EditTranslationModal } from './EditTranslationModal';
 export { DeleteTranslationModal } from './DeleteTranslationModal';
+export { TranslateKeyModal } from './TranslateKeyModal';
