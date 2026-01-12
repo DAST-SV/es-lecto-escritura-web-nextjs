@@ -1,14 +1,9 @@
 // ============================================
 // src/infrastructure/repositories/SupabaseRouteRepository.ts
-// ✅ CORRECCIÓN: Usar schema 'app' en lugar de 'public'
 // ============================================
 
 import { createClient } from '@/src/infrastructure/config/supabase.config';
-import {
-  RouteRepository,
-  CreateRouteDTO,
-  UpdateRouteDTO,
-} from '@/src/core/domain/repositories/RouteRepository';
+import { RouteRepository, CreateRouteDTO, UpdateRouteDTO } from '@/src/core/domain/repositories/RouteRepository';
 import { Route, RouteTranslation } from '@/src/core/domain/entities/Route';
 
 export class SupabaseRouteRepository implements RouteRepository {
@@ -23,28 +18,21 @@ export class SupabaseRouteRepository implements RouteRepository {
         translations:route_translations(
           language_code,
           translated_path,
-          translated_name,
-          translated_description
+          translated_name
         )
       `)
-      .order('menu_order', { ascending: true });
+      .order('pathname', { ascending: true });
 
-    if (error) {
-      throw new Error(`Error fetching routes: ${error.message}`);
-    }
+    if (error) throw new Error(`Error fetching routes: ${error.message}`);
 
     return (data || []).map((row: any) => {
       const translations: RouteTranslation[] = (row.translations || []).map((t: any) => ({
         languageCode: t.language_code,
         translatedPath: t.translated_path,
         translatedName: t.translated_name,
-        translatedDescription: t.translated_description,
       }));
 
-      return Route.fromDatabase({
-        ...row,
-        translations,
-      });
+      return Route.fromDatabase({ ...row, translations });
     });
   }
 
@@ -57,8 +45,7 @@ export class SupabaseRouteRepository implements RouteRepository {
         translations:route_translations(
           language_code,
           translated_path,
-          translated_name,
-          translated_description
+          translated_name
         )
       `)
       .eq('id', id)
@@ -73,13 +60,9 @@ export class SupabaseRouteRepository implements RouteRepository {
       languageCode: t.language_code,
       translatedPath: t.translated_path,
       translatedName: t.translated_name,
-      translatedDescription: t.translated_description,
     }));
 
-    return Route.fromDatabase({
-      ...data,
-      translations,
-    });
+    return Route.fromDatabase({ ...data, translations });
   }
 
   async findByPathname(pathname: string): Promise<Route | null> {
@@ -91,8 +74,7 @@ export class SupabaseRouteRepository implements RouteRepository {
         translations:route_translations(
           language_code,
           translated_path,
-          translated_name,
-          translated_description
+          translated_name
         )
       `)
       .eq('pathname', pathname)
@@ -107,13 +89,9 @@ export class SupabaseRouteRepository implements RouteRepository {
       languageCode: t.language_code,
       translatedPath: t.translated_path,
       translatedName: t.translated_name,
-      translatedDescription: t.translated_description,
     }));
 
-    return Route.fromDatabase({
-      ...data,
-      translations,
-    });
+    return Route.fromDatabase({ ...data, translations });
   }
 
   async findActive(): Promise<Route[]> {
@@ -125,30 +103,23 @@ export class SupabaseRouteRepository implements RouteRepository {
         translations:route_translations(
           language_code,
           translated_path,
-          translated_name,
-          translated_description
+          translated_name
         )
       `)
       .eq('is_active', true)
       .is('deleted_at', null)
-      .order('menu_order', { ascending: true });
+      .order('pathname', { ascending: true });
 
-    if (error) {
-      throw new Error(`Error fetching active routes: ${error.message}`);
-    }
+    if (error) throw new Error(`Error fetching active routes: ${error.message}`);
 
     return (data || []).map((row: any) => {
       const translations: RouteTranslation[] = (row.translations || []).map((t: any) => ({
         languageCode: t.language_code,
         translatedPath: t.translated_path,
         translatedName: t.translated_name,
-        translatedDescription: t.translated_description,
       }));
 
-      return Route.fromDatabase({
-        ...row,
-        translations,
-      });
+      return Route.fromDatabase({ ...row, translations });
     });
   }
 
@@ -160,29 +131,19 @@ export class SupabaseRouteRepository implements RouteRepository {
         pathname: dto.pathname,
         display_name: dto.displayName,
         description: dto.description,
-        icon: dto.icon,
-        is_public: dto.isPublic ?? false,
-        requires_permissions: dto.requiresPermissions ?? [],
-        requires_all_permissions: dto.requiresAllPermissions ?? true,
-        show_in_menu: dto.showInMenu ?? true,
-        menu_order: dto.menuOrder ?? 0,
-        parent_route_id: dto.parentRouteId,
       })
       .select()
       .single();
 
-    if (error) {
-      throw new Error(`Error creating route: ${error.message}`);
-    }
+    if (error) throw new Error(`Error creating route: ${error.message}`);
 
-    // Crear traducciones si se proporcionan
+    // Crear traducciones
     if (dto.translations && dto.translations.length > 0) {
       const translationInserts = dto.translations.map(t => ({
         route_id: data.id,
         language_code: t.languageCode,
         translated_path: t.translatedPath,
         translated_name: t.translatedName,
-        translated_description: t.translatedDescription,
       }));
 
       const { error: translationError } = await this.supabase
@@ -191,7 +152,7 @@ export class SupabaseRouteRepository implements RouteRepository {
         .insert(translationInserts);
 
       if (translationError) {
-        console.error('Error creating route translations:', translationError);
+        console.error('Error creating translations:', translationError);
       }
     }
 
@@ -203,13 +164,6 @@ export class SupabaseRouteRepository implements RouteRepository {
     if (dto.pathname !== undefined) updateData.pathname = dto.pathname;
     if (dto.displayName !== undefined) updateData.display_name = dto.displayName;
     if (dto.description !== undefined) updateData.description = dto.description;
-    if (dto.icon !== undefined) updateData.icon = dto.icon;
-    if (dto.isPublic !== undefined) updateData.is_public = dto.isPublic;
-    if (dto.requiresPermissions !== undefined) updateData.requires_permissions = dto.requiresPermissions;
-    if (dto.requiresAllPermissions !== undefined) updateData.requires_all_permissions = dto.requiresAllPermissions;
-    if (dto.showInMenu !== undefined) updateData.show_in_menu = dto.showInMenu;
-    if (dto.menuOrder !== undefined) updateData.menu_order = dto.menuOrder;
-    if (dto.parentRouteId !== undefined) updateData.parent_route_id = dto.parentRouteId;
     if (dto.isActive !== undefined) updateData.is_active = dto.isActive;
 
     const { error } = await this.supabase
@@ -218,27 +172,22 @@ export class SupabaseRouteRepository implements RouteRepository {
       .update(updateData)
       .eq('id', id);
 
-    if (error) {
-      throw new Error(`Error updating route: ${error.message}`);
-    }
+    if (error) throw new Error(`Error updating route: ${error.message}`);
 
-    // Actualizar traducciones si se proporcionan
+    // Actualizar traducciones
     if (dto.translations) {
-      // Eliminar traducciones existentes
       await this.supabase
         .schema('app')
         .from('route_translations')
         .delete()
         .eq('route_id', id);
 
-      // Insertar nuevas traducciones
       if (dto.translations.length > 0) {
         const translationInserts = dto.translations.map(t => ({
           route_id: id,
           language_code: t.languageCode,
           translated_path: t.translatedPath,
           translated_name: t.translatedName,
-          translated_description: t.translatedDescription,
         }));
 
         await this.supabase
@@ -258,9 +207,7 @@ export class SupabaseRouteRepository implements RouteRepository {
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
 
-    if (error) {
-      throw new Error(`Error deleting route: ${error.message}`);
-    }
+    if (error) throw new Error(`Error deleting route: ${error.message}`);
   }
 
   async restore(id: string): Promise<void> {
@@ -270,28 +217,22 @@ export class SupabaseRouteRepository implements RouteRepository {
       .update({ deleted_at: null })
       .eq('id', id);
 
-    if (error) {
-      throw new Error(`Error restoring route: ${error.message}`);
-    }
+    if (error) throw new Error(`Error restoring route: ${error.message}`);
   }
 
   async hardDelete(id: string): Promise<void> {
-    // Primero eliminar traducciones
     await this.supabase
       .schema('app')
       .from('route_translations')
       .delete()
       .eq('route_id', id);
 
-    // Luego eliminar la ruta
     const { error } = await this.supabase
       .schema('app')
       .from('routes')
       .delete()
       .eq('id', id);
 
-    if (error) {
-      throw new Error(`Error hard deleting route: ${error.message}`);
-    }
+    if (error) throw new Error(`Error hard deleting route: ${error.message}`);
   }
 }

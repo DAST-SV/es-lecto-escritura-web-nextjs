@@ -1,71 +1,37 @@
-// ============================================
 // app/[locale]/admin/routes/page.tsx
-// ESTILO ADMIN PROFESIONAL
-// ============================================
-
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { Route, Globe, Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import { useRoutes } from '@/src/presentation/features/routes/hooks/useRoutes';
-import {
-  CreateRouteModal,
-  EditRouteModal,
-  DeleteRouteModal,
+import { 
+  CreateRouteModal, 
+  EditRouteModal, 
+  DeleteRouteModal 
 } from '@/src/presentation/features/routes/components';
-import { Route } from '@/src/core/domain/entities/Route';
-import { Loader2, AlertCircle, Lock, Globe, Plus, Search, Filter, Edit2, Trash2, RotateCcw } from 'lucide-react';
-import toast, { Toaster } from 'react-hot-toast';
 
-export default function RoutesPage() {
-  const {
-    routes,
-    loading,
-    error,
-    createRoute,
-    updateRoute,
-    deleteRoute,
-    restoreRoute,
-    hardDeleteRoute,
-    refresh,
-  } = useRoutes();
-
+export default function RoutesAdminPage() {
+  const { routes, loading, createRoute, updateRoute, deleteRoute, hardDeleteRoute } = useRoutes();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showDeleted, setShowDeleted] = useState(false);
-
-  const handleOpenEdit = (route: Route) => {
-    setSelectedRoute(route);
-    setShowEditModal(true);
-  };
-
-  const handleOpenDelete = (route: Route) => {
-    setSelectedRoute(route);
-    setShowDeleteModal(true);
-  };
+  const [editingRoute, setEditingRoute] = useState<any>(null);
+  const [deletingRoute, setDeletingRoute] = useState<any>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState('es');
 
   const handleCreate = async (data: any) => {
     try {
       await createRoute(data);
-      toast.success('Ruta creada exitosamente');
       setShowCreateModal(false);
-    } catch (err: any) {
-      toast.error(err.message || 'Error al crear ruta');
-      throw err;
+    } catch (error: any) {
+      alert(error.message);
     }
   };
 
   const handleUpdate = async (id: string, data: any) => {
     try {
       await updateRoute(id, data);
-      toast.success('Ruta actualizada exitosamente');
-      setShowEditModal(false);
-      setSelectedRoute(null);
-    } catch (err: any) {
-      toast.error(err.message || 'Error al actualizar ruta');
-      throw err;
+      setEditingRoute(null);
+    } catch (error: any) {
+      alert(error.message);
     }
   };
 
@@ -73,234 +39,148 @@ export default function RoutesPage() {
     try {
       if (hardDelete) {
         await hardDeleteRoute(id);
-        toast.success('Ruta eliminada permanentemente');
       } else {
         await deleteRoute(id);
-        toast.success('Ruta movida a papelera');
       }
-      setShowDeleteModal(false);
-      setSelectedRoute(null);
-    } catch (err: any) {
-      toast.error(err.message || 'Error al eliminar ruta');
-      throw err;
+      setDeletingRoute(null);
+    } catch (error: any) {
+      alert(error.message);
     }
   };
-
-  const handleRestore = async (route: Route) => {
-    try {
-      await restoreRoute(route.id);
-      toast.success('Ruta restaurada exitosamente');
-    } catch (err: any) {
-      toast.error(err.message || 'Error al restaurar ruta');
-    }
-  };
-
-  // Filtrar rutas
-  const filteredRoutes = routes.filter(route => {
-    const matchesSearch = 
-      route.pathname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      route.displayName.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesDeleted = showDeleted ? !!route.deletedAt : !route.deletedAt;
-    
-    return matchesSearch && matchesDeleted;
-  });
-
-  if (loading && routes.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <Loader2 size={48} className="animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">Cargando rutas...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && routes.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <AlertCircle size={64} className="text-red-500 mb-4" />
-        <h2 className="text-xl font-bold text-red-700 mb-2">Error al cargar</h2>
-        <p className="text-gray-600 mb-6 max-w-md text-center">{error}</p>
-        <button
-          onClick={refresh}
-          className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold"
-        >
-          Reintentar
-        </button>
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-6">
-      <Toaster position="top-right" />
-      
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Gestión de Rutas</h2>
-          <p className="text-gray-600 mt-1">Administra las rutas y permisos del sistema</p>
-        </div>
-
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus size={20} />
-          Nueva Ruta
-        </button>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <div className="flex items-center gap-4">
-          <div className="flex-1 relative">
-            <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar rutas..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-2xl shadow-xl p-8 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <Route className="text-blue-600" size={32} />
+                Gestión de Rutas
+              </h1>
+              <p className="text-gray-600 mt-2">
+                Administra rutas del sistema y sus traducciones
+              </p>
+            </div>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-600/30 font-semibold"
+            >
+              <Plus size={20} />
+              Nueva Ruta
+            </button>
           </div>
-
-          <button
-            onClick={() => setShowDeleted(!showDeleted)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
-              showDeleted
-                ? 'bg-orange-50 border-orange-200 text-orange-700'
-                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            <Filter size={18} />
-            {showDeleted ? 'Papelera' : 'Activos'}
-          </button>
         </div>
-      </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Ruta
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Nombre
-              </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Traducciones
-              </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Acceso
-              </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Permisos
-              </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Menú
-              </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Acciones
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredRoutes.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                  No se encontraron rutas
-                </td>
-              </tr>
-            ) : (
-              filteredRoutes.map((route) => (
-                <tr key={route.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <code className="text-sm font-mono font-semibold text-blue-600">
-                      {route.pathname}
-                    </code>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm font-medium text-gray-900">{route.displayName}</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex justify-center gap-1">
-                      {route.translations.map(t => (
-                        <span key={t.languageCode} className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-medium">
-                          {t.languageCode.toUpperCase()}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center">
-                    {route.isPublic ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                        <Globe size={12} />
-                        Público
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
-                        <Lock size={12} />
-                        Privado
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
-                    {route.requiresPermissions.length > 0 ? (
-                      <span>{route.requiresPermissions.length} permiso(s)</span>
-                    ) : (
-                      <span className="text-gray-400">Sin permisos</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                    {route.showInMenu ? (
-                      <span className="text-green-600">✓ Sí</span>
-                    ) : (
-                      <span className="text-gray-400">− No</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      {route.deletedAt ? (
-                        <button
-                          onClick={() => handleRestore(route)}
-                          className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                          title="Restaurar"
-                        >
-                          <RotateCcw size={18} />
-                        </button>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => handleOpenEdit(route)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Editar"
-                          >
-                            <Edit2 size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleOpenDelete(route)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Eliminar"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </>
+        {/* Selector de idioma */}
+        <div className="bg-white rounded-xl shadow-lg p-4 mb-6">
+          <div className="flex items-center gap-3">
+            <Globe className="text-gray-600" size={20} />
+            <span className="text-sm font-medium text-gray-700">Ver traducciones en:</span>
+            <select
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="es">🇪🇸 Español</option>
+              <option value="en">🇺🇸 English</option>
+              <option value="fr">🇫🇷 Français</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Lista de rutas */}
+        {loading ? (
+          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto"></div>
+            <p className="text-gray-600 mt-4">Cargando rutas...</p>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {routes.map((route) => {
+              const translation = route.getTranslation(selectedLanguage);
+              return (
+                <div
+                  key={route.id}
+                  className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all p-6"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <code className="px-3 py-1 bg-gray-100 rounded-lg text-sm font-mono text-gray-800">
+                          {route.pathname}
+                        </code>
+                        {!route.isActive && (
+                          <span className="px-3 py-1 bg-red-100 text-red-700 rounded-lg text-xs font-semibold">
+                            INACTIVA
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 className="text-xl font-bold text-gray-900 mb-1">
+                        {route.displayName}
+                      </h3>
+
+                      {route.description && (
+                        <p className="text-gray-600 text-sm mb-3">
+                          {route.description}
+                        </p>
+                      )}
+
+                      {/* Traducción actual */}
+                      {translation && (
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mt-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Globe size={16} className="text-blue-600" />
+                            <span className="text-sm font-semibold text-blue-900">
+                              Traducción en {selectedLanguage.toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <span className="text-xs text-blue-700 font-medium">Ruta:</span>
+                              <code className="block mt-1 px-2 py-1 bg-white rounded text-sm font-mono text-blue-900">
+                                {translation.translatedPath}
+                              </code>
+                            </div>
+                            <div>
+                              <span className="text-xs text-blue-700 font-medium">Nombre:</span>
+                              <span className="block mt-1 px-2 py-1 bg-white rounded text-sm text-blue-900">
+                                {translation.translatedName}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       )}
                     </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+
+                    {/* Acciones */}
+                    <div className="flex gap-2 ml-4">
+                      <button
+                        onClick={() => setEditingRoute(route)}
+                        className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg"
+                        title="Editar"
+                      >
+                        <Edit size={18} />
+                      </button>
+                      <button
+                        onClick={() => setDeletingRoute(route)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                        title="Eliminar"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Modals */}
+      {/* Modales */}
       <CreateRouteModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
@@ -308,23 +188,17 @@ export default function RoutesPage() {
       />
 
       <EditRouteModal
-        isOpen={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setSelectedRoute(null);
-        }}
+        isOpen={!!editingRoute}
+        onClose={() => setEditingRoute(null)}
         onUpdate={handleUpdate}
-        route={selectedRoute}
+        route={editingRoute}
       />
 
       <DeleteRouteModal
-        isOpen={showDeleteModal}
-        onClose={() => {
-          setShowDeleteModal(false);
-          setSelectedRoute(null);
-        }}
+        isOpen={!!deletingRoute}
+        onClose={() => setDeletingRoute(null)}
         onDelete={handleDelete}
-        route={selectedRoute}
+        route={deletingRoute}
       />
     </div>
   );

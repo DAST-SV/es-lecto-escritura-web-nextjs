@@ -1,6 +1,6 @@
 // ============================================
 // src/presentation/features/routes/components/EditRouteModal.tsx
-// Modal: Editar ruta existente
+// ✅ CORREGIDO: Solo campos que existen en Route
 // ============================================
 
 import { Route } from '@/src/core/domain/entities/Route';
@@ -22,10 +22,6 @@ export function EditRouteModal({
   if (!route) return null;
 
   const handleSubmit = async (formData: Record<string, any>) => {
-    const permissions = formData.requiresPermissions
-      ? formData.requiresPermissions.split(',').map((p: string) => p.trim()).filter(Boolean)
-      : [];
-
     const translations = [];
     
     if (formData.translationEs) {
@@ -33,7 +29,6 @@ export function EditRouteModal({
         languageCode: 'es',
         translatedPath: formData.translationEs,
         translatedName: formData.translationEsName || formData.displayName,
-        translatedDescription: formData.description,
       });
     }
     
@@ -42,7 +37,6 @@ export function EditRouteModal({
         languageCode: 'en',
         translatedPath: formData.translationEn,
         translatedName: formData.translationEnName || formData.displayName,
-        translatedDescription: formData.description,
       });
     }
     
@@ -51,7 +45,6 @@ export function EditRouteModal({
         languageCode: 'fr',
         translatedPath: formData.translationFr,
         translatedName: formData.translationFrName || formData.displayName,
-        translatedDescription: formData.description,
       });
     }
 
@@ -59,13 +52,7 @@ export function EditRouteModal({
       pathname: formData.pathname,
       displayName: formData.displayName,
       description: formData.description || null,
-      icon: formData.icon || null,
-      isPublic: formData.isPublic === 'true',
-      requiresPermissions: permissions,
-      requiresAllPermissions: true,
-      showInMenu: formData.showInMenu === 'true',
-      menuOrder: parseInt(formData.menuOrder) || 0,
-      parentRouteId: null,
+      isActive: formData.isActive === 'true',
       translations,
     });
   };
@@ -85,11 +72,11 @@ export function EditRouteModal({
       fields={[
         {
           name: 'pathname',
-          label: 'Pathname (base)',
+          label: 'Pathname (ruta física)',
           type: 'text',
           value: route.pathname,
           required: true,
-          placeholder: '/books',
+          placeholder: '/library',
         },
         {
           name: 'displayName',
@@ -106,88 +93,59 @@ export function EditRouteModal({
           rows: 2,
         },
         {
-          name: 'icon',
-          label: 'Icono (Lucide React)',
-          type: 'text',
-          value: route.icon || '',
-          placeholder: 'BookOpen',
-        },
-        {
-          name: 'isPublic',
-          label: '¿Es pública?',
+          name: 'isActive',
+          label: 'Estado',
           type: 'select',
-          value: route.isPublic ? 'true' : 'false',
+          value: route.isActive ? 'true' : 'false',
           options: [
-            { value: 'false', label: 'No (requiere login)' },
-            { value: 'true', label: 'Sí (acceso público)' },
+            { value: 'true', label: 'Activa' },
+            { value: 'false', label: 'Inactiva' },
           ],
         },
-        {
-          name: 'requiresPermissions',
-          label: 'Permisos requeridos',
-          type: 'text',
-          value: route.requiresPermissions.join(', '),
-          placeholder: 'books.read, books.create',
-        },
-        {
-          name: 'showInMenu',
-          label: '¿Mostrar en menú?',
-          type: 'select',
-          value: route.showInMenu ? 'true' : 'false',
-          options: [
-            { value: 'true', label: 'Sí' },
-            { value: 'false', label: 'No' },
-          ],
-        },
-        {
-          name: 'menuOrder',
-          label: 'Orden en menú',
-          type: 'number',
-          value: route.menuOrder,
-          min: 0,
-        },
-        // Traducciones
+        // Traducciones ES
         {
           name: 'translationEs',
-          label: 'Ruta en Español',
+          label: '🇪🇸 Ruta en Español',
           type: 'text',
           value: esTranslation?.translatedPath || '',
-          placeholder: '/libros',
+          placeholder: '/biblioteca',
         },
         {
           name: 'translationEsName',
-          label: 'Nombre en Español',
+          label: '🇪🇸 Nombre en Español',
           type: 'text',
           value: esTranslation?.translatedName || '',
-          placeholder: 'Libros',
+          placeholder: 'Biblioteca',
         },
+        // Traducciones EN
         {
           name: 'translationEn',
-          label: 'Ruta en Inglés',
+          label: '🇺🇸 Ruta en Inglés',
           type: 'text',
           value: enTranslation?.translatedPath || '',
-          placeholder: '/books',
+          placeholder: '/library',
         },
         {
           name: 'translationEnName',
-          label: 'Nombre en Inglés',
+          label: '🇺🇸 Nombre en Inglés',
           type: 'text',
           value: enTranslation?.translatedName || '',
-          placeholder: 'Books',
+          placeholder: 'Library',
         },
+        // Traducciones FR
         {
           name: 'translationFr',
-          label: 'Ruta en Francés',
+          label: '🇫🇷 Ruta en Francés',
           type: 'text',
           value: frTranslation?.translatedPath || '',
-          placeholder: '/livres',
+          placeholder: '/bibliotheque',
         },
         {
           name: 'translationFrName',
-          label: 'Nombre en Francés',
+          label: '🇫🇷 Nombre en Francés',
           type: 'text',
           value: frTranslation?.translatedName || '',
-          placeholder: 'Livres',
+          placeholder: 'Bibliothèque',
         },
       ]}
     />

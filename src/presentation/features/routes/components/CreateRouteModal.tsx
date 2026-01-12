@@ -1,6 +1,6 @@
 // ============================================
 // src/presentation/features/routes/components/CreateRouteModal.tsx
-// Modal: Crear nueva ruta (SIN helperText)
+// ✅ CORREGIDO: Solo campos necesarios
 // ============================================
 
 import { EditModal } from '@/src/presentation/components/shared/Modals';
@@ -17,10 +17,6 @@ export function CreateRouteModal({
   onCreate 
 }: CreateRouteModalProps) {
   const handleSubmit = async (formData: Record<string, any>) => {
-    const permissions = formData.requiresPermissions
-      ? formData.requiresPermissions.split(',').map((p: string) => p.trim()).filter(Boolean)
-      : [];
-
     const translations = [];
     
     if (formData.translationEs) {
@@ -28,7 +24,6 @@ export function CreateRouteModal({
         languageCode: 'es',
         translatedPath: formData.translationEs,
         translatedName: formData.translationEsName || formData.displayName,
-        translatedDescription: formData.description,
       });
     }
     
@@ -37,7 +32,6 @@ export function CreateRouteModal({
         languageCode: 'en',
         translatedPath: formData.translationEn,
         translatedName: formData.translationEnName || formData.displayName,
-        translatedDescription: formData.description,
       });
     }
     
@@ -46,7 +40,6 @@ export function CreateRouteModal({
         languageCode: 'fr',
         translatedPath: formData.translationFr,
         translatedName: formData.translationFrName || formData.displayName,
-        translatedDescription: formData.description,
       });
     }
 
@@ -54,13 +47,6 @@ export function CreateRouteModal({
       pathname: formData.pathname,
       displayName: formData.displayName,
       description: formData.description || null,
-      icon: formData.icon || null,
-      isPublic: formData.isPublic === 'true',
-      requiresPermissions: permissions,
-      requiresAllPermissions: true,
-      showInMenu: formData.showInMenu === 'true',
-      menuOrder: parseInt(formData.menuOrder) || 0,
-      parentRouteId: null,
       translations,
     });
   };
@@ -76,11 +62,11 @@ export function CreateRouteModal({
       fields={[
         {
           name: 'pathname',
-          label: 'Pathname (base)',
+          label: 'Pathname (ruta física)',
           type: 'text',
           value: '',
           required: true,
-          placeholder: '/books (debe empezar con /)',
+          placeholder: '/library (debe empezar con /)',
         },
         {
           name: 'displayName',
@@ -88,7 +74,7 @@ export function CreateRouteModal({
           type: 'text',
           value: '',
           required: true,
-          placeholder: 'Books',
+          placeholder: 'Biblioteca',
         },
         {
           name: 'description',
@@ -98,89 +84,50 @@ export function CreateRouteModal({
           rows: 2,
           placeholder: 'Descripción de la ruta',
         },
-        {
-          name: 'icon',
-          label: 'Icono (Lucide)',
-          type: 'text',
-          value: '',
-          placeholder: 'BookOpen, Users, Settings...',
-        },
-        {
-          name: 'isPublic',
-          label: '¿Es pública?',
-          type: 'select',
-          value: 'false',
-          options: [
-            { value: 'false', label: 'No (requiere login)' },
-            { value: 'true', label: 'Sí (acceso público)' },
-          ],
-        },
-        {
-          name: 'requiresPermissions',
-          label: 'Permisos requeridos (separados por comas)',
-          type: 'text',
-          value: '',
-          placeholder: 'books.read, books.create',
-        },
-        {
-          name: 'showInMenu',
-          label: '¿Mostrar en menú?',
-          type: 'select',
-          value: 'true',
-          options: [
-            { value: 'true', label: 'Sí' },
-            { value: 'false', label: 'No' },
-          ],
-        },
-        {
-          name: 'menuOrder',
-          label: 'Orden en menú',
-          type: 'number',
-          value: 0,
-          min: 0,
-        },
-        // Traducciones
+        // Traducciones ES
         {
           name: 'translationEs',
-          label: 'Ruta en Español',
+          label: '🇪🇸 Ruta en Español',
           type: 'text',
           value: '',
-          placeholder: '/libros',
+          placeholder: '/biblioteca',
         },
         {
           name: 'translationEsName',
-          label: 'Nombre en Español',
+          label: '🇪🇸 Nombre en Español',
           type: 'text',
           value: '',
-          placeholder: 'Libros',
+          placeholder: 'Biblioteca',
         },
+        // Traducciones EN
         {
           name: 'translationEn',
-          label: 'Ruta en Inglés',
+          label: '🇺🇸 Ruta en Inglés',
           type: 'text',
           value: '',
-          placeholder: '/books',
+          placeholder: '/library',
         },
         {
           name: 'translationEnName',
-          label: 'Nombre en Inglés',
+          label: '🇺🇸 Nombre en Inglés',
           type: 'text',
           value: '',
-          placeholder: 'Books',
+          placeholder: 'Library',
         },
+        // Traducciones FR
         {
           name: 'translationFr',
-          label: 'Ruta en Francés',
+          label: '🇫🇷 Ruta en Francés',
           type: 'text',
           value: '',
-          placeholder: '/livres',
+          placeholder: '/bibliotheque',
         },
         {
           name: 'translationFrName',
-          label: 'Nombre en Francés',
+          label: '🇫🇷 Nombre en Francés',
           type: 'text',
           value: '',
-          placeholder: 'Livres',
+          placeholder: 'Bibliothèque',
         },
       ]}
     />

@@ -1,6 +1,6 @@
 // ============================================
 // src/presentation/features/routes/components/DeleteRouteModal.tsx
-// Modal: Eliminar ruta
+// ✅ CORREGIDO: Sin propiedades que no existen
 // ============================================
 
 import { Route } from '@/src/core/domain/entities/Route';
@@ -34,9 +34,9 @@ export function DeleteRouteModal({
       itemName={route.displayName}
       itemDetails={[
         { label: 'Pathname', value: route.pathname },
-        { label: 'Público', value: route.isPublic ? 'Sí' : 'No' },
-        { label: 'Permisos', value: route.requiresPermissions.length > 0 ? route.requiresPermissions.join(', ') : 'Ninguno' },
-        { label: 'En menú', value: route.showInMenu ? 'Sí' : 'No' },
+        { label: 'Estado', value: route.isActive ? 'Activa' : 'Inactiva' },
+        { label: 'Descripción', value: route.description || 'Sin descripción' },
+        { label: 'Traducciones', value: `${route.translations.length} idiomas` },
       ]}
       showHardDeleteOption={true}
     />

@@ -1,26 +1,17 @@
 // ============================================
 // src/core/domain/repositories/RouteRepository.ts
-// ✅ Interface del repositorio de rutas con isActive
 // ============================================
 
-import { Route, RouteTranslation } from '@/src/core/domain/entities/Route';
+import { Route, RouteTranslation } from '../entities/Route';
 
 export interface CreateRouteDTO {
   pathname: string;
   displayName: string;
   description?: string;
-  icon?: string;
-  isPublic?: boolean;
-  requiresPermissions?: string[];
-  requiresAllPermissions?: boolean;
-  showInMenu?: boolean;
-  menuOrder?: number;
-  parentRouteId?: string;
   translations?: {
     languageCode: string;
     translatedPath: string;
     translatedName: string;
-    translatedDescription?: string;
   }[];
 }
 
@@ -28,19 +19,11 @@ export interface UpdateRouteDTO {
   pathname?: string;
   displayName?: string;
   description?: string;
-  icon?: string;
-  isPublic?: boolean;
-  requiresPermissions?: string[];
-  requiresAllPermissions?: boolean;
-  showInMenu?: boolean;
-  menuOrder?: number;
-  parentRouteId?: string;
-  isActive?: boolean; // ✅ AGREGADO
+  isActive?: boolean;
   translations?: {
     languageCode: string;
     translatedPath: string;
     translatedName: string;
-    translatedDescription?: string;
   }[];
 }
 
