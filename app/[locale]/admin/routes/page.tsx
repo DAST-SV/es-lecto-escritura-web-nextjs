@@ -1,71 +1,314 @@
+// ============================================
 // app/[locale]/admin/routes/page.tsx
+// GESTIÓN DE RUTAS INTERNACIONALES
+// ============================================
+
 'use client';
 
-import { useState } from 'react';
-import { Route, Globe, Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
-import { useRoutes } from '@/src/presentation/features/routes/hooks/useRoutes';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 import { 
-  CreateRouteModal, 
-  EditRouteModal, 
-  DeleteRouteModal 
-} from '@/src/presentation/features/routes/components';
+  Plus, 
+  Edit2, 
+  Trash2, 
+  Globe, 
+  Save, 
+  X,
+  Map,
+  Languages
+} from 'lucide-react';
 
-export default function RoutesAdminPage() {
-  const { routes, loading, createRoute, updateRoute, deleteRoute, hardDeleteRoute } = useRoutes();
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingRoute, setEditingRoute] = useState<any>(null);
-  const [deletingRoute, setDeletingRoute] = useState<any>(null);
-  const [selectedLanguage, setSelectedLanguage] = useState('es');
+// ============================================
+// TIPOS
+// ============================================
 
-  const handleCreate = async (data: any) => {
+type LanguageCode = 'es' | 'en' | 'fr' | 'it';
+
+interface Translation {
+  path: string;
+  name: string;
+}
+
+interface Translations {
+  [key: string]: Translation;
+}
+
+interface Route {
+  id: string;
+  pathname: string;
+  display_name: string;
+  icon?: string;
+  show_in_menu: boolean;
+  menu_order: number;
+  translations: Translations;
+}
+
+interface FormData {
+  pathname: string;
+  display_name: string;
+  icon: string;
+  show_in_menu: boolean;
+  menu_order: number;
+  translations: {
+    [K in LanguageCode]: Translation;
+  };
+}
+
+// ============================================
+// COMPONENTE
+// ============================================
+
+export default function RoutesManagementPage() {
+  const supabase = createClient();
+  const languages: LanguageCode[] = ['es', 'en', 'fr', 'it'];
+
+  const [routes, setRoutes] = useState<Route[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingRoute, setEditingRoute] = useState<Route | null>(null);
+
+  const [formData, setFormData] = useState<FormData>({
+    pathname: '',
+    display_name: '',
+    icon: '',
+    show_in_menu: true,
+    menu_order: 0,
+    translations: {
+      es: { path: '', name: '' },
+      en: { path: '', name: '' },
+      fr: { path: '', name: '' },
+      it: { path: '', name: '' },
+    }
+  });
+
+  /**
+   * 📥 CARGAR RUTAS
+   */
+  const loadRoutes = async () => {
+    setLoading(true);
     try {
-      await createRoute(data);
-      setShowCreateModal(false);
-    } catch (error: any) {
-      alert(error.message);
+      const { data: routesData, error: routesError } = await supabase
+        .schema('app')
+        .from('routes')
+        .select('*')
+        .eq('is_active', true)
+        .is('deleted_at', null)
+        .order('menu_order');
+
+      if (routesError) throw new Error(routesError.message);
+
+      const { data: translationsData, error: translationsError } = await supabase
+        .schema('app')
+        .from('route_translations')
+        .select('*')
+        .eq('is_active', true);
+
+      if (translationsError) throw new Error(translationsError.message);
+
+      const routesWithTranslations: Route[] = (routesData || []).map((route: any) => {
+        const routeTranslations = (translationsData || []).filter(
+          (t: any) => t.route_id === route.id
+        );
+
+        const translations: Translations = {};
+        routeTranslations.forEach((t: any) => {
+          translations[t.language_code] = {
+            path: t.translated_path,
+            name: t.translated_name
+          };
+        });
+
+        return {
+          id: route.id,
+          pathname: route.pathname,
+          display_name: route.display_name,
+          icon: route.icon,
+          show_in_menu: route.show_in_menu,
+          menu_order: route.menu_order,
+          translations
+        };
+      });
+
+      setRoutes(routesWithTranslations);
+    } catch (err: any) {
+      alert('Error cargando rutas: ' + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleUpdate = async (id: string, data: any) => {
-    try {
-      await updateRoute(id, data);
-      setEditingRoute(null);
-    } catch (error: any) {
-      alert(error.message);
-    }
-  };
+  useEffect(() => {
+    loadRoutes();
+  }, []);
 
-  const handleDelete = async (id: string, hardDelete: boolean) => {
-    try {
-      if (hardDelete) {
-        await hardDeleteRoute(id);
-      } else {
-        await deleteRoute(id);
+  /**
+   * ✏️ EDITAR
+   */
+  const handleEdit = (route: Route) => {
+    setEditingRoute(route);
+    setFormData({
+      pathname: route.pathname,
+      display_name: route.display_name,
+      icon: route.icon || '',
+      show_in_menu: route.show_in_menu,
+      menu_order: route.menu_order,
+      translations: {
+        es: route.translations['es'] || { path: '', name: '' },
+        en: route.translations['en'] || { path: '', name: '' },
+        fr: route.translations['fr'] || { path: '', name: '' },
+        it: route.translations['it'] || { path: '', name: '' },
       }
-      setDeletingRoute(null);
-    } catch (error: any) {
-      alert(error.message);
+    });
+    setShowForm(true);
+  };
+
+  /**
+   * ➕ NUEVO
+   */
+  const handleNew = () => {
+    setEditingRoute(null);
+    setFormData({
+      pathname: '',
+      display_name: '',
+      icon: '',
+      show_in_menu: true,
+      menu_order: routes.length + 1,
+      translations: {
+        es: { path: '', name: '' },
+        en: { path: '', name: '' },
+        fr: { path: '', name: '' },
+        it: { path: '', name: '' },
+      }
+    });
+    setShowForm(true);
+  };
+
+  /**
+   * 💾 GUARDAR
+   */
+  const handleSave = async () => {
+    try {
+      if (!formData.pathname || !formData.display_name) {
+        alert('Pathname y Display Name son requeridos');
+        return;
+      }
+
+      if (editingRoute) {
+        const { error: updateError } = await supabase
+          .schema('app')
+          .from('routes')
+          .update({
+            pathname: formData.pathname,
+            display_name: formData.display_name,
+            icon: formData.icon || null,
+            show_in_menu: formData.show_in_menu,
+            menu_order: formData.menu_order,
+          })
+          .eq('id', editingRoute.id);
+
+        if (updateError) throw new Error(updateError.message);
+        await updateTranslations(editingRoute.id);
+      } else {
+        const { data: newRoute, error: insertError } = await supabase
+          .schema('app')
+          .from('routes')
+          .insert({
+            pathname: formData.pathname,
+            display_name: formData.display_name,
+            icon: formData.icon || null,
+            show_in_menu: formData.show_in_menu,
+            menu_order: formData.menu_order,
+          })
+          .select()
+          .single();
+
+        if (insertError) throw new Error(insertError.message);
+        await updateTranslations(newRoute.id);
+      }
+
+      alert('✅ Ruta guardada correctamente');
+      setShowForm(false);
+      loadRoutes();
+    } catch (err: any) {
+      alert('❌ Error: ' + err.message);
+    }
+  };
+
+  /**
+   * 🌍 ACTUALIZAR TRADUCCIONES
+   */
+  const updateTranslations = async (routeId: string) => {
+    await supabase
+      .schema('app')
+      .from('route_translations')
+      .delete()
+      .eq('route_id', routeId);
+
+    const translations = [];
+    for (const lang of languages) {
+      if (formData.translations[lang].path && formData.translations[lang].name) {
+        translations.push({
+          route_id: routeId,
+          language_code: lang,
+          translated_path: formData.translations[lang].path,
+          translated_name: formData.translations[lang].name,
+        });
+      }
+    }
+
+    if (translations.length > 0) {
+      const { error } = await supabase
+        .schema('app')
+        .from('route_translations')
+        .insert(translations);
+
+      if (error) throw new Error(error.message);
+    }
+  };
+
+  /**
+   * 🗑️ ELIMINAR
+   */
+  const handleDelete = async (routeId: string) => {
+    if (!confirm('¿Estás seguro de eliminar esta ruta?')) return;
+
+    try {
+      const { error } = await supabase
+        .schema('app')
+        .from('routes')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', routeId);
+
+      if (error) throw new Error(error.message);
+
+      alert('✅ Ruta eliminada');
+      loadRoutes();
+    } catch (err: any) {
+      alert('❌ Error: ' + err.message);
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        
+        {/* HEADER */}
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <Route className="text-blue-600" size={32} />
-                Gestión de Rutas
-              </h1>
-              <p className="text-gray-600 mt-2">
-                Administra rutas del sistema y sus traducciones
-              </p>
+            <div className="flex items-center gap-3">
+              <Map className="text-blue-600" size={32} />
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  Gestión de Rutas
+                </h1>
+                <p className="text-gray-600">
+                  Crea y edita rutas con traducciones internacionales
+                </p>
+              </div>
             </div>
             <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-600/30 font-semibold"
+              onClick={handleNew}
+              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
               <Plus size={20} />
               Nueva Ruta
@@ -73,133 +316,241 @@ export default function RoutesAdminPage() {
           </div>
         </div>
 
-        {/* Selector de idioma */}
-        <div className="bg-white rounded-xl shadow-lg p-4 mb-6">
-          <div className="flex items-center gap-3">
-            <Globe className="text-gray-600" size={20} />
-            <span className="text-sm font-medium text-gray-700">Ver traducciones en:</span>
-            <select
-              value={selectedLanguage}
-              onChange={(e) => setSelectedLanguage(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="es">🇪🇸 Español</option>
-              <option value="en">🇺🇸 English</option>
-              <option value="fr">🇫🇷 Français</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Lista de rutas */}
+        {/* LISTA DE RUTAS */}
         {loading ? (
-          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+          <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto"></div>
-            <p className="text-gray-600 mt-4">Cargando rutas...</p>
           </div>
         ) : (
           <div className="grid gap-4">
-            {routes.map((route) => {
-              const translation = route.getTranslation(selectedLanguage);
-              return (
-                <div
-                  key={route.id}
-                  className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all p-6"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <code className="px-3 py-1 bg-gray-100 rounded-lg text-sm font-mono text-gray-800">
-                          {route.pathname}
-                        </code>
-                        {!route.isActive && (
-                          <span className="px-3 py-1 bg-red-100 text-red-700 rounded-lg text-xs font-semibold">
-                            INACTIVA
-                          </span>
-                        )}
-                      </div>
-
-                      <h3 className="text-xl font-bold text-gray-900 mb-1">
-                        {route.displayName}
-                      </h3>
-
-                      {route.description && (
-                        <p className="text-gray-600 text-sm mb-3">
-                          {route.description}
-                        </p>
+            {routes.map((route) => (
+              <div
+                key={route.id}
+                className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <code className="px-3 py-1 bg-blue-100 text-blue-800 rounded font-mono text-sm">
+                        {route.pathname}
+                      </code>
+                      {route.icon && (
+                        <span className="text-gray-500">{route.icon}</span>
                       )}
-
-                      {/* Traducción actual */}
-                      {translation && (
-                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mt-3">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Globe size={16} className="text-blue-600" />
-                            <span className="text-sm font-semibold text-blue-900">
-                              Traducción en {selectedLanguage.toUpperCase()}
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <span className="text-xs text-blue-700 font-medium">Ruta:</span>
-                              <code className="block mt-1 px-2 py-1 bg-white rounded text-sm font-mono text-blue-900">
-                                {translation.translatedPath}
-                              </code>
-                            </div>
-                            <div>
-                              <span className="text-xs text-blue-700 font-medium">Nombre:</span>
-                              <span className="block mt-1 px-2 py-1 bg-white rounded text-sm text-blue-900">
-                                {translation.translatedName}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
+                      {route.show_in_menu && (
+                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
+                          En menú
+                        </span>
                       )}
                     </div>
+                    
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                      {route.display_name}
+                    </h3>
 
-                    {/* Acciones */}
-                    <div className="flex gap-2 ml-4">
-                      <button
-                        onClick={() => setEditingRoute(route)}
-                        className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg"
-                        title="Editar"
-                      >
-                        <Edit size={18} />
-                      </button>
-                      <button
-                        onClick={() => setDeletingRoute(route)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                        title="Eliminar"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                    <div className="grid grid-cols-2 gap-3">
+                      {languages.map((lang) => (
+                        <div key={lang} className="flex items-center gap-2">
+                          <Languages size={14} className="text-gray-400" />
+                          <span className="text-xs font-semibold text-gray-500 uppercase w-6">
+                            {lang}
+                          </span>
+                          {route.translations[lang] ? (
+                            <code className="text-xs text-gray-700 bg-gray-50 px-2 py-1 rounded">
+                              {route.translations[lang].path}
+                            </code>
+                          ) : (
+                            <span className="text-xs text-gray-400">Sin traducción</span>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEdit(route)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                    >
+                      <Edit2 size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(route.id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* FORMULARIO MODAL */}
+        {showForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {editingRoute ? 'Editar Ruta' : 'Nueva Ruta'}
+                  </h2>
+                  <button
+                    onClick={() => setShowForm(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Pathname (clave interna) *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.pathname}
+                      onChange={(e) => setFormData({ ...formData, pathname: e.target.value })}
+                      placeholder="/my-route"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Display Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.display_name}
+                      onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+                      placeholder="My Route"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Icon (Lucide)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.icon}
+                        onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                        placeholder="BookOpen"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Orden en menú
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.menu_order}
+                        onChange={(e) => setFormData({ ...formData, menu_order: parseInt(e.target.value) })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.show_in_menu}
+                      onChange={(e) => setFormData({ ...formData, show_in_menu: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <label className="text-sm font-medium text-gray-700">
+                      Mostrar en menú
+                    </label>
+                  </div>
+                </div>
+
+                {/* Traducciones */}
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <Globe size={20} />
+                    Traducciones
+                  </h3>
+
+                  <div className="space-y-4">
+                    {languages.map((lang) => (
+                      <div key={lang} className="border rounded-lg p-4 bg-gray-50">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="font-semibold text-gray-700 uppercase">
+                            {lang === 'es' && '🇪🇸 Español'}
+                            {lang === 'en' && '🇺🇸 English'}
+                            {lang === 'fr' && '🇫🇷 Français'}
+                            {lang === 'it' && '🇮🇹 Italiano'}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              Ruta traducida
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.translations[lang].path}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                translations: {
+                                  ...formData.translations,
+                                  [lang]: { ...formData.translations[lang], path: e.target.value }
+                                }
+                              })}
+                              placeholder={`/mi-ruta-${lang}`}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              Nombre traducido
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.translations[lang].name}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                translations: {
+                                  ...formData.translations,
+                                  [lang]: { ...formData.translations[lang], name: e.target.value }
+                                }
+                              })}
+                              placeholder="Mi Ruta"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={handleSave}
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    <Save size={20} />
+                    Guardar
+                  </button>
+                  <button
+                    onClick={() => setShowForm(false)}
+                    className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
-
-      {/* Modales */}
-      <CreateRouteModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onCreate={handleCreate}
-      />
-
-      <EditRouteModal
-        isOpen={!!editingRoute}
-        onClose={() => setEditingRoute(null)}
-        onUpdate={handleUpdate}
-        route={editingRoute}
-      />
-
-      <DeleteRouteModal
-        isOpen={!!deletingRoute}
-        onClose={() => setDeletingRoute(null)}
-        onDelete={handleDelete}
-        route={deletingRoute}
-      />
     </div>
   );
 }

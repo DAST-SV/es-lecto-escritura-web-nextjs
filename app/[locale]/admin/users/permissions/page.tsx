@@ -1,7 +1,11 @@
 // ============================================
 // app/[locale]/admin/users/permissions/page.tsx
-// Panel de gestión de permisos de usuario
-// ✅ Busca por USER ID (más simple y funcional)
+// SISTEMA DE PERMISOS DE USUARIO
+// ============================================
+// ✅ Buscar por EMAIL
+// ✅ Ver permisos actuales (por rol)
+// ✅ GRANT: Dar acceso extra
+// ✅ DENY: Bloquear acceso
 // ============================================
 
 'use client';
@@ -17,126 +21,133 @@ import {
   Unlock,
   CheckCircle,
   AlertCircle,
-  Info
+  Info,
+  Users
 } from 'lucide-react';
 import { createClient } from '@/src/infrastructure/config/supabase.config';
 
 interface UserInfo {
   id: string;
-  email?: string;
-  roles: string[];
+  email: string;
+  roles: Array<{
+    role_name: string;
+    role_display_name: string;
+  }>;
 }
 
 interface RouteInfo {
   id: string;
   pathname: string;
   displayName: string;
-  hasFromRole: boolean;
-  hasUserGrant: boolean;
-  hasUserDeny: boolean;
-  permissionId?: string;
+  translatedPath: string;
+  // Permisos
+  hasFromRole: boolean;      // Tiene acceso por su rol
+  hasUserGrant: boolean;     // Tiene GRANT manual (acceso extra)
+  hasUserDeny: boolean;      // Tiene DENY manual (bloqueado)
+  permissionId?: string;     // ID del permiso manual
+  // Estado final
+  canAccess: boolean;        // ¿Puede acceder? (considerando todo)
 }
 
 export default function UserPermissionsPage() {
   const supabase = createClient();
 
-  const [searchUserId, setSearchUserId] = useState('');
+  const [searchEmail, setSearchEmail] = useState('');
+  const [searchResults, setSearchResults] = useState<UserInfo[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserInfo | null>(null);
   const [userRoutes, setUserRoutes] = useState<RouteInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
 
   /**
-   * Buscar usuario por ID
+   * 🔍 BUSCAR USUARIOS POR EMAIL
    */
-  const handleSearchUser = async () => {
-    if (!searchUserId.trim()) {
-      alert('Ingresa un User ID para buscar');
+  const handleSearchUsers = async () => {
+    if (!searchEmail.trim()) {
+      alert('Ingresa un email para buscar');
       return;
     }
 
     setLoading(true);
     try {
-      // Buscar roles del usuario
-      const { data: userRolesData, error: userRolesError } = await supabase
-        .schema('app')
-        .from('user_roles')
-        .select(`
-          user_id,
-          roles!inner(name, display_name)
-        `)
-        .eq('user_id', searchUserId)
-        .eq('is_active', true);
+      const { data, error } = await supabase
+        .rpc('search_users_by_email', {
+          p_search_term: searchEmail
+        });
 
-      if (userRolesError) {
-        throw new Error(userRolesError.message);
+      if (error) {
+        throw new Error(error.message);
       }
 
-      if (!userRolesData || userRolesData.length === 0) {
-        alert('Usuario no encontrado o sin roles asignados');
-        setSelectedUser(null);
+      if (!data || data.length === 0) {
+        alert('No se encontraron usuarios con ese email');
+        setSearchResults([]);
         return;
       }
 
-      const userRoles = userRolesData.map((ur: any) => ur.roles.name);
+      const users: UserInfo[] = data.map((u: any) => ({
+        id: u.user_id,
+        email: u.email,
+        roles: Array.isArray(u.roles) ? u.roles : [],
+      }));
 
-      const userInfo: UserInfo = {
-        id: searchUserId,
-        roles: userRoles,
-      };
-
-      // Intentar obtener email (opcional)
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.id === searchUserId) {
-          userInfo.email = user.email;
-        }
-      } catch (e) {
-        // No hay problema si no podemos obtener el email
-      }
-
-      setSelectedUser(userInfo);
-      await loadUserRoutes(userInfo);
+      setSearchResults(users);
     } catch (err: any) {
-      console.error('Error buscando usuario:', err);
-      alert('Error al buscar usuario: ' + err.message);
+      console.error('Error buscando usuarios:', err);
+      alert('Error: ' + err.message);
     } finally {
       setLoading(false);
     }
   };
 
   /**
-   * Cargar rutas y permisos del usuario
+   * 👤 SELECCIONAR USUARIO Y CARGAR SUS PERMISOS
    */
-  const loadUserRoutes = async (user: UserInfo) => {
+  const handleSelectUser = async (user: UserInfo) => {
+    setSelectedUser(user);
     setLoadingRoutes(true);
 
     try {
-      // Cargar todas las rutas
+      // 1. Cargar todas las rutas
       const { data: routes, error: routesError } = await supabase
         .schema('app')
         .from('routes')
         .select('id, pathname, display_name')
         .eq('is_active', true)
-        .is('deleted_at', null);
+        .is('deleted_at', null)
+        .order('menu_order');
 
       if (routesError) {
         throw new Error(routesError.message);
       }
 
-      // Cargar permisos del rol
+      // 2. Cargar traducciones (español por defecto)
+      const { data: translations } = await supabase
+        .schema('app')
+        .from('route_translations')
+        .select('route_id, translated_path, translated_name')
+        .eq('language_code', 'es')
+        .eq('is_active', true);
+
+      const translationsMap = new Map(
+        (translations || []).map((t: any) => [t.route_id, t])
+      );
+
+      // 3. Obtener permisos POR ROL
+      const roleNames = user.roles.map(r => r.role_name);
       const rolePermissions = new Set<string>();
-      for (const roleName of user.roles) {
+
+      if (roleNames.length > 0) {
         const { data: rolePerms } = await supabase
           .schema('app')
           .from('route_permissions')
           .select('route_id')
-          .eq('role_name', roleName);
+          .in('role_name', roleNames);
 
         (rolePerms || []).forEach((p: any) => rolePermissions.add(p.route_id));
       }
 
-      // Cargar permisos específicos del usuario
+      // 4. Obtener permisos MANUALES del usuario (grant/deny)
       const { data: userPerms, error: userPermsError } = await supabase
         .schema('app')
         .from('user_route_permissions')
@@ -147,31 +158,54 @@ export default function UserPermissionsPage() {
         throw new Error(userPermsError.message);
       }
 
-      // Construir lista
+      const userPermsMap = new Map(
+        (userPerms || []).map((p: any) => [p.route_id, p])
+      );
+
+      // 5. CONSTRUIR LISTA FINAL
       const routesWithPermissions: RouteInfo[] = (routes || []).map((route: any) => {
-        const userPerm = (userPerms || []).find((p: any) => p.route_id === route.id);
+        const translation = translationsMap.get(route.id);
+        const userPerm = userPermsMap.get(route.id);
+
+        const hasFromRole = rolePermissions.has(route.id);
+        const hasUserGrant = userPerm?.permission_type === 'grant';
+        const hasUserDeny = userPerm?.permission_type === 'deny';
+
+        // LÓGICA DE ACCESO:
+        // - Si tiene DENY → NO puede acceder (prioridad máxima)
+        // - Si tiene GRANT → SÍ puede acceder (aunque el rol no lo tenga)
+        // - Si tiene permiso por ROL → SÍ puede acceder
+        // - Si NO tiene nada → NO puede acceder
+        let canAccess = false;
+        if (hasUserDeny) {
+          canAccess = false;
+        } else if (hasUserGrant || hasFromRole) {
+          canAccess = true;
+        }
 
         return {
           id: route.id,
           pathname: route.pathname,
           displayName: route.display_name,
-          hasFromRole: rolePermissions.has(route.id),
-          hasUserGrant: userPerm?.permission_type === 'grant',
-          hasUserDeny: userPerm?.permission_type === 'deny',
+          translatedPath: translation?.translated_path || route.pathname,
+          hasFromRole,
+          hasUserGrant,
+          hasUserDeny,
           permissionId: userPerm?.id,
+          canAccess,
         };
       });
 
       setUserRoutes(routesWithPermissions);
     } catch (err: any) {
-      alert(err.message);
+      alert('Error cargando permisos: ' + err.message);
     } finally {
       setLoadingRoutes(false);
     }
   };
 
   /**
-   * Otorgar acceso
+   * ✅ DAR ACCESO (GRANT)
    */
   const handleGrantAccess = async (routeId: string) => {
     if (!selectedUser) return;
@@ -186,20 +220,21 @@ export default function UserPermissionsPage() {
           user_id: selectedUser.id,
           route_id: routeId,
           permission_type: 'grant',
-          reason: 'Acceso manual desde admin',
+          reason: 'Acceso otorgado desde panel de admin',
           granted_by: user?.id,
         });
 
       if (error) throw new Error(error.message);
-      await loadUserRoutes(selectedUser);
-      alert('✅ Acceso otorgado');
+      
+      await handleSelectUser(selectedUser);
+      alert('✅ Acceso otorgado correctamente');
     } catch (err: any) {
       alert('❌ Error: ' + err.message);
     }
   };
 
   /**
-   * Bloquear acceso
+   * 🚫 BLOQUEAR ACCESO (DENY)
    */
   const handleDenyAccess = async (routeId: string) => {
     if (!selectedUser) return;
@@ -214,23 +249,26 @@ export default function UserPermissionsPage() {
           user_id: selectedUser.id,
           route_id: routeId,
           permission_type: 'deny',
-          reason: 'Bloqueo manual desde admin',
+          reason: 'Acceso bloqueado desde panel de admin',
           granted_by: user?.id,
         });
 
       if (error) throw new Error(error.message);
-      await loadUserRoutes(selectedUser);
-      alert('✅ Acceso bloqueado');
+      
+      await handleSelectUser(selectedUser);
+      alert('✅ Acceso bloqueado correctamente');
     } catch (err: any) {
       alert('❌ Error: ' + err.message);
     }
   };
 
   /**
-   * Remover permiso
+   * 🗑️ REMOVER PERMISO MANUAL
    */
   const handleRemovePermission = async (permissionId: string) => {
     if (!selectedUser) return;
+
+    if (!confirm('¿Remover este permiso manual?')) return;
 
     try {
       const { error } = await supabase
@@ -240,29 +278,19 @@ export default function UserPermissionsPage() {
         .eq('id', permissionId);
 
       if (error) throw new Error(error.message);
-      await loadUserRoutes(selectedUser);
-      alert('✅ Permiso removido');
+      
+      await handleSelectUser(selectedUser);
+      alert('✅ Permiso removido correctamente');
     } catch (err: any) {
       alert('❌ Error: ' + err.message);
-    }
-  };
-
-  /**
-   * Copiar User ID actual
-   */
-  const copyCurrentUserId = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      navigator.clipboard.writeText(user.id);
-      setSearchUserId(user.id);
-      alert('✅ Tu User ID copiado: ' + user.id);
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-purple-50 p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        
+        {/* ========== HEADER ========== */}
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-6">
           <div className="flex items-center gap-3 mb-2">
             <Shield className="text-purple-600" size={32} />
@@ -271,65 +299,99 @@ export default function UserPermissionsPage() {
             </h1>
           </div>
           <p className="text-gray-600">
-            Otorga o bloquea acceso a rutas específicas por User ID
+            Otorga o bloquea acceso a rutas específicas para usuarios individuales
           </p>
         </div>
 
-        {/* Info Box */}
+        {/* ========== INFO BOX ========== */}
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex items-start gap-3">
-          <Info className="text-blue-600 flex-shrink-0" size={20} />
+          <Info className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
           <div className="text-sm text-blue-900">
-            <p className="font-semibold mb-1">¿Cómo obtener el User ID?</p>
-            <p>1. El usuario puede ver su ID en su perfil</p>
-            <p>2. Puedes buscarlo en la tabla <code className="bg-blue-100 px-1 rounded">auth.users</code> en Supabase</p>
-            <p>3. O haz clic en "Copiar mi ID" abajo</p>
+            <p className="font-semibold mb-2">💡 Cómo funciona este sistema:</p>
+            <ul className="space-y-1 ml-4 list-disc">
+              <li><strong>Permisos por ROL</strong>: El usuario tiene acceso según su rol (azul)</li>
+              <li><strong>GRANT (verde)</strong>: Dar acceso EXTRA aunque su rol no lo tenga</li>
+              <li><strong>DENY (rojo)</strong>: BLOQUEAR acceso aunque su rol lo tenga</li>
+              <li><strong>Prioridad</strong>: DENY tiene prioridad sobre todo</li>
+            </ul>
           </div>
         </div>
 
-        {/* Buscador */}
+        {/* ========== BUSCADOR ========== */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 mb-4">
             <Search className="text-gray-400" size={20} />
             <input
-              type="text"
-              value={searchUserId}
-              onChange={(e) => setSearchUserId(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearchUser()}
-              placeholder="User ID (UUID)..."
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono text-sm"
+              type="email"
+              value={searchEmail}
+              onChange={(e) => setSearchEmail(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearchUsers()}
+              placeholder="Buscar usuario por email..."
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
             <button
-              onClick={copyCurrentUserId}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm"
-            >
-              Copiar mi ID
-            </button>
-            <button
-              onClick={handleSearchUser}
+              onClick={handleSearchUsers}
               disabled={loading}
-              className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+              className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Buscando...' : 'Buscar'}
             </button>
           </div>
+
+          {/* Resultados de búsqueda */}
+          {searchResults.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600 mb-2">
+                {searchResults.length} usuario(s) encontrado(s):
+              </p>
+              {searchResults.map((user) => (
+                <button
+                  key={user.id}
+                  onClick={() => handleSelectUser(user)}
+                  className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-purple-50 rounded-lg transition-colors border-2 border-transparent hover:border-purple-200"
+                >
+                  <div className="flex items-center gap-3">
+                    <User size={20} className="text-purple-600" />
+                    <div className="text-left">
+                      <p className="font-medium text-gray-900">{user.email}</p>
+                      <p className="text-xs text-gray-500 font-mono">{user.id}</p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Roles: {user.roles.map(r => r.role_display_name).join(', ') || 'Sin rol asignado'}
+                      </p>
+                    </div>
+                  </div>
+                  <Shield size={18} className="text-purple-600" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Panel de permisos */}
+        {/* ========== PANEL DE PERMISOS ========== */}
         {selectedUser && (
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center justify-between mb-6 pb-4 border-b">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {selectedUser.email || 'Usuario'}
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <Users size={24} />
+                  {selectedUser.email}
                 </h2>
                 <p className="text-xs text-gray-500 font-mono mt-1">
                   ID: {selectedUser.id}
                 </p>
-                <p className="text-sm text-gray-600 mt-1">
-                  Roles: {selectedUser.roles.join(', ') || 'Sin rol'}
-                </p>
+                <div className="flex gap-2 mt-2">
+                  {selectedUser.roles.map((role, idx) => (
+                    <span key={idx} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
+                      {role.role_display_name}
+                    </span>
+                  ))}
+                  {selectedUser.roles.length === 0 && (
+                    <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">
+                      Sin rol asignado
+                    </span>
+                  )}
+                </div>
               </div>
-              <User size={32} className="text-purple-600" />
             </div>
 
             {loadingRoutes ? (
@@ -342,63 +404,82 @@ export default function UserPermissionsPage() {
                 {userRoutes.map((route) => (
                   <div
                     key={route.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
+                      route.canAccess 
+                        ? 'bg-green-50 border-2 border-green-200' 
+                        : 'bg-gray-50 border-2 border-gray-200'
+                    }`}
                   >
                     <div className="flex-1">
-                      <code className="px-3 py-1 bg-white rounded text-sm font-mono text-gray-800">
-                        {route.pathname}
-                      </code>
-                      <p className="text-sm text-gray-600 mt-1">
+                      <div className="flex items-center gap-3">
+                        <code className="px-3 py-1 bg-white rounded text-sm font-mono text-gray-800 border">
+                          {route.pathname}
+                        </code>
+                        {route.canAccess ? (
+                          <CheckCircle className="text-green-600" size={20} />
+                        ) : (
+                          <Lock className="text-gray-400" size={20} />
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1 ml-1">
                         {route.displayName}
                       </p>
 
+                      {/* Estados */}
                       <div className="flex gap-2 mt-2">
                         {route.hasFromRole && (
-                          <span className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                            <CheckCircle size={14} />
-                            Desde rol
+                          <span className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                            <Shield size={14} />
+                            Acceso por ROL
                           </span>
                         )}
                         {route.hasUserGrant && (
-                          <span className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
+                          <span className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
                             <Unlock size={14} />
-                            Acceso manual
+                            GRANT (acceso extra)
                           </span>
                         )}
                         {route.hasUserDeny && (
-                          <span className="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded text-xs">
+                          <span className="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium">
                             <Lock size={14} />
-                            Bloqueado
+                            DENY (bloqueado)
                           </span>
                         )}
                       </div>
                     </div>
 
+                    {/* Acciones */}
                     <div className="flex gap-2">
                       {route.hasUserGrant || route.hasUserDeny ? (
                         <button
                           onClick={() => handleRemovePermission(route.permissionId!)}
-                          className="p-2 text-gray-600 hover:bg-gray-200 rounded-lg"
-                          title="Remover permiso"
+                          className="p-2 text-gray-600 hover:bg-red-100 rounded-lg transition-colors"
+                          title="Remover permiso manual"
                         >
                           <Trash2 size={18} />
                         </button>
                       ) : (
                         <>
-                          <button
-                            onClick={() => handleGrantAccess(route.id)}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
-                            title="Dar acceso"
-                          >
-                            <Plus size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleDenyAccess(route.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                            title="Bloquear acceso"
-                          >
-                            <Lock size={18} />
-                          </button>
+                          {!route.hasFromRole && (
+                            <button
+                              onClick={() => handleGrantAccess(route.id)}
+                              className="px-3 py-2 text-green-700 bg-green-100 hover:bg-green-200 rounded-lg transition-colors text-sm font-medium flex items-center gap-1"
+                              title="Dar acceso extra"
+                            >
+                              <Plus size={16} />
+                              GRANT
+                            </button>
+                          )}
+                          {route.hasFromRole && (
+                            <button
+                              onClick={() => handleDenyAccess(route.id)}
+                              className="px-3 py-2 text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors text-sm font-medium flex items-center gap-1"
+                              title="Bloquear acceso"
+                            >
+                              <Lock size={16} />
+                              DENY
+                            </button>
+                          )}
                         </>
                       )}
                     </div>
@@ -409,12 +490,15 @@ export default function UserPermissionsPage() {
           </div>
         )}
 
-        {/* Estado vacío */}
-        {!selectedUser && (
+        {/* ========== ESTADO VACÍO ========== */}
+        {!selectedUser && searchResults.length === 0 && (
           <div className="bg-white rounded-xl shadow-lg p-12 text-center">
             <AlertCircle className="mx-auto text-gray-400 mb-4" size={48} />
-            <p className="text-gray-600 text-lg">
-              Ingresa un User ID para gestionar permisos
+            <p className="text-gray-600 text-lg mb-2">
+              Busca un usuario por email para gestionar sus permisos
+            </p>
+            <p className="text-gray-500 text-sm">
+              Puedes buscar tu propio email para ver tus permisos actuales
             </p>
           </div>
         )}

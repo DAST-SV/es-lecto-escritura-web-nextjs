@@ -1,16 +1,16 @@
 // ============================================
-// middleware.ts - VERSIÓN CORREGIDA
-// Solo verifica rutas privadas (las que están en DB)
-// Rutas públicas se controlan estáticamente aquí
+// middleware.ts - VERSIÓN DINÁMICA
+// Rutas públicas: estáticas
+// Rutas privadas: desde BD (dinámicas)
 // ============================================
 
 import createMiddleware from 'next-intl/middleware';
 import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
-import { routing } from '@/src/infrastructure/config/routing.config';
+import { routing, publicPathnames } from '@/src/infrastructure/config/routing.config';
 
 // ============================================
-// RUTAS PÚBLICAS (CONTROL ESTÁTICO)
+// RUTAS PÚBLICAS (ESTÁTICAS)
 // ============================================
 
 const PUBLIC_ROUTES = [
@@ -21,7 +21,8 @@ const PUBLIC_ROUTES = [
   '/chi-siamo',
   '/error',
   '/forbidden',
-  '/admin/users/permissions',
+  '/admin/routes',
+  '/admin/route-permissions',
 ];
 
 const AUTH_ROUTES = [
@@ -40,30 +41,53 @@ const AUTH_ROUTES = [
 // CACHE DE RUTAS DINÁMICAS
 // ============================================
 
-let routesCache: Record<string, any> | null = null;
+let dynamicRoutesCache: Record<string, any> | null = null;
 let cacheTimestamp: number = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
-async function loadRoutes(): Promise<Record<string, any>> {
+/**
+ * Cargar rutas dinámicas desde la BD
+ */
+async function loadDynamicRoutes(): Promise<Record<string, any>> {
   const now = Date.now();
   
-  if (routesCache && (now - cacheTimestamp) < CACHE_TTL) {
-    return routesCache;
+  // Usar cache si está vigente
+  if (dynamicRoutesCache && (now - cacheTimestamp) < CACHE_TTL) {
+    return dynamicRoutesCache;
   }
 
   try {
-    const { DynamicRoutingService } = await import('@/src/infrastructure/services/routing/DynamicRoutingService');
-    routesCache = await DynamicRoutingService.loadAllRoutes();
+    // Importar servicio dinámicamente para evitar errores en build
+    const { DynamicRoutingService } = await import(
+      '@/src/infrastructure/services/routing/DynamicRoutingService'
+    );
+    
+    const routes = await DynamicRoutingService.loadAllRoutes();
+    
+    dynamicRoutesCache = routes;
     cacheTimestamp = now;
-    return routesCache;
+    
+    console.log(`✅ ${Object.keys(routes).length} rutas dinámicas cargadas`);
+    return routes;
+    
   } catch (error) {
-    console.error('❌ Error cargando rutas:', error);
-    return {
-      '/': { es: '/', en: '/', fr: '/', it: '/' },
-      '/library': { es: '/biblioteca', en: '/library', fr: '/bibliotheque', it: '/biblioteca' },
-      '/my-world': { es: '/mi-mundo', en: '/my-world', fr: '/mon-monde', it: '/mio-mondo' },
-    };
+    console.error('❌ Error cargando rutas dinámicas:', error);
+    // Fallback vacío si falla
+    return {};
   }
+}
+
+/**
+ * Combinar rutas públicas estáticas + rutas privadas dinámicas
+ */
+async function getAllPathnames(): Promise<Record<string, any>> {
+  const dynamicRoutes = await loadDynamicRoutes();
+  
+  // Combinar: públicas + dinámicas
+  return {
+    ...publicPathnames,
+    ...dynamicRoutes,
+  };
 }
 
 // ============================================
@@ -105,7 +129,7 @@ function getLoginPath(locale: string): string {
 }
 
 /**
- * Verificar acceso a ruta privada (solo rutas en DB)
+ * Verificar acceso a ruta en BD
  */
 async function canAccessRoute(
   supabase: any,
@@ -138,13 +162,13 @@ async function canAccessRoute(
 // ============================================
 
 export default async function middleware(request: NextRequest) {
-  // 1. Cargar rutas dinámicas
-  const pathnames = await loadRoutes();
+  // 1. Cargar todas las rutas (públicas + dinámicas)
+  const allPathnames = await getAllPathnames();
   
-  // 2. Manejar i18n
+  // 2. Crear handler de i18n con TODAS las rutas
   const handleI18nRouting = createMiddleware({
     ...routing,
-    pathnames: pathnames as any,
+    pathnames: allPathnames as any,
   });
 
   const response = handleI18nRouting(request);
@@ -156,19 +180,17 @@ export default async function middleware(request: NextRequest) {
   const locale = ['es', 'en', 'fr', 'it'].includes(maybeLocale) ? maybeLocale : 'es';
   const cleanPath = cleanPathname(pathname, locale);
 
-  // 4. RUTAS PÚBLICAS → Permitir (sin verificar DB)
+  // 4. RUTAS PÚBLICAS → Permitir
   if (isPublicRoute(pathname, locale)) {
-    console.log(`✅ Ruta pública: ${pathname}`);
     return response;
   }
 
   // 5. RUTAS DE AUTH → Permitir
   if (isAuthRoute(pathname, locale)) {
-    console.log(`✅ Ruta de autenticación: ${pathname}`);
     return response;
   }
 
-  // 6. Crear cliente Supabase (solo para rutas privadas)
+  // 6. Crear cliente Supabase
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
@@ -199,16 +221,13 @@ export default async function middleware(request: NextRequest) {
     loginUrl.pathname = `/${locale}${loginPath}`;
     loginUrl.searchParams.set('redirect', pathname);
     
-    console.log(`🔒 No autenticado, redirigiendo: ${pathname} → ${loginUrl.pathname}`);
     return NextResponse.redirect(loginUrl);
   }
 
-  // 9. Verificar permisos en DB
+  // 9. Verificar permisos en BD
   const hasAccess = await canAccessRoute(supabase, user.id, cleanPath, locale);
 
   if (!hasAccess) {
-    console.log(`🚫 Acceso denegado: ${pathname} (user: ${user.email}, idioma: ${locale})`);
-    
     const forbiddenUrl = request.nextUrl.clone();
     forbiddenUrl.pathname = `/${locale}/forbidden`;
     forbiddenUrl.searchParams.set('from', pathname);
@@ -217,10 +236,9 @@ export default async function middleware(request: NextRequest) {
   }
 
   // 10. Acceso permitido
-  console.log(`✅ Acceso permitido: ${pathname} (user: ${user.email}, idioma: ${locale})`);
   return response;
 }
 
 export const config = {
-  matcher: ['/((?!api|_next|.*\\..*).*)']
+  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)']
 };
