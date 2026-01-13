@@ -23,6 +23,7 @@ const PUBLIC_ROUTES = [
   '/forbidden',
   '/admin/routes',
   '/admin/route-permissions',
+  '/admin/route-translations'
 ];
 
 const AUTH_ROUTES = [
