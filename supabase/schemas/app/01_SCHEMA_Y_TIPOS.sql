@@ -1,7 +1,7 @@
 -- ============================================
--- SCRIPT 00: SCHEMA Y TIPOS BASE
+-- SCRIPT 01: SCHEMA Y TIPOS BASE
 -- ============================================
--- Crear schema app y tipos enumerados
+-- Crea schema app y tipos enumerados
 -- ============================================
 
 -- Crear schema si no existe
@@ -49,3 +49,15 @@ COMMENT ON SCHEMA app IS 'Schema principal de la aplicación - contiene todas la
 COMMENT ON TYPE app.permission_type IS 'Tipo de permiso individual: grant (permitir) o deny (bloquear)';
 COMMENT ON TYPE app.language_code IS 'Códigos de idioma soportados por la aplicación';
 COMMENT ON FUNCTION app.set_updated_at() IS 'Función trigger para actualizar automáticamente updated_at';
+
+-- ============================================
+-- VERIFICAR
+-- ============================================
+
+-- Ver tipos creados
+SELECT n.nspname as schema, t.typname as type_name
+FROM pg_type t
+JOIN pg_namespace n ON n.oid = t.typnamespace
+WHERE n.nspname = 'app';
+
+-- Debe mostrar: permission_type, language_code

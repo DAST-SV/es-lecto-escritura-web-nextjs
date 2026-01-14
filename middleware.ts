@@ -1,245 +1,161 @@
 // ============================================
-// middleware.ts - VERSIÓN DINÁMICA
-// Rutas públicas: estáticas
-// Rutas privadas: desde BD (dinámicas)
+// CAPA: INFRASTRUCTURE (Framework Integration)
+// Ubicación: middleware.ts (raíz del proyecto)
+// Propósito: Middleware de Next.js para proteger rutas server-side
 // ============================================
 
-import createMiddleware from 'next-intl/middleware';
 import { createServerClient } from '@supabase/ssr';
-import { type NextRequest, NextResponse } from 'next/server';
-import { routing, publicPathnames } from '@/src/infrastructure/config/routing.config';
-
-// ============================================
-// RUTAS PÚBLICAS (ESTÁTICAS)
-// ============================================
-
-const PUBLIC_ROUTES = [
-  '/',
-  '/about',
-  '/acerca-de',
-  '/a-propos',
-  '/chi-siamo',
-  '/error',
-  '/forbidden',
-  '/admin/routes',
-  '/admin/route-permissions',
-  '/admin/route-translations'
-];
-
-const AUTH_ROUTES = [
-  '/auth/login',
-  '/auth/ingresar',
-  '/auth/connexion',
-  '/auth/accesso',
-  '/auth/register',
-  '/auth/registro',
-  '/auth/inscription',
-  '/auth/registrazione',
-  '/auth/callback',
-];
-
-// ============================================
-// CACHE DE RUTAS DINÁMICAS
-// ============================================
-
-let dynamicRoutesCache: Record<string, any> | null = null;
-let cacheTimestamp: number = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+import { NextResponse, type NextRequest } from 'next/server';
 
 /**
- * Cargar rutas dinámicas desde la BD
+ * Middleware de Next.js que protege rutas usando RBAC
  */
-async function loadDynamicRoutes(): Promise<Record<string, any>> {
-  const now = Date.now();
-  
-  // Usar cache si está vigente
-  if (dynamicRoutesCache && (now - cacheTimestamp) < CACHE_TTL) {
-    return dynamicRoutesCache;
-  }
+export async function middleware(request: NextRequest) {
+  // 🔍 DEBUG: Verificar variables de entorno
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY; // ✅ TU VARIABLE
 
-  try {
-    // Importar servicio dinámicamente para evitar errores en build
-    const { DynamicRoutingService } = await import(
-      '@/src/infrastructure/services/routing/DynamicRoutingService'
+  // Si no hay variables, mostrar error detallado
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('❌ ERROR EN MIDDLEWARE:');
+    console.error('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? '✅ Definida' : '❌ NO DEFINIDA');
+    console.error('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:', supabaseKey ? '✅ Definida' : '❌ NO DEFINIDA');
+    console.error('');
+    console.error('SOLUCIÓN:');
+    console.error('1. Verifica que .env.local esté en la RAÍZ del proyecto');
+    console.error('2. Verifica que tenga las variables correctas');
+    console.error('3. Reinicia el servidor (npm run dev)');
+    
+    // Retornar error visible
+    return new NextResponse(
+      JSON.stringify({
+        error: 'Variables de entorno no configuradas',
+        details: {
+          url: supabaseUrl ? 'OK' : 'FALTA',
+          key: supabaseKey ? 'OK' : 'FALTA',
+        },
+        solution: 'Crea .env.local en la raíz con NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY'
+      }),
+      { status: 500, headers: { 'content-type': 'application/json' } }
     );
-    
-    const routes = await DynamicRoutingService.loadAllRoutes();
-    
-    dynamicRoutesCache = routes;
-    cacheTimestamp = now;
-    
-    console.log(`✅ ${Object.keys(routes).length} rutas dinámicas cargadas`);
-    return routes;
-    
-  } catch (error) {
-    console.error('❌ Error cargando rutas dinámicas:', error);
-    // Fallback vacío si falla
-    return {};
   }
-}
 
-/**
- * Combinar rutas públicas estáticas + rutas privadas dinámicas
- */
-async function getAllPathnames(): Promise<Record<string, any>> {
-  const dynamicRoutes = await loadDynamicRoutes();
-  
-  // Combinar: públicas + dinámicas
-  return {
-    ...publicPathnames,
-    ...dynamicRoutes,
-  };
-}
-
-// ============================================
-// FUNCIONES AUXILIARES
-// ============================================
-
-function cleanPathname(pathname: string, locale: string): string {
-  return pathname.startsWith(`/${locale}`)
-    ? pathname.slice(`/${locale}`.length) || '/'
-    : pathname;
-}
-
-function isPublicRoute(pathname: string, locale: string): boolean {
-  const cleanPath = cleanPathname(pathname, locale);
-  return PUBLIC_ROUTES.some(route => 
-    cleanPath === route || 
-    cleanPath === `${route}/` ||
-    cleanPath.startsWith(`${route}/`)
-  );
-}
-
-function isAuthRoute(pathname: string, locale: string): boolean {
-  const cleanPath = cleanPathname(pathname, locale);
-  return AUTH_ROUTES.some(route => 
-    cleanPath === route || 
-    cleanPath === `${route}/` ||
-    cleanPath.startsWith(route)
-  );
-}
-
-function getLoginPath(locale: string): string {
-  const loginPaths: Record<string, string> = {
-    es: '/auth/ingresar',
-    en: '/auth/login',
-    fr: '/auth/connexion',
-    it: '/auth/accesso',
-  };
-  return loginPaths[locale] || loginPaths['es'];
-}
-
-/**
- * Verificar acceso a ruta en BD
- */
-async function canAccessRoute(
-  supabase: any,
-  userId: string,
-  pathname: string,
-  languageCode: string = 'es'
-): Promise<boolean> {
-  try {
-    const { data, error } = await supabase.rpc('can_access_route', {
-      p_user_id: userId,
-      p_pathname: pathname,
-      p_language_code: languageCode,
-      p_organization_id: null,
-    });
-
-    if (error) {
-      console.error('❌ Error verificando acceso:', error);
-      return false;
-    }
-
-    return data === true;
-  } catch (error) {
-    console.error('❌ Error en can_access_route:', error);
-    return false;
-  }
-}
-
-// ============================================
-// MIDDLEWARE PRINCIPAL
-// ============================================
-
-export default async function middleware(request: NextRequest) {
-  // 1. Cargar todas las rutas (públicas + dinámicas)
-  const allPathnames = await getAllPathnames();
-  
-  // 2. Crear handler de i18n con TODAS las rutas
-  const handleI18nRouting = createMiddleware({
-    ...routing,
-    pathnames: allPathnames as any,
+  let supabaseResponse = NextResponse.next({
+    request,
   });
 
-  const response = handleI18nRouting(request);
-  
-  // 3. Extraer locale y pathname
-  const { pathname } = request.nextUrl;
-  const segments = pathname.split('/').filter(Boolean);
-  const maybeLocale = segments[0];
-  const locale = ['es', 'en', 'fr', 'it'].includes(maybeLocale) ? maybeLocale : 'es';
-  const cleanPath = cleanPathname(pathname, locale);
-
-  // 4. RUTAS PÚBLICAS → Permitir
-  if (isPublicRoute(pathname, locale)) {
-    return response;
-  }
-
-  // 5. RUTAS DE AUTH → Permitir
-  if (isAuthRoute(pathname, locale)) {
-    return response;
-  }
-
-  // 6. Crear cliente Supabase
+  // Crear cliente Supabase para SSR
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
-        }
-      }
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value);
+          });
+          supabaseResponse = NextResponse.next({
+            request,
+          });
+          cookiesToSet.forEach(({ name, value, options }) => {
+            supabaseResponse.cookies.set(name, value, options);
+          });
+        },
+      },
     }
   );
 
-  // 7. Obtener usuario
+  // Obtener usuario actual
   const { data: { user } } = await supabase.auth.getUser();
 
-  // 8. Si no hay usuario → Login
+  // Extraer pathname y locale
+  const pathname = request.nextUrl.pathname;
+  const locale = pathname.split('/')[1] || 'es';
+  const routePath = pathname.replace(`/${locale}`, '') || '/';
+
+  // Definir rutas públicas (no requieren autenticación)
+  const publicRoutes = [
+    '/', 
+    '/auth/login', 
+    '/auth/register', 
+    '/auth/callback',
+    '/auth/error',
+    '/unauthorized'
+  ];
+  
+  const isPublicRoute = publicRoutes.some(
+    route => routePath === route || routePath.startsWith('/auth')
+  );
+
+  // 🔍 DEBUG: Log de ruta
+  console.log(`[Middleware] ${routePath} - Usuario: ${user ? user.email : 'No autenticado'} - Público: ${isPublicRoute}`);
+
+  // Si es ruta pública, permitir acceso
+  if (isPublicRoute) {
+    return supabaseResponse;
+  }
+
+  // Si no hay usuario, redirigir a login
   if (!user) {
-    const loginUrl = request.nextUrl.clone();
-    const loginPath = getLoginPath(locale);
-    loginUrl.pathname = `/${locale}${loginPath}`;
-    loginUrl.searchParams.set('redirect', pathname);
-    
-    return NextResponse.redirect(loginUrl);
+    console.log(`[Middleware] Redirigiendo a login: ${routePath}`);
+    const redirectUrl = new URL(`/${locale}/auth/login`, request.url);
+    redirectUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(redirectUrl);
   }
 
-  // 9. Verificar permisos en BD
-  const hasAccess = await canAccessRoute(supabase, user.id, cleanPath, locale);
+  // Verificar acceso a la ruta con RBAC
+  try {
+    const { data: canAccess, error } = await supabase.rpc('can_access_route', {
+      p_user_id: user.id,
+      p_pathname: routePath,
+      p_language_code: locale,
+    });
 
-  if (!hasAccess) {
-    const forbiddenUrl = request.nextUrl.clone();
-    forbiddenUrl.pathname = `/${locale}/forbidden`;
-    forbiddenUrl.searchParams.set('from', pathname);
+    if (error) {
+      console.error('[Middleware] Error checking route access:', error);
+      // En desarrollo, permitir acceso si hay error
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[Middleware] MODO DESARROLLO: Permitiendo acceso a pesar del error');
+        return supabaseResponse;
+      }
+      return NextResponse.redirect(new URL(`/${locale}/unauthorized`, request.url));
+    }
+
+    // Si no tiene acceso, redirigir a página no autorizada
+    if (!canAccess) {
+      console.log(`[Middleware] Acceso denegado para ${user.email} a ${routePath}`);
+      return NextResponse.redirect(new URL(`/${locale}/unauthorized`, request.url));
+    }
+
+    console.log(`[Middleware] Acceso permitido para ${user.email} a ${routePath}`);
+    return supabaseResponse;
     
-    return NextResponse.redirect(forbiddenUrl);
+  } catch (err) {
+    console.error('[Middleware] Unexpected error:', err);
+    // En desarrollo, permitir acceso
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[Middleware] MODO DESARROLLO: Permitiendo acceso a pesar del error');
+      return supabaseResponse;
+    }
+    return NextResponse.redirect(new URL(`/${locale}/error`, request.url));
   }
-
-  // 10. Acceso permitido
-  return response;
 }
 
+/**
+ * Configuración del matcher
+ */
 export const config = {
-  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)']
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization)
+     * - favicon.ico (favicon)
+     * - public folder files
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 };

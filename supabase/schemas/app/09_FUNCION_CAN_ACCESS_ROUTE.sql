@@ -1,19 +1,16 @@
 -- ============================================
--- SCRIPT 08: FUNCIÓN CAN_ACCESS_ROUTE
+-- SCRIPT 09: FUNCIÓN CAN_ACCESS_ROUTE
 -- ============================================
+-- ⚠️ EJECUTAR DESPUÉS DEL SCRIPT 08B (limpiar funciones)
 -- Verifica si un usuario puede acceder a una ruta
--- Lógica: DENY > GRANT > ROL
+-- Lógica: DENY > GRANT > ROL > Sin acceso
 -- ============================================
-
--- Eliminar función si existe
-DROP FUNCTION IF EXISTS app.can_access_route(uuid, varchar, varchar);
-DROP FUNCTION IF EXISTS public.can_access_route(uuid, varchar, varchar);
 
 -- ============================================
 -- CREAR FUNCIÓN EN SCHEMA APP
 -- ============================================
 
-CREATE OR REPLACE FUNCTION app.can_access_route(
+CREATE FUNCTION app.can_access_route(
   p_user_id uuid,
   p_pathname varchar,
   p_language_code varchar DEFAULT 'es'
@@ -54,7 +51,7 @@ BEGIN
     RETURN false;
   END IF;
 
-  -- 2. Verificar DENY individual
+  -- 2. Verificar DENY individual (máxima prioridad)
   SELECT EXISTS (
     SELECT 1 
     FROM app.user_route_permissions urp
@@ -65,12 +62,12 @@ BEGIN
       AND (urp.expires_at IS NULL OR urp.expires_at > NOW())
   ) INTO v_has_deny;
 
-  -- Si tiene DENY, bloquear
+  -- Si tiene DENY, bloquear inmediatamente
   IF v_has_deny THEN
     RETURN false;
   END IF;
 
-  -- 3. Verificar GRANT individual
+  -- 3. Verificar GRANT individual (segunda prioridad)
   SELECT EXISTS (
     SELECT 1 
     FROM app.user_route_permissions urp
@@ -86,13 +83,12 @@ BEGIN
     RETURN true;
   END IF;
 
-  -- 4. Verificar permisos por ROL
+  -- 4. Verificar permisos por ROL (tercera prioridad)
   SELECT EXISTS (
     SELECT 1
     FROM app.user_roles ur
-    JOIN app.route_permissions rp ON rp.role_name = (
-      SELECT r.name FROM app.roles r WHERE r.id = ur.role_id
-    )
+    JOIN app.roles rol ON rol.id = ur.role_id
+    JOIN app.route_permissions rp ON rp.role_name = rol.name
     WHERE ur.user_id = p_user_id
       AND ur.is_active = true
       AND ur.revoked_at IS NULL
@@ -100,7 +96,7 @@ BEGIN
       AND rp.is_active = true
   ) INTO v_has_from_role;
 
-  -- Retornar resultado
+  -- Retornar resultado basado en rol
   RETURN v_has_from_role;
 END;
 $$;
@@ -109,7 +105,7 @@ $$;
 -- CREAR WRAPPER EN PUBLIC
 -- ============================================
 
-CREATE OR REPLACE FUNCTION public.can_access_route(
+CREATE FUNCTION public.can_access_route(
   p_user_id uuid,
   p_pathname varchar,
   p_language_code varchar DEFAULT 'es'
@@ -124,25 +120,43 @@ END;
 $$;
 
 -- ============================================
--- DAR PERMISOS
+-- DAR PERMISOS EXECUTE (especificando parámetros)
 -- ============================================
 
-GRANT EXECUTE ON FUNCTION public.can_access_route(uuid, varchar, varchar) TO authenticated;
-GRANT EXECUTE ON FUNCTION app.can_access_route(uuid, varchar, varchar) TO authenticated;
+-- Permisos con los 3 parámetros explícitos
+GRANT EXECUTE ON FUNCTION public.can_access_route(uuid, character varying, character varying) TO authenticated;
+GRANT EXECUTE ON FUNCTION app.can_access_route(uuid, character varying, character varying) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_access_route(uuid, character varying, character varying) TO anon;
+GRANT EXECUTE ON FUNCTION app.can_access_route(uuid, character varying, character varying) TO anon;
 
 -- ============================================
 -- COMENTARIOS
 -- ============================================
 
-COMMENT ON FUNCTION app.can_access_route IS 'Verifica si un usuario puede acceder a una ruta - Lógica: DENY > GRANT > ROL';
+COMMENT ON FUNCTION app.can_access_route(uuid, character varying, character varying) IS 'Verifica si un usuario puede acceder a una ruta. Lógica: DENY > GRANT > ROL';
 
 -- ============================================
--- TEST
+-- VERIFICAR CREACIÓN
 -- ============================================
 
--- Ejemplo de uso:
--- SELECT can_access_route(
---   'user-uuid-here',  -- ID del usuario
---   '/library',        -- Pathname o ruta traducida
---   'es'               -- Idioma
--- );
+SELECT 
+  n.nspname as schema,
+  p.proname as function_name,
+  pg_get_function_identity_arguments(p.oid) as arguments
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+WHERE p.proname = 'can_access_route';
+
+-- Debe mostrar 2 funciones (app y public) con los mismos argumentos
+
+-- ============================================
+-- PROBAR (después de asignar rol)
+-- ============================================
+
+-- Con 3 parámetros explícitos
+SELECT can_access_route(auth.uid(), '/', 'es');
+
+-- Con 2 parámetros (usa DEFAULT 'es')
+SELECT can_access_route(auth.uid(), '/');
+
+-- Ambas formas deben funcionar

@@ -3,13 +3,13 @@
 // SERVER COMPONENT - Escanea rutas reales
 // ============================================
 
-import { scanSystemRoutes } from '@/src/lib/route-scanner';
-import RoutesPageClient from './client';
+import RoutesPage from '@/src/presentation/pages/admin/routes/RoutesPage';
 
-export default function RoutesPage() {
-  // Escanear rutas reales del sistema
-  const systemRoutes = scanSystemRoutes();
-
-  // Pasar al componente cliente
-  return <RoutesPageClient systemRoutes={systemRoutes} />;
+export default function RoutesRoute() {
+  return <RoutesPage />;
 }
+
+export const metadata = {
+  title: 'Gestión de Rutas - Admin',
+  description: 'Administración de rutas del sistema',
+};
