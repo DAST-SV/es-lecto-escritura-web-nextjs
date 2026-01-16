@@ -1,9 +1,7 @@
+// ============================================
 // src/core/application/use-cases/CheckRouteAccessUseCase.ts
-
-/**
- * Application Use Case: Check Route Access
- * Verifica si un usuario puede acceder a una ruta
- */
+// ✅ CORREGIDO - Tipos correctos
+// ============================================
 
 import { IPermissionRepository } from '@/src/core/domain/repositories/IPermissionRepository';
 import { LanguageCode } from '@/src/core/domain/entities/Permission';
@@ -18,7 +16,6 @@ export class CheckRouteAccessUseCase {
   ): Promise<boolean> {
     // Si no hay usuario, solo puede acceder a rutas públicas
     if (!userId) {
-      // Verificar si la ruta es pública usando el repositorio
       return this.permissionRepository.canAccessRoute('', pathname, languageCode);
     }
 

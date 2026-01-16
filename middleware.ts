@@ -1,9 +1,14 @@
-// middleware.ts - VERSIÓN ULTRA SIMPLE
+// ============================================
+// middleware.ts - VERSIÓN CORREGIDA
+// ✅ Sin errores de TypeScript
+// ============================================
 
 import { NextResponse, type NextRequest } from 'next/server';
 
-const LOCALES = ['es', 'en', 'fr', 'it'];
+const LOCALES = ['es', 'en', 'fr', 'it'] as const;
 const DEFAULT_LOCALE = 'es';
+
+type Locale = typeof LOCALES[number];
 
 // ⚠️ ESTAS RUTAS PASAN SIN VERIFICAR NADA
 const BYPASS_ROUTES = [
@@ -28,14 +33,20 @@ export async function middleware(request: NextRequest) {
   }
 
   // Extraer locale
-  let locale = DEFAULT_LOCALE;
+  let locale: Locale = DEFAULT_LOCALE;
   let path = pathname;
 
   const hasLocale = LOCALES.some(l => pathname.startsWith(`/${l}/`) || pathname === `/${l}`);
   
   if (hasLocale) {
     const parts = pathname.split('/');
-    locale = parts[1];
+    const extractedLocale = parts[1];
+    
+    // ✅ Validar que sea un locale válido
+    if (LOCALES.includes(extractedLocale as Locale)) {
+      locale = extractedLocale as Locale;
+    }
+    
     path = '/' + parts.slice(2).join('/') || '/';
   } else {
     // Agregar locale
@@ -45,7 +56,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  console.log(`📍 Path: ${path}`);
+  console.log(`📍 Path: ${path}, Locale: ${locale}`);
 
   // ⚡ BYPASS - Verificar si empieza con alguna ruta bypass
   const shouldBypass = BYPASS_ROUTES.some(route => {
@@ -92,7 +103,10 @@ export async function middleware(request: NextRequest) {
 
     const repo = new SupabasePermissionRepository();
     const useCase = new CheckRouteAccessUseCase(repo);
-    const canAccess = await useCase.execute(user.id, path, locale);
+    
+    // ✅ CORRECCIÓN: Asegurar que locale sea un tipo válido
+    const validLocale = LOCALES.includes(locale) ? locale : DEFAULT_LOCALE;
+    const canAccess = await useCase.execute(user.id, path, validLocale);
 
     if (!canAccess) {
       console.log(`🚫 No permission`);

@@ -1,9 +1,7 @@
+// ============================================
 // src/core/domain/entities/Permission.ts
-
-/**
- * Domain Entity: Permission
- * Representa el sistema de permisos del usuario
- */
+// ✅ CORREGIDO - Tipos correctos
+// ============================================
 
 export type PermissionType = 'grant' | 'deny';
 export type LanguageCode = 'es' | 'en' | 'fr' | 'it';
@@ -140,4 +138,9 @@ export class UserPermissions {
     if (this.roles.length === 0) return 0;
     return Math.max(...this.roles.map(r => r.hierarchy_level));
   }
+}
+
+// ✅ Helper para validar LanguageCode
+export function isValidLanguageCode(code: string): code is LanguageCode {
+  return ['es', 'en', 'fr', 'it'].includes(code);
 }
