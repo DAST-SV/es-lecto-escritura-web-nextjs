@@ -1,25 +1,18 @@
 // ============================================
-// middleware.ts - VERSIÓN CORREGIDA
-// ✅ Sin errores de TypeScript
+// middleware.ts - VERSIÓN CORREGIDA UNIFICADA
+// ✅ Combina i18n + auth + RBAC en un solo flujo
 // ============================================
 
 import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 
 const LOCALES = ['es', 'en', 'fr', 'it'] as const;
 const DEFAULT_LOCALE = 'es';
 
 type Locale = typeof LOCALES[number];
 
-// ⚠️ ESTAS RUTAS PASAN SIN VERIFICAR NADA
-const BYPASS_ROUTES = [
-  '/admin',
-  '/error',
-  '/',
-  '/auth/login',
-  '/auth/signup',
-  '/auth/callback',
-];
-
+// ⚠️ RUTAS QUE NO NECESITAN VERIFICACIÓN
+const PUBLIC_ROUTES = ['/', '/auth/login', '/auth/signup', '/auth/callback', '/error'];
 const STATIC_ROUTES = ['/_next', '/api', '/favicon.ico', '/images', '/fonts'];
 
 export async function middleware(request: NextRequest) {
@@ -27,12 +20,16 @@ export async function middleware(request: NextRequest) {
 
   console.log(`🔍 [MW] ${pathname}`);
 
-  // Ignorar estáticas
+  // ============================================
+  // 1. IGNORAR ARCHIVOS ESTÁTICOS
+  // ============================================
   if (STATIC_ROUTES.some(r => pathname.startsWith(r))) {
     return NextResponse.next();
   }
 
-  // Extraer locale
+  // ============================================
+  // 2. EXTRAER LOCALE
+  // ============================================
   let locale: Locale = DEFAULT_LOCALE;
   let path = pathname;
 
@@ -42,14 +39,13 @@ export async function middleware(request: NextRequest) {
     const parts = pathname.split('/');
     const extractedLocale = parts[1];
     
-    // ✅ Validar que sea un locale válido
     if (LOCALES.includes(extractedLocale as Locale)) {
       locale = extractedLocale as Locale;
     }
     
     path = '/' + parts.slice(2).join('/') || '/';
   } else {
-    // Agregar locale
+    // Redirigir para agregar locale
     const url = request.nextUrl.clone();
     url.pathname = `/${DEFAULT_LOCALE}${pathname}`;
     console.log(`➡️ Redirect to: ${url.pathname}`);
@@ -58,69 +54,86 @@ export async function middleware(request: NextRequest) {
 
   console.log(`📍 Path: ${path}, Locale: ${locale}`);
 
-  // ⚡ BYPASS - Verificar si empieza con alguna ruta bypass
-  const shouldBypass = BYPASS_ROUTES.some(route => {
+  // ============================================
+  // 3. VERIFICAR SI ES RUTA PÚBLICA
+  // ============================================
+  const isPublicRoute = PUBLIC_ROUTES.some(route => {
     return path === route || path.startsWith(route + '/');
   });
 
-  if (shouldBypass) {
-    console.log(`✅ [BYPASS] ${path} - PERMITIDO`);
+  if (isPublicRoute) {
+    console.log(`✅ [PUBLIC] ${path}`);
     return NextResponse.next();
   }
 
-  // Para todo lo demás: auth + permisos
-  console.log(`🔒 [PROTECTED] ${path}`);
-
-  try {
-    const { createServerClient } = await import('@supabase/ssr');
-    
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-      {
-        cookies: {
-          getAll() { return request.cookies.getAll(); },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value }) => {
-              request.cookies.set(name, value);
-            });
-          },
+  // ============================================
+  // 4. CREAR CLIENTE SUPABASE
+  // ============================================
+  const response = NextResponse.next();
+  
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll() { return request.cookies.getAll(); },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value);
+            response.cookies.set(name, value, options);
+          });
         },
-      }
-    );
+      },
+    }
+  );
 
-    const { data: { user } } = await supabase.auth.getUser();
+  // ============================================
+  // 5. VERIFICAR AUTENTICACIÓN
+  // ============================================
+  const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
-      console.log(`❌ No user - redirect to login`);
+  if (!user) {
+    console.log(`❌ No user - redirect to login`);
+    const url = request.nextUrl.clone();
+    url.pathname = `/${locale}/auth/login`;
+    url.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(url);
+  }
+
+  console.log(`✅ User authenticated: ${user.email}`);
+
+  // ============================================
+  // 6. VERIFICAR PERMISOS DE ACCESO (RBAC)
+  // ============================================
+  try {
+    const { data: canAccess, error } = await supabase.rpc('can_access_route', {
+      p_user_id: user.id,
+      p_pathname: path,
+      p_language_code: locale,
+    });
+
+    if (error) {
+      console.error(`❌ Error checking access:`, error);
       const url = request.nextUrl.clone();
-      url.pathname = `/${locale}/auth/login`;
+      url.pathname = `/${locale}/error`;
+      url.searchParams.set('code', '500');
       return NextResponse.redirect(url);
     }
 
-    const { SupabasePermissionRepository } = await import('@/src/infrastructure/repositories/SupabasePermissionRepository');
-    const { CheckRouteAccessUseCase } = await import('@/src/core/application/use-cases/CheckRouteAccessUseCase');
-
-    const repo = new SupabasePermissionRepository();
-    const useCase = new CheckRouteAccessUseCase(repo);
-    
-    // ✅ CORRECCIÓN: Asegurar que locale sea un tipo válido
-    const validLocale = LOCALES.includes(locale) ? locale : DEFAULT_LOCALE;
-    const canAccess = await useCase.execute(user.id, path, validLocale);
-
     if (!canAccess) {
-      console.log(`🚫 No permission`);
+      console.log(`🚫 Access denied to ${path}`);
       const url = request.nextUrl.clone();
       url.pathname = `/${locale}/error`;
       url.searchParams.set('code', '403');
       return NextResponse.redirect(url);
     }
 
-    console.log(`✅ Access granted`);
-    return NextResponse.next();
+    console.log(`✅ Access granted to ${path}`);
+    return response;
+
   } catch (err) {
-    console.error('❌ Error:', err);
-    return NextResponse.next();
+    console.error('❌ Unexpected error:', err);
+    return response; // Permitir en caso de error inesperado
   }
 }
 

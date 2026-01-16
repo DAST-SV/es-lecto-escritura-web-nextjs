@@ -1,21 +1,17 @@
 // ============================================
 // src/infrastructure/config/routing.config.ts
-// Configuración de routing con soporte DINÁMICO
+// ✅ CORREGIDO: Solo rutas PÚBLICAS estáticas
+// Las rutas protegidas se cargan dinámicamente
 // ============================================
 
 import { Pathnames, LocalePrefix } from 'next-intl/routing';
 
-// RUTAS PÚBLICAS (estáticas en código)
+// ============================================
+// SOLO RUTAS PÚBLICAS (hardcoded)
+// ============================================
 export const publicPathnames = {
   '/': '/',
-  '/about': {
-    es: '/acerca-de',
-    en: '/about',
-    fr: '/a-propos',
-    it: '/chi-siamo'
-  },
   '/error': '/error',
-  '/forbidden': '/forbidden',
   '/auth/callback': '/auth/callback',
   '/auth/login': {
     es: '/auth/ingresar',
@@ -31,17 +27,21 @@ export const publicPathnames = {
   },
 } as const satisfies Pathnames<readonly ['es', 'en', 'fr', 'it']>;
 
-// Configuración base
+// ============================================
+// CONFIGURACIÓN BASE
+// ============================================
 export const locales = ['es', 'en', 'fr', 'it'] as const;
 export const defaultLocale = 'es' as const;
 export const localePrefix: LocalePrefix<typeof locales> = 'always';
 
-// Configuración de routing (se combina con rutas dinámicas en middleware)
+// ============================================
+// ROUTING CONFIG
+// ============================================
 export const routing = {
   locales,
   defaultLocale,
   localePrefix,
-  pathnames: publicPathnames, // Solo rutas públicas aquí
+  pathnames: publicPathnames, // Solo rutas públicas
 };
 
 export type Locale = (typeof locales)[number];
