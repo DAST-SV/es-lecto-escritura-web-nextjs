@@ -1,16 +1,10 @@
-// ============================================
 // app/[locale]/admin/route-translations/page.tsx
-// TRADUCCIONES DE RUTAS (como translations)
-// ============================================
-// Seleccionas una ruta → Traduces a idiomas
-// ============================================
 
 'use client';
 
 import { useState, useEffect } from 'react';
+import { RouteGuard } from '@/src/presentation/components/RouteGuard';
 import { createClient } from '@/src/infrastructure/config/supabase.config';
-import { Plus, Edit2, Trash2, Globe, Search, Loader2, AlertCircle, Languages } from 'lucide-react';
-import toast, { Toaster } from 'react-hot-toast';
 
 interface Route {
   id: string;
@@ -18,598 +12,385 @@ interface Route {
   display_name: string;
 }
 
-interface RouteTranslation {
+interface Translation {
   id: string;
   route_id: string;
-  pathname: string;
-  display_name: string;
-  language_code: string;
+  language_code: 'es' | 'en' | 'fr' | 'it';
   translated_path: string;
   translated_name: string;
+  is_active: boolean;
+  routes?: Route;
 }
 
+const LANGUAGES = [
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'en', name: 'English', flag: '🇺🇸' },
+  { code: 'fr', name: 'Français', flag: '🇫🇷' },
+  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+] as const;
+
 export default function RouteTranslationsPage() {
-  const supabase = createClient();
-  const languages = [
-    { code: 'es', name: 'Español', flag: '🇪🇸' },
-    { code: 'en', name: 'English', flag: '🇺🇸' },
-    { code: 'fr', name: 'Français', flag: '🇫🇷' },
-    { code: 'it', name: 'Italiano', flag: '🇮🇹' },
-  ];
-
   const [routes, setRoutes] = useState<Route[]>([]);
-  const [translations, setTranslations] = useState<RouteTranslation[]>([]);
+  const [translations, setTranslations] = useState<Translation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterLanguage, setFilterLanguage] = useState<string>('all');
+  const [showForm, setShowForm] = useState(false);
+  const [editingTranslation, setEditingTranslation] = useState<Translation | null>(null);
 
-  // Modal states
-  const [showTranslateModal, setShowTranslateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedTranslation, setSelectedTranslation] = useState<RouteTranslation | null>(null);
-
-  // Form states
-  const [selectedRouteId, setSelectedRouteId] = useState('');
-  const [selectedLanguage, setSelectedLanguage] = useState('es');
-  const [translatedPath, setTranslatedPath] = useState('');
-  const [translatedName, setTranslatedName] = useState('');
-
-  /**
-   * 📥 CARGAR RUTAS
-   */
-  const loadRoutes = async () => {
-    try {
-      const { data, error } = await supabase
-        .schema('app')
-        .from('routes')
-        .select('id, pathname, display_name')
-        .eq('is_active', true)
-        .is('deleted_at', null)
-        .order('pathname');
-
-      if (error) throw error;
-      setRoutes(data || []);
-    } catch (err: any) {
-      console.error('Error loading routes:', err);
-    }
-  };
-
-  /**
-   * 📥 CARGAR TRADUCCIONES
-   */
-  const loadTranslations = async () => {
-    try {
-      setLoading(true);
-
-      const { data: translationsData, error: translationsError } = await supabase
-        .schema('app')
-        .from('route_translations')
-        .select('*')
-        .eq('is_active', true)
-        .order('language_code');
-
-      if (translationsError) throw translationsError;
-
-      // Agregar info de la ruta
-      const translationsWithRoute = await Promise.all(
-        (translationsData || []).map(async (t: any) => {
-          const { data: route } = await supabase
-            .schema('app')
-            .from('routes')
-            .select('pathname, display_name')
-            .eq('id', t.route_id)
-            .single();
-
-          return {
-            ...t,
-            pathname: route?.pathname || '',
-            display_name: route?.display_name || '',
-          };
-        })
-      );
-
-      setTranslations(translationsWithRoute);
-      setError(null);
-    } catch (err: any) {
-      setError(err.message);
-      toast.error(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadRoutes();
-    loadTranslations();
-  }, []);
-
-  /**
-   * ✏️ ABRIR MODAL EDITAR
-   */
-  const handleOpenEdit = (translation: RouteTranslation) => {
-    setSelectedTranslation(translation);
-    setTranslatedPath(translation.translated_path);
-    setTranslatedName(translation.translated_name);
-    setShowEditModal(true);
-  };
-
-  /**
-   * 🗑️ ABRIR MODAL ELIMINAR
-   */
-  const handleOpenDelete = (translation: RouteTranslation) => {
-    setSelectedTranslation(translation);
-    setShowDeleteModal(true);
-  };
-
-  /**
-   * ➕ CREAR TRADUCCIÓN
-   */
-  const handleTranslate = async () => {
-    try {
-      if (!selectedRouteId || !translatedPath || !translatedName) {
-        toast.error('Todos los campos son requeridos');
-        return;
-      }
-
-      // Verificar si ya existe
-      const { data: existing } = await supabase
-        .schema('app')
-        .from('route_translations')
-        .select('id')
-        .eq('route_id', selectedRouteId)
-        .eq('language_code', selectedLanguage)
-        .single();
-
-      if (existing) {
-        toast.error('Ya existe una traducción para este idioma');
-        return;
-      }
-
-      const { error: insertError } = await supabase
-        .schema('app')
-        .from('route_translations')
-        .insert({
-          route_id: selectedRouteId,
-          language_code: selectedLanguage,
-          translated_path: translatedPath,
-          translated_name: translatedName,
-        });
-
-      if (insertError) throw insertError;
-
-      toast.success('✅ Traducción creada');
-      setShowTranslateModal(false);
-      resetForm();
-      loadTranslations();
-    } catch (err: any) {
-      toast.error(err.message);
-    }
-  };
-
-  /**
-   * ✏️ ACTUALIZAR TRADUCCIÓN
-   */
-  const handleUpdate = async () => {
-    try {
-      if (!translatedPath || !translatedName) {
-        toast.error('Todos los campos son requeridos');
-        return;
-      }
-
-      if (!selectedTranslation) return;
-
-      const { error: updateError } = await supabase
-        .schema('app')
-        .from('route_translations')
-        .update({
-          translated_path: translatedPath,
-          translated_name: translatedName,
-        })
-        .eq('id', selectedTranslation.id);
-
-      if (updateError) throw updateError;
-
-      toast.success('✅ Traducción actualizada');
-      setShowEditModal(false);
-      resetForm();
-      loadTranslations();
-    } catch (err: any) {
-      toast.error(err.message);
-    }
-  };
-
-  /**
-   * 🗑️ ELIMINAR TRADUCCIÓN
-   */
-  const handleDelete = async () => {
-    try {
-      if (!selectedTranslation) return;
-
-      const { error: deleteError } = await supabase
-        .schema('app')
-        .from('route_translations')
-        .delete()
-        .eq('id', selectedTranslation.id);
-
-      if (deleteError) throw deleteError;
-
-      toast.success('✅ Traducción eliminada');
-      setShowDeleteModal(false);
-      setSelectedTranslation(null);
-      loadTranslations();
-    } catch (err: any) {
-      toast.error(err.message);
-    }
-  };
-
-  /**
-   * 🔄 RESETEAR FORMULARIO
-   */
-  const resetForm = () => {
-    setSelectedRouteId('');
-    setSelectedLanguage('es');
-    setTranslatedPath('');
-    setTranslatedName('');
-    setSelectedTranslation(null);
-  };
-
-  /**
-   * 🔍 FILTRAR TRADUCCIONES
-   */
-  const filteredTranslations = translations.filter(t => {
-    const matchesSearch =
-      t.pathname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.translated_path.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.translated_name.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesLanguage = filterLanguage === 'all' || t.language_code === filterLanguage;
-
-    return matchesSearch && matchesLanguage;
+  // Form state
+  const [formData, setFormData] = useState({
+    route_id: '',
+    language_code: 'es' as 'es' | 'en' | 'fr' | 'it',
+    translated_path: '',
+    translated_name: '',
   });
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <Loader2 size={48} className="animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">Cargando traducciones...</p>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    loadData();
+  }, []);
 
-  if (error && translations.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <AlertCircle size={64} className="text-red-500 mb-4" />
-        <h2 className="text-xl font-bold text-red-700 mb-2">Error al cargar</h2>
-        <p className="text-gray-600 mb-6">{error}</p>
-        <button onClick={loadTranslations} className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700">
-          Reintentar
-        </button>
-      </div>
-    );
-  }
+  const loadData = async () => {
+    setLoading(true);
+    const supabase = createClient();
+
+    // Cargar rutas
+    const { data: routesData } = await supabase
+      .from('routes')
+      .select('id, pathname, display_name')
+      .is('deleted_at', null)
+      .order('pathname');
+
+    // Cargar traducciones
+    const { data: translationsData } = await supabase
+      .from('route_translations')
+      .select(`
+        *,
+        routes:route_id (
+          id,
+          pathname,
+          display_name
+        )
+      `)
+      .order('language_code');
+
+    setRoutes(routesData || []);
+    setTranslations(translationsData || []);
+    setLoading(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const supabase = createClient();
+
+    if (editingTranslation) {
+      // Actualizar
+      const { error } = await supabase
+        .from('route_translations')
+        .update({
+          translated_path: formData.translated_path,
+          translated_name: formData.translated_name,
+        })
+        .eq('id', editingTranslation.id);
+
+      if (error) {
+        console.error('Error updating translation:', error);
+        alert('Error al actualizar traducción');
+      } else {
+        alert('Traducción actualizada exitosamente');
+        resetForm();
+        loadData();
+      }
+    } else {
+      // Crear nueva
+      const { error } = await supabase
+        .from('route_translations')
+        .insert([formData]);
+
+      if (error) {
+        console.error('Error creating translation:', error);
+        alert('Error al crear traducción. Puede que ya exista para este idioma.');
+      } else {
+        alert('Traducción creada exitosamente');
+        resetForm();
+        loadData();
+      }
+    }
+  };
+
+  const handleEdit = (translation: Translation) => {
+    setEditingTranslation(translation);
+    setFormData({
+      route_id: translation.route_id,
+      language_code: translation.language_code,
+      translated_path: translation.translated_path,
+      translated_name: translation.translated_name,
+    });
+    setShowForm(true);
+  };
+
+  const handleDelete = async (translationId: string) => {
+    if (!confirm('¿Estás seguro de eliminar esta traducción?')) return;
+
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('route_translations')
+      .delete()
+      .eq('id', translationId);
+
+    if (error) {
+      console.error('Error deleting translation:', error);
+      alert('Error al eliminar traducción');
+    } else {
+      alert('Traducción eliminada exitosamente');
+      loadData();
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      route_id: '',
+      language_code: 'es',
+      translated_path: '',
+      translated_name: '',
+    });
+    setEditingTranslation(null);
+    setShowForm(false);
+  };
+
+  // Agrupar traducciones por ruta
+  const groupedTranslations = routes.map((route) => ({
+    route,
+    translations: translations.filter((t) => t.route_id === route.id),
+  }));
 
   return (
-    <div className="space-y-6">
-      <Toaster position="top-right" />
-
-      {/* HEADER */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Traducciones de Rutas</h2>
-          <p className="text-gray-600 mt-1">Traduce rutas a múltiples idiomas</p>
-        </div>
-
-        <button
-          onClick={() => setShowTranslateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          <Plus size={20} />
-          Traducir Ruta
-        </button>
-      </div>
-
-      {/* FILTERS */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <div className="flex items-center gap-4">
-          <div className="flex-1 relative">
-            <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar traducciones..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+    <RouteGuard redirectTo="/error?code=403">
+      <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              🌍 Traducciones de Rutas
+            </h1>
+            <p className="text-gray-600">
+              Traducir rutas a diferentes idiomas (Script 04)
+            </p>
           </div>
 
-          <select
-            value={filterLanguage}
-            onChange={(e) => setFilterLanguage(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="all">Todos los idiomas</option>
-            {languages.map(lang => (
-              <option key={lang.code} value={lang.code}>
-                {lang.flag} {lang.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+          {/* Botón Nueva Traducción */}
+          <div className="mb-6">
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+            >
+              {showForm ? '❌ Cancelar' : '➕ Nueva Traducción'}
+            </button>
+          </div>
 
-      {/* TABLE */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ruta Original</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Idioma</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ruta Traducida</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre Traducido</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredTranslations.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                  No se encontraron traducciones
-                </td>
-              </tr>
+          {/* Formulario */}
+          {showForm && (
+            <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+              <h2 className="text-xl font-semibold mb-4">
+                {editingTranslation ? 'Editar Traducción' : 'Nueva Traducción'}
+              </h2>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Ruta */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Ruta *
+                    </label>
+                    <select
+                      required
+                      disabled={!!editingTranslation}
+                      value={formData.route_id}
+                      onChange={(e) =>
+                        setFormData({ ...formData, route_id: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+                    >
+                      <option value="">Seleccionar ruta...</option>
+                      {routes.map((route) => (
+                        <option key={route.id} value={route.id}>
+                          {route.pathname} - {route.display_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Idioma */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Idioma *
+                    </label>
+                    <select
+                      required
+                      disabled={!!editingTranslation}
+                      value={formData.language_code}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          language_code: e.target.value as 'es' | 'en' | 'fr' | 'it',
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+                    >
+                      {LANGUAGES.map((lang) => (
+                        <option key={lang.code} value={lang.code}>
+                          {lang.flag} {lang.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Ruta Traducida */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Ruta Traducida *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="/biblioteca"
+                      value={formData.translated_path}
+                      onChange={(e) =>
+                        setFormData({ ...formData, translated_path: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Debe empezar con / (ejemplo: /biblioteca)
+                    </p>
+                  </div>
+
+                  {/* Nombre Traducido */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Nombre Traducido *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Biblioteca"
+                      value={formData.translated_name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, translated_name: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Botones */}
+                <div className="flex gap-3">
+                  <button
+                    type="submit"
+                    className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                  >
+                    {editingTranslation ? '💾 Guardar Cambios' : '➕ Crear Traducción'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Lista de Traducciones Agrupadas */}
+          <div className="space-y-6">
+            {loading ? (
+              <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-500">
+                Cargando...
+              </div>
+            ) : groupedTranslations.length === 0 ? (
+              <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-500">
+                No hay rutas registradas
+              </div>
             ) : (
-              filteredTranslations.map((translation) => (
-                <tr key={translation.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <code className="text-sm font-mono text-gray-900">{translation.pathname}</code>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <span className="text-lg">
-                        {languages.find(l => l.code === translation.language_code)?.flag}
-                      </span>
-                      <span className="font-semibold text-blue-600">
-                        {translation.language_code.toUpperCase()}
+              groupedTranslations.map(({ route, translations: routeTranslations }) => (
+                <div key={route.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                  {/* Header de la ruta */}
+                  <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <code className="text-sm text-indigo-600 bg-indigo-50 px-2 py-1 rounded">
+                          {route.pathname}
+                        </code>
+                        <span className="ml-3 text-gray-700">{route.display_name}</span>
+                      </div>
+                      <span className="text-sm text-gray-500">
+                        {routeTranslations.length} traducciones
                       </span>
                     </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <code className="text-sm font-mono text-blue-800">{translation.translated_path}</code>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-gray-800">{translation.translated_name}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => handleOpenEdit(translation)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                        title="Editar"
-                      >
-                        <Edit2 size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleOpenDelete(translation)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                        title="Eliminar"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                  </div>
+
+                  {/* Traducciones */}
+                  {routeTranslations.length === 0 ? (
+                    <div className="px-6 py-4 text-center text-gray-500 text-sm">
+                      Sin traducciones
                     </div>
-                  </td>
-                </tr>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6">
+                      {routeTranslations.map((translation) => {
+                        const lang = LANGUAGES.find(
+                          (l) => l.code === translation.language_code
+                        );
+                        return (
+                          <div
+                            key={translation.id}
+                            className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-colors"
+                          >
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <span className="text-2xl">{lang?.flag}</span>
+                                <span className="font-medium text-gray-900">
+                                  {lang?.name}
+                                </span>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleEdit(translation)}
+                                  className="text-indigo-600 hover:text-indigo-900 text-sm"
+                                >
+                                  ✏️
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(translation.id)}
+                                  className="text-red-600 hover:text-red-900 text-sm"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <div>
+                                <span className="text-xs text-gray-500">Ruta:</span>
+                                <code className="block text-sm text-indigo-600 bg-indigo-50 px-2 py-1 rounded mt-1">
+                                  {translation.translated_path}
+                                </code>
+                              </div>
+                              <div>
+                                <span className="text-xs text-gray-500">Nombre:</span>
+                                <p className="text-sm text-gray-900 mt-1">
+                                  {translation.translated_name}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               ))
             )}
-          </tbody>
-        </table>
+          </div>
+        </div>
       </div>
-
-      {/* MODAL TRADUCIR */}
-      {showTranslateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full">
-            <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Traducir Ruta</h3>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Seleccionar Ruta *
-                  </label>
-                  <select
-                    value={selectedRouteId}
-                    onChange={(e) => setSelectedRouteId(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Seleccionar...</option>
-                    {routes.map(route => (
-                      <option key={route.id} value={route.id}>
-                        {route.pathname} - {route.display_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Idioma *
-                  </label>
-                  <select
-                    value={selectedLanguage}
-                    onChange={(e) => setSelectedLanguage(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    {languages.map(lang => (
-                      <option key={lang.code} value={lang.code}>
-                        {lang.flag} {lang.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ruta Traducida *
-                  </label>
-                  <input
-                    type="text"
-                    value={translatedPath}
-                    onChange={(e) => setTranslatedPath(e.target.value)}
-                    placeholder="/biblioteca"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg font-mono focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nombre Traducido *
-                  </label>
-                  <input
-                    type="text"
-                    value={translatedName}
-                    onChange={(e) => setTranslatedName(e.target.value)}
-                    placeholder="Biblioteca"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 mt-6">
-                <button
-                  onClick={handleTranslate}
-                  className="flex-1 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Crear Traducción
-                </button>
-                <button
-                  onClick={() => {
-                    setShowTranslateModal(false);
-                    resetForm();
-                  }}
-                  className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL EDITAR */}
-      {showEditModal && selectedTranslation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full">
-            <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Editar Traducción</h3>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ruta Original
-                  </label>
-                  <input
-                    type="text"
-                    value={selectedTranslation.pathname}
-                    disabled
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 font-mono cursor-not-allowed"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Idioma
-                  </label>
-                  <input
-                    type="text"
-                    value={selectedTranslation.language_code.toUpperCase()}
-                    disabled
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ruta Traducida *
-                  </label>
-                  <input
-                    type="text"
-                    value={translatedPath}
-                    onChange={(e) => setTranslatedPath(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg font-mono focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nombre Traducido *
-                  </label>
-                  <input
-                    type="text"
-                    value={translatedName}
-                    onChange={(e) => setTranslatedName(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 mt-6">
-                <button
-                  onClick={handleUpdate}
-                  className="flex-1 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Actualizar
-                </button>
-                <button
-                  onClick={() => {
-                    setShowEditModal(false);
-                    resetForm();
-                  }}
-                  className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL ELIMINAR */}
-      {showDeleteModal && selectedTranslation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
-            <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Eliminar Traducción</h3>
-              <p className="text-gray-600 mb-6">
-                ¿Eliminar la traducción <strong>{selectedTranslation.language_code.toUpperCase()}</strong> de <code className="font-mono">{selectedTranslation.pathname}</code>?
-              </p>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={handleDelete}
-                  className="flex-1 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                >
-                  Eliminar
-                </button>
-                <button
-                  onClick={() => {
-                    setShowDeleteModal(false);
-                    setSelectedTranslation(null);
-                  }}
-                  className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </RouteGuard>
   );
 }
