@@ -1,4 +1,7 @@
+// ============================================
 // app/[locale]/error/page.tsx
+// ✅ CORREGIDO: router.push fuera del setState
+// ============================================
 
 'use client';
 
@@ -13,19 +16,21 @@ export default function ErrorPage() {
   const code = searchParams.get('code') || '500';
   const message = searchParams.get('message') || 'Ha ocurrido un error';
 
+  // ✅ FIX: Separar el countdown del redirect
   useEffect(() => {
     const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          router.push('/es');
-          return 0;
-        }
-        return prev - 1;
-      });
+      setCountdown((prev) => prev - 1);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [router]);
+  }, []);
+
+  // ✅ FIX: Redirect en un useEffect separado
+  useEffect(() => {
+    if (countdown <= 0) {
+      router.push('/es');
+    }
+  }, [countdown, router]);
 
   const errorMessages: Record<string, { title: string; description: string; icon: string }> = {
     '403': {
@@ -71,13 +76,15 @@ export default function ErrorPage() {
           </p>
 
           {/* Countdown */}
-          <div className="bg-indigo-50 rounded-lg p-4 mb-6">
-            <p className="text-sm text-indigo-900">
-              Redirigiendo a inicio en{' '}
-              <span className="font-bold text-indigo-600 text-lg">{countdown}</span>{' '}
-              segundos...
-            </p>
-          </div>
+          {countdown > 0 && (
+            <div className="bg-indigo-50 rounded-lg p-4 mb-6">
+              <p className="text-sm text-indigo-900">
+                Redirigiendo a inicio en{' '}
+                <span className="font-bold text-indigo-600 text-lg">{countdown}</span>{' '}
+                segundos...
+              </p>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="space-y-3">

@@ -1,10 +1,14 @@
 // ============================================
 // src/core/domain/entities/Permission.ts
-// ✅ CORREGIDO - Tipos correctos
+// ✅ LIMPIADO: Solo lo que REALMENTE se usa
 // ============================================
 
 export type PermissionType = 'grant' | 'deny';
 export type LanguageCode = 'es' | 'en' | 'fr' | 'it';
+
+// ============================================
+// ENTIDADES BÁSICAS
+// ============================================
 
 export interface Role {
   id: string;
@@ -90,9 +94,13 @@ export interface RoleLanguageAccess {
   updated_at: string;
 }
 
+// ============================================
+// AGGREGATE ROOT: UserPermissions
+// ============================================
+
 /**
- * Aggregate Root: UserPermissions
  * Encapsula toda la información de permisos de un usuario
+ * Este es el ÚNICO modelo que necesitas usar en la app
  */
 export class UserPermissions {
   constructor(
@@ -138,9 +146,61 @@ export class UserPermissions {
     if (this.roles.length === 0) return 0;
     return Math.max(...this.roles.map(r => r.hierarchy_level));
   }
+
+  /**
+   * Obtiene nombres de roles como string
+   */
+  getRoleNames(): string {
+    return this.roles.map(r => r.display_name).join(', ');
+  }
+
+  /**
+   * Tiene permisos GRANT activos
+   */
+  hasGrantPermissions(): boolean {
+    return this.individualPermissions.some(
+      p => p.permission_type === 'grant' && 
+           p.is_active && 
+           (!p.expires_at || new Date(p.expires_at) > new Date())
+    );
+  }
+
+  /**
+   * Tiene permisos DENY activos
+   */
+  hasDenyPermissions(): boolean {
+    return this.individualPermissions.some(
+      p => p.permission_type === 'deny' && 
+           p.is_active && 
+           (!p.expires_at || new Date(p.expires_at) > new Date())
+    );
+  }
 }
 
-// ✅ Helper para validar LanguageCode
+// ============================================
+// HELPERS
+// ============================================
+
 export function isValidLanguageCode(code: string): code is LanguageCode {
   return ['es', 'en', 'fr', 'it'].includes(code);
+}
+
+export function getLanguageName(code: LanguageCode): string {
+  const names: Record<LanguageCode, string> = {
+    es: 'Español',
+    en: 'English',
+    fr: 'Français',
+    it: 'Italiano',
+  };
+  return names[code];
+}
+
+export function getLanguageFlag(code: LanguageCode): string {
+  const flags: Record<LanguageCode, string> = {
+    es: '🇪🇸',
+    en: '🇺🇸',
+    fr: '🇫🇷',
+    it: '🇮🇹',
+  };
+  return flags[code];
 }
