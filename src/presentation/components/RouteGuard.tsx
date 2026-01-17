@@ -1,76 +1,93 @@
 // src/presentation/components/RouteGuard.tsx
-
-/**
- * Route Guard Component
- * Protege rutas en el cliente verificando permisos
- */
+// ✅ CORREGIDO: Con manejo de errores y logs
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useRouteAccess } from '@/src/presentation/features/permissions/hooks/useRouteAccess';
-import { LanguageCode } from '@/src/core/domain/entities/Permission';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 
 interface RouteGuardProps {
   children: React.ReactNode;
-  fallback?: React.ReactNode;
   redirectTo?: string;
-  languageCode?: LanguageCode;
 }
 
-export function RouteGuard({ 
-  children, 
-  fallback,
-  redirectTo = '/error?code=403',
-  languageCode = 'es'
-}: RouteGuardProps) {
-  const pathname = usePathname();
+export function RouteGuard({ children, redirectTo = '/error?code=403' }: RouteGuardProps) {
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const { canAccess, loading } = useRouteAccess({ 
-    pathname,
-    languageCode 
-  });
+  const pathname = usePathname();
+  const supabase = createClient();
 
   useEffect(() => {
-    if (!loading && !canAccess) {
+    checkAccess();
+  }, [pathname]);
+
+  const checkAccess = async () => {
+    try {
+      console.log('🔐 RouteGuard checking access to:', pathname);
+      
+      // 1. Verificar autenticación
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        console.log('❌ No authenticated user');
+        router.push('/auth/login');
+        return;
+      }
+
+      console.log('✅ User authenticated:', user.email);
+
+      // 2. Extraer el path sin locale
+      const pathParts = pathname.split('/').filter(Boolean);
+      const locale = pathParts[0]; // es, en, fr, it
+      const pathWithoutLocale = '/' + pathParts.slice(1).join('/');
+
+      console.log('📍 Path sin locale:', pathWithoutLocale);
+      console.log('🌍 Locale:', locale);
+
+      // 3. Verificar acceso con can_access_route
+      const { data: canAccess, error: accessError } = await supabase.rpc('can_access_route', {
+        p_user_id: user.id,
+        p_pathname: pathWithoutLocale,
+        p_language_code: locale,
+      });
+
+      console.log('📊 can_access_route response:', { canAccess, error: accessError });
+
+      if (accessError) {
+        console.error('❌ Error checking access:', accessError);
+        router.push(redirectTo);
+        return;
+      }
+
+      if (!canAccess) {
+        console.log('🚫 Access DENIED to:', pathWithoutLocale);
+        router.push(redirectTo);
+        return;
+      }
+
+      console.log('✅ Access GRANTED to:', pathWithoutLocale);
+      setIsAuthorized(true);
+      setIsLoading(false);
+
+    } catch (error) {
+      console.error('❌ RouteGuard error:', error);
       router.push(redirectTo);
     }
-  }, [loading, canAccess, router, redirectTo]);
+  };
 
-  // Mostrar loading
-  if (loading) {
-    return fallback || (
+  if (isLoading) {
+    return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Verificando permisos...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
-  // Si no tiene acceso, no mostrar nada (el useEffect redirigirá)
-  if (!canAccess) {
-    return fallback || null;
+  if (!isAuthorized) {
+    return null;
   }
 
-  // Tiene acceso, mostrar contenido
   return <>{children}</>;
-}
-
-/**
- * Higher Order Component para proteger páginas
- */
-export function withRouteGuard<P extends object>(
-  Component: React.ComponentType<P>,
-  options?: Omit<RouteGuardProps, 'children'>
-) {
-  return function GuardedComponent(props: P) {
-    return (
-      <RouteGuard {...options}>
-        <Component {...props} />
-      </RouteGuard>
-    );
-  };
 }
