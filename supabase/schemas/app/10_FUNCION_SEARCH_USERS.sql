@@ -1,13 +1,9 @@
 -- ============================================
 -- SCRIPT 10: FUNCIÓN SEARCH_USERS_BY_EMAIL
 -- ============================================
--- Busca usuarios por email desde el cliente
--- ✅ Incluye permisos EXECUTE
--- ============================================
 
--- ============================================
--- CREAR FUNCIÓN EN SCHEMA APP
--- ============================================
+DROP FUNCTION IF EXISTS public.search_users_by_email(text) CASCADE;
+DROP FUNCTION IF EXISTS app.search_users_by_email(text) CASCADE;
 
 CREATE OR REPLACE FUNCTION app.search_users_by_email(
   search_email text
@@ -21,7 +17,7 @@ RETURNS TABLE (
   created_at timestamptz
 ) 
 SECURITY DEFINER
-SET search_path = public, auth
+SET search_path = auth, public
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -50,10 +46,7 @@ BEGIN
 END;
 $$;
 
--- ============================================
--- CREAR WRAPPER EN PUBLIC
--- ============================================
-
+-- Wrapper público
 CREATE OR REPLACE FUNCTION public.search_users_by_email(search_email text)
 RETURNS TABLE (
   user_id uuid,
@@ -63,32 +56,19 @@ RETURNS TABLE (
   provider text,
   created_at timestamptz
 )
-LANGUAGE plpgsql
+LANGUAGE sql
 SECURITY DEFINER
 AS $$
-BEGIN
-  RETURN QUERY
   SELECT * FROM app.search_users_by_email(search_email);
-END;
 $$;
 
--- ============================================
--- DAR PERMISOS EXECUTE
--- ============================================
-
+-- Permisos
 GRANT EXECUTE ON FUNCTION public.search_users_by_email(text) TO authenticated;
 GRANT EXECUTE ON FUNCTION app.search_users_by_email(text) TO authenticated;
 
--- ============================================
--- COMENTARIOS
--- ============================================
+-- Comentario
+COMMENT ON FUNCTION app.search_users_by_email IS 
+'Busca usuarios por email - Límite 50 resultados';
 
-COMMENT ON FUNCTION app.search_users_by_email IS 'Busca usuarios por email - Límite 50 resultados';
-
--- ============================================
--- VERIFICAR
--- ============================================
-
--- Buscar tu propio usuario
-SELECT * FROM search_users_by_email('tu-email');
--- Debe retornar tu información
+-- Probar
+SELECT * FROM public.search_users_by_email('test');

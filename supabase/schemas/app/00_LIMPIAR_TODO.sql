@@ -1,15 +1,14 @@
 -- ============================================
--- SCRIPT 00: LIMPIAR TODO (OPCIONAL)
--- ============================================
--- ⚠️ CUIDADO: Esto elimina TODAS las tablas
--- Solo ejecutar si quieres empezar completamente desde cero
+-- SCRIPT 00: LIMPIAR TODO
+-- ⚠️ Esto elimina TODAS las tablas y funciones
 -- ============================================
 
 -- Eliminar funciones
-DROP FUNCTION IF EXISTS public.can_access_route(uuid, varchar, varchar) CASCADE;
-DROP FUNCTION IF EXISTS app.can_access_route(uuid, varchar, varchar) CASCADE;
+DROP FUNCTION IF EXISTS public.can_access_route(uuid, text, text) CASCADE;
+DROP FUNCTION IF EXISTS app.can_access_route(uuid, text, text) CASCADE;
 DROP FUNCTION IF EXISTS public.search_users_by_email(text) CASCADE;
 DROP FUNCTION IF EXISTS app.search_users_by_email(text) CASCADE;
+DROP FUNCTION IF EXISTS app.is_super_admin(uuid) CASCADE;
 DROP FUNCTION IF EXISTS app.set_user_route_permissions_granted_by() CASCADE;
 DROP FUNCTION IF EXISTS app.set_user_roles_assigned_by() CASCADE;
 DROP FUNCTION IF EXISTS app.set_updated_at() CASCADE;
@@ -27,17 +26,15 @@ DROP TABLE IF EXISTS app.roles CASCADE;
 DROP TYPE IF EXISTS app.language_code CASCADE;
 DROP TYPE IF EXISTS app.permission_type CASCADE;
 
--- ============================================
--- VERIFICAR QUE TODO SE ELIMINÓ
--- ============================================
+-- Verificar limpieza
+SELECT tablename FROM pg_tables WHERE schemaname = 'app';
+-- Debe retornar 0 filas
 
--- Ver tablas restantes en app
-SELECT tablename 
-FROM pg_tables 
-WHERE schemaname = 'app';
-
--- Debería retornar 0 filas
-
--- ============================================
--- CONTINUAR CON EL SIGUIENTE SCRIPT
--- ============================================
+SELECT 
+  n.nspname as schema,
+  p.proname as function_name
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+WHERE n.nspname IN ('app', 'public')
+  AND p.proname IN ('can_access_route', 'search_users_by_email', 'is_super_admin');
+-- Debe retornar 0 filas

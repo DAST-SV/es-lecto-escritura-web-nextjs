@@ -1,9 +1,6 @@
 -- ============================================
 -- SCRIPT 06: TABLA ROUTE_PERMISSIONS
 -- ============================================
--- Define qué rutas puede acceder cada ROL
--- ✅ Incluye RLS y permisos de CRUD
--- ============================================
 
 CREATE TABLE app.route_permissions (
   -- Identificación
@@ -23,136 +20,77 @@ CREATE TABLE app.route_permissions (
   CONSTRAINT route_permissions_unique UNIQUE (role_name, route_id)
 );
 
--- ============================================
--- ÍNDICES
--- ============================================
-
+-- Índices
 CREATE INDEX idx_route_permissions_role_name ON app.route_permissions(role_name);
 CREATE INDEX idx_route_permissions_route_id ON app.route_permissions(route_id);
 CREATE INDEX idx_route_permissions_is_active ON app.route_permissions(is_active);
 
--- ============================================
--- TRIGGER updated_at
--- ============================================
-
+-- Trigger
 CREATE TRIGGER set_route_permissions_updated_at
   BEFORE UPDATE ON app.route_permissions
   FOR EACH ROW
   EXECUTE FUNCTION app.set_updated_at();
 
--- ============================================
--- HABILITAR RLS
--- ============================================
-
+-- RLS
 ALTER TABLE app.route_permissions ENABLE ROW LEVEL SECURITY;
 
--- ============================================
--- POLÍTICAS RLS
--- ============================================
-
--- SELECT: Todos pueden ver permisos de roles
 CREATE POLICY "route_permissions_select_policy" ON app.route_permissions
   FOR SELECT
   TO authenticated
   USING (true);
 
--- INSERT: Solo super_admin puede asignar rutas a roles
 CREATE POLICY "route_permissions_insert_policy" ON app.route_permissions
   FOR INSERT
   TO authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM app.user_roles ur
-      JOIN app.roles r ON r.id = ur.role_id
-      WHERE ur.user_id = auth.uid()
-        AND r.name = 'super_admin'
-        AND ur.is_active = true
-        AND ur.revoked_at IS NULL
-    )
-  );
+  WITH CHECK (app.is_super_admin(auth.uid()));
 
--- UPDATE: Solo super_admin puede actualizar permisos
 CREATE POLICY "route_permissions_update_policy" ON app.route_permissions
   FOR UPDATE
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM app.user_roles ur
-      JOIN app.roles r ON r.id = ur.role_id
-      WHERE ur.user_id = auth.uid()
-        AND r.name = 'super_admin'
-        AND ur.is_active = true
-        AND ur.revoked_at IS NULL
-    )
-  );
+  USING (app.is_super_admin(auth.uid()));
 
--- DELETE: Solo super_admin puede eliminar permisos
 CREATE POLICY "route_permissions_delete_policy" ON app.route_permissions
   FOR DELETE
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM app.user_roles ur
-      JOIN app.roles r ON r.id = ur.role_id
-      WHERE ur.user_id = auth.uid()
-        AND r.name = 'super_admin'
-        AND ur.is_active = true
-        AND ur.revoked_at IS NULL
-    )
-  );
+  USING (app.is_super_admin(auth.uid()));
 
--- ============================================
--- PERMISOS GRANT
--- ============================================
+-- Permisos
+GRANT SELECT, INSERT, UPDATE, DELETE ON app.route_permissions TO authenticated;
 
-GRANT SELECT ON app.route_permissions TO authenticated;
-GRANT INSERT, UPDATE, DELETE ON app.route_permissions TO authenticated;
-
--- ============================================
--- DATOS INICIALES
--- ============================================
-
--- Permisos para super_admin (TODAS las rutas)
+-- Datos iniciales: super_admin (TODAS)
 INSERT INTO app.route_permissions (role_name, route_id)
 SELECT 'super_admin', r.id
 FROM app.routes r
 WHERE r.deleted_at IS NULL;
 
--- Permisos para admin
+-- admin
 INSERT INTO app.route_permissions (role_name, route_id)
 SELECT 'admin', r.id
 FROM app.routes r
 WHERE r.pathname IN ('/', '/library', '/my-world', '/my-progress', '/admin');
 
--- Permisos para teacher
+-- teacher
 INSERT INTO app.route_permissions (role_name, route_id)
 SELECT 'teacher', r.id
 FROM app.routes r
 WHERE r.pathname IN ('/', '/library', '/my-world', '/my-progress');
 
--- Permisos para student
+-- student
 INSERT INTO app.route_permissions (role_name, route_id)
 SELECT 'student', r.id
 FROM app.routes r
 WHERE r.pathname IN ('/', '/library', '/my-world', '/my-progress');
 
--- Permisos para guest
+-- guest
 INSERT INTO app.route_permissions (role_name, route_id)
 SELECT 'guest', r.id
 FROM app.routes r
 WHERE r.pathname IN ('/');
 
--- ============================================
--- COMENTARIOS
--- ============================================
+-- Comentarios
+COMMENT ON TABLE app.route_permissions IS 'Permisos por ROL';
 
-COMMENT ON TABLE app.route_permissions IS 'Permisos por ROL - Define qué rutas puede acceder cada rol';
-COMMENT ON COLUMN app.route_permissions.role_name IS 'Nombre del rol (referencia a roles.name)';
-
--- ============================================
--- VERIFICAR
--- ============================================
-
+-- Verificar
 SELECT 
   rp.role_name,
   r.pathname,
@@ -160,4 +98,3 @@ SELECT
 FROM app.route_permissions rp
 JOIN app.routes r ON r.id = rp.route_id
 ORDER BY rp.role_name, r.pathname;
--- Debe mostrar permisos para todos los roles

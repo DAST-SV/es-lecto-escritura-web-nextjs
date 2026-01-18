@@ -1,9 +1,6 @@
 -- ============================================
 -- SCRIPT 07: TABLA USER_ROUTE_PERMISSIONS
 -- ============================================
--- Permisos INDIVIDUALES por usuario (GRANT/DENY)
--- ✅ Incluye RLS y permisos de CRUD
--- ============================================
 
 CREATE TABLE app.user_route_permissions (
   -- Identificación
@@ -15,6 +12,9 @@ CREATE TABLE app.user_route_permissions (
   permission_type app.permission_type NOT NULL,
   reason TEXT,
   
+  -- ✅ NUEVO: Idioma específico (NULL = todos los idiomas)
+  language_code app.language_code NULL,
+  
   -- Metadata
   is_active BOOLEAN NOT NULL DEFAULT true,
   
@@ -24,32 +24,24 @@ CREATE TABLE app.user_route_permissions (
   granted_by UUID REFERENCES auth.users(id),
   expires_at TIMESTAMPTZ,
   
-  -- Constraints
-  CONSTRAINT user_route_permissions_unique UNIQUE (user_id, route_id)
+  -- Constraints (incluye language_code)
+  CONSTRAINT user_route_permissions_unique UNIQUE (user_id, route_id, language_code)
 );
 
--- ============================================
--- ÍNDICES
--- ============================================
-
+-- Índices
 CREATE INDEX idx_user_route_permissions_user_id ON app.user_route_permissions(user_id);
 CREATE INDEX idx_user_route_permissions_route_id ON app.user_route_permissions(route_id);
 CREATE INDEX idx_user_route_permissions_type ON app.user_route_permissions(permission_type);
 CREATE INDEX idx_user_route_permissions_expires ON app.user_route_permissions(expires_at);
+CREATE INDEX idx_user_route_permissions_language ON app.user_route_permissions(language_code);
 
--- ============================================
--- TRIGGER updated_at
--- ============================================
-
+-- Trigger: updated_at
 CREATE TRIGGER set_user_route_permissions_updated_at
   BEFORE UPDATE ON app.user_route_permissions
   FOR EACH ROW
   EXECUTE FUNCTION app.set_updated_at();
 
--- ============================================
--- TRIGGER: Auto-asignar granted_by
--- ============================================
-
+-- Trigger: granted_by
 CREATE OR REPLACE FUNCTION app.set_user_route_permissions_granted_by()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -65,95 +57,38 @@ CREATE TRIGGER set_user_route_permissions_granted_by_trigger
   FOR EACH ROW
   EXECUTE FUNCTION app.set_user_route_permissions_granted_by();
 
--- ============================================
--- HABILITAR RLS
--- ============================================
-
+-- RLS
 ALTER TABLE app.user_route_permissions ENABLE ROW LEVEL SECURITY;
 
--- ============================================
--- POLÍTICAS RLS
--- ============================================
-
--- SELECT: Ver tus propios permisos O ser super_admin
 CREATE POLICY "user_route_permissions_select_policy" ON app.user_route_permissions
   FOR SELECT
   TO authenticated
   USING (
     user_id = auth.uid()
-    OR EXISTS (
-      SELECT 1 FROM app.user_roles ur
-      JOIN app.roles r ON r.id = ur.role_id
-      WHERE ur.user_id = auth.uid()
-        AND r.name = 'super_admin'
-        AND ur.is_active = true
-        AND ur.revoked_at IS NULL
-    )
+    OR app.is_super_admin(auth.uid())
   );
 
--- INSERT: Solo super_admin puede dar permisos individuales
 CREATE POLICY "user_route_permissions_insert_policy" ON app.user_route_permissions
   FOR INSERT
   TO authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM app.user_roles ur
-      JOIN app.roles r ON r.id = ur.role_id
-      WHERE ur.user_id = auth.uid()
-        AND r.name = 'super_admin'
-        AND ur.is_active = true
-        AND ur.revoked_at IS NULL
-    )
-  );
+  WITH CHECK (app.is_super_admin(auth.uid()));
 
--- UPDATE: Solo super_admin puede actualizar permisos
 CREATE POLICY "user_route_permissions_update_policy" ON app.user_route_permissions
   FOR UPDATE
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM app.user_roles ur
-      JOIN app.roles r ON r.id = ur.role_id
-      WHERE ur.user_id = auth.uid()
-        AND r.name = 'super_admin'
-        AND ur.is_active = true
-        AND ur.revoked_at IS NULL
-    )
-  );
+  USING (app.is_super_admin(auth.uid()));
 
--- DELETE: Solo super_admin puede eliminar permisos
 CREATE POLICY "user_route_permissions_delete_policy" ON app.user_route_permissions
   FOR DELETE
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM app.user_roles ur
-      JOIN app.roles r ON r.id = ur.role_id
-      WHERE ur.user_id = auth.uid()
-        AND r.name = 'super_admin'
-        AND ur.is_active = true
-        AND ur.revoked_at IS NULL
-    )
-  );
+  USING (app.is_super_admin(auth.uid()));
 
--- ============================================
--- PERMISOS GRANT
--- ============================================
+-- Permisos
+GRANT SELECT, INSERT, UPDATE, DELETE ON app.user_route_permissions TO authenticated;
 
-GRANT SELECT ON app.user_route_permissions TO authenticated;
-GRANT INSERT, UPDATE, DELETE ON app.user_route_permissions TO authenticated;
+-- Comentarios
+COMMENT ON TABLE app.user_route_permissions IS 'Permisos individuales (GRANT/DENY)';
+COMMENT ON COLUMN app.user_route_permissions.language_code IS 'Idioma específico. NULL = todos los idiomas';
 
--- ============================================
--- COMENTARIOS
--- ============================================
-
-COMMENT ON TABLE app.user_route_permissions IS 'Permisos individuales - GRANT (dar acceso extra) o DENY (bloquear)';
-COMMENT ON COLUMN app.user_route_permissions.permission_type IS 'grant (dar acceso) o deny (bloquear)';
-COMMENT ON COLUMN app.user_route_permissions.expires_at IS 'Fecha de expiración del permiso (opcional)';
-
--- ============================================
--- VERIFICAR
--- ============================================
-
+-- Verificar
 SELECT COUNT(*) FROM app.user_route_permissions;
--- Debe ser 0 (aún no hay permisos individuales)

@@ -1,9 +1,6 @@
 -- ============================================
 -- SCRIPT 05: TABLA USER_ROLES
 -- ============================================
--- Asigna roles a usuarios
--- ✅ Incluye RLS y permisos de CRUD
--- ============================================
 
 CREATE TABLE app.user_roles (
   -- Identificación
@@ -28,28 +25,19 @@ CREATE TABLE app.user_roles (
   CONSTRAINT user_roles_unique UNIQUE (user_id, role_id)
 );
 
--- ============================================
--- ÍNDICES
--- ============================================
-
+-- Índices
 CREATE INDEX idx_user_roles_user_id ON app.user_roles(user_id);
 CREATE INDEX idx_user_roles_role_id ON app.user_roles(role_id);
 CREATE INDEX idx_user_roles_is_active ON app.user_roles(is_active);
 CREATE INDEX idx_user_roles_revoked_at ON app.user_roles(revoked_at);
 
--- ============================================
--- TRIGGER updated_at
--- ============================================
-
+-- Trigger: updated_at
 CREATE TRIGGER set_user_roles_updated_at
   BEFORE UPDATE ON app.user_roles
   FOR EACH ROW
   EXECUTE FUNCTION app.set_updated_at();
 
--- ============================================
--- TRIGGER: Auto-asignar assigned_by y revoked_by
--- ============================================
-
+-- Trigger: assigned_by y revoked_by
 CREATE OR REPLACE FUNCTION app.set_user_roles_assigned_by()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -70,95 +58,57 @@ CREATE TRIGGER set_user_roles_assigned_by_trigger
   FOR EACH ROW
   EXECUTE FUNCTION app.set_user_roles_assigned_by();
 
--- ============================================
--- HABILITAR RLS
--- ============================================
+-- Función auxiliar SIN RLS
+CREATE OR REPLACE FUNCTION app.is_super_admin(p_user_id uuid)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 
+    FROM app.user_roles ur
+    JOIN app.roles r ON r.id = ur.role_id
+    WHERE ur.user_id = p_user_id
+      AND r.name = 'super_admin'
+      AND ur.is_active = true
+      AND ur.revoked_at IS NULL
+  );
+$$;
 
+-- RLS
 ALTER TABLE app.user_roles ENABLE ROW LEVEL SECURITY;
 
--- ============================================
--- POLÍTICAS RLS
--- ============================================
-
--- SELECT: Ver tus propios roles O ser super_admin
+-- Políticas SIN recursión
 CREATE POLICY "user_roles_select_policy" ON app.user_roles
   FOR SELECT
   TO authenticated
   USING (
     user_id = auth.uid()
-    OR EXISTS (
-      SELECT 1 FROM app.user_roles ur
-      JOIN app.roles r ON r.id = ur.role_id
-      WHERE ur.user_id = auth.uid()
-        AND r.name = 'super_admin'
-        AND ur.is_active = true
-        AND ur.revoked_at IS NULL
-    )
+    OR app.is_super_admin(auth.uid())
   );
 
--- INSERT: Solo super_admin puede asignar roles
 CREATE POLICY "user_roles_insert_policy" ON app.user_roles
   FOR INSERT
   TO authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM app.user_roles ur
-      JOIN app.roles r ON r.id = ur.role_id
-      WHERE ur.user_id = auth.uid()
-        AND r.name = 'super_admin'
-        AND ur.is_active = true
-        AND ur.revoked_at IS NULL
-    )
-  );
+  WITH CHECK (app.is_super_admin(auth.uid()));
 
--- UPDATE: Solo super_admin puede actualizar roles
 CREATE POLICY "user_roles_update_policy" ON app.user_roles
   FOR UPDATE
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM app.user_roles ur
-      JOIN app.roles r ON r.id = ur.role_id
-      WHERE ur.user_id = auth.uid()
-        AND r.name = 'super_admin'
-        AND ur.is_active = true
-        AND ur.revoked_at IS NULL
-    )
-  );
+  USING (app.is_super_admin(auth.uid()));
 
--- DELETE: Solo super_admin puede eliminar roles
 CREATE POLICY "user_roles_delete_policy" ON app.user_roles
   FOR DELETE
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM app.user_roles ur
-      JOIN app.roles r ON r.id = ur.role_id
-      WHERE ur.user_id = auth.uid()
-        AND r.name = 'super_admin'
-        AND ur.is_active = true
-        AND ur.revoked_at IS NULL
-    )
-  );
+  USING (app.is_super_admin(auth.uid()));
 
--- ============================================
--- PERMISOS GRANT
--- ============================================
+-- Permisos
+GRANT SELECT, INSERT, UPDATE, DELETE ON app.user_roles TO authenticated;
+GRANT EXECUTE ON FUNCTION app.is_super_admin(uuid) TO authenticated;
 
-GRANT SELECT ON app.user_roles TO authenticated;
-GRANT INSERT, UPDATE, DELETE ON app.user_roles TO authenticated;
+-- Comentarios
+COMMENT ON TABLE app.user_roles IS 'Asignación de roles a usuarios';
 
--- ============================================
--- COMENTARIOS
--- ============================================
-
-COMMENT ON TABLE app.user_roles IS 'Asignación de roles a usuarios - Un usuario puede tener múltiples roles';
-COMMENT ON COLUMN app.user_roles.revoked_at IS 'Fecha en que se revocó el rol (soft delete)';
-COMMENT ON COLUMN app.user_roles.assigned_by IS 'Usuario que asignó el rol';
-
--- ============================================
--- VERIFICAR
--- ============================================
-
+-- Verificar
 SELECT COUNT(*) FROM app.user_roles;
--- Debe ser 0 (aún no hay usuarios con roles)
