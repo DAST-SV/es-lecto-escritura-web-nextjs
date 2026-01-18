@@ -54,6 +54,7 @@ export default function RouteTranslationsPage() {
 
     // Cargar rutas
     const { data: routesData } = await supabase
+      .schema('app')
       .from('routes')
       .select('id, pathname, display_name')
       .is('deleted_at', null)
@@ -61,6 +62,7 @@ export default function RouteTranslationsPage() {
 
     // Cargar traducciones
     const { data: translationsData } = await supabase
+      .schema('app')
       .from('route_translations')
       .select(`
         *,
@@ -84,6 +86,7 @@ export default function RouteTranslationsPage() {
     if (editingTranslation) {
       // Actualizar
       const { error } = await supabase
+        .schema('app')
         .from('route_translations')
         .update({
           translated_path: formData.translated_path,
@@ -102,6 +105,7 @@ export default function RouteTranslationsPage() {
     } else {
       // Crear nueva
       const { error } = await supabase
+        .schema('app')
         .from('route_translations')
         .insert([formData]);
 
@@ -132,6 +136,7 @@ export default function RouteTranslationsPage() {
 
     const supabase = createClient();
     const { error } = await supabase
+      .schema('app')
       .from('route_translations')
       .delete()
       .eq('id', translationId);
