@@ -1,7 +1,7 @@
 // ============================================
 // ARCHIVO: src/presentation/components/RouteGuard.tsx
 // ACCIÓN: REEMPLAZAR COMPLETO
-// CAMBIO: Verificar con ruta traducida directamente
+// CAMBIO: Usar pathname SIN convertir (ya viene traducido)
 // ============================================
 
 'use client';
@@ -18,7 +18,7 @@ interface RouteGuardProps {
 
 export function RouteGuard({ children, redirectTo = '/error?code=403' }: RouteGuardProps) {
   const router = useRouter();
-  const pathname = usePathname(); // /es/exclusive
+  const pathname = usePathname(); // /es/admin/permisos-usuario
   const locale = useLocale(); // es
   const [isChecking, setIsChecking] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
@@ -34,33 +34,34 @@ export function RouteGuard({ children, redirectTo = '/error?code=403' }: RouteGu
         const { data: { user }, error: userError } = await supabase.auth.getUser();
 
         if (userError || !user) {
-          console.log('❌ No autenticado');
+          console.log('❌ [RouteGuard] No autenticado');
           if (mounted) {
             router.push(`/${locale}/auth/login?redirect=${pathname}`);
           }
           return;
         }
 
-        // ✅ Extraer ruta traducida (sin locale)
-        const pathParts = pathname.split('/').filter(Boolean);
-        const translatedPath = '/' + pathParts.slice(1).join('/') || '/';
+        // ✅ CORRECCIÓN: Extraer ruta traducida correctamente
+        // pathname = "/es/admin/permisos-usuario"
+        // Queremos: "/admin/permisos-usuario"
+        const translatedPath = pathname.replace(`/${locale}`, '') || '/';
 
         console.log('🔍 [RouteGuard]', {
           pathname,
-          translatedPath,
           locale,
+          translatedPath,
           userId: user.id
         });
 
         // ✅ Verificar con RUTA TRADUCIDA
         const { data: canAccess, error: accessError } = await supabase.rpc('can_access_route', {
           p_user_id: user.id,
-          p_translated_path: translatedPath,  // ✅ /exclusive, /exclusivo, etc
-          p_language_code: locale,            // ✅ es, en, fr, it
+          p_translated_path: translatedPath,  // /admin/permisos-usuario
+          p_language_code: locale,            // es
         });
 
         if (accessError) {
-          console.error('❌ Error checking access:', accessError);
+          console.error('❌ [RouteGuard] Error checking access:', accessError);
           if (mounted) {
             router.push(redirectTo);
           }
@@ -70,21 +71,21 @@ export function RouteGuard({ children, redirectTo = '/error?code=403' }: RouteGu
         console.log('📊 [RouteGuard] Resultado:', { canAccess });
 
         if (!canAccess) {
-          console.log(`🚫 Acceso DENEGADO: ${translatedPath} (${locale})`);
+          console.log(`🚫 [RouteGuard] Acceso DENEGADO: ${translatedPath} (${locale})`);
           if (mounted) {
             router.push(redirectTo);
           }
           return;
         }
 
-        console.log(`✅ Acceso PERMITIDO: ${translatedPath} (${locale})`);
+        console.log(`✅ [RouteGuard] Acceso PERMITIDO: ${translatedPath} (${locale})`);
         if (mounted) {
           setHasAccess(true);
           setIsChecking(false);
         }
 
       } catch (error) {
-        console.error('❌ Error en RouteGuard:', error);
+        console.error('❌ [RouteGuard] Error fatal:', error);
         if (mounted) {
           router.push(redirectTo);
         }

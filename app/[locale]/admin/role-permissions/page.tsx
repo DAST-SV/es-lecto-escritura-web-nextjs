@@ -1,7 +1,5 @@
 // ============================================
 // ARCHIVO: app/[locale]/admin/role-permissions/page.tsx
-// ACCIÓN: REEMPLAZAR COMPLETO
-// CAMBIO: Mostrar rutas TRADUCIDAS en lugar de pathname
 // ============================================
 
 'use client';
@@ -23,15 +21,23 @@ interface Route {
   pathname: string;
   display_name: string;
   icon: string | null;
-  translated_path: string;  // ✅ Agregado
-  translated_name: string;  // ✅ Agregado
+  translated_path: string;
+  translated_name: string;
 }
 
 interface RoutePermission {
   id: string;
   role_name: string;
   route_id: string;
+  language_code: string | null; // ✅ NUEVO
 }
+
+const LANGUAGES = [
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'en', name: 'English', flag: '🇺🇸' },
+  { code: 'fr', name: 'Français', flag: '🇫🇷' },
+  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+] as const;
 
 export default function RolePermissionsPage() {
   const locale = useLocale();
@@ -39,25 +45,25 @@ export default function RolePermissionsPage() {
   const [routes, setRoutes] = useState<Route[]>([]);
   const [permissions, setPermissions] = useState<RoutePermission[]>([]);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('es'); // ✅ NUEVO
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [selectedLanguage]); // ✅ Recargar cuando cambie idioma
 
   const loadData = async () => {
     setLoading(true);
     const supabase = createClient();
 
-    // Cargar roles
     const { data: rolesData } = await supabase
       .schema('app')
       .from('roles')
       .select('*')
       .order('hierarchy_level', { ascending: false });
 
-    // ✅ Cargar rutas CON traducciones
+    // ✅ Cargar rutas con traducciones
     const { data: routesData } = await supabase
       .schema('app')
       .from('routes')
@@ -76,10 +82,9 @@ export default function RolePermissionsPage() {
       .is('deleted_at', null)
       .order('menu_order');
 
-    // ✅ Mapear rutas con sus traducciones
     const mappedRoutes = (routesData || []).map((route: any) => {
       const translation = route.route_translations?.find(
-        (t: any) => t.language_code === locale
+        (t: any) => t.language_code === selectedLanguage
       );
       
       return {
@@ -92,7 +97,7 @@ export default function RolePermissionsPage() {
       };
     });
 
-    // Cargar permisos
+    // ✅ Cargar permisos con language_code
     const { data: permissionsData } = await supabase
       .schema('app')
       .from('route_permissions')
@@ -105,15 +110,19 @@ export default function RolePermissionsPage() {
     setLoading(false);
   };
 
+  // ✅ CORREGIDO: Verificar permiso por idioma
   const hasPermission = (roleId: string, routeId: string): boolean => {
     const role = roles.find(r => r.id === roleId);
     if (!role) return false;
 
     return permissions.some(
-      p => p.role_name === role.name && p.route_id === routeId
+      p => p.role_name === role.name && 
+           p.route_id === routeId &&
+           (p.language_code === selectedLanguage || p.language_code === null)
     );
   };
 
+  // ✅ CORREGIDO: Toggle con language_code
   const togglePermission = async (roleId: string, routeId: string) => {
     const role = roles.find(r => r.id === roleId);
     if (!role) return;
@@ -124,9 +133,11 @@ export default function RolePermissionsPage() {
     const exists = hasPermission(roleId, routeId);
 
     if (exists) {
-      // Eliminar permiso
+      // Eliminar permiso para este idioma
       const permission = permissions.find(
-        p => p.role_name === role.name && p.route_id === routeId
+        p => p.role_name === role.name && 
+             p.route_id === routeId &&
+             (p.language_code === selectedLanguage || p.language_code === null)
       );
 
       if (permission) {
@@ -141,13 +152,14 @@ export default function RolePermissionsPage() {
         }
       }
     } else {
-      // Agregar permiso
+      // ✅ Agregar permiso CON language_code
       const { data, error } = await supabase
         .schema('app')
         .from('route_permissions')
         .insert({
           role_name: role.name,
           route_id: routeId,
+          language_code: selectedLanguage, // ✅ NUEVO
           is_active: true,
         })
         .select()
@@ -169,12 +181,12 @@ export default function RolePermissionsPage() {
     const supabase = createClient();
 
     if (grant) {
-      // Dar todas las rutas
       const newPermissions = routes
         .filter(route => !hasPermission(roleId, route.id))
         .map(route => ({
           role_name: role.name,
           route_id: route.id,
+          language_code: selectedLanguage, // ✅ NUEVO
           is_active: true,
         }));
 
@@ -190,8 +202,10 @@ export default function RolePermissionsPage() {
         }
       }
     } else {
-      // Quitar todas las rutas
-      const toDelete = permissions.filter(p => p.role_name === role.name);
+      const toDelete = permissions.filter(
+        p => p.role_name === role.name &&
+             (p.language_code === selectedLanguage || p.language_code === null)
+      );
 
       if (toDelete.length > 0) {
         const ids = toDelete.map(p => p.id);
@@ -201,18 +215,11 @@ export default function RolePermissionsPage() {
           .delete()
           .in('id', ids);
 
-        setPermissions(prev => prev.filter(p => p.role_name !== role.name));
+        setPermissions(prev => prev.filter(p => !ids.includes(p.id)));
       }
     }
 
     setSaving(false);
-  };
-
-  const getRolePermissionsCount = (roleId: string): number => {
-    const role = roles.find(r => r.id === roleId);
-    if (!role) return 0;
-
-    return permissions.filter(p => p.role_name === role.name).length;
   };
 
   return (
@@ -225,7 +232,32 @@ export default function RolePermissionsPage() {
               🔐 Módulo 4: Permisos por Rol
             </h1>
             <p className="text-gray-600">
-              Asigna múltiples rutas a cada rol
+              Asigna rutas a roles (por idioma)
+            </p>
+          </div>
+
+          {/* ✅ NUEVO: Selector de idioma */}
+          <div className="mb-6 bg-white rounded-lg shadow-md p-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              🌍 Seleccionar Idioma:
+            </label>
+            <div className="flex gap-2">
+              {LANGUAGES.map(lang => (
+                <button
+                  key={lang.code}
+                  onClick={() => setSelectedLanguage(lang.code)}
+                  className={`px-4 py-2 rounded-lg font-medium transition ${
+                    selectedLanguage === lang.code
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  {lang.flag} {lang.name}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              ⚠️ Los permisos se asignan por idioma separado
             </p>
           </div>
 
@@ -253,12 +285,12 @@ export default function RolePermissionsPage() {
                           <div>
                             <h3 className="font-semibold">{role.display_name}</h3>
                             <p className="text-sm text-gray-500">
-                              {getRolePermissionsCount(role.id)} rutas
+                              {permissions.filter(p => 
+                                p.role_name === role.name &&
+                                (p.language_code === selectedLanguage || p.language_code === null)
+                              ).length} rutas en {selectedLanguage.toUpperCase()}
                             </p>
                           </div>
-                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                            Nivel {role.hierarchy_level}
-                          </span>
                         </div>
                       </button>
                     ))}
@@ -266,14 +298,14 @@ export default function RolePermissionsPage() {
                 </div>
               </div>
 
-              {/* Rutas para el Rol Seleccionado */}
+              {/* Rutas para el Rol */}
               <div className="lg:col-span-2">
                 {selectedRole ? (
                   <div className="bg-white rounded-lg shadow-md">
                     <div className="px-6 py-4 bg-gray-50 border-b">
                       <div className="flex items-center justify-between">
                         <h2 className="text-lg font-semibold">
-                          Rutas para: {selectedRole.display_name}
+                          {selectedRole.display_name} - {selectedLanguage.toUpperCase()}
                         </h2>
                         <div className="flex gap-2">
                           <button
@@ -281,7 +313,7 @@ export default function RolePermissionsPage() {
                             disabled={saving}
                             className="text-sm bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400"
                           >
-                            ✅ Seleccionar Todas
+                            ✅ Todas ({selectedLanguage.toUpperCase()})
                           </button>
                           <button
                             onClick={() => toggleAllForRole(selectedRole.id, false)}
@@ -311,20 +343,11 @@ export default function RolePermissionsPage() {
                               <div className="flex-1">
                                 <div className="flex items-center gap-2">
                                   {route.icon && <span>{route.icon}</span>}
-                                  {/* ✅ Mostrar nombre traducido */}
                                   <span className="font-medium">{route.translated_name}</span>
                                 </div>
-                                {/* ✅ Mostrar ruta traducida */}
-                                <div className="flex items-center gap-2 mt-1">
-                                  <code className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                                    {route.translated_path}
-                                  </code>
-                                  {route.translated_path !== route.pathname && (
-                                    <code className="text-xs text-gray-500">
-                                      → {route.pathname}
-                                    </code>
-                                  )}
-                                </div>
+                                <code className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                                  {route.translated_path}
+                                </code>
                               </div>
                             </label>
                           </div>
@@ -334,7 +357,7 @@ export default function RolePermissionsPage() {
                   </div>
                 ) : (
                   <div className="bg-white rounded-lg shadow-md p-12 text-center text-gray-500">
-                    Selecciona un rol para ver sus permisos
+                    Selecciona un rol
                   </div>
                 )}
               </div>
@@ -345,14 +368,12 @@ export default function RolePermissionsPage() {
           {/* Ayuda */}
           <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
             <h3 className="text-lg font-semibold text-blue-900 mb-3">
-              ℹ️ Cómo funciona
+              ℹ️ Permisos por Idioma Separado
             </h3>
             <ul className="space-y-2 text-blue-800 text-sm">
-              <li>• Selecciona un rol de la lista izquierda</li>
-              <li>• Marca/desmarca las rutas a las que ese rol puede acceder</li>
-              <li>• Los cambios se guardan automáticamente</li>
-              <li>• Usuarios con ese rol heredan TODOS estos permisos</li>
-              <li>• ✅ Las rutas se muestran en el idioma actual: {locale.toUpperCase()}</li>
+              <li>• Cada idioma requiere permiso independiente</li>
+              <li>• Si das permiso en ES, NO tiene acceso en EN automáticamente</li>
+              <li>• Cambia el idioma arriba para gestionar otros idiomas</li>
             </ul>
           </div>
 

@@ -1,7 +1,5 @@
 // ============================================
 // ARCHIVO: app/[locale]/admin/user-permissions/page.tsx
-// ACCIÓN: REEMPLAZAR COMPLETO
-// CAMBIO: Interfaces corregidas + rutas traducidas
 // ============================================
 
 'use client';
@@ -22,8 +20,8 @@ interface Route {
   id: string;
   pathname: string;
   display_name: string;
-  icon: string | null;
-  route_translations?: RouteTranslation[];  // ✅ Agregado como opcional
+  icon: string;
+  route_translations: RouteTranslation[];
 }
 
 interface UserPermission {
@@ -31,10 +29,10 @@ interface UserPermission {
   user_id: string;
   route_id: string;
   permission_type: 'grant' | 'deny';
+  language_code: string | null;
   reason: string | null;
   is_active: boolean;
   expires_at: string | null;
-  created_at: string;
   routes?: Route;
 }
 
@@ -45,32 +43,38 @@ interface User {
   avatar_url: string | null;
 }
 
+const LANGUAGES = [
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'en', name: 'English', flag: '🇺🇸' },
+  { code: 'fr', name: 'Français', flag: '🇫🇷' },
+  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+  { code: null, name: 'Todos', flag: '🌍' },
+] as const;
+
 export default function UserPermissionsPage() {
   const searchParams = useSearchParams();
-  const userIdFromUrl = searchParams.get('user_id');
   const locale = useLocale();
-
+  
   const [routes, setRoutes] = useState<Route[]>([]);
-  const [searchEmail, setSearchEmail] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [userPermissions, setUserPermissions] = useState<UserPermission[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [permissions, setPermissions] = useState<UserPermission[]>([]);
   const [showForm, setShowForm] = useState(false);
-
-  const [formData, setFormData] = useState({
+  const [searchEmail, setSearchEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  const [form, setForm] = useState({
     route_id: '',
     permission_type: 'grant' as 'grant' | 'deny',
+    language_code: 'es',
     reason: '',
     expires_at: '',
   });
 
   useEffect(() => {
     loadRoutes();
-    if (userIdFromUrl) {
-      loadUserById(userIdFromUrl);
-    }
-  }, [userIdFromUrl]);
+    const uid = searchParams.get('user_id');
+    if (uid) loadUserById(uid);
+  }, [searchParams]);
 
   const loadRoutes = async () => {
     const supabase = createClient();
@@ -89,41 +93,51 @@ export default function UserPermissionsPage() {
         )
       `)
       .is('deleted_at', null)
-      .eq('is_active', true)
-      .order('menu_order');
-
-    setRoutes(data || []);
+      .eq('is_active', true);
+    
+    setRoutes((data || []) as Route[]);
   };
 
-  const loadUserById = async (userId: string) => {
+  const loadUserById = async (uid: string) => {
     setLoading(true);
     const supabase = createClient();
-
-    const { data: userData, error: userError } = await supabase
+    
+    const { data: u } = await supabase
       .schema('auth')
       .from('users')
       .select('*')
-      .eq('id', userId)
+      .eq('id', uid)
       .single();
-
-    if (!userError && userData) {
-      const user: User = {
-        user_id: userData.id,
-        email: userData.email || '',
-        full_name:
-          userData.raw_user_meta_data?.full_name ||
-          userData.raw_user_meta_data?.name ||
-          userData.email?.split('@')[0] ||
-          'Usuario',
-        avatar_url:
-          userData.raw_user_meta_data?.avatar_url ||
-          userData.raw_user_meta_data?.picture ||
-          null,
-      };
-      setSelectedUser(user);
-      await loadUserPermissions(userId);
+    
+    if (u) {
+      setSelectedUser({
+        user_id: u.id,
+        email: u.email || '',
+        full_name: u.raw_user_meta_data?.full_name || u.email?.split('@')[0] || 'Usuario',
+        avatar_url: u.raw_user_meta_data?.avatar_url || null,
+      });
+      
+      const { data: p } = await supabase
+        .schema('app')
+        .from('user_route_permissions')
+        .select(`
+          *,
+          routes:route_id(
+            id,
+            pathname,
+            display_name,
+            icon,
+            route_translations!left(
+              language_code,
+              translated_path,
+              translated_name
+            )
+          )
+        `)
+        .eq('user_id', uid);
+      
+      setPermissions((p || []) as UserPermission[]);
     }
-
     setLoading(false);
   };
 
@@ -133,532 +147,278 @@ export default function UserPermissionsPage() {
 
     setLoading(true);
     const supabase = createClient();
-
-    const { data, error } = await supabase.rpc('search_users_by_email', {
+    const { data } = await supabase.rpc('search_users_by_email', {
       search_email: searchEmail,
     });
 
-    if (error || !data || data.length === 0) {
-      alert('No se encontró ningún usuario con ese email');
-      setLoading(false);
-      return;
+    if (data && data.length > 0) {
+      await loadUserById(data[0].user_id);
+    } else {
+      alert('Usuario no encontrado');
     }
-
-    setSelectedUser(data[0]);
-    await loadUserPermissions(data[0].user_id);
     setLoading(false);
   };
 
-  const loadUserPermissions = async (userId: string) => {
-    const supabase = createClient();
-    const { data } = await supabase
-      .schema('app')
-      .from('user_route_permissions')
-      .select(`
-        *,
-        routes:route_id (
-          id,
-          pathname,
-          display_name,
-          icon,
-          route_translations!left(
-            language_code,
-            translated_path,
-            translated_name
-          )
-        )
-      `)
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-
-    setUserPermissions(data || []);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (!selectedUser) return;
-
-    setSaving(true);
+    
     const supabase = createClient();
-
-    const permissionData: any = {
-      user_id: selectedUser.user_id,
-      route_id: formData.route_id,
-      permission_type: formData.permission_type,
-      reason: formData.reason.trim() || null,
-      is_active: true,
-    };
-
-    if (formData.expires_at) {
-      permissionData.expires_at = new Date(formData.expires_at).toISOString();
-    }
-
     const { error } = await supabase
       .schema('app')
       .from('user_route_permissions')
-      .insert([permissionData]);
-
+      .insert({
+        user_id: selectedUser.user_id,
+        route_id: form.route_id,
+        permission_type: form.permission_type,
+        language_code: form.language_code === 'all' ? null : form.language_code,
+        reason: form.reason || null,
+        is_active: true,
+        expires_at: form.expires_at || null,
+      });
+    
     if (error) {
-      console.error('Error creating permission:', error);
-      if (error.code === '23505') {
-        alert('Ya existe un permiso para esta ruta. Elimínalo primero.');
-      } else {
-        alert('Error al crear permiso');
-      }
+      console.error(error);
+      alert('Error al crear permiso');
     } else {
-      alert('Permiso creado exitosamente');
-      resetForm();
-      await loadUserPermissions(selectedUser.user_id);
+      setShowForm(false);
+      setForm({
+        route_id: '',
+        permission_type: 'grant',
+        language_code: 'es',
+        reason: '',
+        expires_at: '',
+      });
+      await loadUserById(selectedUser.user_id);
     }
-
-    setSaving(false);
   };
 
-  const deletePermission = async (permissionId: string) => {
-    if (!confirm('¿Estás seguro de eliminar este permiso?')) return;
-
-    setSaving(true);
+  const deletePermission = async (id: string) => {
+    if (!confirm('¿Eliminar permiso?')) return;
+    
     const supabase = createClient();
-
-    const { error } = await supabase
+    await supabase
       .schema('app')
       .from('user_route_permissions')
       .delete()
-      .eq('id', permissionId);
-
-    if (error) {
-      console.error('Error deleting permission:', error);
-      alert('Error al eliminar permiso');
-    } else {
-      alert('Permiso eliminado exitosamente');
-      if (selectedUser) {
-        await loadUserPermissions(selectedUser.user_id);
-      }
+      .eq('id', id);
+    
+    if (selectedUser) {
+      await loadUserById(selectedUser.user_id);
     }
-
-    setSaving(false);
-  };
-
-  const resetForm = () => {
-    setFormData({
-      route_id: '',
-      permission_type: 'grant',
-      reason: '',
-      expires_at: '',
-    });
-    setShowForm(false);
-  };
-
-  const activePermissions = userPermissions.filter(
-    (p) =>
-      p.is_active && (!p.expires_at || new Date(p.expires_at) > new Date())
-  );
-  const expiredPermissions = userPermissions.filter(
-    (p) => p.expires_at && new Date(p.expires_at) <= new Date()
-  );
-
-  const grantPermissions = activePermissions.filter(
-    (p) => p.permission_type === 'grant'
-  );
-  const denyPermissions = activePermissions.filter(
-    (p) => p.permission_type === 'deny'
-  );
-
-  // ✅ Helper para obtener traducción
-  const getTranslation = (route: Route | undefined) => {
-    if (!route) return { path: '', name: '' };
-    
-    const translation = route.route_translations?.find(
-      t => t.language_code === locale
-    );
-    
-    return {
-      path: translation?.translated_path || route.pathname,
-      name: translation?.translated_name || route.display_name,
-    };
   };
 
   return (
     <RouteGuard redirectTo="/error?code=403">
-      <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              ⚡ Permisos Individuales
-            </h1>
-            <p className="text-gray-600">
-              Dar o bloquear acceso específico (GRANT/DENY)
-            </p>
-          </div>
+          <h1 className="text-3xl font-bold mb-2">⚡ Permisos Individuales</h1>
+          <p className="text-gray-600 mb-8">GRANT/DENY por ruta e idioma</p>
 
-          {/* Buscar Usuario */}
+          {/* Buscar usuario */}
           {!selectedUser && (
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div className="bg-white p-6 rounded-lg shadow mb-6">
               <h2 className="text-lg font-semibold mb-4">Buscar Usuario</h2>
-              <form onSubmit={handleSearch} className="space-y-4">
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    placeholder="Escribe el email del usuario..."
-                    value={searchEmail}
-                    onChange={(e) => setSearchEmail(e.target.value)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors disabled:bg-gray-400"
-                  >
-                    {loading ? '🔍 Buscando...' : '🔍 Buscar'}
-                  </button>
-                </div>
-              </form>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  placeholder="Email del usuario..."
+                  value={searchEmail}
+                  onChange={(e) => setSearchEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
+                  className="flex-1 px-4 py-2 border rounded-md"
+                />
+                <button
+                  onClick={handleSearch}
+                  disabled={loading}
+                  className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700"
+                >
+                  {loading ? 'Buscando...' : '🔍 Buscar'}
+                </button>
+              </div>
             </div>
           )}
 
-          {/* Usuario Seleccionado */}
           {selectedUser && (
-            <>
-              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div className="space-y-6">
+              {/* Info usuario */}
+              <div className="bg-white p-6 rounded-lg shadow">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold">Usuario Seleccionado</h2>
+                  <h2 className="text-xl font-semibold">Usuario Seleccionado</h2>
                   <button
                     onClick={() => {
                       setSelectedUser(null);
-                      setUserPermissions([]);
+                      setPermissions([]);
                       setSearchEmail('');
-                      resetForm();
                     }}
                     className="text-sm text-gray-600 hover:text-gray-900"
                   >
-                    ❌ Cambiar usuario
+                    ❌ Cambiar
                   </button>
                 </div>
-
                 <div className="flex items-center gap-4">
                   {selectedUser.avatar_url ? (
-                    <img
-                      src={selectedUser.avatar_url}
-                      alt={selectedUser.full_name}
-                      className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
-                    />
+                    <img src={selectedUser.avatar_url} alt="" className="w-16 h-16 rounded-full" />
                   ) : (
                     <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center text-2xl">
                       👤
                     </div>
                   )}
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-900">
-                      {selectedUser.full_name}
-                    </h3>
+                    <h3 className="text-xl font-semibold">{selectedUser.full_name}</h3>
                     <p className="text-gray-600">{selectedUser.email}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Botón Nuevo Permiso */}
-              <div className="mb-6">
-                <button
-                  onClick={() => setShowForm(!showForm)}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-                >
-                  {showForm ? '❌ Cancelar' : '➕ Nuevo Permiso'}
-                </button>
-              </div>
+              {/* Botón nuevo permiso */}
+              <button
+                onClick={() => setShowForm(!showForm)}
+                className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+              >
+                {showForm ? '❌ Cancelar' : '➕ Nuevo Permiso'}
+              </button>
 
               {/* Formulario */}
               {showForm && (
-                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                  <h2 className="text-xl font-semibold mb-4">Nuevo Permiso</h2>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Ruta */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Ruta *
-                        </label>
-                        <select
-                          required
-                          value={formData.route_id}
-                          onChange={(e) =>
-                            setFormData({ ...formData, route_id: e.target.value })
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        >
-                          <option value="">Seleccionar ruta...</option>
-                          {routes.map((route) => {
-                            const trans = getTranslation(route);
-                            return (
-                              <option key={route.id} value={route.id}>
-                                {route.icon} {trans.path} - {trans.name}
-                                {trans.path !== route.pathname && ` (${route.pathname})`}
-                              </option>
-                            );
-                          })}
-                        </select>
-                      </div>
+                <div className="bg-white p-6 rounded-lg shadow space-y-4">
+                  <h2 className="text-xl font-semibold">Nuevo Permiso</h2>
 
-                      {/* Tipo de Permiso */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Tipo de Permiso *
-                        </label>
-                        <select
-                          required
-                          value={formData.permission_type}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              permission_type: e.target.value as 'grant' | 'deny',
-                            })
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        >
-                          <option value="grant">🟢 GRANT - Dar acceso</option>
-                          <option value="deny">🔴 DENY - Bloquear acceso</option>
-                        </select>
-                      </div>
+                  {/* Ruta */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Ruta *</label>
+                    <select
+                      value={form.route_id}
+                      onChange={(e) => setForm({ ...form, route_id: e.target.value })}
+                      className="w-full p-2 border rounded"
+                    >
+                      <option value="">Seleccionar ruta...</option>
+                      {routes.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.icon} {r.pathname} - {r.display_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                      {/* Razón */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Razón
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="¿Por qué este permiso?"
-                          value={formData.reason}
-                          onChange={(e) =>
-                            setFormData({ ...formData, reason: e.target.value })
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                      </div>
-
-                      {/* Fecha de Expiración */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Fecha de Expiración (opcional)
-                        </label>
-                        <input
-                          type="date"
-                          value={formData.expires_at}
-                          onChange={(e) =>
-                            setFormData({ ...formData, expires_at: e.target.value })
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Info */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-                      <p className="text-sm text-blue-800">
-                        {formData.permission_type === 'grant' ? (
-                          <>
-                            🟢 <strong>GRANT:</strong> Dará acceso a esta ruta aunque el
-                            rol del usuario no lo permita.
-                          </>
-                        ) : (
-                          <>
-                            🔴 <strong>DENY:</strong> Bloqueará el acceso a esta ruta
-                            aunque el rol del usuario sí lo permita.
-                          </>
-                        )}
-                      </p>
-                    </div>
-
-                    {/* Botones */}
-                    <div className="flex gap-3">
-                      <button
-                        type="submit"
-                        disabled={saving}
-                        className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors disabled:bg-gray-400"
-                      >
-                        {saving ? '⏳ Guardando...' : '💾 Crear Permiso'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={resetForm}
-                        className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400 transition-colors"
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              )}
-
-              {/* Permisos GRANT */}
-              {grantPermissions.length > 0 && (
-                <div className="bg-white rounded-lg shadow-md mb-6">
-                  <div className="px-6 py-4 bg-green-50 border-b border-green-200">
-                    <h2 className="text-lg font-semibold text-green-900">
-                      🟢 Permisos GRANT - Acceso Extra ({grantPermissions.length})
-                    </h2>
-                    <p className="text-sm text-green-700 mt-1">
-                      Rutas a las que tiene acceso aunque su rol no lo permita
+                  {/* Idioma */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Idioma *</label>
+                    <select
+                      value={form.language_code}
+                      onChange={(e) => setForm({ ...form, language_code: e.target.value })}
+                      className="w-full p-2 border rounded"
+                    >
+                      {LANGUAGES.map((l) => (
+                        <option key={l.code || 'all'} value={l.code || 'all'}>
+                          {l.flag} {l.name}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      🌍 = Todos los idiomas | ES/EN/FR/IT = Solo ese idioma
                     </p>
                   </div>
-                  <div className="divide-y divide-gray-200">
-                    {grantPermissions.map((permission) => (
-                      <PermissionCard
-                        key={permission.id}
-                        permission={permission}
-                        onDelete={deletePermission}
-                        saving={saving}
-                        locale={locale}
-                        getTranslation={getTranslation}
-                      />
+
+                  {/* Tipo */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Tipo *</label>
+                    <select
+                      value={form.permission_type}
+                      onChange={(e) => setForm({ ...form, permission_type: e.target.value as 'grant' | 'deny' })}
+                      className="w-full p-2 border rounded"
+                    >
+                      <option value="grant">🟢 GRANT - Dar acceso</option>
+                      <option value="deny">🔴 DENY - Bloquear</option>
+                    </select>
+                  </div>
+
+                  {/* Razón */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Razón</label>
+                    <input
+                      type="text"
+                      placeholder="¿Por qué?"
+                      value={form.reason}
+                      onChange={(e) => setForm({ ...form, reason: e.target.value })}
+                      className="w-full p-2 border rounded"
+                    />
+                  </div>
+
+                  {/* Expiración */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Expiración (opcional)</label>
+                    <input
+                      type="date"
+                      value={form.expires_at}
+                      onChange={(e) => setForm({ ...form, expires_at: e.target.value })}
+                      className="w-full p-2 border rounded"
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleSubmit}
+                    className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
+                  >
+                    💾 Crear Permiso
+                  </button>
+                </div>
+              )}
+
+              {/* Lista de permisos */}
+              <div className="bg-white rounded-lg shadow">
+                <div className="px-6 py-4 bg-gray-50 border-b">
+                  <h2 className="text-lg font-semibold">Permisos Activos ({permissions.length})</h2>
+                </div>
+                {permissions.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500">Sin permisos</div>
+                ) : (
+                  <div className="divide-y">
+                    {permissions.map((p) => (
+                      <div key={p.id} className="p-4 flex justify-between items-center">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-2xl">
+                              {p.permission_type === 'grant' ? '🟢' : '🔴'}
+                            </span>
+                            <code className="text-sm bg-blue-50 px-2 py-1 rounded">
+                              {p.routes?.pathname}
+                            </code>
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            {p.language_code ? `🌐 ${p.language_code.toUpperCase()}` : '🌍 Todos los idiomas'}
+                          </p>
+                          {p.reason && (
+                            <p className="text-sm text-gray-600 mt-1">📝 {p.reason}</p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => deletePermission(p.id)}
+                          className="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700"
+                        >
+                          🗑️ Eliminar
+                        </button>
+                      </div>
                     ))}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
-              {/* Permisos DENY */}
-              {denyPermissions.length > 0 && (
-                <div className="bg-white rounded-lg shadow-md mb-6">
-                  <div className="px-6 py-4 bg-red-50 border-b border-red-200">
-                    <h2 className="text-lg font-semibold text-red-900">
-                      🔴 Permisos DENY - Acceso Bloqueado ({denyPermissions.length})
-                    </h2>
-                    <p className="text-sm text-red-700 mt-1">
-                      Rutas bloqueadas aunque su rol sí lo permita
-                    </p>
-                  </div>
-                  <div className="divide-y divide-gray-200">
-                    {denyPermissions.map((permission) => (
-                      <PermissionCard
-                        key={permission.id}
-                        permission={permission}
-                        onDelete={deletePermission}
-                        saving={saving}
-                        locale={locale}
-                        getTranslation={getTranslation}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Permisos Expirados */}
-              {expiredPermissions.length > 0 && (
-                <div className="bg-white rounded-lg shadow-md mb-6">
-                  <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                    <h2 className="text-lg font-semibold text-gray-900">
-                      ⏰ Permisos Expirados ({expiredPermissions.length})
-                    </h2>
-                  </div>
-                  <div className="divide-y divide-gray-200">
-                    {expiredPermissions.map((permission) => (
-                      <PermissionCard
-                        key={permission.id}
-                        permission={permission}
-                        onDelete={deletePermission}
-                        saving={saving}
-                        locale={locale}
-                        getTranslation={getTranslation}
-                        expired
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Sin permisos */}
-              {activePermissions.length === 0 && expiredPermissions.length === 0 && (
-                <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-500">
-                  Este usuario no tiene permisos individuales
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Información */}
-          <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-blue-900 mb-3">
-              ℹ️ Orden de Prioridad de Permisos
-            </h3>
-            <div className="space-y-2 text-blue-800 text-sm">
-              <p className="font-semibold">1️⃣ DENY individual (Mayor prioridad)</p>
-              <p className="font-semibold">2️⃣ GRANT individual</p>
-              <p className="font-semibold">3️⃣ Permisos por ROL</p>
-              <p className="font-semibold">4️⃣ Sin acceso (Menor prioridad)</p>
+              {/* Info */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-blue-900 mb-3">
+                  ℹ️ Permisos por Idioma
+                </h3>
+                <ul className="space-y-2 text-blue-800 text-sm">
+                  <li>• Cada permiso se asigna a UN idioma específico</li>
+                  <li>• GRANT ES solo da acceso a /es/ruta</li>
+                  <li>• Para acceso completo, usa 🌍 Todos los idiomas</li>
+                  <li>• DENY tiene prioridad sobre GRANT</li>
+                </ul>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </RouteGuard>
-  );
-}
-
-// Componente para mostrar un permiso
-interface PermissionCardProps {
-  permission: UserPermission;
-  onDelete: (id: string) => void;
-  saving: boolean;
-  locale: string;
-  getTranslation: (route: Route | undefined) => { path: string; name: string };
-  expired?: boolean;
-}
-
-function PermissionCard({
-  permission,
-  onDelete,
-  saving,
-  locale,
-  getTranslation,
-  expired = false,
-}: PermissionCardProps) {
-  const trans = getTranslation(permission.routes);
-
-  return (
-    <div className={`p-6 hover:bg-gray-50 transition-colors ${expired ? 'opacity-60' : ''}`}>
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="text-2xl">{permission.routes?.icon || '📄'}</span>
-            <div>
-              <code className="text-sm text-indigo-600 bg-indigo-50 px-2 py-1 rounded">
-                {trans.path}
-              </code>
-              <p className="text-sm text-gray-700 mt-1">
-                {trans.name}
-              </p>
-              {trans.path !== permission.routes?.pathname && (
-                <code className="text-xs text-gray-500">
-                  → {permission.routes?.pathname}
-                </code>
-              )}
-            </div>
-          </div>
-
-          {permission.reason && (
-            <p className="text-sm text-gray-600 mb-2">📝 {permission.reason}</p>
-          )}
-
-          <div className="flex gap-4 text-xs text-gray-500">
-            <span>
-              Creado: {new Date(permission.created_at).toLocaleDateString()}
-            </span>
-            {permission.expires_at && (
-              <span className={expired ? 'text-red-600 font-semibold' : 'text-orange-600'}>
-                {expired ? '⏰ Expirado' : '⏰ Expira'}:{' '}
-                {new Date(permission.expires_at).toLocaleDateString()}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <button
-          onClick={() => onDelete(permission.id)}
-          disabled={saving}
-          className="ml-4 text-sm bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:bg-gray-400"
-        >
-          🗑️ Eliminar
-        </button>
-      </div>
-    </div>
   );
 }
