@@ -1,4 +1,5 @@
 // app/[locale]/admin/page.tsx
+// ✅ DASHBOARD CON ORDEN LÓGICO (6 MÓDULOS)
 
 import Link from 'next/link';
 import { RouteGuard } from '@/src/presentation/components/RouteGuard';
@@ -8,118 +9,194 @@ export default function AdminPage() {
     <RouteGuard redirectTo="/error?code=403">
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
+          
           {/* Header */}
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              Panel de Administración
+              Panel de Administración RBAC
             </h1>
             <p className="text-lg text-gray-600">
-              Sistema de gestión de rutas, permisos y usuarios
+              Sistema de control de acceso basado en roles
             </p>
           </div>
 
-          {/* Grid de Módulos */}
+          {/* Flujo recomendado */}
+          <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-blue-900 mb-4 flex items-center gap-2">
+              <span className="text-2xl">🎯</span>
+              Flujo Recomendado (Sigue este orden)
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="bg-white rounded-lg p-4 border-l-4 border-blue-500">
+                <div className="font-bold text-blue-900 mb-2">1️⃣ Preparación</div>
+                <ul className="space-y-1 text-gray-700">
+                  <li>• Escanear rutas del sistema</li>
+                  <li>• Traducir rutas a idiomas</li>
+                </ul>
+              </div>
+              <div className="bg-white rounded-lg p-4 border-l-4 border-green-500">
+                <div className="font-bold text-green-900 mb-2">2️⃣ Configuración</div>
+                <ul className="space-y-1 text-gray-700">
+                  <li>• Crear roles necesarios</li>
+                  <li>• Asignar rutas a roles</li>
+                </ul>
+              </div>
+              <div className="bg-white rounded-lg p-4 border-l-4 border-purple-500">
+                <div className="font-bold text-purple-900 mb-2">3️⃣ Asignación</div>
+                <ul className="space-y-1 text-gray-700">
+                  <li>• Asignar roles a usuarios</li>
+                  <li>• Permisos individuales</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Grid de Módulos EN ORDEN */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* 1. Gestión de Rutas */}
+            
+            {/* MÓDULO 1 */}
             <AdminCard
-              title="🗺️ Gestión de Rutas"
-              description="Crear, editar y eliminar rutas del sistema"
-              href="/admin/routes"
-              badge="Script 03"
+              number="1"
+              title="🔍 Escanear Rutas"
+              description="Detecta automáticamente todas las rutas en app/[locale]/*/page.tsx"
+              href="/admin/route-scanner"
+              color="blue"
             />
 
-            {/* 2. Traducciones */}
+            {/* MÓDULO 2 */}
             <AdminCard
-              title="🌍 Traducciones de Rutas"
-              description="Traducir rutas a diferentes idiomas"
+              number="2"
+              title="🌍 Traducir Rutas"
+              description="Traduce rutas a ES, EN, FR, IT para rutas internacionales"
               href="/admin/route-translations"
-              badge="Script 04"
+              color="blue"
             />
 
-            {/* 3. Buscar Usuarios */}
+            {/* MÓDULO 3 */}
             <AdminCard
-              title="👤 Buscar Usuarios"
-              description="Buscar usuarios por email y ver información"
-              href="/admin/users"
-              badge="Script 10"
+              number="3"
+              title="👥 Gestionar Roles"
+              description="Crear, editar y administrar roles del sistema"
+              href="/admin/roles"
+              color="green"
             />
 
-            {/* 4. Permisos por Rol */}
+            {/* MÓDULO 4 */}
             <AdminCard
+              number="4"
               title="🔐 Permisos por Rol"
-              description="Asignar rutas a cada rol del sistema"
+              description="Asigna múltiples rutas a cada rol (define qué puede hacer cada cargo)"
               href="/admin/role-permissions"
-              badge="Script 06"
+              color="green"
             />
 
-            {/* 5. Asignar Roles */}
+            {/* MÓDULO 5 */}
             <AdminCard
-              title="👥 Asignar Roles"
-              description="Asignar roles a usuarios específicos"
+              number="5"
+              title="👤 Asignar Roles a Usuarios"
+              description="Busca usuarios y asígnales roles específicos"
               href="/admin/user-roles"
-              badge="Script 05"
+              color="purple"
             />
 
-            {/* 6. Permisos Individuales */}
+            {/* MÓDULO 6 */}
             <AdminCard
+              number="6"
               title="⚡ Permisos Individuales"
-              description="Dar o bloquear acceso específico (GRANT/DENY)"
+              description="GRANT/DENY rutas específicas a usuarios (casos especiales)"
               href="/admin/user-permissions"
-              badge="Script 07"
+              color="purple"
             />
+
           </div>
 
-          {/* Info */}
-          <div className="mt-12 bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-blue-900 mb-2">
-              ℹ️ Orden de Uso Recomendado
-            </h3>
-            <ol className="list-decimal list-inside space-y-2 text-blue-800">
-              <li>Crear rutas en el sistema</li>
-              <li>Traducir rutas a diferentes idiomas (opcional)</li>
-              <li>Asignar rutas a roles (qué puede hacer cada cargo)</li>
-              <li>Asignar roles a usuarios (qué cargo tiene cada persona)</li>
-              <li>Permisos individuales (casos especiales: GRANT/DENY)</li>
-            </ol>
+          {/* Módulos adicionales */}
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              Herramientas Adicionales
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              
+              <AdminCard
+                number=""
+                title="🔍 Buscar Usuarios"
+                description="Busca cualquier usuario por email y ve su información"
+                href="/admin/users"
+                color="gray"
+              />
+
+              <AdminCard
+                number=""
+                title="📚 Gestión de Libros"
+                description="Administrar libros del sistema"
+                href="/admin/books"
+                color="gray"
+              />
+
+              <AdminCard
+                number=""
+                title="🔎 Auditoría"
+                description="Registro de cambios y accesos del sistema"
+                href="/admin/audit"
+                color="gray"
+              />
+
+            </div>
           </div>
+
         </div>
       </div>
     </RouteGuard>
   );
 }
 
+// ============================================
+// Componente AdminCard con colores
+// ============================================
+
 interface AdminCardProps {
+  number: string;
   title: string;
   description: string;
   href: string;
-  badge: string;
+  color: 'blue' | 'green' | 'purple' | 'gray';
 }
 
-function AdminCard({ title, description, href, badge }: AdminCardProps) {
+function AdminCard({ number, title, description, href, color }: AdminCardProps) {
+  const colors = {
+    blue: 'border-blue-200 hover:border-blue-400 bg-blue-50/50',
+    green: 'border-green-200 hover:border-green-400 bg-green-50/50',
+    purple: 'border-purple-200 hover:border-purple-400 bg-purple-50/50',
+    gray: 'border-gray-200 hover:border-gray-400 bg-gray-50/50',
+  };
+
+  const badgeColors = {
+    blue: 'bg-blue-100 text-blue-800',
+    green: 'bg-green-100 text-green-800',
+    purple: 'bg-purple-100 text-purple-800',
+    gray: 'bg-gray-100 text-gray-800',
+  };
+
   return (
     <Link href={href}>
-      <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 p-6 cursor-pointer border border-gray-200 h-full">
+      <div className={`${colors[color]} bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 p-6 cursor-pointer border-2 h-full`}>
         <div className="flex items-start justify-between mb-3">
-          <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
-          <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full">
-            {badge}
-          </span>
+          <h3 className="text-lg font-semibold text-gray-900 flex-1">
+            {title}
+          </h3>
+          {number && (
+            <span className={`${badgeColors[color]} text-sm font-bold px-3 py-1 rounded-full`}>
+              {number}
+            </span>
+          )}
         </div>
-        <p className="text-gray-600 text-sm">{description}</p>
-        <div className="mt-4 flex items-center text-indigo-600 text-sm font-medium">
+        <p className="text-gray-600 text-sm mb-4">
+          {description}
+        </p>
+        <div className="flex items-center text-indigo-600 text-sm font-medium">
           Abrir módulo
-          <svg
-            className="w-4 h-4 ml-1"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
+          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </div>
       </div>
