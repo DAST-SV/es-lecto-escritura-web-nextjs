@@ -55,6 +55,7 @@ export default function UserRolesPage() {
   const loadRoles = async () => {
     const supabase = createClient();
     const { data } = await supabase
+      .schema('app')
       .from('roles')
       .select('*')
       .eq('is_active', true)
@@ -69,7 +70,8 @@ export default function UserRolesPage() {
 
     // Obtener info del usuario
     const { data: userData, error: userError } = await supabase
-      .from('auth.users')
+      .schema('auth')
+      .from('users')
       .select('*')
       .eq('id', userId)
       .single();
@@ -121,6 +123,7 @@ export default function UserRolesPage() {
   const loadUserRoles = async (userId: string) => {
     const supabase = createClient();
     const { data } = await supabase
+      .schema('app')
       .from('user_roles')
       .select(`
         *,
@@ -151,7 +154,7 @@ export default function UserRolesPage() {
     setSaving(true);
     const supabase = createClient();
 
-    const { error } = await supabase.from('user_roles').insert([
+    const { error } = await supabase.schema('app').from('user_roles').insert([
       {
         user_id: selectedUser.user_id,
         role_id: roleId,
@@ -184,6 +187,7 @@ export default function UserRolesPage() {
     const supabase = createClient();
 
     const { error } = await supabase
+      .schema('app')
       .from('user_roles')
       .update({
         is_active: false,
@@ -209,6 +213,7 @@ export default function UserRolesPage() {
     const supabase = createClient();
 
     const { error } = await supabase
+      .schema('app')
       .from('user_roles')
       .update({
         is_active: true,
@@ -442,10 +447,9 @@ export default function UserRolesPage() {
                             disabled={saving || alreadyHas}
                             className={`
                               p-4 border-2 rounded-lg text-left transition-all
-                              ${
-                                alreadyHas
-                                  ? 'bg-gray-100 border-gray-300 cursor-not-allowed'
-                                  : 'bg-white border-indigo-300 hover:border-indigo-500 hover:shadow-md'
+                              ${alreadyHas
+                                ? 'bg-gray-100 border-gray-300 cursor-not-allowed'
+                                : 'bg-white border-indigo-300 hover:border-indigo-500 hover:shadow-md'
                               }
                             `}
                           >
