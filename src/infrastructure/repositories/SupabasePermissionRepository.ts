@@ -1,9 +1,8 @@
-// src/infrastructure/repositories/SupabasePermissionRepository.ts
-
-/**
- * Infrastructure: Supabase Permission Repository
- * Implementación concreta del repositorio de permisos
- */
+// ============================================
+// ARCHIVO: src/infrastructure/repositories/SupabasePermissionRepository.ts
+// ACCIÓN: REEMPLAZAR COMPLETO
+// CAMBIO: Usar p_translated_path en lugar de p_pathname
+// ============================================
 
 import { createClient } from '@/src/infrastructure/config/supabase.config';
 import { IPermissionRepository } from '@/src/core/domain/repositories/IPermissionRepository';
@@ -79,17 +78,21 @@ export class SupabasePermissionRepository implements IPermissionRepository {
   }
 
   /**
-   * Verifica si un usuario puede acceder a una ruta usando la función SQL
-   */
+ * Verifica si un usuario puede acceder a una ruta TRADUCIDA
+ * 
+ * @param userId - ID del usuario
+ * @param translatedPath - Ruta TRADUCIDA (ej: /exclusive, /exclusivo, /exclusif)
+ * @param languageCode - Código de idioma (es, en, fr, it)
+ */
   async canAccessRoute(
     userId: string,
-    pathname: string,
+    translatedPath: string,  // ✅ Ruta TRADUCIDA
     languageCode: LanguageCode = 'es'
   ): Promise<boolean> {
     try {
       const { data, error } = await this.supabase.rpc('can_access_route', {
         p_user_id: userId,
-        p_pathname: pathname,
+        p_translated_path: translatedPath,  // ✅ Ruta traducida
         p_language_code: languageCode,
       });
 
@@ -107,6 +110,7 @@ export class SupabasePermissionRepository implements IPermissionRepository {
 
   /**
    * Obtiene todas las rutas permitidas para un usuario
+   * ✅ Retorna rutas TRADUCIDAS según el idioma
    */
   async getAllowedRoutes(
     userId: string,
@@ -161,47 +165,54 @@ export class SupabasePermissionRepository implements IPermissionRepository {
         .eq('is_active', true)
         .or('expires_at.is.null,expires_at.gt.now()');
 
-      // Combinar todas las rutas
+      // Combinar todas las rutas TRADUCIDAS
       const allRoutes = new Set<string>();
 
-      // Agregar rutas públicas
+      // Agregar rutas públicas (traducidas)
       publicRoutes?.forEach((route: any) => {
-        allRoutes.add(route.pathname);
         route.route_translations?.forEach((trans: any) => {
           if (trans.language_code === languageCode) {
             allRoutes.add(trans.translated_path);
           }
         });
+        // Fallback al pathname si no hay traducción
+        if (!route.route_translations || route.route_translations.length === 0) {
+          allRoutes.add(route.pathname);
+        }
       });
 
-      // Agregar rutas por roles
+      // Agregar rutas por roles (traducidas)
       roleRoutes?.forEach((rp: any) => {
         const route = rp.routes;
-        allRoutes.add(route.pathname);
         route.route_translations?.forEach((trans: any) => {
           if (trans.language_code === languageCode) {
             allRoutes.add(trans.translated_path);
           }
         });
+        if (!route.route_translations || route.route_translations.length === 0) {
+          allRoutes.add(route.pathname);
+        }
       });
 
       // Aplicar permisos individuales (GRANT y DENY)
       userPerms?.forEach((up: any) => {
         const route = up.routes;
+        const translatedPaths: string[] = [];
+
+        route.route_translations?.forEach((trans: any) => {
+          if (trans.language_code === languageCode) {
+            translatedPaths.push(trans.translated_path);
+          }
+        });
+
+        if (translatedPaths.length === 0) {
+          translatedPaths.push(route.pathname);
+        }
+
         if (up.permission_type === 'grant') {
-          allRoutes.add(route.pathname);
-          route.route_translations?.forEach((trans: any) => {
-            if (trans.language_code === languageCode) {
-              allRoutes.add(trans.translated_path);
-            }
-          });
+          translatedPaths.forEach(path => allRoutes.add(path));
         } else if (up.permission_type === 'deny') {
-          allRoutes.delete(route.pathname);
-          route.route_translations?.forEach((trans: any) => {
-            if (trans.language_code === languageCode) {
-              allRoutes.delete(trans.translated_path);
-            }
-          });
+          translatedPaths.forEach(path => allRoutes.delete(path));
         }
       });
 

@@ -1,10 +1,13 @@
 // ============================================
-// app/[locale]/admin/role-permissions/page.tsx
+// ARCHIVO: app/[locale]/admin/role-permissions/page.tsx
+// ACCIÓN: REEMPLAZAR COMPLETO
+// CAMBIO: Mostrar rutas TRADUCIDAS en lugar de pathname
 // ============================================
 
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLocale } from 'next-intl';
 import { RouteGuard } from '@/src/presentation/components/RouteGuard';
 import { createClient } from '@/src/infrastructure/config/supabase.config';
 
@@ -20,6 +23,8 @@ interface Route {
   pathname: string;
   display_name: string;
   icon: string | null;
+  translated_path: string;  // ✅ Agregado
+  translated_name: string;  // ✅ Agregado
 }
 
 interface RoutePermission {
@@ -29,6 +34,7 @@ interface RoutePermission {
 }
 
 export default function RolePermissionsPage() {
+  const locale = useLocale();
   const [roles, setRoles] = useState<Role[]>([]);
   const [routes, setRoutes] = useState<Route[]>([]);
   const [permissions, setPermissions] = useState<RoutePermission[]>([]);
@@ -51,14 +57,40 @@ export default function RolePermissionsPage() {
       .select('*')
       .order('hierarchy_level', { ascending: false });
 
-    // Cargar rutas
+    // ✅ Cargar rutas CON traducciones
     const { data: routesData } = await supabase
       .schema('app')
       .from('routes')
-      .select('id, pathname, display_name, icon')
+      .select(`
+        id,
+        pathname,
+        display_name,
+        icon,
+        route_translations!left(
+          language_code,
+          translated_path,
+          translated_name
+        )
+      `)
       .eq('is_active', true)
       .is('deleted_at', null)
       .order('menu_order');
+
+    // ✅ Mapear rutas con sus traducciones
+    const mappedRoutes = (routesData || []).map((route: any) => {
+      const translation = route.route_translations?.find(
+        (t: any) => t.language_code === locale
+      );
+      
+      return {
+        id: route.id,
+        pathname: route.pathname,
+        display_name: route.display_name,
+        icon: route.icon,
+        translated_path: translation?.translated_path || route.pathname,
+        translated_name: translation?.translated_name || route.display_name,
+      };
+    });
 
     // Cargar permisos
     const { data: permissionsData } = await supabase
@@ -68,7 +100,7 @@ export default function RolePermissionsPage() {
       .eq('is_active', true);
 
     setRoles(rolesData || []);
-    setRoutes(routesData || []);
+    setRoutes(mappedRoutes);
     setPermissions(permissionsData || []);
     setLoading(false);
   };
@@ -279,9 +311,20 @@ export default function RolePermissionsPage() {
                               <div className="flex-1">
                                 <div className="flex items-center gap-2">
                                   {route.icon && <span>{route.icon}</span>}
-                                  <span className="font-medium">{route.display_name}</span>
+                                  {/* ✅ Mostrar nombre traducido */}
+                                  <span className="font-medium">{route.translated_name}</span>
                                 </div>
-                                <code className="text-xs text-gray-500">{route.pathname}</code>
+                                {/* ✅ Mostrar ruta traducida */}
+                                <div className="flex items-center gap-2 mt-1">
+                                  <code className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                                    {route.translated_path}
+                                  </code>
+                                  {route.translated_path !== route.pathname && (
+                                    <code className="text-xs text-gray-500">
+                                      → {route.pathname}
+                                    </code>
+                                  )}
+                                </div>
                               </div>
                             </label>
                           </div>
@@ -309,6 +352,7 @@ export default function RolePermissionsPage() {
               <li>• Marca/desmarca las rutas a las que ese rol puede acceder</li>
               <li>• Los cambios se guardan automáticamente</li>
               <li>• Usuarios con ese rol heredan TODOS estos permisos</li>
+              <li>• ✅ Las rutas se muestran en el idioma actual: {locale.toUpperCase()}</li>
             </ul>
           </div>
 

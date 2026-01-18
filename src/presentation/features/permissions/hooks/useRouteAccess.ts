@@ -1,6 +1,7 @@
 // ============================================
-// src/presentation/features/permissions/hooks/useRouteAccess.ts
-// Hook para verificar acceso a rutas en el cliente
+// ARCHIVO: src/presentation/features/permissions/hooks/useRouteAccess.ts
+// ACCIÓN: REEMPLAZAR COMPLETO
+// CAMBIO: Renombrar pathname a translatedPath
 // ============================================
 
 'use client';
@@ -10,7 +11,7 @@ import { createClient } from '@/src/infrastructure/config/supabase.config';
 import { LanguageCode } from '@/src/core/domain/entities/Permission';
 
 interface UseRouteAccessProps {
-  pathname: string;
+  translatedPath: string;  // ✅ RENOMBRADO
   languageCode?: LanguageCode;
 }
 
@@ -20,8 +21,14 @@ interface UseRouteAccessReturn {
   error: string | null;
 }
 
+/**
+ * Hook para verificar acceso a rutas en el cliente
+ * 
+ * ✅ IMPORTANTE: translatedPath debe ser la ruta TRADUCIDA actual
+ * Ejemplo: Si estás en /es/biblioteca, pasa "/biblioteca"
+ */
 export function useRouteAccess({ 
-  pathname, 
+  translatedPath,  // ✅ RENOMBRADO
   languageCode = 'es' 
 }: UseRouteAccessProps): UseRouteAccessReturn {
   const [canAccess, setCanAccess] = useState(false);
@@ -49,10 +56,10 @@ export function useRouteAccess({
           return;
         }
 
-        // Verificar acceso usando la función de Supabase
+        // ✅ CAMBIO: p_translated_path
         const { data, error: rpcError } = await supabase.rpc('can_access_route', {
           p_user_id: user.id,
-          p_pathname: pathname,
+          p_translated_path: translatedPath,  // ✅ CAMBIADO
           p_language_code: languageCode,
         });
 
@@ -79,7 +86,7 @@ export function useRouteAccess({
     return () => {
       mounted = false;
     };
-  }, [pathname, languageCode]);
+  }, [translatedPath, languageCode]);  // ✅ CAMBIADO
 
   return { canAccess, loading, error };
 }

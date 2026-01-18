@@ -1,7 +1,7 @@
 // ============================================
-// src/presentation/features/rbac/hooks/useRBACPermissions.ts
-// Hook para el sistema RBAC internacional
-// ✅ Usa schema 'app' correctamente
+// ARCHIVO: src/presentation/features/rbac/hooks/useRBACPermissions.ts
+// ACCIÓN: REEMPLAZAR COMPLETO
+// CAMBIO: Usar p_translated_path en canAccessRoute
 // ============================================
 
 'use client';
@@ -62,7 +62,6 @@ export function useRBACPermissions() {
       setLoading(true);
       setError(null);
 
-      // ✅ Llamar a función en schema 'app'
       const { data, error: fetchError } = await supabase
         .rpc('get_accessible_routes', {
           p_user_id: user.id,
@@ -104,7 +103,6 @@ export function useRBACPermissions() {
     }
 
     try {
-      // ✅ Acceder a tabla en schema 'app'
       const { data, error: fetchError } = await supabase
         .schema('app')
         .from('user_route_permissions')
@@ -131,15 +129,19 @@ export function useRBACPermissions() {
   }, [user, supabase]);
 
   /**
-   * Verificar si el usuario puede acceder a una ruta
+   * Verificar si el usuario puede acceder a una ruta TRADUCIDA
+   * 
+   * ✅ IMPORTANTE: translatedPath debe ser la ruta en el idioma actual
+   * Ejemplo: /biblioteca (ES), /library (EN), /bibliotheque (FR)
    */
   const canAccessRoute = useCallback(
-    async (pathname: string): Promise<boolean> => {
+    async (translatedPath: string): Promise<boolean> => {  // ✅ RENOMBRADO
       try {
+        // ✅ CAMBIO: p_translated_path
         const { data, error: fetchError } = await supabase
           .rpc('can_access_route', {
             p_user_id: user?.id || null,
-            p_pathname: pathname,
+            p_translated_path: translatedPath,  // ✅ CAMBIADO
             p_language_code: locale,
             p_organization_id: null,
           });

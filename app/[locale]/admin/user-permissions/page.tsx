@@ -1,17 +1,29 @@
-// app/[locale]/admin/user-permissions/page.tsx
+// ============================================
+// ARCHIVO: app/[locale]/admin/user-permissions/page.tsx
+// ACCIÓN: REEMPLAZAR COMPLETO
+// CAMBIO: Interfaces corregidas + rutas traducidas
+// ============================================
 
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import { RouteGuard } from '@/src/presentation/components/RouteGuard';
 import { createClient } from '@/src/infrastructure/config/supabase.config';
+
+interface RouteTranslation {
+  language_code: string;
+  translated_path: string;
+  translated_name: string;
+}
 
 interface Route {
   id: string;
   pathname: string;
   display_name: string;
   icon: string | null;
+  route_translations?: RouteTranslation[];  // ✅ Agregado como opcional
 }
 
 interface UserPermission {
@@ -36,6 +48,7 @@ interface User {
 export default function UserPermissionsPage() {
   const searchParams = useSearchParams();
   const userIdFromUrl = searchParams.get('user_id');
+  const locale = useLocale();
 
   const [routes, setRoutes] = useState<Route[]>([]);
   const [searchEmail, setSearchEmail] = useState('');
@@ -45,7 +58,6 @@ export default function UserPermissionsPage() {
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
-  // Form state
   const [formData, setFormData] = useState({
     route_id: '',
     permission_type: 'grant' as 'grant' | 'deny',
@@ -65,7 +77,17 @@ export default function UserPermissionsPage() {
     const { data } = await supabase
       .schema('app')
       .from('routes')
-      .select('id, pathname, display_name, icon')
+      .select(`
+        id,
+        pathname,
+        display_name,
+        icon,
+        route_translations!left(
+          language_code,
+          translated_path,
+          translated_name
+        )
+      `)
       .is('deleted_at', null)
       .eq('is_active', true)
       .order('menu_order');
@@ -138,7 +160,12 @@ export default function UserPermissionsPage() {
           id,
           pathname,
           display_name,
-          icon
+          icon,
+          route_translations!left(
+            language_code,
+            translated_path,
+            translated_name
+          )
         )
       `)
       .eq('user_id', userId)
@@ -237,6 +264,20 @@ export default function UserPermissionsPage() {
     (p) => p.permission_type === 'deny'
   );
 
+  // ✅ Helper para obtener traducción
+  const getTranslation = (route: Route | undefined) => {
+    if (!route) return { path: '', name: '' };
+    
+    const translation = route.route_translations?.find(
+      t => t.language_code === locale
+    );
+    
+    return {
+      path: translation?.translated_path || route.pathname,
+      name: translation?.translated_name || route.display_name,
+    };
+  };
+
   return (
     <RouteGuard redirectTo="/error?code=403">
       <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -247,7 +288,7 @@ export default function UserPermissionsPage() {
               ⚡ Permisos Individuales
             </h1>
             <p className="text-gray-600">
-              Dar o bloquear acceso específico (GRANT/DENY) - Script 07
+              Dar o bloquear acceso específico (GRANT/DENY)
             </p>
           </div>
 
@@ -346,11 +387,15 @@ export default function UserPermissionsPage() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                           <option value="">Seleccionar ruta...</option>
-                          {routes.map((route) => (
-                            <option key={route.id} value={route.id}>
-                              {route.icon} {route.pathname} - {route.display_name}
-                            </option>
-                          ))}
+                          {routes.map((route) => {
+                            const trans = getTranslation(route);
+                            return (
+                              <option key={route.id} value={route.id}>
+                                {route.icon} {trans.path} - {trans.name}
+                                {trans.path !== route.pathname && ` (${route.pathname})`}
+                              </option>
+                            );
+                          })}
                         </select>
                       </div>
 
@@ -463,6 +508,8 @@ export default function UserPermissionsPage() {
                         permission={permission}
                         onDelete={deletePermission}
                         saving={saving}
+                        locale={locale}
+                        getTranslation={getTranslation}
                       />
                     ))}
                   </div>
@@ -487,6 +534,8 @@ export default function UserPermissionsPage() {
                         permission={permission}
                         onDelete={deletePermission}
                         saving={saving}
+                        locale={locale}
+                        getTranslation={getTranslation}
                       />
                     ))}
                   </div>
@@ -508,6 +557,8 @@ export default function UserPermissionsPage() {
                         permission={permission}
                         onDelete={deletePermission}
                         saving={saving}
+                        locale={locale}
+                        getTranslation={getTranslation}
                         expired
                       />
                     ))}
@@ -534,19 +585,6 @@ export default function UserPermissionsPage() {
               <p className="font-semibold">2️⃣ GRANT individual</p>
               <p className="font-semibold">3️⃣ Permisos por ROL</p>
               <p className="font-semibold">4️⃣ Sin acceso (Menor prioridad)</p>
-              <div className="mt-4 pt-4 border-t border-blue-200">
-                <p className="font-medium">Ejemplos:</p>
-                <ul className="list-disc list-inside space-y-1 mt-2">
-                  <li>
-                    Si un estudiante tiene GRANT a /admin, podrá acceder aunque su rol
-                    no lo permita
-                  </li>
-                  <li>
-                    Si un profesor tiene DENY a /library, NO podrá acceder aunque su
-                    rol sí lo permita
-                  </li>
-                </ul>
-              </div>
             </div>
           </div>
         </div>
@@ -560,6 +598,8 @@ interface PermissionCardProps {
   permission: UserPermission;
   onDelete: (id: string) => void;
   saving: boolean;
+  locale: string;
+  getTranslation: (route: Route | undefined) => { path: string; name: string };
   expired?: boolean;
 }
 
@@ -567,26 +607,30 @@ function PermissionCard({
   permission,
   onDelete,
   saving,
+  locale,
+  getTranslation,
   expired = false,
 }: PermissionCardProps) {
-  const isGrant = permission.permission_type === 'grant';
+  const trans = getTranslation(permission.routes);
 
   return (
-    <div
-      className={`p-6 hover:bg-gray-50 transition-colors ${expired ? 'opacity-60' : ''
-        }`}
-    >
+    <div className={`p-6 hover:bg-gray-50 transition-colors ${expired ? 'opacity-60' : ''}`}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
             <span className="text-2xl">{permission.routes?.icon || '📄'}</span>
             <div>
               <code className="text-sm text-indigo-600 bg-indigo-50 px-2 py-1 rounded">
-                {permission.routes?.pathname}
+                {trans.path}
               </code>
               <p className="text-sm text-gray-700 mt-1">
-                {permission.routes?.display_name}
+                {trans.name}
               </p>
+              {trans.path !== permission.routes?.pathname && (
+                <code className="text-xs text-gray-500">
+                  → {permission.routes?.pathname}
+                </code>
+              )}
             </div>
           </div>
 
@@ -599,9 +643,7 @@ function PermissionCard({
               Creado: {new Date(permission.created_at).toLocaleDateString()}
             </span>
             {permission.expires_at && (
-              <span
-                className={expired ? 'text-red-600 font-semibold' : 'text-orange-600'}
-              >
+              <span className={expired ? 'text-red-600 font-semibold' : 'text-orange-600'}>
                 {expired ? '⏰ Expirado' : '⏰ Expira'}:{' '}
                 {new Date(permission.expires_at).toLocaleDateString()}
               </span>

@@ -1,6 +1,7 @@
 // ============================================
-// middleware.ts - VERSIÓN SIMPLIFICADA
-// ✅ Sin conflictos, solo una llamada a can_access_route
+// ARCHIVO: middleware.ts
+// ACCIÓN: REEMPLAZAR COMPLETO
+// CAMBIO: NO convertir, pasar la ruta traducida directamente
 // ============================================
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -10,7 +11,6 @@ const LOCALES = ['es', 'en', 'fr', 'it'] as const;
 const DEFAULT_LOCALE = 'es';
 type Locale = typeof LOCALES[number];
 
-// Rutas que NO necesitan verificación
 const PUBLIC_ROUTES = ['/', '/auth/login', '/auth/signup', '/auth/callback', '/error'];
 const STATIC_ROUTES = ['/_next', '/api', '/favicon.ico', '/images', '/fonts'];
 
@@ -24,33 +24,32 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. Extraer locale del pathname
+  // 2. Extraer locale y ruta traducida
   let locale: Locale = DEFAULT_LOCALE;
-  let path = pathname;
+  let translatedPath = pathname;
 
   const parts = pathname.split('/').filter(Boolean);
   const maybeLocale = parts[0];
   
   if (LOCALES.includes(maybeLocale as Locale)) {
     locale = maybeLocale as Locale;
-    path = '/' + parts.slice(1).join('/') || '/';
+    translatedPath = '/' + parts.slice(1).join('/') || '/';
   } else {
-    // Redirigir para agregar locale
     const url = request.nextUrl.clone();
     url.pathname = `/${DEFAULT_LOCALE}${pathname}`;
     console.log(`➡️ Agregando locale: ${url.pathname}`);
     return NextResponse.redirect(url);
   }
 
-  console.log(`📍 Path: "${path}", Locale: "${locale}"`);
+  console.log(`📍 Ruta traducida: "${translatedPath}", Idioma: "${locale}"`);
 
   // 3. Verificar si es ruta pública
   const isPublicRoute = PUBLIC_ROUTES.some(route => 
-    path === route || path.startsWith(route + '/')
+    translatedPath === route || translatedPath.startsWith(route + '/')
   );
 
   if (isPublicRoute) {
-    console.log(`✅ [PÚBLICO] ${path}`);
+    console.log(`✅ [PÚBLICO] ${translatedPath}`);
     return NextResponse.next();
   }
 
@@ -96,14 +95,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // 6. Verificar permisos con can_access_route
+  // 6. ✅ VERIFICAR CON RUTA TRADUCIDA (sin conversión)
   try {
-    console.log(`🔐 Verificando acceso a: ${path}`);
+    console.log(`🔐 Verificando: "${translatedPath}" en idioma "${locale}"`);
 
-    // ✅ LLAMADA SIMPLE, SIN CONFLICTOS
     const { data: canAccess, error } = await supabase.rpc('can_access_route', {
       p_user_id: user.id,
-      p_pathname: path,
+      p_translated_path: translatedPath,  // ✅ Ruta traducida directa
       p_language_code: locale,
     });
 
@@ -119,21 +117,20 @@ export async function middleware(request: NextRequest) {
     }
 
     if (!canAccess) {
-      console.log(`🚫 Acceso DENEGADO`);
+      console.log(`🚫 ACCESO DENEGADO: ${translatedPath} (${locale})`);
       const url = request.nextUrl.clone();
       url.pathname = `/${locale}/error`;
       url.searchParams.set('code', '403');
-      url.searchParams.set('message', `Sin permiso para ${path}`);
+      url.searchParams.set('message', `Sin acceso a ${translatedPath} en ${locale}`);
       return NextResponse.redirect(url);
     }
 
-    console.log(`✅ Acceso PERMITIDO\n`);
+    console.log(`✅ ACCESO PERMITIDO: ${translatedPath} (${locale})\n`);
     return response;
 
   } catch (err: any) {
     console.error(`❌ Error inesperado:`, err);
     
-    // En desarrollo, permitir; en producción, denegar
     if (process.env.NODE_ENV === 'development') {
       console.log(`⚠️ DEV MODE: Permitiendo a pesar del error`);
       return response;

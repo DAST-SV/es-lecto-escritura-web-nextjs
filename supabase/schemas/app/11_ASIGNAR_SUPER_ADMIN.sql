@@ -9,7 +9,7 @@ SELECT
   email,
   created_at
 FROM auth.users
-WHERE email = 'TU_EMAIL@example.com';  -- ⚠️ CAMBIAR
+WHERE email = 'tomac22753@ncien.com';  -- ⚠️ CAMBIAR
 
 -- Paso 2: Asignar super_admin
 INSERT INTO app.user_roles (user_id, role_id, is_active, notes)
@@ -38,12 +38,12 @@ SELECT
 FROM app.user_roles ur
 JOIN auth.users au ON au.id = ur.user_id
 JOIN app.roles r ON r.id = ur.role_id
-WHERE au.email = 'TU_EMAIL@example.com'  -- ⚠️ CAMBIAR
+WHERE au.email = 'tomac22753@ncien.com'  -- ⚠️ CAMBIAR
   AND ur.revoked_at IS NULL;
 
 -- Paso 4: Probar acceso
 SELECT can_access_route(
-  (SELECT id FROM auth.users WHERE email = 'TU_EMAIL@example.com'),  -- ⚠️ CAMBIAR
+  (SELECT id FROM auth.users WHERE email = 'tomac22753@ncien.com'),  -- ⚠️ CAMBIAR
   '/admin',
   'es'
 ) as puede_acceder_admin;
