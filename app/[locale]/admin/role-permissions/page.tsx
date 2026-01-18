@@ -1,12 +1,9 @@
-// ============================================
-// ARCHIVO: app/[locale]/admin/role-permissions/page.tsx
-// ✅ CORREGIDO: Permisos SEPARADOS por idioma
-// ============================================
+// app/[locale]/admin/user-roles/page.tsx
 
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useLocale } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/src/presentation/components/RouteGuard';
 import { createClient } from '@/src/infrastructure/config/supabase.config';
 
@@ -14,371 +11,498 @@ interface Role {
   id: string;
   name: string;
   display_name: string;
+  description: string | null;
   hierarchy_level: number;
 }
 
-interface Route {
+interface UserRole {
   id: string;
-  pathname: string;
-  display_name: string;
-  icon: string | null;
-  translated_path: string;
-  translated_name: string;
+  user_id: string;
+  role_id: string;
+  is_active: boolean;
+  created_at: string;
+  revoked_at: string | null;
+  notes: string | null;
+  roles?: Role;
 }
 
-interface RoutePermission {
-  id: string;
-  role_name: string;
-  route_id: string;
-  // ❌ ELIMINADO: language_code (no existe en route_permissions)
+interface User {
+  user_id: string;
+  email: string;
+  full_name: string;
+  avatar_url: string | null;
 }
 
-const LANGUAGES = [
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
-  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
-] as const;
+export default function UserRolesPage() {
+  const searchParams = useSearchParams();
+  const userIdFromUrl = searchParams.get('user_id');
 
-export default function RolePermissionsPage() {
-  const locale = useLocale();
   const [roles, setRoles] = useState<Role[]>([]);
-  const [routes, setRoutes] = useState<Route[]>([]);
-  const [permissions, setPermissions] = useState<RoutePermission[]>([]);
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('es');
-  const [loading, setLoading] = useState(true);
+  const [searchEmail, setSearchEmail] = useState('');
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [notes, setNotes] = useState('');
 
   useEffect(() => {
-    loadData();
-  }, [selectedLanguage]);
+    loadRoles();
+    if (userIdFromUrl) {
+      loadUserById(userIdFromUrl);
+    }
+  }, [userIdFromUrl]);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadRoles = async () => {
     const supabase = createClient();
-
-    const { data: rolesData } = await supabase
+    const { data } = await supabase
       .schema('app')
       .from('roles')
       .select('*')
+      .eq('is_active', true)
       .order('hierarchy_level', { ascending: false });
 
-    // Cargar rutas con traducciones
-    const { data: routesData } = await supabase
-      .schema('app')
-      .from('routes')
-      .select(`
-        id,
-        pathname,
-        display_name,
-        icon,
-        route_translations!left(
-          language_code,
-          translated_path,
-          translated_name
-        )
-      `)
-      .eq('is_active', true)
-      .is('deleted_at', null)
-      .order('menu_order');
+    setRoles(data || []);
+  };
 
-    const mappedRoutes = (routesData || []).map((route: any) => {
-      const translation = route.route_translations?.find(
-        (t: any) => t.language_code === selectedLanguage
-      );
-      
-      return {
-        id: route.id,
-        pathname: route.pathname,
-        display_name: route.display_name,
-        icon: route.icon,
-        translated_path: translation?.translated_path || route.pathname,
-        translated_name: translation?.translated_name || route.display_name,
+  const loadUserById = async (userId: string) => {
+    setLoading(true);
+    const supabase = createClient();
+
+    // Obtener info del usuario
+    const { data: userData, error: userError } = await supabase
+      .schema('auth')
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (!userError && userData) {
+      const user: User = {
+        user_id: userData.id,
+        email: userData.email || '',
+        full_name:
+          userData.raw_user_meta_data?.full_name ||
+          userData.raw_user_meta_data?.name ||
+          userData.email?.split('@')[0] ||
+          'Usuario',
+        avatar_url:
+          userData.raw_user_meta_data?.avatar_url ||
+          userData.raw_user_meta_data?.picture ||
+          null,
       };
-    });
-
-    // Cargar permisos (sin language_code, eso está en role_language_access)
-    const { data: permissionsData, error: permError } = await supabase
-      .schema('app')
-      .from('route_permissions')
-      .select('id, role_name, route_id, is_active')
-      .eq('is_active', true);
-
-    if (permError) {
-      console.error('Error loading permissions:', permError);
+      setSelectedUser(user);
+      await loadUserRoles(userId);
     }
 
-    setRoles(rolesData || []);
-    setRoutes(mappedRoutes);
-    setPermissions(permissionsData || []);
     setLoading(false);
   };
 
-  // ✅ CORRECCIÓN: Verificar si el rol tiene la ruta (sin idioma)
-  const hasPermission = (roleId: string, routeId: string): boolean => {
-    const role = roles.find(r => r.id === roleId);
-    if (!role) return false;
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchEmail.trim()) return;
 
-    return permissions.some(
-      p => p.role_name === role.name && p.route_id === routeId
+    setLoading(true);
+    const supabase = createClient();
+
+    const { data, error } = await supabase.rpc('search_users_by_email', {
+      search_email: searchEmail,
+    });
+
+    if (error || !data || data.length === 0) {
+      alert('No se encontró ningún usuario con ese email');
+      setLoading(false);
+      return;
+    }
+
+    // Seleccionar el primer usuario
+    setSelectedUser(data[0]);
+    await loadUserRoles(data[0].user_id);
+    setLoading(false);
+  };
+
+  const loadUserRoles = async (userId: string) => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .schema('app')
+      .from('user_roles')
+      .select(`
+        *,
+        roles:role_id (
+          id,
+          name,
+          display_name,
+          description,
+          hierarchy_level
+        )
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    setUserRoles(data || []);
+  };
+
+  const hasRole = (roleId: string): boolean => {
+    return userRoles.some(
+      (ur) =>
+        ur.role_id === roleId && ur.is_active && ur.revoked_at === null
     );
   };
 
-  // ✅ CORRECCIÓN: Toggle permiso de ruta (sin idioma)
-  const togglePermission = async (roleId: string, routeId: string) => {
-    const role = roles.find(r => r.id === roleId);
-    if (!role) return;
+  const assignRole = async (roleId: string) => {
+    if (!selectedUser) return;
 
     setSaving(true);
     const supabase = createClient();
 
-    const exists = hasPermission(roleId, routeId);
+    const { error } = await supabase.schema('app').from('user_roles').insert([
+      {
+        user_id: selectedUser.user_id,
+        role_id: roleId,
+        is_active: true,
+        notes: notes.trim() || null,
+      },
+    ]);
 
-    if (exists) {
-      // Eliminar permiso
-      const permission = permissions.find(
-        p => p.role_name === role.name && p.route_id === routeId
-      );
-
-      if (permission) {
-        const { error } = await supabase
-          .schema('app')
-          .from('route_permissions')
-          .delete()
-          .eq('id', permission.id);
-
-        if (!error) {
-          setPermissions(prev => prev.filter(p => p.id !== permission.id));
-        }
+    if (error) {
+      console.error('Error assigning role:', error);
+      if (error.code === '23505') {
+        // Duplicate key
+        alert('Este usuario ya tiene este rol asignado');
+      } else {
+        alert('Error al asignar rol');
       }
     } else {
-      // Agregar permiso (sin language_code)
-      const { data, error } = await supabase
-        .schema('app')
-        .from('route_permissions')
-        .insert({
-          role_name: role.name,
-          route_id: routeId,
-          is_active: true,
-        })
-        .select()
-        .single();
+      alert('Rol asignado exitosamente');
+      setNotes('');
+      await loadUserRoles(selectedUser.user_id);
+    }
 
-      if (!error && data) {
-        setPermissions(prev => [...prev, data]);
+    setSaving(false);
+  };
+
+  const revokeRole = async (userRoleId: string) => {
+    if (!confirm('¿Estás seguro de revocar este rol?')) return;
+
+    setSaving(true);
+    const supabase = createClient();
+
+    const { error } = await supabase
+      .schema('app')
+      .from('user_roles')
+      .update({
+        is_active: false,
+        revoked_at: new Date().toISOString(),
+      })
+      .eq('id', userRoleId);
+
+    if (error) {
+      console.error('Error revoking role:', error);
+      alert('Error al revocar rol');
+    } else {
+      alert('Rol revocado exitosamente');
+      if (selectedUser) {
+        await loadUserRoles(selectedUser.user_id);
       }
     }
 
     setSaving(false);
   };
 
-  // ✅ CORRECCIÓN: Toggle todas (sin idioma)
-  const toggleAllForRole = async (roleId: string, grant: boolean) => {
-    const role = roles.find(r => r.id === roleId);
-    if (!role) return;
-
+  const reactivateRole = async (userRoleId: string) => {
     setSaving(true);
     const supabase = createClient();
 
-    if (grant) {
-      const newPermissions = routes
-        .filter(route => !hasPermission(roleId, route.id))
-        .map(route => ({
-          role_name: role.name,
-          route_id: route.id,
-          is_active: true,
-        }));
+    const { error } = await supabase
+      .schema('app')
+      .from('user_roles')
+      .update({
+        is_active: true,
+        revoked_at: null,
+      })
+      .eq('id', userRoleId);
 
-      if (newPermissions.length > 0) {
-        const { data } = await supabase
-          .schema('app')
-          .from('route_permissions')
-          .insert(newPermissions)
-          .select();
-
-        if (data) {
-          setPermissions(prev => [...prev, ...data]);
-        }
-      }
+    if (error) {
+      console.error('Error reactivating role:', error);
+      alert('Error al reactivar rol');
     } else {
-      const toDelete = permissions.filter(p => p.role_name === role.name);
-
-      if (toDelete.length > 0) {
-        const ids = toDelete.map(p => p.id);
-        await supabase
-          .schema('app')
-          .from('route_permissions')
-          .delete()
-          .in('id', ids);
-
-        setPermissions(prev => prev.filter(p => !ids.includes(p.id)));
+      alert('Rol reactivado exitosamente');
+      if (selectedUser) {
+        await loadUserRoles(selectedUser.user_id);
       }
     }
 
     setSaving(false);
   };
+
+  const activeRoles = userRoles.filter((ur) => ur.is_active && !ur.revoked_at);
+  const inactiveRoles = userRoles.filter((ur) => !ur.is_active || ur.revoked_at);
 
   return (
     <RouteGuard redirectTo="/error?code=403">
       <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              🔐 Módulo 4: Permisos por Rol
+              👥 Asignar Roles a Usuarios
             </h1>
             <p className="text-gray-600">
-              Asigna rutas a roles. El acceso por idioma se controla en role_language_access.
+              Asignar roles a usuarios específicos (Script 05)
             </p>
           </div>
 
-          {/* Selector de idioma (solo para ver traducciones) */}
-          <div className="mb-6 bg-white rounded-lg shadow-md p-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              🌍 Idioma de visualización:
-            </label>
-            <div className="flex gap-2">
-              {LANGUAGES.map(lang => (
-                <button
-                  key={lang.code}
-                  onClick={() => setSelectedLanguage(lang.code)}
-                  className={`px-4 py-2 rounded-lg font-medium transition ${
-                    selectedLanguage === lang.code
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  {lang.flag} {lang.name}
-                </button>
-              ))}
+          {/* Buscar Usuario */}
+          {!selectedUser && (
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <h2 className="text-lg font-semibold mb-4">Buscar Usuario</h2>
+              <form onSubmit={handleSearch} className="space-y-4">
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    placeholder="Escribe el email del usuario..."
+                    value={searchEmail}
+                    onChange={(e) => setSearchEmail(e.target.value)}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors disabled:bg-gray-400"
+                  >
+                    {loading ? '🔍 Buscando...' : '🔍 Buscar'}
+                  </button>
+                </div>
+              </form>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
-              ℹ️ Los permisos NO son por idioma. El selector solo cambia los nombres mostrados.
-            </p>
-          </div>
+          )}
 
-          {loading ? (
-            <div className="text-center py-12">Cargando...</div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
-              {/* Lista de Roles */}
-              <div className="lg:col-span-1">
-                <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                  <div className="px-6 py-4 bg-gray-50 border-b">
-                    <h2 className="text-lg font-semibold">Roles ({roles.length})</h2>
-                  </div>
-                  <div className="divide-y">
-                    {roles.map(role => {
-                      // Contar permisos del rol (sin idioma)
-                      const permCount = permissions.filter(p => 
-                        p.role_name === role.name
-                      ).length;
+          {/* Usuario Seleccionado */}
+          {selectedUser && (
+            <>
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold">Usuario Seleccionado</h2>
+                  <button
+                    onClick={() => {
+                      setSelectedUser(null);
+                      setUserRoles([]);
+                      setSearchEmail('');
+                    }}
+                    className="text-sm text-gray-600 hover:text-gray-900"
+                  >
+                    ❌ Cambiar usuario
+                  </button>
+                </div>
 
-                      return (
-                        <button
-                          key={role.id}
-                          onClick={() => setSelectedRole(role)}
-                          className={`w-full text-left p-4 hover:bg-gray-50 transition ${
-                            selectedRole?.id === role.id ? 'bg-blue-50' : ''
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h3 className="font-semibold">{role.display_name}</h3>
-                              <p className="text-sm text-gray-500">
-                                {permCount} rutas asignadas
-                              </p>
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
+                <div className="flex items-center gap-4">
+                  {selectedUser.avatar_url ? (
+                    <img
+                      src={selectedUser.avatar_url}
+                      alt={selectedUser.full_name}
+                      className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center text-2xl">
+                      👤
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      {selectedUser.full_name}
+                    </h3>
+                    <p className="text-gray-600">{selectedUser.email}</p>
+                    <code className="text-xs text-gray-500">
+                      ID: {selectedUser.user_id}
+                    </code>
                   </div>
                 </div>
               </div>
 
-              {/* Rutas para el Rol */}
-              <div className="lg:col-span-2">
-                {selectedRole ? (
-                  <div className="bg-white rounded-lg shadow-md">
-                    <div className="px-6 py-4 bg-gray-50 border-b">
-                      <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-semibold">
-                          {selectedRole.display_name}
-                        </h2>
-                        <div className="flex gap-2">
+              {/* Roles Activos */}
+              <div className="bg-white rounded-lg shadow-md mb-6">
+                <div className="px-6 py-4 bg-green-50 border-b border-green-200">
+                  <h2 className="text-lg font-semibold text-green-900">
+                    ✅ Roles Activos ({activeRoles.length})
+                  </h2>
+                </div>
+                {activeRoles.length === 0 ? (
+                  <div className="p-6 text-center text-gray-500">
+                    Este usuario no tiene roles activos
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-200">
+                    {activeRoles.map((userRole) => (
+                      <div
+                        key={userRole.id}
+                        className="p-6 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              {userRole.roles?.display_name}
+                            </h3>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {userRole.roles?.description}
+                            </p>
+                            <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
+                              <span>
+                                Nivel: {userRole.roles?.hierarchy_level}
+                              </span>
+                              <span>
+                                Asignado:{' '}
+                                {new Date(userRole.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                            {userRole.notes && (
+                              <p className="mt-2 text-sm text-gray-600 italic">
+                                📝 {userRole.notes}
+                              </p>
+                            )}
+                          </div>
                           <button
-                            onClick={() => toggleAllForRole(selectedRole.id, true)}
+                            onClick={() => revokeRole(userRole.id)}
                             disabled={saving}
-                            className="text-sm bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400"
+                            className="ml-4 text-sm bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:bg-gray-400"
                           >
-                            ✅ Todas
-                          </button>
-                          <button
-                            onClick={() => toggleAllForRole(selectedRole.id, false)}
-                            disabled={saving}
-                            className="text-sm bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:bg-gray-400"
-                          >
-                            ❌ Quitar Todas
+                            🗑️ Revocar
                           </button>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="divide-y max-h-[600px] overflow-y-auto">
-                      {routes.map(route => {
-                        const checked = hasPermission(selectedRole.id, route.id);
-                        
-                        return (
-                          <div key={route.id} className="p-4 hover:bg-gray-50">
-                            <label className="flex items-center gap-3 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={() => togglePermission(selectedRole.id, route.id)}
-                                disabled={saving}
-                                className="w-5 h-5 text-blue-600 rounded"
-                              />
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  {route.icon && <span>{route.icon}</span>}
-                                  <span className="font-medium">{route.translated_name}</span>
-                                </div>
-                                <code className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                                  {route.translated_path}
-                                </code>
-                              </div>
-                            </label>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-lg shadow-md p-12 text-center text-gray-500">
-                    Selecciona un rol
+                    ))}
                   </div>
                 )}
               </div>
 
-            </div>
+              {/* Roles Revocados */}
+              {inactiveRoles.length > 0 && (
+                <div className="bg-white rounded-lg shadow-md mb-6">
+                  <div className="px-6 py-4 bg-red-50 border-b border-red-200">
+                    <h2 className="text-lg font-semibold text-red-900">
+                      ❌ Roles Revocados ({inactiveRoles.length})
+                    </h2>
+                  </div>
+                  <div className="divide-y divide-gray-200">
+                    {inactiveRoles.map((userRole) => (
+                      <div
+                        key={userRole.id}
+                        className="p-6 bg-gray-50 hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-gray-700">
+                              {userRole.roles?.display_name}
+                            </h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                              Revocado:{' '}
+                              {userRole.revoked_at
+                                ? new Date(userRole.revoked_at).toLocaleDateString()
+                                : 'N/A'}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => reactivateRole(userRole.id)}
+                            disabled={saving}
+                            className="ml-4 text-sm bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400"
+                          >
+                            ♻️ Reactivar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Asignar Nuevo Rol */}
+              <div className="bg-white rounded-lg shadow-md">
+                <div className="px-6 py-4 bg-indigo-50 border-b border-indigo-200">
+                  <h2 className="text-lg font-semibold text-indigo-900">
+                    ➕ Asignar Nuevo Rol
+                  </h2>
+                </div>
+                <div className="p-6">
+                  <div className="space-y-4">
+                    {/* Notas opcionales */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Notas (opcional)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Razón de la asignación..."
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+
+                    {/* Lista de roles disponibles */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {roles.map((role) => {
+                        const alreadyHas = hasRole(role.id);
+                        return (
+                          <button
+                            key={role.id}
+                            onClick={() => !alreadyHas && assignRole(role.id)}
+                            disabled={saving || alreadyHas}
+                            className={`
+                              p-4 border-2 rounded-lg text-left transition-all
+                              ${alreadyHas
+                                ? 'bg-gray-100 border-gray-300 cursor-not-allowed'
+                                : 'bg-white border-indigo-300 hover:border-indigo-500 hover:shadow-md'
+                              }
+                            `}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-gray-900">
+                                  {role.display_name}
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {role.description}
+                                </p>
+                                <span className="inline-block mt-2 text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded">
+                                  Nivel: {role.hierarchy_level}
+                                </span>
+                              </div>
+                              {alreadyHas && (
+                                <span className="ml-2 text-green-600">✅</span>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
 
-          {/* Ayuda */}
+          {/* Información */}
           <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
             <h3 className="text-lg font-semibold text-blue-900 mb-3">
-              ℹ️ Cómo Funcionan los Permisos por Rol
+              ℹ️ Cómo funciona
             </h3>
             <ul className="space-y-2 text-blue-800 text-sm">
-              <li>• <strong>route_permissions:</strong> Define QUÉ rutas puede usar cada rol</li>
-              <li>• <strong>role_language_access:</strong> Define EN QUÉ idiomas puede usarlas</li>
-              <li>• Si un rol tiene permiso de /library PERO no acceso a 'en', no podrá acceder</li>
-              <li>• El selector de idioma arriba solo cambia los nombres mostrados</li>
+              <li>
+                ✅ <strong>Buscar usuario:</strong> Escribe el email para encontrar
+                al usuario
+              </li>
+              <li>
+                ✅ <strong>Asignar rol:</strong> El usuario hereda TODOS los permisos
+                de ese rol
+              </li>
+              <li>
+                ✅ <strong>Múltiples roles:</strong> Un usuario puede tener varios
+                roles activos simultáneamente
+              </li>
+              <li>
+                ⚠️ <strong>Revocar vs Eliminar:</strong> Revocar mantiene el historial,
+                útil para auditoría
+              </li>
             </ul>
           </div>
-
         </div>
       </div>
     </RouteGuard>
