@@ -16,157 +16,175 @@
 -- 1. SUPER_ADMIN - Acceso Total
 -- ========================================
 
-INSERT INTO app.route_permissions (role_name, route_id, language_code, is_active)
-SELECT
-  'super_admin',
-  r.id,
-  NULL, -- NULL = todos los idiomas
-  TRUE
-FROM app.routes r
-WHERE r.is_active = TRUE
-ON CONFLICT (role_name, route_id, COALESCE(language_code, ''))
-DO UPDATE SET is_active = TRUE;
+DO $$
+BEGIN
+  INSERT INTO app.route_permissions (role_name, route_id, language_code, is_active)
+  SELECT
+    'super_admin',
+    r.id,
+    NULL, -- NULL = todos los idiomas
+    TRUE
+  FROM app.routes r
+  WHERE r.is_active = TRUE
+  ON CONFLICT (role_name, route_id, COALESCE(language_code, ''))
+  DO UPDATE SET is_active = TRUE;
 
-RAISE NOTICE '✅ Super Admin: Acceso a todas las rutas';
+  RAISE NOTICE '✅ Super Admin: Acceso a todas las rutas';
+END $$;
 
 -- ========================================
 -- 2. ADMIN - Acceso Amplio (excepto críticas)
 -- ========================================
 
-INSERT INTO app.route_permissions (role_name, route_id, language_code, is_active)
-SELECT
-  'admin',
-  r.id,
-  NULL,
-  TRUE
-FROM app.routes r
-WHERE r.is_active = TRUE
-  AND r.pathname NOT IN (
-    '/admin/route-scanner',      -- Solo super_admin puede escanear rutas
-    '/admin/user-roles'           -- Solo super_admin puede asignar roles
-  )
-ON CONFLICT (role_name, route_id, COALESCE(language_code, ''))
-DO UPDATE SET is_active = TRUE;
+DO $$
+BEGIN
+  INSERT INTO app.route_permissions (role_name, route_id, language_code, is_active)
+  SELECT
+    'admin',
+    r.id,
+    NULL,
+    TRUE
+  FROM app.routes r
+  WHERE r.is_active = TRUE
+    AND r.pathname NOT IN (
+      '/admin/route-scanner',      -- Solo super_admin puede escanear rutas
+      '/admin/user-roles'           -- Solo super_admin puede asignar roles
+    )
+  ON CONFLICT (role_name, route_id, COALESCE(language_code, ''))
+  DO UPDATE SET is_active = TRUE;
 
-RAISE NOTICE '✅ Admin: Acceso a casi todas las rutas';
+  RAISE NOTICE '✅ Admin: Acceso a casi todas las rutas';
+END $$;
 
 -- ========================================
 -- 3. TEACHER - Acceso a Libros y Gestión
 -- ========================================
 
-INSERT INTO app.route_permissions (role_name, route_id, language_code, is_active)
-SELECT
-  'teacher',
-  r.id,
-  NULL,
-  TRUE
-FROM app.routes r
-WHERE r.is_active = TRUE
-  AND (
-    -- Rutas de libros
-    r.pathname LIKE '/books%'
-    OR
-    -- Navegación principal
-    r.pathname IN (
-      '/library',
-      '/my-world',
-      '/my-progress'
+DO $$
+BEGIN
+  INSERT INTO app.route_permissions (role_name, route_id, language_code, is_active)
+  SELECT
+    'teacher',
+    r.id,
+    NULL,
+    TRUE
+  FROM app.routes r
+  WHERE r.is_active = TRUE
+    AND (
+      -- Rutas de libros
+      r.pathname LIKE '/books%'
+      OR
+      -- Navegación principal
+      r.pathname IN (
+        '/library',
+        '/my-world',
+        '/my-progress'
+      )
+      OR
+      -- Organizaciones
+      r.pathname LIKE '/organizations%'
     )
-    OR
-    -- Organizaciones
-    r.pathname LIKE '/organizations%'
-  )
-ON CONFLICT (role_name, route_id, COALESCE(language_code, ''))
-DO UPDATE SET is_active = TRUE;
+  ON CONFLICT (role_name, route_id, COALESCE(language_code, ''))
+  DO UPDATE SET is_active = TRUE;
 
-RAISE NOTICE '✅ Teacher: Acceso a libros, navegación y organizaciones';
+  RAISE NOTICE '✅ Teacher: Acceso a libros, navegación y organizaciones';
+END $$;
 
 -- ========================================
 -- 4. STUDENT - Acceso Limitado (Solo Lectura)
 -- ========================================
 
-INSERT INTO app.route_permissions (role_name, route_id, language_code, is_active)
-SELECT
-  'student',
-  r.id,
-  NULL,
-  TRUE
-FROM app.routes r
-WHERE r.is_active = TRUE
-  AND r.pathname IN (
-    -- Solo lectura
-    '/library',
-    '/my-world',
-    '/my-progress',
-    '/books',
-    '/books/[id]/read',
-    '/books/[id]/statistics'
-  )
-ON CONFLICT (role_name, route_id, COALESCE(language_code, ''))
-DO UPDATE SET is_active = TRUE;
+DO $$
+BEGIN
+  INSERT INTO app.route_permissions (role_name, route_id, language_code, is_active)
+  SELECT
+    'student',
+    r.id,
+    NULL,
+    TRUE
+  FROM app.routes r
+  WHERE r.is_active = TRUE
+    AND r.pathname IN (
+      -- Solo lectura
+      '/library',
+      '/my-world',
+      '/my-progress',
+      '/books',
+      '/books/[id]/read',
+      '/books/[id]/statistics'
+    )
+  ON CONFLICT (role_name, route_id, COALESCE(language_code, ''))
+  DO UPDATE SET is_active = TRUE;
 
-RAISE NOTICE '✅ Student: Acceso solo a lectura';
+  RAISE NOTICE '✅ Student: Acceso solo a lectura';
+END $$;
 
 -- ========================================
 -- 5. GUEST - Acceso Mínimo
 -- ========================================
 
-INSERT INTO app.route_permissions (role_name, route_id, language_code, is_active)
-SELECT
-  'guest',
-  r.id,
-  NULL,
-  TRUE
-FROM app.routes r
-WHERE r.is_active = TRUE
-  AND r.pathname IN (
-    '/library',
-    '/books',
-    '/books/[id]/read'
-  )
-ON CONFLICT (role_name, route_id, COALESCE(language_code, ''))
-DO UPDATE SET is_active = TRUE;
+DO $$
+BEGIN
+  INSERT INTO app.route_permissions (role_name, route_id, language_code, is_active)
+  SELECT
+    'guest',
+    r.id,
+    NULL,
+    TRUE
+  FROM app.routes r
+  WHERE r.is_active = TRUE
+    AND r.pathname IN (
+      '/library',
+      '/books',
+      '/books/[id]/read'
+    )
+  ON CONFLICT (role_name, route_id, COALESCE(language_code, ''))
+  DO UPDATE SET is_active = TRUE;
 
-RAISE NOTICE '✅ Guest: Acceso mínimo';
+  RAISE NOTICE '✅ Guest: Acceso mínimo';
+END $$;
 
 -- ========================================
 -- 6. CONFIGURAR ACCESO A IDIOMAS POR ROL
 -- ========================================
 
--- Super Admin: Todos los idiomas
-INSERT INTO app.role_language_access (role_name, language_code, is_active)
-SELECT 'super_admin', lang, TRUE
-FROM (VALUES ('es'), ('en'), ('fr'), ('it')) AS langs(lang)
-ON CONFLICT (role_name, language_code)
-DO UPDATE SET is_active = TRUE;
+DO $$
+BEGIN
+  -- Super Admin: Todos los idiomas
+  INSERT INTO app.role_language_access (role_name, language_code, is_active)
+  SELECT 'super_admin', lang, TRUE
+  FROM (VALUES ('es'), ('en'), ('fr'), ('it')) AS langs(lang)
+  ON CONFLICT (role_name, language_code)
+  DO UPDATE SET is_active = TRUE;
 
--- Admin: Todos los idiomas
-INSERT INTO app.role_language_access (role_name, language_code, is_active)
-SELECT 'admin', lang, TRUE
-FROM (VALUES ('es'), ('en'), ('fr'), ('it')) AS langs(lang)
-ON CONFLICT (role_name, language_code)
-DO UPDATE SET is_active = TRUE;
+  -- Admin: Todos los idiomas
+  INSERT INTO app.role_language_access (role_name, language_code, is_active)
+  SELECT 'admin', lang, TRUE
+  FROM (VALUES ('es'), ('en'), ('fr'), ('it')) AS langs(lang)
+  ON CONFLICT (role_name, language_code)
+  DO UPDATE SET is_active = TRUE;
 
--- Teacher: Español e Inglés
-INSERT INTO app.role_language_access (role_name, language_code, is_active)
-SELECT 'teacher', lang, TRUE
-FROM (VALUES ('es'), ('en')) AS langs(lang)
-ON CONFLICT (role_name, language_code)
-DO UPDATE SET is_active = TRUE;
+  -- Teacher: Español e Inglés
+  INSERT INTO app.role_language_access (role_name, language_code, is_active)
+  SELECT 'teacher', lang, TRUE
+  FROM (VALUES ('es'), ('en')) AS langs(lang)
+  ON CONFLICT (role_name, language_code)
+  DO UPDATE SET is_active = TRUE;
 
--- Student: Solo Español
-INSERT INTO app.role_language_access (role_name, language_code, is_active)
-VALUES ('student', 'es', TRUE)
-ON CONFLICT (role_name, language_code)
-DO UPDATE SET is_active = TRUE;
+  -- Student: Solo Español
+  INSERT INTO app.role_language_access (role_name, language_code, is_active)
+  VALUES ('student', 'es', TRUE)
+  ON CONFLICT (role_name, language_code)
+  DO UPDATE SET is_active = TRUE;
 
--- Guest: Solo Español
-INSERT INTO app.role_language_access (role_name, language_code, is_active)
-VALUES ('guest', 'es', TRUE)
-ON CONFLICT (role_name, language_code)
-DO UPDATE SET is_active = TRUE;
+  -- Guest: Solo Español
+  INSERT INTO app.role_language_access (role_name, language_code, is_active)
+  VALUES ('guest', 'es', TRUE)
+  ON CONFLICT (role_name, language_code)
+  DO UPDATE SET is_active = TRUE;
 
-RAISE NOTICE '✅ Acceso a idiomas configurado';
+  RAISE NOTICE '✅ Acceso a idiomas configurado';
+END $$;
 
 -- ========================================
 -- 7. RESUMEN DE PERMISOS

@@ -14,6 +14,34 @@ Esta guía te ayudará a configurar el sistema de rutas traducidas con verificac
 
 ---
 
+## 🔧 Paso 0: Arreglar Constraint (PRIMERO - MUY IMPORTANTE)
+
+### ⚠️ Este paso es OBLIGATORIO antes de insertar rutas
+
+1. Abre tu proyecto en [Supabase Dashboard](https://supabase.com/dashboard)
+2. Ve a **SQL Editor**
+3. Crea una nueva query
+4. Copia y pega el contenido de:
+   ```
+   supabase/migrations/00_FIX_ROUTES_CONSTRAINT.sql
+   ```
+5. Haz click en **Run**
+
+**Por qué es necesario:**
+- El constraint actual de `app.routes` no permite corchetes `[]`
+- Las rutas dinámicas como `/books/[id]/edit` necesitan corchetes
+- Este script actualiza el constraint para permitirlos
+
+**Resultado esperado:**
+```
+✅ Constraint actualizado
+✅ Test 1 pasado: Ruta simple
+✅ Test 2 pasado: Ruta con [id]
+✅ TODOS LOS TESTS PASARON
+```
+
+---
+
 ## 🔧 Paso 1: Ejecutar Script de Inserción
 
 ### Opción A: Desde el Dashboard de Supabase
@@ -418,11 +446,13 @@ WHERE r.pathname = '/mi/nueva/ruta';
 
 ## ✅ Checklist de Instalación
 
-- [ ] Ejecutar `INSERT_ROUTE_KEYS_SYSTEM.sql`
-- [ ] Ejecutar `VERIFY_ROUTE_KEYS_SYSTEM.sql`
+- [ ] **PASO 0:** Ejecutar `00_FIX_ROUTES_CONSTRAINT.sql` (PRIMERO)
+- [ ] Verificar que los tests del constraint pasaron
+- [ ] **PASO 1:** Ejecutar `INSERT_ROUTE_KEYS_SYSTEM.sql`
+- [ ] **PASO 2:** Ejecutar `VERIFY_ROUTE_KEYS_SYSTEM.sql`
 - [ ] Verificar que hay 33 rutas insertadas
 - [ ] Verificar que hay 132 traducciones (33 rutas x 4 idiomas)
-- [ ] Configurar permisos básicos para cada rol
+- [ ] **PASO 3:** Configurar permisos básicos para cada rol
 - [ ] Probar navegación en diferentes idiomas
 - [ ] Probar con diferentes roles de usuario
 - [ ] Limpiar cache del navegador si es necesario

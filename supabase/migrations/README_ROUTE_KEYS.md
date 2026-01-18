@@ -4,7 +4,27 @@
 
 Ejecuta estos scripts en **ESTE ORDEN** desde el SQL Editor de Supabase:
 
-### 1️⃣ Insertar Rutas y Traducciones
+### 1️⃣ Arreglar Constraint (IMPORTANTE - EJECUTAR PRIMERO)
+```
+00_FIX_ROUTES_CONSTRAINT.sql
+```
+**Qué hace:**
+- Modifica el constraint `routes_pathname_format` para permitir corchetes `[]`
+- Permite rutas dinámicas como `/books/[id]/edit`
+- Ejecuta tests automáticos para verificar
+
+**Resultado esperado:**
+```
+✅ Constraint actualizado
+✅ Test 1 pasado: Ruta simple
+✅ Test 2 pasado: Ruta con [id]
+✅ Test 3 pasado: Ruta con múltiples parámetros
+✅ TODOS LOS TESTS PASARON
+```
+
+---
+
+### 2️⃣ Insertar Rutas y Traducciones
 ```
 INSERT_ROUTE_KEYS_SYSTEM.sql
 ```
@@ -19,7 +39,7 @@ INSERT_ROUTE_KEYS_SYSTEM.sql
 
 ---
 
-### 2️⃣ Verificar Instalación
+### 3️⃣ Verificar Instalación
 ```
 VERIFY_ROUTE_KEYS_SYSTEM.sql
 ```
@@ -38,7 +58,7 @@ VERIFY_ROUTE_KEYS_SYSTEM.sql
 
 ---
 
-### 3️⃣ Configurar Permisos Básicos
+### 4️⃣ Configurar Permisos Básicos
 ```
 SETUP_BASIC_PERMISSIONS.sql
 ```
@@ -72,6 +92,7 @@ SETUP_BASIC_PERMISSIONS.sql
 1. Abre [Supabase Dashboard](https://supabase.com/dashboard)
 2. Ve a **SQL Editor**
 3. Ejecuta en orden:
+   - `00_FIX_ROUTES_CONSTRAINT.sql` (PRIMERO)
    - `INSERT_ROUTE_KEYS_SYSTEM.sql`
    - `VERIFY_ROUTE_KEYS_SYSTEM.sql`
    - `SETUP_BASIC_PERMISSIONS.sql`
@@ -80,6 +101,9 @@ SETUP_BASIC_PERMISSIONS.sql
 
 ```bash
 cd /home/user/es-lecto-escritura-web-nextjs
+
+# 0. Arreglar constraint (PRIMERO)
+supabase db execute -f supabase/migrations/00_FIX_ROUTES_CONSTRAINT.sql
 
 # 1. Insertar rutas
 supabase db execute -f supabase/migrations/INSERT_ROUTE_KEYS_SYSTEM.sql
