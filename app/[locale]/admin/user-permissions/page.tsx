@@ -1,5 +1,6 @@
 // ============================================
 // ARCHIVO: app/[locale]/admin/user-permissions/page.tsx
+// ✅ CORREGIDO: Permisos SEPARADOS por idioma (igual que SQL)
 // ============================================
 
 'use client';
@@ -29,7 +30,7 @@ interface UserPermission {
   user_id: string;
   route_id: string;
   permission_type: 'grant' | 'deny';
-  language_code: string | null;
+  language_code: string | null; // ✅ null = TODOS los idiomas
   reason: string | null;
   is_active: boolean;
   expires_at: string | null;
@@ -44,11 +45,11 @@ interface User {
 }
 
 const LANGUAGES = [
+  { code: null, name: 'Todos los idiomas', flag: '🌍' }, // ✅ null primero
   { code: 'es', name: 'Español', flag: '🇪🇸' },
   { code: 'en', name: 'English', flag: '🇺🇸' },
   { code: 'fr', name: 'Français', flag: '🇫🇷' },
   { code: 'it', name: 'Italiano', flag: '🇮🇹' },
-  { code: null, name: 'Todos', flag: '🌍' },
 ] as const;
 
 export default function UserPermissionsPage() {
@@ -65,7 +66,7 @@ export default function UserPermissionsPage() {
   const [form, setForm] = useState({
     route_id: '',
     permission_type: 'grant' as 'grant' | 'deny',
-    language_code: 'es',
+    language_code: null as string | null, // ✅ Por defecto null (todos)
     reason: '',
     expires_at: '',
   });
@@ -163,6 +164,8 @@ export default function UserPermissionsPage() {
     if (!selectedUser) return;
     
     const supabase = createClient();
+    
+    // ✅ CORRECCIÓN: language_code puede ser null (todos) o específico
     const { error } = await supabase
       .schema('app')
       .from('user_route_permissions')
@@ -170,7 +173,7 @@ export default function UserPermissionsPage() {
         user_id: selectedUser.user_id,
         route_id: form.route_id,
         permission_type: form.permission_type,
-        language_code: form.language_code === 'all' ? null : form.language_code,
+        language_code: form.language_code, // ✅ null o 'es'/'en'/'fr'/'it'
         reason: form.reason || null,
         is_active: true,
         expires_at: form.expires_at || null,
@@ -184,7 +187,7 @@ export default function UserPermissionsPage() {
       setForm({
         route_id: '',
         permission_type: 'grant',
-        language_code: 'es',
+        language_code: null, // ✅ Reset a null
         reason: '',
         expires_at: '',
       });
@@ -212,7 +215,7 @@ export default function UserPermissionsPage() {
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-3xl font-bold mb-2">⚡ Permisos Individuales</h1>
-          <p className="text-gray-600 mb-8">GRANT/DENY por ruta e idioma</p>
+          <p className="text-gray-600 mb-8">GRANT/DENY por ruta e idioma SEPARADO</p>
 
           {/* Buscar usuario */}
           {!selectedUser && (
@@ -304,18 +307,24 @@ export default function UserPermissionsPage() {
                   <div>
                     <label className="block text-sm font-medium mb-1">Idioma *</label>
                     <select
-                      value={form.language_code}
-                      onChange={(e) => setForm({ ...form, language_code: e.target.value })}
+                      value={form.language_code === null ? 'null' : form.language_code}
+                      onChange={(e) => setForm({ 
+                        ...form, 
+                        language_code: e.target.value === 'null' ? null : e.target.value 
+                      })}
                       className="w-full p-2 border rounded"
                     >
                       {LANGUAGES.map((l) => (
-                        <option key={l.code || 'all'} value={l.code || 'all'}>
+                        <option 
+                          key={l.code === null ? 'null' : l.code} 
+                          value={l.code === null ? 'null' : l.code}
+                        >
                           {l.flag} {l.name}
                         </option>
                       ))}
                     </select>
                     <p className="text-xs text-gray-500 mt-1">
-                      🌍 = Todos los idiomas | ES/EN/FR/IT = Solo ese idioma
+                      🌍 = TODOS los idiomas | ES/EN/FR/IT = SOLO ese idioma
                     </p>
                   </div>
 
@@ -385,7 +394,11 @@ export default function UserPermissionsPage() {
                             </code>
                           </div>
                           <p className="text-xs text-gray-500">
-                            {p.language_code ? `🌐 ${p.language_code.toUpperCase()}` : '🌍 Todos los idiomas'}
+                            {/* ✅ CORRECCIÓN: Mostrar correctamente null */}
+                            {p.language_code === null 
+                              ? '🌍 TODOS los idiomas' 
+                              : `🌐 Solo ${p.language_code.toUpperCase()}`
+                            }
                           </p>
                           {p.reason && (
                             <p className="text-sm text-gray-600 mt-1">📝 {p.reason}</p>
@@ -406,13 +419,14 @@ export default function UserPermissionsPage() {
               {/* Info */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-blue-900 mb-3">
-                  ℹ️ Permisos por Idioma
+                  ℹ️ Permisos por Idioma SEPARADO
                 </h3>
                 <ul className="space-y-2 text-blue-800 text-sm">
-                  <li>• Cada permiso se asigna a UN idioma específico</li>
-                  <li>• GRANT ES solo da acceso a /es/ruta</li>
-                  <li>• Para acceso completo, usa 🌍 Todos los idiomas</li>
-                  <li>• DENY tiene prioridad sobre GRANT</li>
+                  <li>• <strong>🌍 TODOS</strong> = Acceso en ES, EN, FR, IT (global)</li>
+                  <li>• <strong>🇪🇸 Solo ES</strong> = Acceso SOLO en español</li>
+                  <li>• <strong>🇺🇸 Solo EN</strong> = Acceso SOLO en inglés</li>
+                  <li>• Si asignas GRANT ES, NO tiene acceso en EN/FR/IT</li>
+                  <li>• DENY tiene prioridad sobre GRANT (bloquea siempre)</li>
                 </ul>
               </div>
             </div>
