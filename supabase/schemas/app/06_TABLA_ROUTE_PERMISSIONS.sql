@@ -8,6 +8,9 @@ CREATE TABLE app.route_permissions (
   role_name VARCHAR(50) NOT NULL REFERENCES app.roles(name) ON DELETE CASCADE,
   route_id UUID NOT NULL REFERENCES app.routes(id) ON DELETE CASCADE,
   
+  -- ✅ NUEVO: Idioma específico (NULL = todos los idiomas)
+  language_code app.language_code NULL,
+  
   -- Metadata
   is_active BOOLEAN NOT NULL DEFAULT true,
   
@@ -17,13 +20,14 @@ CREATE TABLE app.route_permissions (
   created_by UUID REFERENCES auth.users(id),
   
   -- Constraints
-  CONSTRAINT route_permissions_unique UNIQUE (role_name, route_id)
+  CONSTRAINT route_permissions_unique UNIQUE (role_name, route_id, language_code)
 );
 
 -- Índices
 CREATE INDEX idx_route_permissions_role_name ON app.route_permissions(role_name);
 CREATE INDEX idx_route_permissions_route_id ON app.route_permissions(route_id);
 CREATE INDEX idx_route_permissions_is_active ON app.route_permissions(is_active);
+CREATE INDEX idx_route_permissions_language ON app.route_permissions(language_code);
 
 -- Trigger
 CREATE TRIGGER set_route_permissions_updated_at
@@ -58,37 +62,38 @@ CREATE POLICY "route_permissions_delete_policy" ON app.route_permissions
 GRANT SELECT, INSERT, UPDATE, DELETE ON app.route_permissions TO authenticated;
 
 -- Datos iniciales: super_admin (TODAS)
-INSERT INTO app.route_permissions (role_name, route_id)
-SELECT 'super_admin', r.id
+INSERT INTO app.route_permissions (role_name, route_id, language_code)
+SELECT 'super_admin', r.id, NULL
 FROM app.routes r
 WHERE r.deleted_at IS NULL;
 
 -- admin
-INSERT INTO app.route_permissions (role_name, route_id)
-SELECT 'admin', r.id
+INSERT INTO app.route_permissions (role_name, route_id, language_code)
+SELECT 'admin', r.id, NULL
 FROM app.routes r
 WHERE r.pathname IN ('/', '/library', '/my-world', '/my-progress', '/admin');
 
 -- teacher
-INSERT INTO app.route_permissions (role_name, route_id)
-SELECT 'teacher', r.id
+INSERT INTO app.route_permissions (role_name, route_id, language_code)
+SELECT 'teacher', r.id, NULL
 FROM app.routes r
 WHERE r.pathname IN ('/', '/library', '/my-world', '/my-progress');
 
 -- student
-INSERT INTO app.route_permissions (role_name, route_id)
-SELECT 'student', r.id
+INSERT INTO app.route_permissions (role_name, route_id, language_code)
+SELECT 'student', r.id, NULL
 FROM app.routes r
 WHERE r.pathname IN ('/', '/library', '/my-world', '/my-progress');
 
 -- guest
-INSERT INTO app.route_permissions (role_name, route_id)
-SELECT 'guest', r.id
+INSERT INTO app.route_permissions (role_name, route_id, language_code)
+SELECT 'guest', r.id, NULL
 FROM app.routes r
 WHERE r.pathname IN ('/');
 
 -- Comentarios
 COMMENT ON TABLE app.route_permissions IS 'Permisos por ROL';
+COMMENT ON COLUMN app.route_permissions.language_code IS 'Idioma específico. NULL = todos los idiomas';
 
 -- Verificar
 SELECT 
