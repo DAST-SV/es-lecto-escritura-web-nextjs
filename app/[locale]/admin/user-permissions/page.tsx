@@ -63,6 +63,7 @@ export default function UserPermissionsPage() {
   const loadRoutes = async () => {
     const supabase = createClient();
     const { data } = await supabase
+      .schema('app')
       .from('routes')
       .select('id, pathname, display_name, icon')
       .is('deleted_at', null)
@@ -77,7 +78,8 @@ export default function UserPermissionsPage() {
     const supabase = createClient();
 
     const { data: userData, error: userError } = await supabase
-      .from('auth.users')
+      .schema('auth')
+      .from('users')
       .select('*')
       .eq('id', userId)
       .single();
@@ -128,6 +130,7 @@ export default function UserPermissionsPage() {
   const loadUserPermissions = async (userId: string) => {
     const supabase = createClient();
     const { data } = await supabase
+      .schema('app')
       .from('user_route_permissions')
       .select(`
         *,
@@ -164,6 +167,7 @@ export default function UserPermissionsPage() {
     }
 
     const { error } = await supabase
+      .schema('app')
       .from('user_route_permissions')
       .insert([permissionData]);
 
@@ -190,6 +194,7 @@ export default function UserPermissionsPage() {
     const supabase = createClient();
 
     const { error } = await supabase
+      .schema('app')
       .from('user_route_permissions')
       .delete()
       .eq('id', permissionId);
@@ -568,9 +573,8 @@ function PermissionCard({
 
   return (
     <div
-      className={`p-6 hover:bg-gray-50 transition-colors ${
-        expired ? 'opacity-60' : ''
-      }`}
+      className={`p-6 hover:bg-gray-50 transition-colors ${expired ? 'opacity-60' : ''
+        }`}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
