@@ -1,6 +1,6 @@
 -- ============================================
 -- SCRIPT 09: FUNCIÓN CAN_ACCESS_ROUTE
--- ✅ CORREGIDA: Permisos SEPARADOS por idioma
+-- ✅ ACTUALIZADO: Lógica de DENY mejorada con logs detallados
 -- ============================================
 
 DROP FUNCTION IF EXISTS public.can_access_route(uuid, text, text) CASCADE;
@@ -8,7 +8,7 @@ DROP FUNCTION IF EXISTS app.can_access_route(uuid, text, text) CASCADE;
 
 CREATE OR REPLACE FUNCTION app.can_access_route(
   p_user_id uuid,
-  p_translated_path text,  -- /biblioteca, /library, /bibliotheque
+  p_translated_path text,
   p_language_code text DEFAULT 'es'
 )
 RETURNS boolean
@@ -21,7 +21,6 @@ DECLARE
   v_is_public boolean;
   v_lang_code app.language_code;
   
-  -- ✅ SEPARADOS: global vs específico
   v_has_deny_global boolean := false;
   v_has_deny_specific boolean := false;
   v_has_grant_global boolean := false;
@@ -35,6 +34,12 @@ BEGIN
   EXCEPTION WHEN OTHERS THEN
     v_lang_code := 'es'::app.language_code;
   END;
+
+  RAISE NOTICE '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+  RAISE NOTICE '🔐 can_access_route()';
+  RAISE NOTICE '   User: %', p_user_id;
+  RAISE NOTICE '   Path: %', p_translated_path;
+  RAISE NOTICE '   Lang: %', v_lang_code;
 
   -- ============================================
   -- PASO 1: Buscar ruta por traducción
@@ -55,11 +60,11 @@ BEGIN
   LIMIT 1;
 
   IF v_route_id IS NULL THEN
-    RAISE NOTICE '❌ Ruta no encontrada: % (idioma: %)', p_translated_path, v_lang_code;
+    RAISE NOTICE '❌ Ruta no encontrada';
     RETURN false;
   END IF;
 
-  RAISE NOTICE '📍 Ruta encontrada: % (route_id: %)', p_translated_path, v_route_id;
+  RAISE NOTICE '📍 Ruta encontrada: %', v_route_id;
 
   -- Si es pública, acceso directo
   IF v_is_public = true THEN
@@ -74,7 +79,7 @@ BEGIN
   END IF;
 
   -- ============================================
-  -- PASO 2: DENY - Verificar bloqueos
+  -- PASO 2: DENY - Verificar bloqueos PRIMERO
   -- ============================================
   
   -- DENY global (todos los idiomas)
@@ -86,8 +91,13 @@ BEGIN
       AND urp.permission_type = 'deny'
       AND urp.is_active = true
       AND (urp.expires_at IS NULL OR urp.expires_at > NOW())
-      AND urp.language_code IS NULL  -- ✅ NULL = bloqueo global
+      AND urp.language_code IS NULL
   ) INTO v_has_deny_global;
+
+  IF v_has_deny_global THEN
+    RAISE NOTICE '🚫 DENY GLOBAL encontrado - BLOQUEADO';
+    RETURN false;
+  END IF;
 
   -- DENY específico para este idioma
   SELECT EXISTS (
@@ -98,15 +108,15 @@ BEGIN
       AND urp.permission_type = 'deny'
       AND urp.is_active = true
       AND (urp.expires_at IS NULL OR urp.expires_at > NOW())
-      AND urp.language_code = v_lang_code  -- ✅ Idioma específico
+      AND urp.language_code = v_lang_code
   ) INTO v_has_deny_specific;
 
-  -- Si hay cualquier DENY, bloquear
-  IF v_has_deny_global OR v_has_deny_specific THEN
-    RAISE NOTICE '🚫 DENY encontrado (global: %, específico: %)', 
-      v_has_deny_global, v_has_deny_specific;
+  IF v_has_deny_specific THEN
+    RAISE NOTICE '🚫 DENY ESPECÍFICO [%] encontrado - BLOQUEADO', v_lang_code;
     RETURN false;
   END IF;
+
+  RAISE NOTICE '✓ Sin DENY encontrados';
 
   -- ============================================
   -- PASO 3: GRANT - Verificar permisos individuales
@@ -121,11 +131,11 @@ BEGIN
       AND urp.permission_type = 'grant'
       AND urp.is_active = true
       AND (urp.expires_at IS NULL OR urp.expires_at > NOW())
-      AND urp.language_code IS NULL  -- ✅ NULL = acceso global
+      AND urp.language_code IS NULL
   ) INTO v_has_grant_global;
 
   IF v_has_grant_global THEN
-    RAISE NOTICE '✅ GRANT global encontrado - acceso a todos los idiomas';
+    RAISE NOTICE '✅ GRANT GLOBAL encontrado - PERMITIDO';
     RETURN true;
   END IF;
 
@@ -138,15 +148,15 @@ BEGIN
       AND urp.permission_type = 'grant'
       AND urp.is_active = true
       AND (urp.expires_at IS NULL OR urp.expires_at > NOW())
-      AND urp.language_code = v_lang_code  -- ✅ Idioma específico
+      AND urp.language_code = v_lang_code
   ) INTO v_has_grant_specific;
 
   IF v_has_grant_specific THEN
-    RAISE NOTICE '✅ GRANT específico encontrado para idioma: %', v_lang_code;
+    RAISE NOTICE '✅ GRANT ESPECÍFICO [%] encontrado - PERMITIDO', v_lang_code;
     RETURN true;
   END IF;
 
-  RAISE NOTICE '⚠️ Sin GRANT individual, verificando permisos por rol...';
+  RAISE NOTICE '⚠️ Sin GRANT individual';
 
   -- ============================================
   -- PASO 4: Permisos por ROL
@@ -162,14 +172,15 @@ BEGIN
       AND rol.is_active = true
       AND rp.route_id = v_route_id
       AND rp.is_active = true
+      AND (rp.language_code IS NULL OR rp.language_code = v_lang_code)
   ) INTO v_has_from_role;
 
   IF NOT v_has_from_role THEN
-    RAISE NOTICE '❌ Sin permiso por rol para esta ruta';
+    RAISE NOTICE '❌ Sin permiso por ROL - DENEGADO';
     RETURN false;
   END IF;
 
-  RAISE NOTICE '✅ Permiso por rol encontrado, verificando idioma...';
+  RAISE NOTICE '✓ Permiso por ROL encontrado';
 
   -- ============================================
   -- PASO 5: Verificar si el ROL permite este idioma
@@ -187,11 +198,11 @@ BEGIN
   ) INTO v_can_use_language;
 
   IF NOT v_can_use_language THEN
-    RAISE NOTICE '🚫 El rol NO permite acceso al idioma: %', v_lang_code;
+    RAISE NOTICE '🚫 ROL no permite idioma [%] - BLOQUEADO', v_lang_code;
     RETURN false;
   END IF;
 
-  RAISE NOTICE '✅ El rol permite el idioma: %', v_lang_code;
+  RAISE NOTICE '✅ ROL permite idioma [%] - PERMITIDO', v_lang_code;
   RETURN true;
 END;
 $$;
@@ -217,10 +228,8 @@ GRANT EXECUTE ON FUNCTION app.can_access_route(uuid, text, text) TO anon;
 
 -- Comentario
 COMMENT ON FUNCTION app.can_access_route IS 
-'✅ Permisos SEPARADOS por idioma. 
-- language_code = NULL → acceso global (todos los idiomas)
-- language_code específico → solo ese idioma
-Prioridad: DENY > GRANT individual > ROL + idioma';
+'✅ Verifica permisos con RAISE NOTICE detallados.
+Prioridad: DENY (bloquea inmediatamente) > GRANT individual > ROL + idioma';
 
 -- Verificar
 SELECT 'Función creada correctamente' as status;

@@ -1,193 +1,114 @@
 // ============================================
 // src/infrastructure/services/routing/DynamicRoutingService.ts
-// Carga rutas DINÁMICAMENTE desde la BD
+// Servicio para cargar rutas desde Supabase
 // ============================================
 
-import { createClient } from '@/src/infrastructure/config/supabase.config';
+import { createClient } from '@supabase/supabase-js';
 
-interface RouteTranslation {
-  route_id: string;
-  language_code: string;
-  translated_path: string;
-  translated_name: string;
-}
-
-interface Route {
-  id: string;
+interface RouteMapping {
   pathname: string;
-  display_name: string;
+  translations: {
+    [locale: string]: string;
+  };
 }
 
-/**
- * Servicio para cargar rutas dinámicamente desde la base de datos
- */
 export class DynamicRoutingService {
   /**
-   * Cargar todas las rutas con sus traducciones
-   * Devuelve el formato que next-intl necesita
+   * Carga TODAS las rutas con sus traducciones
+   * Formato: { '/admin/audit': { es: '/a', en: '/audit', fr: '/audit' } }
    */
   static async loadAllRoutes(): Promise<Record<string, any>> {
     try {
-      const supabase = createClient();
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+      );
 
-      // 1. Cargar todas las rutas activas
+      // 1. Obtener todas las rutas activas
       const { data: routes, error: routesError } = await supabase
         .schema('app')
         .from('routes')
-        .select('id, pathname, display_name')
+        .select(`
+          id,
+          pathname,
+          route_translations (
+            language_code,
+            translated_path
+          )
+        `)
         .eq('is_active', true)
         .is('deleted_at', null);
 
-      if (routesError) {
-        console.error('Error cargando rutas:', routesError);
-        return DynamicRoutingService.getFallbackRoutes();
-      }
+      if (routesError) throw routesError;
+      if (!routes) return {};
 
-      // 2. Cargar todas las traducciones
-      const { data: translations, error: translationsError } = await supabase
-        .schema('app')
-        .from('route_translations')
-        .select('route_id, language_code, translated_path, translated_name')
-        .eq('is_active', true);
-
-      if (translationsError) {
-        console.error('Error cargando traducciones:', translationsError);
-        return DynamicRoutingService.getFallbackRoutes();
-      }
-
-      // 3. Construir el objeto pathnames dinámicamente
+      // 2. Construir el objeto de rutas
       const pathnames: Record<string, any> = {};
 
-      routes?.forEach((route: Route) => {
-        // Obtener traducciones para esta ruta
-        const routeTranslations = translations?.filter(
-          (t: RouteTranslation) => t.route_id === route.id
-        );
+      routes.forEach((route: any) => {
+        const translations: Record<string, string> = {};
 
-        if (routeTranslations && routeTranslations.length > 0) {
-          // Construir objeto de traducciones
-          const translationsObj: Record<string, string> = {};
-          
-          routeTranslations.forEach((t: RouteTranslation) => {
-            translationsObj[t.language_code] = t.translated_path;
+        // Agregar traducciones
+        if (route.route_translations) {
+          route.route_translations.forEach((t: any) => {
+            translations[t.language_code] = t.translated_path;
           });
+        }
 
-          // Agregar al pathnames
-          pathnames[route.pathname] = translationsObj;
+        // Si tiene traducciones, agregarlas
+        if (Object.keys(translations).length > 0) {
+          pathnames[route.pathname] = translations;
         } else {
-          // Si no hay traducciones, usar la ruta original para todos los idiomas
+          // Sin traducciones, usar el pathname para todos los idiomas
           pathnames[route.pathname] = route.pathname;
         }
       });
 
-      console.log('✅ Rutas dinámicas cargadas:', Object.keys(pathnames).length);
+      console.log(`✅ [DynamicRouting] ${Object.keys(pathnames).length} rutas cargadas`);
       return pathnames;
 
     } catch (error) {
-      console.error('Error en loadAllRoutes:', error);
-      return DynamicRoutingService.getFallbackRoutes();
+      console.error('❌ [DynamicRouting] Error cargando rutas:', error);
+      return {};
     }
   }
 
   /**
-   * Rutas de respaldo si falla la BD
+   * Obtiene la ruta traducida para un pathname y locale
    */
-  private static getFallbackRoutes(): Record<string, any> {
-    return {
-      '/': '/',
-      '/library': {
-        es: '/biblioteca',
-        en: '/library',
-        fr: '/bibliotheque',
-        it: '/biblioteca'
-      },
-      '/my-world': {
-        es: '/mi-mundo',
-        en: '/my-world',
-        fr: '/mon-monde',
-        it: '/mio-mondo'
-      },
-      '/my-progress': {
-        es: '/mi-progreso',
-        en: '/my-progress',
-        fr: '/mon-progres',
-        it: '/mio-progresso'
-      },
-      '/admin': '/admin',
-    };
-  }
-
-  /**
-   * Obtener traducción específica de una ruta
-   */
-  static async getRouteTranslation(
+  static async getTranslatedPath(
     pathname: string,
-    languageCode: string
-  ): Promise<string> {
-    try {
-      const supabase = createClient();
+    locale: string
+  ): Promise<string | null> {
+    const routes = await this.loadAllRoutes();
+    const route = routes[pathname];
 
-      const { data: route } = await supabase
-        .schema('app')
-        .from('routes')
-        .select('id')
-        .eq('pathname', pathname)
-        .single();
+    if (!route) return null;
 
-      if (!route) return pathname;
-
-      const { data: translation } = await supabase
-        .schema('app')
-        .from('route_translations')
-        .select('translated_path')
-        .eq('route_id', route.id)
-        .eq('language_code', languageCode)
-        .single();
-
-      return translation?.translated_path || pathname;
-
-    } catch (error) {
-      console.error('Error obteniendo traducción:', error);
-      return pathname;
+    if (typeof route === 'string') {
+      return route;
     }
+
+    return route[locale] || pathname;
   }
 
   /**
-   * Obtener todas las rutas accesibles para un usuario
+   * Encuentra el pathname original desde una ruta traducida
    */
-  static async getAccessibleRoutes(
-    userId: string,
-    languageCode: string = 'es'
-  ): Promise<Array<{
-    pathname: string;
-    translatedPath: string;
-    displayName: string;
-  }>> {
-    try {
-      const supabase = createClient();
+  static async findPathnameByTranslation(
+    translatedPath: string,
+    locale: string
+  ): Promise<string | null> {
+    const routes = await this.loadAllRoutes();
 
-      const { data, error } = await supabase
-        .rpc('get_accessible_routes', {
-          p_user_id: userId,
-          p_language_code: languageCode,
-          p_organization_id: null,
-          p_show_in_menu_only: true,
-        });
-
-      if (error) {
-        console.error('Error obteniendo rutas accesibles:', error);
-        return [];
+    for (const [pathname, translations] of Object.entries(routes)) {
+      if (typeof translations === 'string') {
+        if (translations === translatedPath) return pathname;
+      } else {
+        if (translations[locale] === translatedPath) return pathname;
       }
-
-      return (data || []).map((r: any) => ({
-        pathname: r.pathname,
-        translatedPath: r.translated_path,
-        displayName: r.display_name,
-      }));
-
-    } catch (error) {
-      console.error('Error en getAccessibleRoutes:', error);
-      return [];
     }
+
+    return null;
   }
 }
