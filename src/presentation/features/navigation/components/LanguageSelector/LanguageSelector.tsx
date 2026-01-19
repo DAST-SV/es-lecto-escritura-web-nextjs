@@ -12,6 +12,7 @@ const LanguageSelector: React.FC = () => {
   const languagesWithFlags: LanguageWithFlag[] = [
     { code: "es", country: "ES" },
     { code: "en", country: "US" },
+    { code: "fr", country: "FR" },
   ];
 
   const currentLang = languagesWithFlags.find((lang) => lang.code === currentLocale.code) || languagesWithFlags[0];

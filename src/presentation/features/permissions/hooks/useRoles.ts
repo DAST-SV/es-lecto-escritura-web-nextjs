@@ -5,7 +5,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { SupabasePermissionRepository } from '@/src/infrastructure/repositories/SupabasePermissionRepository';
+import { SupabasePermissionRepository } from '@/src/infrastructure/repositories';
 import { GetAllRolesUseCase } from '@/src/core/application/use-cases/permissions';
 import { CreateRoleUseCase } from '@/src/core/application/use-cases/permissions';
 import type { CreateRoleDTO } from '@/src/core/application/use-cases/permissions';

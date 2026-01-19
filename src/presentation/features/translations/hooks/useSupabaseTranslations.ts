@@ -5,7 +5,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
-import { SupabaseTranslationRepository } from '@/src/infrastructure/repositories/SupabaseTranslationRepository';
+import { SupabaseTranslationRepository } from '@/src/infrastructure/repositories';
 import { GetTranslationsUseCase } from '@/src/core/application/use-cases';
 
 // Cache en memoria

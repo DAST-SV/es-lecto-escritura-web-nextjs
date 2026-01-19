@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Translation } from '@/src/core/domain/entities/Translation';
-import { SupabaseTranslationRepository } from '@/src/infrastructure/repositories/SupabaseTranslationRepository';
+import { SupabaseTranslationRepository } from '@/src/infrastructure/repositories';
 import { BulkCreateTranslationDTO, CreateTranslationDTO, UpdateTranslationDTO } from '@/src/core/domain/repositories';
 
 const translationRepository = new SupabaseTranslationRepository();

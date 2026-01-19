@@ -12,7 +12,7 @@ import { Login } from '@/src/core/application/use-cases/auth/Login';
 import { Signup } from '@/src/core/application/use-cases/auth/Signup';
 import { Logout } from '@/src/core/application/use-cases/auth/Logout';
 import { LoginWithProvider } from '@/src/core/application/use-cases/auth/LoginWithProvider';
-import { SupabaseAuthRepository } from '@/src/infrastructure/repositories/SupabaseAuthRepository';
+import { SupabaseAuthRepository } from '@/src/infrastructure/repositories';
 import type { LoginCredentials, SignupCredentials, OAuthProvider } from '@/src/core/domain/repositories/IAuthRepository';
 import { DomainAuthError } from '@/src/core/domain/errors/AuthError';
 import { createClient } from '@/src/infrastructure/config/supabase.config';

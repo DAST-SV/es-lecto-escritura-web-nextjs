@@ -16,21 +16,19 @@ export const publicPathnames = {
   '/auth/login': {
     es: '/auth/ingresar',
     en: '/auth/login',
-    fr: '/auth/connexion',
-    it: '/auth/accesso'
+    fr: '/auth/connexion'
   },
   '/auth/register': {
     es: '/auth/registro',
     en: '/auth/register',
-    fr: '/auth/inscription',
-    it: '/auth/registrazione'
+    fr: '/auth/inscription'
   },
-} as const satisfies Pathnames<readonly ['es', 'en', 'fr', 'it']>;
+} as const satisfies Pathnames<readonly ['es', 'en', 'fr']>;
 
 // ============================================
 // CONFIGURACIÓN BASE
 // ============================================
-export const locales = ['es', 'en', 'fr', 'it'] as const;
+export const locales = ['es', 'en', 'fr'] as const;
 export const defaultLocale = 'es' as const;
 export const localePrefix: LocalePrefix<typeof locales> = 'always';
 

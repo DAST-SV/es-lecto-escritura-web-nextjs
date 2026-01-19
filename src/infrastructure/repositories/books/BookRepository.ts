@@ -3,7 +3,7 @@
  * ✅ COMPLETO: Soporte para PDFs + Etiquetas + Todas las relaciones
  */
 
-import { supabaseAdmin } from "../../config/supabase.config";
+import { getSupabaseAdmin } from "../../config/supabase.config";
 
 
 interface PageData {
@@ -48,6 +48,8 @@ export class BookRepository {
     });
 
     try {
+      const supabaseAdmin = getSupabaseAdmin();
+
       // 1️⃣ Crear libro principal
       const { data: libro, error: libroError } = await supabaseAdmin
         .from('books')
@@ -80,7 +82,7 @@ export class BookRepository {
         } catch (pageError: any) {
           console.error('❌ Error guardando páginas:', pageError);
           // Rollback: eliminar libro
-          await supabaseAdmin.from('books').delete().eq('id', libroId);
+          await getSupabaseAdmin().from('books').delete().eq('id', libroId);
           throw new Error(`Error al guardar páginas: ${pageError.message}`);
         }
       } else {
@@ -127,7 +129,7 @@ export class BookRepository {
         updateData.pdf_url = bookData.pdfUrl;
       }
 
-      const { error: updateError } = await supabaseAdmin
+      const { error: updateError } = await getSupabaseAdmin()
         .from('books')
         .update(updateData)
         .eq('id', libroId);
@@ -166,7 +168,7 @@ export class BookRepository {
   static async getComplete(libroId: string): Promise<any> {
     console.log('📚 BookRepository.getComplete:', libroId);
 
-    const { data: libro, error } = await supabaseAdmin
+    const { data: libro, error } = await getSupabaseAdmin()
       .from('books')
       .select('*')
       .eq('id', libroId)
@@ -218,7 +220,7 @@ export class BookRepository {
   static async findByUserId(userId: string): Promise<any[]> {
     console.log('📚 BookRepository.findByUserId:', userId);
 
-    const { data: libros, error } = await supabaseAdmin
+    const { data: libros, error } = await getSupabaseAdmin()
       .from('books')
       .select('id, title, description, cover_url, pdf_url, created_at')
       .eq('user_id', userId)
@@ -253,7 +255,7 @@ export class BookRepository {
    * ============================================
    */
   static async delete(libroId: string): Promise<void> {
-    const { error } = await supabaseAdmin
+    const { error } = await getSupabaseAdmin()
       .from('books')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', libroId);
@@ -283,7 +285,7 @@ export class BookRepository {
       background_color: this.isColor(p.background) ? p.background : null,
     }));
 
-    const { error } = await supabaseAdmin
+    const { error } = await getSupabaseAdmin()
       .from('book_pages')
       .insert(paginasToInsert);
 
@@ -293,14 +295,14 @@ export class BookRepository {
   }
 
   private static async replacePages(libroId: string, pages: PageData[]): Promise<void> {
-    await supabaseAdmin.from('book_pages').delete().eq('book_id', libroId);
+    await getSupabaseAdmin().from('book_pages').delete().eq('book_id', libroId);
     if (pages.length > 0) {
       await this.savePages(libroId, pages);
     }
   }
 
   private static async getPages(libroId: string): Promise<any[]> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await getSupabaseAdmin()
       .from('book_pages')
       .select('*')
       .eq('book_id', libroId)
@@ -333,7 +335,7 @@ export class BookRepository {
       if (!nombre) continue;
 
       try {
-        let { data: existingAutor } = await supabaseAdmin
+        let { data: existingAutor } = await getSupabaseAdmin()
           .from('book_authors')
           .select('id')
           .eq('name', nombre)
@@ -344,7 +346,7 @@ export class BookRepository {
         if (existingAutor?.id) {
           autorId = existingAutor.id;
         } else {
-          const { data: newAutor, error } = await supabaseAdmin
+          const { data: newAutor, error } = await getSupabaseAdmin()
             .from('book_authors')
             .insert({ name: nombre })
             .select('id')
@@ -354,7 +356,7 @@ export class BookRepository {
           autorId = newAutor.id;
         }
 
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('books_authors')
           .insert({ 
             book_id: libroId, 
@@ -369,12 +371,12 @@ export class BookRepository {
   }
 
   private static async replaceAutores(libroId: string, autores: string[]): Promise<void> {
-    await supabaseAdmin.from('books_authors').delete().eq('book_id', libroId);
+    await getSupabaseAdmin().from('books_authors').delete().eq('book_id', libroId);
     await this.saveAutores(libroId, autores);
   }
 
   private static async getAutores(libroId: string): Promise<string[]> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await getSupabaseAdmin()
       .from('books_authors')
       .select('author_id, author_order')
       .eq('book_id', libroId)
@@ -384,7 +386,7 @@ export class BookRepository {
 
     const autores: string[] = [];
     for (const rel of data) {
-      const { data: autor } = await supabaseAdmin
+      const { data: autor } = await getSupabaseAdmin()
         .from('book_authors')
         .select('name')
         .eq('id', rel.author_id)
@@ -410,7 +412,7 @@ export class BookRepository {
       if (!trimmed) continue;
 
       try {
-        let { data: existing } = await supabaseAdmin
+        let { data: existing } = await getSupabaseAdmin()
           .from('book_characters')
           .select('id')
           .eq('name', trimmed)
@@ -421,7 +423,7 @@ export class BookRepository {
         if (existing?.id) {
           personajeId = existing.id;
         } else {
-          const { data: newChar, error } = await supabaseAdmin
+          const { data: newChar, error } = await getSupabaseAdmin()
             .from('book_characters')
             .insert({ name: trimmed })
             .select('id')
@@ -431,7 +433,7 @@ export class BookRepository {
           personajeId = newChar.id;
         }
 
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('books_characters')
           .insert({ book_id: libroId, character_id: personajeId });
 
@@ -442,12 +444,12 @@ export class BookRepository {
   }
 
   private static async replacePersonajes(libroId: string, personajes: string[]): Promise<void> {
-    await supabaseAdmin.from('books_characters').delete().eq('book_id', libroId);
+    await getSupabaseAdmin().from('books_characters').delete().eq('book_id', libroId);
     await this.savePersonajes(libroId, personajes);
   }
 
   private static async getPersonajes(libroId: string): Promise<string[]> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await getSupabaseAdmin()
       .from('books_characters')
       .select('character_id')
       .eq('book_id', libroId);
@@ -456,7 +458,7 @@ export class BookRepository {
 
     const personajes: string[] = [];
     for (const rel of data) {
-      const { data: char } = await supabaseAdmin
+      const { data: char } = await getSupabaseAdmin()
         .from('book_characters')
         .select('name')
         .eq('id', rel.character_id)
@@ -481,16 +483,16 @@ export class BookRepository {
       category_id,
       is_primary: idx === 0
     }));
-    await supabaseAdmin.from('books_categories').insert(inserts);
+    await getSupabaseAdmin().from('books_categories').insert(inserts);
   }
 
   private static async replaceCategorias(libroId: string, categorias: number[]): Promise<void> {
-    await supabaseAdmin.from('books_categories').delete().eq('book_id', libroId);
+    await getSupabaseAdmin().from('books_categories').delete().eq('book_id', libroId);
     await this.saveCategorias(libroId, categorias);
   }
 
   private static async getCategorias(libroId: string): Promise<string[]> {
-    const { data } = await supabaseAdmin
+    const { data } = await getSupabaseAdmin()
       .from('books_categories')
       .select('category_id')
       .eq('book_id', libroId);
@@ -499,7 +501,7 @@ export class BookRepository {
 
     const categorias: string[] = [];
     for (const rel of data) {
-      const { data: cat } = await supabaseAdmin
+      const { data: cat } = await getSupabaseAdmin()
         .from('book_categories')
         .select('name')
         .eq('id', rel.category_id)
@@ -518,16 +520,16 @@ export class BookRepository {
   private static async saveGeneros(libroId: string, generos: number[]): Promise<void> {
     if (!generos.length) return;
     const inserts = generos.map(genre_id => ({ book_id: libroId, genre_id }));
-    await supabaseAdmin.from('books_genres').insert(inserts);
+    await getSupabaseAdmin().from('books_genres').insert(inserts);
   }
 
   private static async replaceGeneros(libroId: string, generos: number[]): Promise<void> {
-    await supabaseAdmin.from('books_genres').delete().eq('book_id', libroId);
+    await getSupabaseAdmin().from('books_genres').delete().eq('book_id', libroId);
     await this.saveGeneros(libroId, generos);
   }
 
   private static async getGeneros(libroId: string): Promise<string[]> {
-    const { data } = await supabaseAdmin
+    const { data } = await getSupabaseAdmin()
       .from('books_genres')
       .select('genre_id')
       .eq('book_id', libroId);
@@ -536,7 +538,7 @@ export class BookRepository {
 
     const generos: string[] = [];
     for (const rel of data) {
-      const { data: genre } = await supabaseAdmin
+      const { data: genre } = await getSupabaseAdmin()
         .from('book_genres')
         .select('name')
         .eq('id', rel.genre_id)
@@ -561,18 +563,18 @@ export class BookRepository {
       is_primary: idx === 0
     }));
     
-    await supabaseAdmin.from('books_tags').insert(inserts);
+    await getSupabaseAdmin().from('books_tags').insert(inserts);
     console.log(`✅ Etiquetas guardadas: ${etiquetas.length}`);
   }
 
   private static async replaceEtiquetas(libroId: string, etiquetas: number[]): Promise<void> {
-    await supabaseAdmin.from('books_tags').delete().eq('book_id', libroId);
+    await getSupabaseAdmin().from('books_tags').delete().eq('book_id', libroId);
     await this.saveEtiquetas(libroId, etiquetas);
     console.log(`✅ Etiquetas reemplazadas: ${etiquetas.length}`);
   }
 
   private static async getEtiquetas(libroId: string): Promise<string[]> {
-    const { data } = await supabaseAdmin
+    const { data } = await getSupabaseAdmin()
       .from('books_tags')
       .select('tag_id')
       .eq('book_id', libroId);
@@ -581,7 +583,7 @@ export class BookRepository {
 
     const etiquetas: string[] = [];
     for (const rel of data) {
-      const { data: tag } = await supabaseAdmin
+      const { data: tag } = await getSupabaseAdmin()
         .from('book_tags')
         .select('name')
         .eq('id', rel.tag_id)
@@ -606,16 +608,16 @@ export class BookRepository {
       value_id,
       is_primary: idx === 0
     }));
-    await supabaseAdmin.from('books_values').insert(inserts);
+    await getSupabaseAdmin().from('books_values').insert(inserts);
   }
 
   private static async replaceValores(libroId: string, valores: number[]): Promise<void> {
-    await supabaseAdmin.from('books_values').delete().eq('book_id', libroId);
+    await getSupabaseAdmin().from('books_values').delete().eq('book_id', libroId);
     await this.saveValores(libroId, valores);
   }
 
   private static async getValores(libroId: string): Promise<string[]> {
-    const { data } = await supabaseAdmin
+    const { data } = await getSupabaseAdmin()
       .from('books_values')
       .select('value_id')
       .eq('book_id', libroId);
@@ -624,7 +626,7 @@ export class BookRepository {
 
     const valores: string[] = [];
     for (const rel of data) {
-      const { data: value } = await supabaseAdmin
+      const { data: value } = await getSupabaseAdmin()
         .from('book_values')
         .select('name')
         .eq('id', rel.value_id)
@@ -642,7 +644,7 @@ export class BookRepository {
   
   private static async getNivel(idNivel: number | null): Promise<any> {
     if (!idNivel) return null;
-    const { data } = await supabaseAdmin
+    const { data } = await getSupabaseAdmin()
       .from('book_levels')
       .select('*')
       .eq('id', idNivel)

@@ -9,7 +9,7 @@ import { redirect } from 'next/navigation';
 import { getLocale } from "next-intl/server";
 import { headers } from 'next/headers';
 import { createServerSupabaseClient } from '@/src/infrastructure/config/supabase.config'; // ✅
-import { SupabaseAuthRepository } from '@/src/infrastructure/repositories/SupabaseAuthRepository';
+import { SupabaseAuthRepository } from '@/src/infrastructure/repositories';
 import { Login, Signup, LoginWithProvider } from '@/src/core/application/use-cases/auth';
 import type { AuthState, OAuthProvider } from '@/src/core/domain/types/Auth.types';
 import { TranslationService } from '@/src/infrastructure/services/i18n';

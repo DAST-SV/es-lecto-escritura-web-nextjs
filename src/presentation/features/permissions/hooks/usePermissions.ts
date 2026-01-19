@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/src/infrastructure/config/supabase.config';
 import { UserPermissions } from '@/src/core/domain/entities/Permission';
-import { SupabasePermissionRepository } from '@/src/infrastructure/repositories/SupabasePermissionRepository';
+import { SupabasePermissionRepository } from '@/src/infrastructure/repositories';
 import { GetUserPermissionsUseCase } from '@/src/core/application/use-cases/GetUserPermissionsUseCase';
 
 interface UsePermissionsReturn {

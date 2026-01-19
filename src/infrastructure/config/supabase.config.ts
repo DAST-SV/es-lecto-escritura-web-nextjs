@@ -6,10 +6,18 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 // ✅ Cliente para browser (componentes cliente)
 export function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-  );
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
+
+  // Durante build time, las variables pueden no estar disponibles
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn('[WARNING] Supabase environment variables not available for browser client (build time?)');
+    // Durante build, retornar cliente dummy
+    // @ts-ignore
+    return createBrowserClient('https://dummy.supabase.co', 'dummy-key');
+  }
+
+  return createBrowserClient(supabaseUrl, supabaseKey);
 }
 
 // ✅ Cliente para servidor (Server Components/Actions)
@@ -42,8 +50,26 @@ export async function createServerSupabaseClient() {
   );
 }
 
-// ✅ Admin client (solo servidor)
-export const supabaseAdmin = createSupabaseClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!
-);
+// ✅ Admin client (solo servidor) - Lazy initialization para evitar errores en build time
+let _supabaseAdmin: ReturnType<typeof createSupabaseClient> | null = null;
+
+export function getSupabaseAdmin() {
+  if (!_supabaseAdmin) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || '';
+
+    // Durante build time, las variables pueden no estar disponibles
+    // En ese caso, creamos un cliente dummy que no se usará
+    if (!supabaseUrl || !supabaseKey) {
+      console.warn('[WARNING] Supabase environment variables not available (build time?)');
+      // @ts-ignore - Durante build time, retornar cliente dummy
+      return createSupabaseClient('https://dummy.supabase.co', 'dummy-key');
+    }
+
+    _supabaseAdmin = createSupabaseClient(supabaseUrl, supabaseKey);
+  }
+  return _supabaseAdmin;
+}
+
+// Backward compatibility export
+export const supabaseAdmin = getSupabaseAdmin();
