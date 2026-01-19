@@ -17,3 +17,9 @@ export * from './TranslationKeyRepository';
 export * from './IBookRepository';
 // Tipos de usuario
 export * from './IUserTypeRepository';
+
+// Organizaciones y miembros
+export * from './IOrganizationMemberRepository';
+
+// Relaciones entre usuarios
+export * from './IUserRelationshipRepository';

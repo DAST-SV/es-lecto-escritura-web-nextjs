@@ -14,3 +14,9 @@ export * from './TranslationKey';
 export * from './Book';
 
 export * from './NavigationItem';
+
+// Organizaciones y miembros
+export * from './OrganizationMember';
+
+// Relaciones entre usuarios
+export * from './UserRelationship';
