@@ -11,8 +11,8 @@ import { headers } from 'next/headers';
 import { createServerSupabaseClient } from '@/src/infrastructure/config/supabase.config'; // ✅
 import { SupabaseAuthRepository } from '@/src/infrastructure/repositories/SupabaseAuthRepository';
 import { Login, Signup, LoginWithProvider } from '@/src/core/application/use-cases/auth';
-import { TranslationService } from '@/src/infrastructure/services/i18n/TranslationService';
 import type { AuthState, OAuthProvider } from '@/src/core/domain/types/Auth.types';
+import { TranslationService } from '@/src/infrastructure/services/i18n';
 
 export async function login(prevState: AuthState, formData: FormData): Promise<AuthState> {
   const supabase = await createServerSupabaseClient(); // ✅ Cliente servidor

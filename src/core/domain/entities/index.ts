@@ -12,3 +12,5 @@ export * from './TranslationKey';
 
 // Dominio principal (si existe)
 export * from './Book';
+
+export * from './NavigationItem';

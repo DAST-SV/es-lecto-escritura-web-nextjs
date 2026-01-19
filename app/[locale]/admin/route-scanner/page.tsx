@@ -4,8 +4,8 @@
 'use client';
 
 import { useState } from 'react';
-import { RouteGuard } from '@/src/presentation/components/RouteGuard';
 import { createClient } from '@/src/infrastructure/config/supabase.config';
+import { RouteGuard } from '@/src/presentation/features/permissions/components';
 
 interface DetectedRoute {
     pathname: string;

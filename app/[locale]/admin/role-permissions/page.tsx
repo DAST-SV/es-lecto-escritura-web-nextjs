@@ -6,8 +6,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RouteGuard } from '@/src/presentation/components/RouteGuard';
 import { createClient } from '@/src/infrastructure/config/supabase.config';
+import { RouteGuard } from '@/src/presentation/features/permissions/components';
 
 interface Role {
   id: string;

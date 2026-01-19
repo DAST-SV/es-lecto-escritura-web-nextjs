@@ -6,6 +6,3 @@
 // Hooks
 export { usePermissions } from './hooks/usePermissions';
 export { useRouteAccess } from './hooks/useRouteAccess';
-
-// Components
-export { RouteGuard } from './components/RouteGuard';

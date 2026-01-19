@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { RouteGuard } from '@/src/presentation/components/RouteGuard';
+import { RouteGuard } from '@/src/presentation/features/permissions/components';
 import { createClient } from '@/src/infrastructure/config/supabase.config';
 
 interface RouteTranslation {

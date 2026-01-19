@@ -4,7 +4,6 @@
 // ============================================
 
 import { Translation } from '../entities/Translation';
-import { Language } from '../entities/Language'; // ✅ IMPORTAR DESDE Language.ts
 
 export interface CreateTranslationDTO {
   namespaceSlug: string;

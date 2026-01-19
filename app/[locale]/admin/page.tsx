@@ -1,8 +1,8 @@
 // app/[locale]/admin/page.tsx
 // ✅ DASHBOARD CON ORDEN LÓGICO (6 MÓDULOS)
 
+import { RouteGuard } from '@/src/presentation/features/permissions/components';
 import Link from 'next/link';
-import { RouteGuard } from '@/src/presentation/components/RouteGuard';
 
 export default function AdminPage() {
   return (

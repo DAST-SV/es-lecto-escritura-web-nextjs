@@ -7,16 +7,12 @@
 
 import React, { useState } from 'react';
 import { UnifiedLayout } from '@/src/presentation/features/navigation';
-import { useUserTypes } from '@/src/presentation/features/user-types/hooks/useUserTypes';
-import {
-  CreateUserTypeModal,
-  EditUserTypeModal,
-  DeleteUserTypeModal,
-} from '@/src/presentation/features/user-types/components';
-import { UserType } from '@/src/core/domain/entities/UserType';
 import { DataTable, Column } from '@/src/presentation/components/shared/DataTable';
 import { Loader2, AlertCircle } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
+import { useUserTypes } from '@/src/presentation/features/user-types/hooks';
+import { CreateUserTypeModal, DeleteUserTypeModal, EditUserTypeModal } from '@/src/presentation/features/user-types/components';
+import { UserType } from '@/src/core/domain/entities/UserType';
 
 export default function UserTypesPage() {
   const {

@@ -4,15 +4,10 @@
 // ============================================
 
 import { createClient } from '@/src/infrastructure/config/supabase.config';
-import {
-  TranslationRepository,
-  CreateTranslationDTO,
-  UpdateTranslationDTO,
-  BulkCreateTranslationDTO,
-} from '@/src/core/domain/repositories/TranslationRepository';
 import { Translation } from '@/src/core/domain/entities/Translation';
+import { BulkCreateTranslationDTO, CreateTranslationDTO, ITranslationRepository, UpdateTranslationDTO } from '@/src/core/domain/repositories';
 
-export class SupabaseTranslationRepository implements TranslationRepository {
+export class SupabaseTranslationRepository implements ITranslationRepository {
   private supabase = createClient();
 
   async findAll(): Promise<Translation[]> {
