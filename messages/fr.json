@@ -1,63 +1,315 @@
 {
   "layout": {
-    "title": "Eslectoescritura"
-  },
-  "test": {
-    "welcome": "Bienvenue dans le système",
-    "description": "Ceci est un exemple de traduction dynamique depuis Supabase",
-    "button": {
-      "start": "Commencer Maintenant"
-    }
-  },
-  "common": {
-    "nav": {
-      "home": "Accueil",
-      "about": "À propos",
-      "contact": "Contact"
+    "meta": {
+      "title": "EsLectoescritura",
+      "description": "Notre plateforme d'alphabétisation est conçue pour accompagner les enfants, les jeunes et les adultes dans le développement complet des compétences en lecture et en écriture, en combinant des méthodes pédagogiques éprouvées avec une technologie interactive de pointe. Grâce à des activités ludiques, des exercices personnalisés et un suivi des progrès, les utilisateurs peuvent améliorer leur compréhension de la lecture, élargir leur vocabulaire, perfectionner leur orthographe et développer leur aisance à l'écriture."
     }
   },
   "nav": {
     "about": {
       "text": "À propos",
-      "href": "/about",
-      "title": "À propos de nous"
+      "href": "/a-propos",
+      "title": "En savoir plus sur nous"
     },
-    "auth.login": {
-      "text": "Connexion",
-      "href": "/auth/connexion",
-      "title": "Connexion"
+    "virtualTour": {
+      "text": "Visite Virtuelle",
+      "href": "/visite-virtuelle",
+      "title": "Explorez notre visite virtuelle"
     },
-    "auth.register": {
-      "text": "Inscription",
-      "href": "/auth/inscription",
-      "title": "Inscription"
+    "auth": {
+      "login": {
+        "text": "Se connecter",
+        "href": "/auth/connexion",
+        "title": "Accéder à votre compte"
+      },
+      "register": {
+        "text": "S'inscrire",
+        "href": "/auth/inscription",
+        "title": "Créer un nouveau compte"
+      }
+    },
+    "back": {
+      "text": "Retour",
+      "title": "Retourner à la page précédente"
+    },
+    "home": {
+      "text": "Accueil",
+      "href": "/",
+      "title": "Aller à la page d'accueil"
+    },
+    "profile": {
+      "text": "Profil",
+      "href": "/profil",
+      "title": "Voir mon profil"
+    },
+    "settings": {
+      "text": "Paramètres",
+      "href": "/parametres",
+      "title": "Ajuster les paramètres"
+    },
+    "logout": {
+      "text": "Déconnexion",
+      "href": "/deconnexion",
+      "title": "Quitter mon compte"
+    },
+    "myDiary": {
+      "text": "Mon Journal",
+      "href": "/mon-journal",
+      "title": "Voir votre journal"
     },
     "library": {
       "text": "Bibliothèque",
       "href": "/bibliotheque",
-      "title": "Ma Bibliothèque"
+      "title": "Bibliothèque"
     },
     "myWorld": {
-      "text": "Mon Monde",
+      "text": "Mon monde",
       "href": "/mon-monde",
-      "title": "Mon Monde"
+      "title": "Mon monde"
     },
     "myProgress": {
       "text": "Mes Progrès",
       "href": "/mes-progres",
-      "title": "Mes Progrès"
+      "title": "Voir vos progrès"
+    },
+    "myBooks": {
+      "text": "Mes Livres",
+      "href": "/mes-livres",
+      "title": "Voir vos livres"
+    },
+    "createBook": {
+      "text": "Créer un Livre",
+      "href": "/creer-livre",
+      "title": "Commencer la création d'un nouveau livre"
+    },
+    "explore": {
+      "text": "Explorer",
+      "href": "/explorer",
+      "title": "Découvrir du nouveau contenu"
+    },
+    "myReadings": {
+      "text": "Mes Lectures",
+      "href": "/mes-lectures",
+      "title": "Suivre vos lectures"
+    },
+    "activities": {
+      "text": "Activités",
+      "href": "/activites",
+      "title": "Voir vos activités"
+    },
+    "book": {
+      "create": {
+        "text": "Créer un Livre",
+        "href": "/livres/creer",
+        "title": "Commencer la création d'un nouveau livre"
+      }
+    },
+    "diary": {
+      "myDiaries": {
+        "text": "Mes Journaux Personnels",
+        "href": "/journal/mes-journaux",
+        "title": "Voir mes journaux personnels"
+      },
+      "create": {
+        "text": "Créer un Journal Personnel",
+        "href": "/journal/creer",
+        "title": "Commencer la création d'un nouveau journal personnel"
+      },
+      "view": {
+        "text": "Voir le Journal Personnel",
+        "href": "/journal/voir",
+        "title": "Voir mon journal personnel"
+      },
+      "edit": {
+        "text": "Modifier le Journal Personnel",
+        "href": "/journal/modifier",
+        "title": "Modifier mon journal personnel"
+      },
+      "delete": {
+        "text": "Supprimer le Journal Personnel",
+        "href": "/journal/supprimer",
+        "title": "Supprimer mon journal personnel"
+      }
     }
+  },
+  "content": {
+    "cover": {
+      "text": "Couverture",
+      "alt": "Image de couverture"
+    },
+    "description": "Description du contenu principal"
+  },
+  "lang": {
+    "selectLanguage": {
+      "text": "Sélectionner la langue",
+      "aria-label": "Changer de langue"
+    },
+    "currentLanguage": "Langue actuelle"
+  },
+  "welcome": {
+    "title": "Bienvenue",
+    "subtitle": "Nous sommes heureux de vous voir",
+    "description": "Explorez notre application et profitez de toutes ses fonctionnalités"
+  },
+  "buttons": {
+    "save": {
+      "text": "Enregistrer",
+      "aria-label": "Enregistrer les modifications"
+    },
+    "cancel": {
+      "text": "Annuler",
+      "aria-label": "Annuler l'opération"
+    },
+    "delete": {
+      "text": "Supprimer",
+      "aria-label": "Supprimer l'élément"
+    },
+    "edit": {
+      "text": "Modifier",
+      "aria-label": "Modifier l'élément"
+    },
+    "submit": {
+      "text": "Envoyer",
+      "aria-label": "Envoyer le formulaire"
+    }
+  },
+  "errors": {
+    "required": "Ce champ est obligatoire",
+    "invalidEmail": "Email invalide",
+    "minLength": "Doit contenir au moins {{count}} caractères"
   },
   "auth": {
     "errors": {
-      "invalid_credentials": "Email ou mot de passe incorrect",
-      "email_not_confirmed": "Veuillez confirmer votre email",
-      "user_not_found": "Utilisateur non trouvé",
-      "invalid_email": "Email invalide",
-      "weak_password": "Le mot de passe doit avoir au moins 6 caractères",
-      "email_already_registered": "Email déjà enregistré",
-      "too_many_requests": "Trop de tentatives, veuillez réessayer plus tard",
-      "generic_error": "Une erreur s'est produite"
+      "invalid_credentials": "Identifiants invalides. Vérifiez votre email et votre mot de passe.",
+      "email_not_confirmed": "Veuillez confirmer votre email avant de vous connecter.",
+      "user_not_found": "Nous n'avons pas trouvé de compte avec cet email.",
+      "invalid_email": "Le format de l'email n'est pas valide.",
+      "weak_password": "Le mot de passe doit contenir au moins 6 caractères.",
+      "email_already_registered": "Un compte existe déjà avec cet email.",
+      "too_many_requests": "Trop de tentatives. Réessayez plus tard.",
+      "generic_error": "Une erreur inattendue s'est produite. Réessayez."
+    },
+    "form": {
+      "or_use_email": "ou utilisez votre email",
+      "email_placeholder": "Votre adresse email",
+      "password_placeholder": "Votre mot de passe",
+      "remember_me": "Se souvenir de moi",
+      "forgot_password": "Mot de passe oublié ?",
+      "login_button": "COMMENCER À APPRENDRE ! 📚",
+      "connect_with": "Se connecter avec :"
     }
+  },
+  "cta": {
+    "title": "Prêt à transformer la lecture ?",
+    "description": "Rejoignez des milliers d'éducateurs qui améliorent déjà la compréhension de lecture de leurs élèves.",
+    "button": "Commencer Maintenant"
+  },
+  "features": {
+    "title": "Pourquoi sommes-nous différents des autres plateformes éducatives ?",
+    "tabs": [
+      {
+        "id": "our_difference",
+        "label": "Notre Différence",
+        "title": "Notre Différence",
+        "content": "🚀 Nous unissons la technologie et la culture. Vous trouverez ici non seulement des matériaux universels, mais aussi des contes, légendes et proverbes propres à notre région. De plus, chaque histoire prend vie avec des activités dynamiques, des jeux et des défis qui motivent à continuer la lecture."
+      },
+      {
+        "id": "for_students",
+        "label": "Pour les Étudiants",
+        "title": "Pour les Étudiants",
+        "content": "✨ Les enfants et les jeunes progressent par niveaux conçus selon leur âge, gagnent des badges, débloquent des réalisations et personnalisent leur propre avatar. Chaque lecture est un défi qui devient un jeu."
+      },
+      {
+        "id": "for_parents",
+        "label": "Pour les Parents",
+        "title": "Pour les Parents",
+        "content": "👨‍👩‍👧 Accédez à des rapports clairs et faciles à comprendre sur les progrès de vos enfants. Découvrez combien de temps ils lisent, quelles catégories ils préfèrent et comment ils progressent dans leur compréhension de lecture."
+      },
+      {
+        "id": "for_teachers",
+        "label": "Pour les Enseignants",
+        "title": "Pour les Enseignants",
+        "content": "👩‍🏫 Surveillez chaque élève et toute votre classe en un seul endroit. Créez des défis, assignez des lectures, révisez la compréhension de lecture et téléchargez des rapports qui vous aideront à renforcer l'apprentissage."
+      },
+      {
+        "id": "plans_and_pricing",
+        "label": "Plans et Tarifs",
+        "title": "Plans et Tarifs",
+        "content": "💡 Accédez à des activités gratuites d'essai. Abonnez-vous pour débloquer des contenus exclusifs, des jeux supplémentaires et un suivi complet des progrès."
+      }
+    ],
+    "button": "En Savoir Plus",
+    "stats": [
+      {
+        "number": "1000+",
+        "label": "Étudiants Actifs"
+      },
+      {
+        "number": "95%",
+        "label": "Amélioration de la Compréhension"
+      },
+      {
+        "number": "50+",
+        "label": "Institutions Partenaires"
+      }
+    ]
+  },
+  "hero": {
+    "slides": [
+      {
+        "title": "ESLectoescritura",
+        "icon": "🌟",
+        "description": "Apprendre à lire et à écrire n'a jamais été aussi amusant. Explorez des contes, fables, poèmes et plus encore, tout en jouant, en progressant de niveau et en gagnant des récompenses pour vos efforts. Une plateforme conçue pour les étudiants, les familles et les enseignants qui croient au pouvoir de la lecture !",
+        "button": "Commencer l'Aventure"
+      },
+      {
+        "title": "Contes",
+        "icon": "📖",
+        "description": "Plongez dans un monde d'aventures, de magie et de personnages inoubliables. Les contes vous invitent à imaginer, rêver et apprendre tout en profitant de chaque page.",
+        "button": "Explorer les Contes"
+      },
+      {
+        "title": "Fables",
+        "icon": "🦊",
+        "description": "Des histoires courtes avec de grandes leçons. Les fables, à travers des animaux et des situations amusantes, transmettent des valeurs que vous n'oublierez jamais.",
+        "button": "Découvrir les Fables"
+      },
+      {
+        "title": "Poèmes",
+        "icon": "✒️",
+        "description": "Laissez les mots prendre vie dans des vers pleins de rythme, d'émotion et de beauté. La poésie vous invite à ressentir et à rêver.",
+        "button": "Lire des Poèmes"
+      },
+      {
+        "title": "Légendes",
+        "icon": "🏞️",
+        "description": "Découvrez les récits qui font partie de notre histoire et culture. Les légendes gardent des mystères, des traditions et des apprentissages uniques.",
+        "button": "Découvrir les Légendes"
+      },
+      {
+        "title": "Devinettes",
+        "icon": "❓",
+        "description": "Testez votre ingéniosité avec des énigmes amusantes qui défieront votre esprit et feront voler votre imagination.",
+        "button": "Résoudre les Devinettes"
+      },
+      {
+        "title": "Bandes Dessinées",
+        "icon": "💬",
+        "description": "Histoires illustrées pleines de couleur et de plaisir. Apprenez et riez tout en accompagnant des personnages uniques dans leurs aventures.",
+        "button": "Voir les Bandes Dessinées"
+      },
+      {
+        "title": "Virelangues",
+        "icon": "👅",
+        "description": "Défiez votre prononciation et amusez-vous en jouant avec les mots. Plus vous essayez rapidement, plus c'est amusant !",
+        "button": "Pratiquer les Virelangues"
+      },
+      {
+        "title": "Proverbes",
+        "icon": "🗣️",
+        "description": "Petites phrases avec de grandes vérités. Les proverbes renferment la sagesse de générations en quelques mots.",
+        "button": "Apprendre les Proverbes"
+      }
+    ]
   }
 }

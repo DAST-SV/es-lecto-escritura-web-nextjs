@@ -1,0 +1,315 @@
+{
+  "layout": {
+    "meta": {
+      "title": "EsLectoescritura",
+      "description": "La nostra piattaforma di alfabetizzazione è progettata per supportare bambini, giovani e adulti nello sviluppo completo delle abilità di lettura e scrittura, combinando metodi pedagogici comprovati con tecnologia interattiva all'avanguardia. Attraverso attività ludiche, esercizi personalizzati e monitoraggio dei progressi, gli utenti possono migliorare la comprensione della lettura, espandere il vocabolario, perfezionare l'ortografia e sviluppare fluidità nella scrittura."
+    }
+  },
+  "nav": {
+    "about": {
+      "text": "Chi Siamo",
+      "href": "/chi-siamo",
+      "title": "Scopri di più su di noi"
+    },
+    "virtualTour": {
+      "text": "Tour Virtuale",
+      "href": "/tour-virtuale",
+      "title": "Esplora il nostro tour virtuale"
+    },
+    "auth": {
+      "login": {
+        "text": "Accedi",
+        "href": "/auth/accedi",
+        "title": "Accedi al tuo account"
+      },
+      "register": {
+        "text": "Registrati",
+        "href": "/auth/registrati",
+        "title": "Crea un nuovo account"
+      }
+    },
+    "back": {
+      "text": "Indietro",
+      "title": "Torna alla pagina precedente"
+    },
+    "home": {
+      "text": "Home",
+      "href": "/",
+      "title": "Vai alla homepage"
+    },
+    "profile": {
+      "text": "Profilo",
+      "href": "/profilo",
+      "title": "Visualizza il mio profilo"
+    },
+    "settings": {
+      "text": "Impostazioni",
+      "href": "/impostazioni",
+      "title": "Regola le impostazioni"
+    },
+    "logout": {
+      "text": "Esci",
+      "href": "/esci",
+      "title": "Chiudi sessione"
+    },
+    "myDiary": {
+      "text": "Il Mio Diario",
+      "href": "/il-mio-diario",
+      "title": "Visualizza il tuo diario"
+    },
+    "library": {
+      "text": "Biblioteca",
+      "href": "/biblioteca",
+      "title": "Biblioteca"
+    },
+    "myWorld": {
+      "text": "Il mio mondo",
+      "href": "/il-mio-mondo",
+      "title": "Il mio mondo"
+    },
+    "myProgress": {
+      "text": "I Miei Progressi",
+      "href": "/i-miei-progressi",
+      "title": "Visualizza i tuoi progressi"
+    },
+    "myBooks": {
+      "text": "I Miei Libri",
+      "href": "/i-miei-libri",
+      "title": "Visualizza i tuoi libri"
+    },
+    "createBook": {
+      "text": "Crea Libro",
+      "href": "/crea-libro",
+      "title": "Inizia la creazione di un nuovo libro"
+    },
+    "explore": {
+      "text": "Esplora",
+      "href": "/esplora",
+      "title": "Scopri nuovi contenuti"
+    },
+    "myReadings": {
+      "text": "Le Mie Letture",
+      "href": "/le-mie-letture",
+      "title": "Segui le tue letture"
+    },
+    "activities": {
+      "text": "Attività",
+      "href": "/attivita",
+      "title": "Visualizza le tue attività"
+    },
+    "book": {
+      "create": {
+        "text": "Crea Libro",
+        "href": "/libri/crea",
+        "title": "Inizia la creazione di un nuovo libro"
+      }
+    },
+    "diary": {
+      "myDiaries": {
+        "text": "I Miei Diari Personali",
+        "href": "/diario/i-miei-diari",
+        "title": "Visualizza i miei diari personali"
+      },
+      "create": {
+        "text": "Crea Diario Personale",
+        "href": "/diario/crea",
+        "title": "Inizia la creazione di un nuovo diario personale"
+      },
+      "view": {
+        "text": "Visualizza Diario Personale",
+        "href": "/diario/visualizza",
+        "title": "Visualizza il mio diario personale"
+      },
+      "edit": {
+        "text": "Modifica Diario Personale",
+        "href": "/diario/modifica",
+        "title": "Modifica il mio diario personale"
+      },
+      "delete": {
+        "text": "Elimina Diario Personale",
+        "href": "/diario/elimina",
+        "title": "Elimina il mio diario personale"
+      }
+    }
+  },
+  "content": {
+    "cover": {
+      "text": "Copertina",
+      "alt": "Immagine di copertina"
+    },
+    "description": "Descrizione del contenuto principale"
+  },
+  "lang": {
+    "selectLanguage": {
+      "text": "Seleziona lingua",
+      "aria-label": "Cambia lingua"
+    },
+    "currentLanguage": "Lingua attuale"
+  },
+  "welcome": {
+    "title": "Benvenuto",
+    "subtitle": "Siamo felici di vederti",
+    "description": "Esplora la nostra applicazione e goditi tutte le sue funzionalità"
+  },
+  "buttons": {
+    "save": {
+      "text": "Salva",
+      "aria-label": "Salva modifiche"
+    },
+    "cancel": {
+      "text": "Annulla",
+      "aria-label": "Annulla operazione"
+    },
+    "delete": {
+      "text": "Elimina",
+      "aria-label": "Elimina elemento"
+    },
+    "edit": {
+      "text": "Modifica",
+      "aria-label": "Modifica elemento"
+    },
+    "submit": {
+      "text": "Invia",
+      "aria-label": "Invia modulo"
+    }
+  },
+  "errors": {
+    "required": "Questo campo è obbligatorio",
+    "invalidEmail": "Email non valida",
+    "minLength": "Deve contenere almeno {{count}} caratteri"
+  },
+  "auth": {
+    "errors": {
+      "invalid_credentials": "Credenziali non valide. Verifica la tua email e password.",
+      "email_not_confirmed": "Conferma la tua email prima di accedere.",
+      "user_not_found": "Non abbiamo trovato un account con questa email.",
+      "invalid_email": "Il formato dell'email non è valido.",
+      "weak_password": "La password deve contenere almeno 6 caratteri.",
+      "email_already_registered": "Esiste già un account con questa email.",
+      "too_many_requests": "Troppi tentativi. Riprova più tardi.",
+      "generic_error": "Si è verificato un errore imprevisto. Riprova."
+    },
+    "form": {
+      "or_use_email": "o usa la tua email",
+      "email_placeholder": "La tua email",
+      "password_placeholder": "La tua password",
+      "remember_me": "Ricordami",
+      "forgot_password": "Password dimenticata?",
+      "login_button": "INIZIA AD IMPARARE! 📚",
+      "connect_with": "Connettiti con:"
+    }
+  },
+  "cta": {
+    "title": "Pronto a trasformare la lettura?",
+    "description": "Unisciti a migliaia di educatori che stanno già migliorando la comprensione della lettura dei loro studenti.",
+    "button": "Inizia Ora"
+  },
+  "features": {
+    "title": "Perché siamo diversi dalle altre piattaforme educative?",
+    "tabs": [
+      {
+        "id": "our_difference",
+        "label": "La Nostra Differenza",
+        "title": "La Nostra Differenza",
+        "content": "🚀 Uniamo tecnologia e cultura. Qui troverai non solo materiali universali, ma anche racconti, leggende e proverbi propri della nostra regione. Inoltre, ogni storia prende vita con attività dinamiche, giochi e sfide che motivano a continuare a leggere."
+      },
+      {
+        "id": "for_students",
+        "label": "Per gli Studenti",
+        "title": "Per gli Studenti",
+        "content": "✨ I bambini e i giovani avanzano per livelli progettati secondo la loro età, guadagnano badge, sbloccano achievement e personalizzano il proprio avatar. Ogni lettura è una sfida che diventa un gioco."
+      },
+      {
+        "id": "for_parents",
+        "label": "Per i Genitori",
+        "title": "Per i Genitori",
+        "content": "👨‍👩‍👧 Accedi a report chiari e facili da comprendere sui progressi dei tuoi figli. Scopri quanto tempo leggono, quali categorie preferiscono e come avanzano nella comprensione della lettura."
+      },
+      {
+        "id": "for_teachers",
+        "label": "Per gli Insegnanti",
+        "title": "Per gli Insegnanti",
+        "content": "👩‍🏫 Monitora ogni studente e tutta la tua classe in un unico posto. Crea sfide, assegna letture, rivedi la comprensione della lettura e scarica report che ti aiuteranno a rafforzare l'apprendimento."
+      },
+      {
+        "id": "plans_and_pricing",
+        "label": "Piani e Prezzi",
+        "title": "Piani e Prezzi",
+        "content": "💡 Accedi ad attività gratuite di prova. Abbonati per sbloccare contenuti esclusivi, giochi aggiuntivi e un monitoraggio completo dei progressi."
+      }
+    ],
+    "button": "Scopri di Più",
+    "stats": [
+      {
+        "number": "1000+",
+        "label": "Studenti Attivi"
+      },
+      {
+        "number": "95%",
+        "label": "Miglioramento nella Comprensione"
+      },
+      {
+        "number": "50+",
+        "label": "Istituzioni Partner"
+      }
+    ]
+  },
+  "hero": {
+    "slides": [
+      {
+        "title": "ESLectoescritura",
+        "icon": "🌟",
+        "description": "Imparare a leggere e scrivere non è mai stato così divertente. Esplora racconti, favole, poesie e molto altro, mentre giochi, avanzi di livello e guadagni ricompense per il tuo impegno. Una piattaforma fatta per studenti, famiglie e insegnanti che credono nel potere della lettura!",
+        "button": "Inizia l'Avventura"
+      },
+      {
+        "title": "Racconti",
+        "icon": "📖",
+        "description": "Immergiti in un mondo di avventure, magia e personaggi indimenticabili. I racconti ti invitano a immaginare, sognare e imparare mentre ti godi ogni pagina.",
+        "button": "Esplora i Racconti"
+      },
+      {
+        "title": "Favole",
+        "icon": "🦊",
+        "description": "Storie brevi con grandi insegnamenti. Le favole, attraverso animali e situazioni divertenti, trasmettono valori che non dimenticherai mai.",
+        "button": "Scopri le Favole"
+      },
+      {
+        "title": "Poesie",
+        "icon": "✒️",
+        "description": "Lascia che le parole prendano vita in versi pieni di ritmo, emozione e bellezza. La poesia ti invita a sentire e sognare.",
+        "button": "Leggi Poesie"
+      },
+      {
+        "title": "Leggende",
+        "icon": "🏞️",
+        "description": "Scopri i racconti che fanno parte della nostra storia e cultura. Le leggende custodiscono misteri, tradizioni e insegnamenti unici.",
+        "button": "Conosci le Leggende"
+      },
+      {
+        "title": "Indovinelli",
+        "icon": "❓",
+        "description": "Metti alla prova il tuo ingegno con divertenti enigmi che sfideranno la tua mente e faranno volare la tua immaginazione.",
+        "button": "Risolvi gli Indovinelli"
+      },
+      {
+        "title": "Fumetti",
+        "icon": "💬",
+        "description": "Storie illustrate piene di colore e divertimento. Impara e ridi mentre accompagni personaggi unici nelle loro avventure.",
+        "button": "Guarda i Fumetti"
+      },
+      {
+        "title": "Scioglilingua",
+        "icon": "👅",
+        "description": "Sfida la tua pronuncia e divertiti giocando con le parole. Più velocemente provi, più divertente sarà!",
+        "button": "Pratica gli Scioglilingua"
+      },
+      {
+        "title": "Proverbi",
+        "icon": "🗣️",
+        "description": "Piccole frasi con grandi verità. I proverbi racchiudono la saggezza di generazioni in poche parole.",
+        "button": "Impara i Proverbi"
+      }
+    ]
+  }
+}

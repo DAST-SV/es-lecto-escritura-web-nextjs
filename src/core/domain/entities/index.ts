@@ -1,9 +1,9 @@
 // ============================================
 // src/core/domain/entities/index.ts
-// ✅ ÚNICO BARREL EXPORT DEL DOMINIO
+// Clean Architecture - Domain Entities Barrel Export
 // ============================================
 
-// Permisos y RBAC (TODO EN Permission.ts)
+// Permisos y RBAC
 export * from './Permission';
 
 // Traducciones

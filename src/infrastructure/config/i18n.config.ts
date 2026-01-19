@@ -1,6 +1,6 @@
 // src/infrastructure/config/i18n.config.ts
 export const i18nConfig = {
-  locales: ['en', 'es', 'fr'] as const, // ✅ Agregar 'fr'
+  locales: ['es', 'en', 'fr', 'it'] as const,
   defaultLocale: 'es',
   get lngs() {
     return this.locales.join('|');

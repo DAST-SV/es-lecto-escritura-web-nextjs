@@ -1,14 +1,7 @@
 /**
  * ============================================
- * ARCHIVO 1: src/core/domain/types/index.ts
- * REEMPLAZAR TODO EL CONTENIDO
- * ============================================
- */
-
-/**
- * ============================================
- * TIPOS DE DOMINIO - VERSIÓN LIMPIA
- * Un solo tipo para páginas, sin duplicados
+ * TIPOS DE DOMINIO
+ * Clean Architecture - Domain Layer Types
  * ============================================
  */
 
@@ -176,14 +169,3 @@ export function sanitizePageForBackend(page: Page) {
   };
 }
 
-// ============================================
-// ALIAS (mantener compatibilidad temporalmente)
-// ============================================
-/** @deprecated Usar Page directamente */
-export type page = Page;
-
-/** @deprecated Usar Page directamente */
-export type PageEditor = Page;
-
-/** @deprecated Usar Page directamente */
-export type PageEditorData = Page;
