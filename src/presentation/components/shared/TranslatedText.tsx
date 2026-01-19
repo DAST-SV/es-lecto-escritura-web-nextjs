@@ -5,6 +5,7 @@
 
 'use client';
 
+import React from 'react';
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 
 interface TranslatedTextProps {
@@ -19,7 +20,7 @@ interface TranslatedTextProps {
   /** Clase CSS adicional */
   className?: string;
   /** Tag HTML (default: 'span') */
-  as?: keyof JSX.IntrinsicElements;
+  as?: keyof React.JSX.IntrinsicElements;
 }
 
 /**

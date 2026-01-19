@@ -142,13 +142,13 @@ export function UserProfileForm({
       } else {
         const dto: UpdateUserProfileDTO = {
           displayName: displayName.trim(),
-          bio: bio.trim() || null,
-          avatarUrl: avatarUrl.trim() || null,
-          dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-          phoneNumber: phoneNumber.trim() || null,
-          address: address.trim() || null,
-          city: city.trim() || null,
-          country: country.trim() || null,
+          bio: bio.trim() || undefined,
+          avatarUrl: avatarUrl.trim() || undefined,
+          dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+          phoneNumber: phoneNumber.trim() || undefined,
+          address: address.trim() || undefined,
+          city: city.trim() || undefined,
+          country: country.trim() || undefined,
           isPublic,
           preferences,
         };

@@ -47,12 +47,12 @@ export function UserProfilesList({
 
   // Get unique cities and countries for filters
   const cities = useMemo(() => {
-    const uniqueCities = new Set(profiles.map(p => p.city).filter(Boolean));
+    const uniqueCities = new Set(profiles.map(p => p.city).filter((c): c is string => Boolean(c)));
     return Array.from(uniqueCities).sort();
   }, [profiles]);
 
   const countries = useMemo(() => {
-    const uniqueCountries = new Set(profiles.map(p => p.country).filter(Boolean));
+    const uniqueCountries = new Set(profiles.map(p => p.country).filter((c): c is string => Boolean(c)));
     return Array.from(uniqueCountries).sort();
   }, [profiles]);
 

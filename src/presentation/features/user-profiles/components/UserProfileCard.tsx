@@ -61,7 +61,7 @@ export function UserProfileCard({
             <div className="flex items-center gap-2 mb-1">
               <h3 className="text-2xl font-bold">{profile.displayName}</h3>
               {profile.isComplete() && (
-                <CheckCircle className="w-5 h-5 text-green-300" title="Complete Profile" />
+                <CheckCircle className="w-5 h-5 text-green-300" />
               )}
             </div>
 
