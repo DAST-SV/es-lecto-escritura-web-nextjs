@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { SupabaseTranslationRepository } from '@/src/infrastructure/repositories/SupabaseTranslationRepository';
-import { GetTranslationsUseCase } from '@/src/core/application/use-cases/GetTranslations';
+import { GetTranslationsUseCase } from '@/src/core/application/use-cases';
 
 // Cache en memoria
 const cache: Record<string, Record<string, string>> = {};

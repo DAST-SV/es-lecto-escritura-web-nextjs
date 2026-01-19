@@ -1,54 +1,70 @@
 // ============================================
 // ARCHIVO: src/core/domain/repositories/IPermissionRepository.ts
 // ACCIÓN: REEMPLAZAR COMPLETO
-// CAMBIO: Documentar que pathname es ruta TRADUCIDA
 // ============================================
 
-import { UserPermissions, LanguageCode } from '../entities/Permission';
+import { UserPermissions, LanguageCode, Role } from '../entities/Permission';
 
-/**
- * Repositorio de permisos
- * Define el contrato para acceder a los permisos del usuario
- */
 export interface IPermissionRepository {
-  /**
-   * Obtiene todos los permisos de un usuario
-   * Usado por: usePermissions hook
-   */
+  // Permisos de usuario
   getUserPermissions(userId: string): Promise<UserPermissions>;
-
-  /**
-   * Verifica si un usuario puede acceder a una ruta TRADUCIDA
-   * 
-   * ✅ IMPORTANTE: translatedPath debe ser la ruta en el idioma actual
-   * Ejemplos:
-   *   - ES: /biblioteca
-   *   - EN: /library
-   *   - FR: /bibliotheque
-   * 
-   * Usado por: useRouteAccess hook, RouteGuard component
-   * 
-   * @param userId - ID del usuario
-   * @param translatedPath - Ruta TRADUCIDA (no la ruta física /library)
-   * @param languageCode - Código de idioma
-   */
-  canAccessRoute(
-    userId: string,
-    translatedPath: string,  // ✅ Ruta TRADUCIDA
-    languageCode?: LanguageCode
-  ): Promise<boolean>;
-
-  /**
-   * Obtiene las rutas permitidas para un usuario
-   * ✅ Retorna rutas TRADUCIDAS según el idioma
-   * 
-   * Usado internamente por getUserPermissions
-   */
+  canAccessRoute(userId: string, translatedPath: string, languageCode?: LanguageCode): Promise<boolean>;
   getAllowedRoutes(userId: string, languageCode?: LanguageCode): Promise<string[]>;
-
-  /**
-   * Obtiene los idiomas permitidos para un usuario
-   * Usado internamente por getUserPermissions
-   */
   getAllowedLanguages(userId: string): Promise<LanguageCode[]>;
+
+  // Gestión de roles
+  getAllRoles(): Promise<Role[]>;
+  getRoleById(roleId: string): Promise<Role | null>;
+  getUserRoles(userId: string): Promise<Role[]>;
+  createRole(data: {
+    name: string;
+    display_name: string;
+    description: string | null;
+    hierarchy_level: number;
+    is_active: boolean;
+    is_system_role: boolean;
+  }): Promise<Role>;
+  updateRole(roleId: string, data: Partial<{
+    display_name: string;
+    description: string | null;
+    hierarchy_level: number;
+    is_active: boolean;
+  }>): Promise<Role>;
+  deleteRole(roleId: string): Promise<void>;
+
+  // Asignación de roles
+  assignRole(dto: {
+    userId: string;
+    roleId: string;
+    assignedBy: string;
+    notes?: string;
+  }): Promise<void>;
+  revokeRole(dto: {
+    userId: string;
+    roleId: string;
+    revokedBy: string;
+    reason?: string;
+  }): Promise<void>;
+
+  // Permisos individuales
+  grantPermission(dto: {
+    userId: string;
+    routeId: string;
+    grantedBy: string;
+    reason?: string;
+    expiresAt?: Date;
+  }): Promise<void>;
+  revokePermission(dto: {
+    userId: string;
+    routeId: string;
+    revokedBy: string;
+    reason?: string;
+  }): Promise<void>;
+
+  // Permisos de rutas
+  getRoutePermissions(routeId?: string): Promise<Array<{
+    routeId: string;
+    routeName: string;
+    allowedRoles: string[];
+  }>>;
 }

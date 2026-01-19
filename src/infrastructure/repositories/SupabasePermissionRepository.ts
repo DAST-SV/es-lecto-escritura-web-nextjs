@@ -16,6 +16,8 @@ import {
 export class SupabasePermissionRepository implements IPermissionRepository {
   private supabase = createClient();
 
+
+
   /**
    * Obtiene todos los permisos de un usuario
    */
@@ -257,6 +259,299 @@ export class SupabasePermissionRepository implements IPermissionRepository {
     } catch (error) {
       console.error('Error getting allowed languages:', error);
       return ['es'];
+    }
+  }
+
+  async getAllRoles(): Promise<Role[]> {
+    try {
+      const { data, error } = await this.supabase
+        .schema('app')
+        .from('roles')
+        .select('*')
+        .eq('is_active', true)
+        .order('hierarchy_level', { ascending: false });
+
+      if (error) throw error;
+
+      return (data || []) as Role[];
+    } catch (error) {
+      console.error('Error getting all roles:', error);
+      return [];
+    }
+  }
+
+  async getRoleById(roleId: string): Promise<Role | null> {
+    try {
+      const { data, error } = await this.supabase
+        .schema('app')
+        .from('roles')
+        .select('*')
+        .eq('id', roleId)
+        .single();
+
+      if (error) throw error;
+
+      return data as Role;
+    } catch (error) {
+      console.error('Error getting role by id:', error);
+      return null;
+    }
+  }
+
+  async createRole(roleData: {
+    name: string;
+    display_name: string;
+    description: string | null;
+    hierarchy_level: number;
+    is_active: boolean;
+    is_system_role: boolean;
+  }): Promise<Role> {
+    try {
+      const { data, error } = await this.supabase
+        .schema('app')
+        .from('roles')
+        .insert({
+          name: roleData.name,
+          display_name: roleData.display_name,
+          description: roleData.description,
+          hierarchy_level: roleData.hierarchy_level,
+          is_active: roleData.is_active,
+          is_system_role: roleData.is_system_role,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return data as Role;
+    } catch (error: any) {
+      console.error('Error creating role:', error);
+      throw new Error(`Error al crear rol: ${error.message}`);
+    }
+  }
+
+  async updateRole(roleId: string, updateData: Partial<{
+    display_name: string;
+    description: string | null;
+    hierarchy_level: number;
+    is_active: boolean;
+  }>): Promise<Role> {
+    try {
+      const { data, error } = await this.supabase
+        .schema('app')
+        .from('roles')
+        .update(updateData)
+        .eq('id', roleId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return data as Role;
+    } catch (error: any) {
+      console.error('Error updating role:', error);
+      throw new Error(`Error al actualizar rol: ${error.message}`);
+    }
+  }
+
+  async deleteRole(roleId: string): Promise<void> {
+    try {
+      const { error } = await this.supabase
+        .schema('app')
+        .from('roles')
+        .delete()
+        .eq('id', roleId);
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Error deleting role:', error);
+      throw new Error(`Error al eliminar rol: ${error.message}`);
+    }
+  }
+
+  // ============================================
+  // Asignación de roles
+  // ============================================
+
+  async getUserRoles(userId: string): Promise<Role[]> {
+    try {
+      const { data, error } = await this.supabase
+        .schema('app')
+        .from('user_roles')
+        .select(`
+          roles!inner (*)
+        `)
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .is('revoked_at', null);
+
+      if (error) throw error;
+
+      return (data?.map((item: any) => item.roles) || []) as Role[];
+    } catch (error) {
+      console.error('Error getting user roles:', error);
+      return [];
+    }
+  }
+
+  async assignRole(dto: {
+    userId: string;
+    roleId: string;
+    assignedBy: string;
+    notes?: string;
+  }): Promise<void> {
+    try {
+      const { error } = await this.supabase
+        .schema('app')
+        .from('user_roles')
+        .insert({
+          user_id: dto.userId,
+          role_id: dto.roleId,
+          assigned_by: dto.assignedBy,
+          notes: dto.notes || null,
+          is_active: true,
+        });
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Error assigning role:', error);
+      throw new Error(`Error al asignar rol: ${error.message}`);
+    }
+  }
+
+  async revokeRole(dto: {
+    userId: string;
+    roleId: string;
+    revokedBy: string;
+    reason?: string;
+  }): Promise<void> {
+    try {
+      const { error } = await this.supabase
+        .schema('app')
+        .from('user_roles')
+        .update({
+          is_active: false,
+          revoked_at: new Date().toISOString(),
+          revoked_by: dto.revokedBy,
+          notes: dto.reason || null,
+        })
+        .eq('user_id', dto.userId)
+        .eq('role_id', dto.roleId);
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Error revoking role:', error);
+      throw new Error(`Error al revocar rol: ${error.message}`);
+    }
+  }
+
+  // ============================================
+  // Permisos individuales
+  // ============================================
+
+  async grantPermission(dto: {
+    userId: string;
+    routeId: string;
+    grantedBy: string;
+    reason?: string;
+    expiresAt?: Date;
+  }): Promise<void> {
+    try {
+      const { error } = await this.supabase
+        .schema('app')
+        .from('user_route_permissions')
+        .insert({
+          user_id: dto.userId,
+          route_id: dto.routeId,
+          permission_type: 'grant',
+          granted_by: dto.grantedBy,
+          reason: dto.reason || null,
+          expires_at: dto.expiresAt?.toISOString() || null,
+          is_active: true,
+        });
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Error granting permission:', error);
+      throw new Error(`Error al otorgar permiso: ${error.message}`);
+    }
+  }
+
+  async revokePermission(dto: {
+    userId: string;
+    routeId: string;
+    revokedBy: string;
+    reason?: string;
+  }): Promise<void> {
+    try {
+      const { error } = await this.supabase
+        .schema('app')
+        .from('user_route_permissions')
+        .insert({
+          user_id: dto.userId,
+          route_id: dto.routeId,
+          permission_type: 'deny',
+          granted_by: dto.revokedBy,
+          reason: dto.reason || null,
+          is_active: true,
+        });
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Error revoking permission:', error);
+      throw new Error(`Error al revocar permiso: ${error.message}`);
+    }
+  }
+
+  // ============================================
+  // Permisos de rutas
+  // ============================================
+
+  async getRoutePermissions(routeId?: string): Promise<Array<{
+    routeId: string;
+    routeName: string;
+    allowedRoles: string[];
+  }>> {
+    try {
+      let query = this.supabase
+        .schema('app')
+        .from('route_permissions')
+        .select(`
+          route_id,
+          routes!inner (
+            pathname,
+            display_name
+          ),
+          role_name
+        `)
+        .eq('is_active', true);
+
+      if (routeId) {
+        query = query.eq('route_id', routeId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      // Agrupar por ruta
+      const grouped = (data || []).reduce((acc: any, item: any) => {
+        const id = item.route_id;
+        if (!acc[id]) {
+          acc[id] = {
+            routeId: id,
+            routeName: item.routes?.display_name || item.routes?.pathname,
+            allowedRoles: [],
+          };
+        }
+        acc[id].allowedRoles.push(item.role_name);
+        return acc;
+      }, {});
+
+      return Object.values(grouped);
+    } catch (error) {
+      console.error('Error getting route permissions:', error);
+      return [];
     }
   }
 }
