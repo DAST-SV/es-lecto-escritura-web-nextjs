@@ -16,3 +16,15 @@ export { SupabaseTranslationKeyRepository } from './translations/SupabaseTransla
 
 // Rutas
 export { RoutesRepository } from './routes/RoutesRepository';
+
+// Organization Members
+export { OrganizationMemberRepository } from './organization-members/OrganizationMemberRepository';
+
+// User Profiles (will be added by agent)
+// export { UserProfileRepository } from './user-profiles/UserProfileRepository';
+
+// User Relationships (will be added by agent)
+// export { UserRelationshipRepository } from './user-relationships/UserRelationshipRepository';
+
+// Role Language Access (will be added by agent)
+// export { RoleLanguageAccessRepository } from './role-language-access/RoleLanguageAccessRepository';
