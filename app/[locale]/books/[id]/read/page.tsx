@@ -121,7 +121,7 @@ export default function ReadBookPage() {
         const file = new File([blob], 'libro.pdf', { type: 'application/pdf' });
 
         // ✅ Importar dinámicamente el servicio
-        const { PDFExtractorService } = await import('@/src/infrastructure/services/PDFExtractorService');
+        const { PDFExtractorService } = await import('@/src/infrastructure/services/books');
         
         console.log('🔄 Extrayendo páginas del PDF...');
         const result = await PDFExtractorService.extractPagesFromPDF(file);
@@ -155,7 +155,7 @@ export default function ReadBookPage() {
       isMounted = false;
       if (extractedPages.length > 0) {
         // Cleanup dinámico
-        import('@/src/infrastructure/services/PDFExtractorService').then(({ PDFExtractorService }) => {
+        import('@/src/infrastructure/services/books').then(({ PDFExtractorService }) => {
           PDFExtractorService.cleanupBlobUrls(extractedPages);
         });
       }
@@ -166,7 +166,7 @@ export default function ReadBookPage() {
     await handleEndSession();
 
     if (extractedPages.length > 0) {
-      const { PDFExtractorService } = await import('@/src/infrastructure/services/PDFExtractorService');
+      const { PDFExtractorService } = await import('@/src/infrastructure/services/books');
       PDFExtractorService.cleanupBlobUrls(extractedPages);
     }
     router.push(`/${locale}/books`);

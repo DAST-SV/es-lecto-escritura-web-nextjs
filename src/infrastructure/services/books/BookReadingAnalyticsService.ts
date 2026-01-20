@@ -107,7 +107,7 @@ export class BookReadingAnalyticsService {
       : 0;
 
     try {
-      const { createClient } = await import('../config/supabase.config');
+      const { createClient } = await import('../../config/supabase.config');
       const supabase = createClient();
 
       // Guardar sesión en Supabase
@@ -189,7 +189,7 @@ export class BookReadingAnalyticsService {
     if (!session) return;
 
     try {
-      const { createClient } = await import('../config/supabase.config');
+      const { createClient } = await import('../../config/supabase.config');
       const supabase = createClient();
 
       // Guardar vista de página
@@ -231,7 +231,7 @@ export class BookReadingAnalyticsService {
     const isCompleted = completionPercentage >= 100;
 
     try {
-      const { createClient } = await import('../config/supabase.config');
+      const { createClient } = await import('../../config/supabase.config');
       const supabase = createClient();
 
       // ✅ CORREGIDO: user_book_progress
@@ -281,7 +281,7 @@ export class BookReadingAnalyticsService {
     bookId: string
   ): Promise<UserProgress | null> {
     try {
-      const { createClient } = await import('../config/supabase.config');
+      const { createClient } = await import('../../config/supabase.config');
       const supabase = createClient();
 
       // ✅ CORREGIDO: user_book_progress
@@ -323,7 +323,7 @@ export class BookReadingAnalyticsService {
     bookId: string
   ): Promise<ReadingComparison> {
     try {
-      const { createClient } = await import('../config/supabase.config');
+      const { createClient } = await import('../../config/supabase.config');
       const supabase = createClient();
 
       // ✅ CORREGIDO: user_book_progress
@@ -393,7 +393,7 @@ export class BookReadingAnalyticsService {
     bookId: string
   ): Promise<BookStatistics> {
     try {
-      const { createClient } = await import('../config/supabase.config');
+      const { createClient } = await import('../../config/supabase.config');
       const supabase = createClient();
 
       const { data: allSessions, count: totalReaders } = await supabase

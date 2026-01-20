@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { BookReadingAnalyticsService } from '@/src/infrastructure/services/BookReadingAnalytics.service';
+import { BookReadingAnalyticsService } from '@/src/infrastructure/services/books';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 

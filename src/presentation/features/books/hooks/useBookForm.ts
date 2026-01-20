@@ -8,8 +8,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { BookPDFService } from '@/src/infrastructure/services/BookPDFService';
-import { BookImageService } from '@/src/infrastructure/services/BookImageService';
+import { BookPDFService, BookImageService } from '@/src/infrastructure/services/books';
 import { CreateBookUseCase } from '@/src/core/application/use-cases/books/CreateBook.usecase';
 import { UpdateBookUseCase } from '@/src/core/application/use-cases/books/UpdateBook.usecase';
 import type { Page } from '@/src/core/domain/types';
@@ -198,7 +197,7 @@ export function useBookForm({ bookId }: UseBookFormProps = {}) {
           const blob = await response.blob();
           const file = new File([blob], 'libro.pdf', { type: 'application/pdf' });
 
-          const { PDFExtractorService } = await import('@/src/infrastructure/services/PDFExtractorService');
+          const { PDFExtractorService } = await import('@/src/infrastructure/services/books');
           const result = await PDFExtractorService.extractPagesFromPDF(file);
           
           setExtractedPages(result.pages);
@@ -293,7 +292,7 @@ export function useBookForm({ bookId }: UseBookFormProps = {}) {
 
     setIsExtractingPages(true);
     try {
-      const { PDFExtractorService } = await import('@/src/infrastructure/services/PDFExtractorService');
+      const { PDFExtractorService } = await import('@/src/infrastructure/services/books');
       const result = await PDFExtractorService.extractPagesFromPDF(file);
       
       setExtractedPages(result.pages);
@@ -424,7 +423,7 @@ export function useBookForm({ bookId }: UseBookFormProps = {}) {
 
       // 4. Cleanup
       if (extractedPages.length > 0) {
-        const { PDFExtractorService } = await import('@/src/infrastructure/services/PDFExtractorService');
+        const { PDFExtractorService } = await import('@/src/infrastructure/services/books');
         PDFExtractorService.cleanupBlobUrls(extractedPages);
       }
 

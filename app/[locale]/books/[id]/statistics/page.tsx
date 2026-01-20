@@ -13,7 +13,7 @@ import {
   Zap, Calendar, Trophy, BarChart3
 } from 'lucide-react';
 import { createClient } from '@/src/infrastructure/config/supabase.config';
-import { BookReadingAnalyticsService } from '@/src/infrastructure/services/BookReadingAnalytics.service';
+import { BookReadingAnalyticsService } from '@/src/infrastructure/services/books';
 import { UnifiedLayout } from '@/src/presentation/features/navigation';
 
 export default function BookStatisticsPage() {
