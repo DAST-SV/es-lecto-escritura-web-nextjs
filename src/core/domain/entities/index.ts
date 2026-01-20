@@ -3,8 +3,9 @@
 // ✅ ÚNICO BARREL EXPORT DEL DOMINIO
 // ============================================
 
-// Permisos y RBAC (TODO EN Permission.ts)
+// Permisos y RBAC
 export * from './Permission';
+export * from './Role';
 
 // Traducciones
 export * from './Translation';
