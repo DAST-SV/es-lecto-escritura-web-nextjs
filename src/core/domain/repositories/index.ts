@@ -16,7 +16,7 @@ export * from './IRoleLanguageAccessRepository';
 
 // Traducciones
 export * from './ITranslationRepository';
-export * from './TranslationKeyRepository';
+export * from './ITranslationKeyRepository';
 
 // Dominio principal (si existe)
 export * from './IBookRepository';
@@ -24,7 +24,9 @@ export * from './IBookRepository';
 export * from './IUserTypeRepository';
 
 // Organizaciones y miembros
+export * from './IOrganizationRepository';
 export * from './IOrganizationMemberRepository';
 
-// Relaciones entre usuarios
+// Perfiles y relaciones entre usuarios
+export * from './IUserProfileRepository';
 export * from './IUserRelationshipRepository';

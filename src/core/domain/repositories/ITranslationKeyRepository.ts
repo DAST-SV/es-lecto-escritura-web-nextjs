@@ -24,7 +24,7 @@ export interface UpdateTranslationKeyDTO {
   isActive?: boolean;
 }
 
-export interface TranslationKeyRepository {
+export interface ITranslationKeyRepository {
   findAll(): Promise<TranslationKey[]>;
   findById(id: string): Promise<TranslationKey | null>;
   findByNamespace(namespaceSlug: string): Promise<TranslationKey[]>;
