@@ -17,7 +17,8 @@ interface TranslateKeyModalProps {
 }
 
 interface TranslateKeyData {
-  translationKeyId: string;
+  namespaceSlug: string;
+  translationKey: string;
   translations: Array<{
     languageCode: string;
     value: string;
@@ -71,9 +72,14 @@ export function TranslateKeyModal({ isOpen, onClose, onTranslate, availableKeys 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedKeyId) {
       alert('Selecciona una clave');
+      return;
+    }
+
+    if (!selectedKey) {
+      alert('Error: clave no encontrada');
       return;
     }
 
@@ -86,10 +92,11 @@ export function TranslateKeyModal({ isOpen, onClose, onTranslate, availableKeys 
     setIsSubmitting(true);
     try {
       await onTranslate({
-        translationKeyId: selectedKeyId,
+        namespaceSlug: selectedKey.namespaceSlug,
+        translationKey: selectedKey.keyName,
         translations: validTranslations,
       });
-      
+
       // Reset
       setSelectedKeyId('');
       setTranslations([{ languageCode: 'es', value: '' }]);

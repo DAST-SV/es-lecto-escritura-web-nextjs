@@ -192,6 +192,27 @@ export class SupabaseTranslationRepository implements ITranslationRepository {
   }
 
   async createBulk(dto: BulkCreateTranslationDTO): Promise<Translation[]> {
+    // Validaciones de entrada
+    if (!dto.namespaceSlug || !dto.namespaceSlug.trim()) {
+      throw new Error('namespaceSlug es requerido');
+    }
+    if (!dto.translationKey || !dto.translationKey.trim()) {
+      throw new Error('translationKey es requerido');
+    }
+    if (!dto.translations || dto.translations.length === 0) {
+      throw new Error('Debe proporcionar al menos una traducción');
+    }
+
+    // Validar cada traducción
+    for (const trans of dto.translations) {
+      if (!trans.languageCode || !trans.languageCode.trim()) {
+        throw new Error('Cada traducción debe tener un languageCode');
+      }
+      if (!trans.value || !trans.value.trim()) {
+        throw new Error('Cada traducción debe tener un valor');
+      }
+    }
+
     // Primero encontrar la translation_key
     const { data: keyData, error: keyError } = await this.supabase
       .schema('app')
