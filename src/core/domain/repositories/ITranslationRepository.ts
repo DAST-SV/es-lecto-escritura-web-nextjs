@@ -1,7 +1,4 @@
-// ============================================
 // src/core/domain/repositories/ITranslationRepository.ts
-// Repositorio: Traducciones (CORREGIDO)
-// ============================================
 
 import { Translation } from '../entities/Translation';
 

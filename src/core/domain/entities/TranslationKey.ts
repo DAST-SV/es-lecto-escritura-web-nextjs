@@ -1,25 +1,4 @@
-// ============================================
 // src/core/domain/entities/TranslationKey.ts
-// ✅ Entidad de clave de traducción
-// ============================================
-
-export interface TranslationKeyData {
-  id: string;
-  namespaceSlug: string;
-  keyName: string;
-  categoryId?: string;
-  categoryName?: string;
-  description?: string;
-  context?: string;
-  defaultValue?: string;
-  isSystemKey: boolean;
-  isActive: boolean;
-  translationCount?: number;
-  createdAt: Date;
-  updatedAt: Date;
-  createdBy?: string;
-  updatedBy?: string;
-}
 
 export class TranslationKey {
   constructor(
@@ -40,9 +19,6 @@ export class TranslationKey {
     public readonly updatedBy: string | undefined
   ) {}
 
-  /**
-   * Obtener la clave completa (namespace.keyName)
-   */
   getFullKey(): string {
     return `${this.namespaceSlug}.${this.keyName}`;
   }
@@ -65,23 +41,5 @@ export class TranslationKey {
       data.created_by,
       data.updated_by
     );
-  }
-
-  toDatabase() {
-    return {
-      id: this.id,
-      namespace_slug: this.namespaceSlug,
-      key_name: this.keyName,
-      category_id: this.categoryId,
-      description: this.description,
-      context: this.context,
-      default_value: this.defaultValue,
-      is_system_key: this.isSystemKey,
-      is_active: this.isActive,
-      created_at: this.createdAt.toISOString(),
-      updated_at: this.updatedAt.toISOString(),
-      created_by: this.createdBy,
-      updated_by: this.updatedBy,
-    };
   }
 }

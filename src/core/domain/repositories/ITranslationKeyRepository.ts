@@ -1,9 +1,6 @@
-// ============================================
-// src/core/domain/repositories/TranslationKeyRepository.ts
-// ✅ Interface del repositorio de claves de traducción
-// ============================================
+// src/core/domain/repositories/ITranslationKeyRepository.ts
 
-import { TranslationKey } from '@/src/core/domain/entities/TranslationKey';
+import { TranslationKey } from '../entities/TranslationKey';
 
 export interface CreateTranslationKeyDTO {
   namespaceSlug: string;

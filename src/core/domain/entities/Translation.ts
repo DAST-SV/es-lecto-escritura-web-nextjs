@@ -1,24 +1,4 @@
-// ============================================
 // src/core/domain/entities/Translation.ts
-// ✅ CORREGIDO: Con método getFullKey()
-// ============================================
-
-export interface TranslationData {
-  id: string;
-  translationKeyId: string;
-  namespaceSlug: string;
-  keyName: string;
-  languageCode: string;
-  value: string;
-  isActive: boolean;
-  isVerified: boolean;
-  verifiedBy?: string;
-  verifiedAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-  createdBy?: string;
-  updatedBy?: string;
-}
 
 export class Translation {
   constructor(
@@ -38,9 +18,6 @@ export class Translation {
     public readonly updatedBy: string | undefined
   ) {}
 
-  /**
-   * ✅ NUEVO: Obtener la clave completa (namespace.key)
-   */
   getFullKey(): string {
     return `${this.namespaceSlug}.${this.keyName}`;
   }
@@ -50,7 +27,7 @@ export class Translation {
       data.id,
       data.translation_key_id,
       data.namespace_slug,
-      data.key_name,  // ✅ CORRECCIÓN: key_name no translation_key
+      data.key_name,
       data.language_code,
       data.value,
       data.is_active ?? true,
@@ -62,22 +39,5 @@ export class Translation {
       data.created_by,
       data.updated_by
     );
-  }
-
-  toDatabase() {
-    return {
-      id: this.id,
-      translation_key_id: this.translationKeyId,
-      language_code: this.languageCode,
-      value: this.value,
-      is_active: this.isActive,
-      is_verified: this.isVerified,
-      verified_by: this.verifiedBy,
-      verified_at: this.verifiedAt?.toISOString(),
-      created_at: this.createdAt.toISOString(),
-      updated_at: this.updatedAt.toISOString(),
-      created_by: this.createdBy,
-      updated_by: this.updatedBy,
-    };
   }
 }
