@@ -96,6 +96,17 @@ export class RoleRepository implements IRoleRepository {
   }
 
   async create(dto: CreateRoleDTO): Promise<Role> {
+    // Validaciones de entrada
+    if (!dto.name || !dto.name.trim()) {
+      throw new Error('El nombre del rol es requerido');
+    }
+    if (!dto.displayName || !dto.displayName.trim()) {
+      throw new Error('El nombre visible del rol es requerido');
+    }
+    if (!dto.createdBy || !dto.createdBy.trim()) {
+      throw new Error('El ID del creador es requerido');
+    }
+
     const { data, error } = await this.supabase
       .schema('app')
       .from('roles')
@@ -119,6 +130,14 @@ export class RoleRepository implements IRoleRepository {
   }
 
   async update(id: string, dto: UpdateRoleDTO, updatedBy: string): Promise<Role> {
+    // Validaciones de entrada
+    if (!id || !id.trim()) {
+      throw new Error('El ID del rol es requerido');
+    }
+    if (dto.displayName !== undefined && (!dto.displayName || !dto.displayName.trim())) {
+      throw new Error('El nombre visible no puede estar vacío');
+    }
+
     const updateData: any = {
       updated_at: new Date().toISOString(),
     };

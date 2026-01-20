@@ -122,6 +122,20 @@ export class UserRoutePermissionRepository implements IUserRoutePermissionReposi
   }
 
   async create(dto: CreateUserRoutePermissionDTO): Promise<UserRoutePermission> {
+    // Validaciones de entrada
+    if (!dto.userId || !dto.userId.trim()) {
+      throw new Error('El ID del usuario es requerido');
+    }
+    if (!dto.routeId || !dto.routeId.trim()) {
+      throw new Error('El ID de la ruta es requerido');
+    }
+    if (!dto.permissionType || !['GRANT', 'DENY'].includes(dto.permissionType)) {
+      throw new Error('El tipo de permiso debe ser GRANT o DENY');
+    }
+    if (!dto.grantedBy || !dto.grantedBy.trim()) {
+      throw new Error('El ID del otorgante es requerido');
+    }
+
     const { data, error } = await this.supabase
       .schema('app')
       .from('user_route_permissions')

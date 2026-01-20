@@ -191,6 +191,17 @@ export class OrganizationMemberRepository implements IOrganizationMemberReposito
   async create(dto: CreateOrganizationMemberDTO): Promise<OrganizationMember> {
     console.log('📝 Creating organization member:', dto);
 
+    // Validaciones de entrada
+    if (!dto.organizationId || !dto.organizationId.trim()) {
+      throw new Error('El ID de la organización es requerido');
+    }
+    if (!dto.userId || !dto.userId.trim()) {
+      throw new Error('El ID del usuario es requerido');
+    }
+    if (!dto.role || !dto.role.trim()) {
+      throw new Error('El rol del usuario es requerido');
+    }
+
     const supabase = createClient();
 
     const { data, error } = await supabase

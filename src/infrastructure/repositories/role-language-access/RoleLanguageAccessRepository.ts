@@ -145,6 +145,17 @@ export class RoleLanguageAccessRepository implements IRoleLanguageAccessReposito
   }
 
   async create(dto: CreateRoleLanguageAccessDTO): Promise<RoleLanguageAccess> {
+    // Validaciones de entrada
+    if (!dto.roleName || !dto.roleName.trim()) {
+      throw new Error('El nombre del rol es requerido');
+    }
+    if (!dto.languageCode || !dto.languageCode.trim()) {
+      throw new Error('El código de idioma es requerido');
+    }
+    if (!dto.createdBy || !dto.createdBy.trim()) {
+      throw new Error('El ID del creador es requerido');
+    }
+
     const { data, error } = await this.supabase
       .schema('app')
       .from('role_language_access')
@@ -212,6 +223,17 @@ export class RoleLanguageAccessRepository implements IRoleLanguageAccessReposito
   }
 
   async grantLanguages(roleName: string, languageCodes: LanguageCode[], createdBy: string): Promise<RoleLanguageAccess[]> {
+    // Validaciones de entrada
+    if (!roleName || !roleName.trim()) {
+      throw new Error('El nombre del rol es requerido');
+    }
+    if (!languageCodes || languageCodes.length === 0) {
+      throw new Error('Debe proporcionar al menos un código de idioma');
+    }
+    if (!createdBy || !createdBy.trim()) {
+      throw new Error('El ID del creador es requerido');
+    }
+
     const inserts = languageCodes.map((code) => ({
       role_name: roleName,
       language_code: code,

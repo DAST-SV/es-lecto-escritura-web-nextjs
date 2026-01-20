@@ -331,6 +331,20 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
   async create(dto: CreateUserRelationshipDTO): Promise<UserRelationship> {
     console.log('📝 Creating user relationship:', dto);
 
+    // Validaciones de entrada
+    if (!dto.parentUserId || !dto.parentUserId.trim()) {
+      throw new Error('El ID del usuario padre es requerido');
+    }
+    if (!dto.childUserId || !dto.childUserId.trim()) {
+      throw new Error('El ID del usuario hijo es requerido');
+    }
+    if (!dto.relationshipType || !dto.relationshipType.trim()) {
+      throw new Error('El tipo de relación es requerido');
+    }
+    if (dto.parentUserId === dto.childUserId) {
+      throw new Error('Un usuario no puede tener una relación consigo mismo');
+    }
+
     const supabase = createClient();
 
     const { data, error } = await supabase

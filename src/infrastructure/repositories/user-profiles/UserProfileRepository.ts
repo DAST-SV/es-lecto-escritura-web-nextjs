@@ -204,6 +204,14 @@ export class UserProfileRepository implements IUserProfileRepository {
   async create(dto: CreateUserProfileDTO): Promise<UserProfile> {
     console.log('📝 Creating user profile:', dto);
 
+    // Validaciones de entrada
+    if (!dto.userId || !dto.userId.trim()) {
+      throw new Error('El ID del usuario es requerido');
+    }
+    if (!dto.displayName || !dto.displayName.trim()) {
+      throw new Error('El nombre visible es requerido');
+    }
+
     const supabase = createClient();
 
     const { data, error } = await supabase

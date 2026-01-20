@@ -147,6 +147,17 @@ export class UserRoleRepository implements IUserRoleRepository {
   }
 
   async assign(dto: AssignRoleDTO): Promise<UserRole> {
+    // Validaciones de entrada
+    if (!dto.userId || !dto.userId.trim()) {
+      throw new Error('El ID del usuario es requerido');
+    }
+    if (!dto.roleId || !dto.roleId.trim()) {
+      throw new Error('El ID del rol es requerido');
+    }
+    if (!dto.assignedBy || !dto.assignedBy.trim()) {
+      throw new Error('El ID del asignador es requerido');
+    }
+
     // Check if assignment already exists
     const existing = await this.findByUserAndRole(dto.userId, dto.roleId);
     if (existing && existing.isActive) {

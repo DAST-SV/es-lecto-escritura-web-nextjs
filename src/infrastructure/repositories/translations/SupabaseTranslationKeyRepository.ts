@@ -114,6 +114,14 @@ export class SupabaseTranslationKeyRepository implements ITranslationKeyReposito
   }
 
   async create(dto: CreateTranslationKeyDTO): Promise<TranslationKey> {
+    // Validaciones de entrada
+    if (!dto.namespaceSlug || !dto.namespaceSlug.trim()) {
+      throw new Error('El namespace es requerido');
+    }
+    if (!dto.keyName || !dto.keyName.trim()) {
+      throw new Error('El nombre de la clave es requerido');
+    }
+
     const { data, error } = await this.supabase
       .schema('app')  // ✅ CRÍTICO
       .from('translation_keys')

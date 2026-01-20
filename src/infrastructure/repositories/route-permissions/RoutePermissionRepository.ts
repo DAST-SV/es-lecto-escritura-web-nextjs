@@ -122,6 +122,17 @@ export class RoutePermissionRepository implements IRoutePermissionRepository {
   }
 
   async create(dto: CreateRoutePermissionDTO): Promise<RoutePermission> {
+    // Validaciones de entrada
+    if (!dto.roleName || !dto.roleName.trim()) {
+      throw new Error('El nombre del rol es requerido');
+    }
+    if (!dto.routeId || !dto.routeId.trim()) {
+      throw new Error('El ID de la ruta es requerido');
+    }
+    if (!dto.createdBy || !dto.createdBy.trim()) {
+      throw new Error('El ID del creador es requerido');
+    }
+
     const { data, error } = await this.supabase
       .schema('app')
       .from('route_permissions')
