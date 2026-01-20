@@ -8,6 +8,7 @@ export * from './Permission';
 export * from './Role';
 export * from './UserRole';
 export * from './RoutePermission';
+export * from './UserRoutePermission';
 
 // Traducciones
 export * from './Translation';

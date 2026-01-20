@@ -11,6 +11,7 @@ export * from './IPermissionRepository';
 export * from './IRoleRepository';
 export * from './IUserRoleRepository';
 export * from './IRoutePermissionRepository';
+export * from './IUserRoutePermissionRepository';
 
 // Traducciones
 export * from './ITranslationRepository';
