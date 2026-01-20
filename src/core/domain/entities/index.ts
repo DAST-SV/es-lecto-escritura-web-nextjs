@@ -9,6 +9,7 @@ export * from './Role';
 export * from './UserRole';
 export * from './RoutePermission';
 export * from './UserRoutePermission';
+export * from './RoleLanguageAccess';
 
 // Traducciones
 export * from './Translation';

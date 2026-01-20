@@ -13,6 +13,7 @@ export { RoleRepository } from './roles/RoleRepository';
 export { UserRoleRepository } from './user-roles/UserRoleRepository';
 export { RoutePermissionRepository } from './route-permissions/RoutePermissionRepository';
 export { UserRoutePermissionRepository } from './user-route-permissions/UserRoutePermissionRepository';
+export { RoleLanguageAccessRepository } from './role-language-access/RoleLanguageAccessRepository';
 
 // Traducciones
 export { SupabaseTranslationRepository } from './translations/SupabaseTranslationRepository';

@@ -12,6 +12,7 @@ export * from './IRoleRepository';
 export * from './IUserRoleRepository';
 export * from './IRoutePermissionRepository';
 export * from './IUserRoutePermissionRepository';
+export * from './IRoleLanguageAccessRepository';
 
 // Traducciones
 export * from './ITranslationRepository';
