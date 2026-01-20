@@ -4,12 +4,15 @@
 // ============================================
 
 // Permisos y RBAC
-export * from './Permission';
+// Export only non-conflicting items from Permission
+export { UserPermissions, isValidLanguageCode, getLanguageName, getLanguageFlag } from './Permission';
+export type { PermissionType, LanguageCode } from './Permission';
 export * from './Role';
 export * from './UserRole';
 export * from './RoutePermission';
 export * from './UserRoutePermission';
-export * from './RoleLanguageAccess';
+// Export RoleLanguageAccess class but not LanguageCode type (already exported from Permission)
+export { RoleLanguageAccess } from './RoleLanguageAccess';
 
 // Traducciones
 export * from './Translation';

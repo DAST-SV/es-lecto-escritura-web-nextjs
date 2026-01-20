@@ -15,13 +15,13 @@ interface UserPermissionCardProps {
 
 export function UserPermissionCard({ permission, onDelete }: UserPermissionCardProps) {
   return (
-    <div className={\`p-4 rounded-lg border-2 \${permission.isGrant() ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}\`}>
+    <div className={`p-4 rounded-lg border-2 ${permission.isGrant() ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <User className="w-4 h-4" />
           <span className="font-semibold text-sm">{permission.getUserDisplay()}</span>
         </div>
-        <span className={\`px-2 py-1 text-xs font-bold rounded \${permission.isGrant() ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}\`}>
+        <span className={`px-2 py-1 text-xs font-bold rounded ${permission.isGrant() ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
           {permission.permissionType}
         </span>
       </div>

@@ -55,7 +55,7 @@ export default function UserRolesPage() {
   };
 
   const handleRevoke = async (userRole: UserRole) => {
-    if (!confirm(t('page.confirm.revoke') || \`Revoke \${userRole.getRoleDisplay()} from \${userRole.getUserDisplay()}?\`)) return;
+    if (!confirm(t('page.confirm.revoke') || `Revoke ${userRole.getRoleDisplay()} from ${userRole.getUserDisplay()}?`)) return;
     try {
       await revokeRole(userRole.id, { revokedBy: currentUserId });
       alert(t('page.success.revoked') || 'Role revoked successfully!');

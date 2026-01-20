@@ -47,7 +47,7 @@ export default function UserPermissionsPage() {
   };
 
   const handleDelete = async (permission: UserRoutePermission) => {
-    if (!confirm(\`Delete permission for \${permission.getUserDisplay()}?\`)) return;
+    if (!confirm(`Delete permission for ${permission.getUserDisplay()}?`)) return;
     try {
       await deletePermission(permission.id);
       alert('Permission deleted!');
