@@ -17,6 +17,8 @@ export { RoleLanguageAccess } from './RoleLanguageAccess';
 // Traducciones
 export * from './Translation';
 export * from './TranslationKey';
+export * from './Language';
+export * from './TranslationNamespace';
 
 // Dominio principal (si existe)
 export * from './Book';

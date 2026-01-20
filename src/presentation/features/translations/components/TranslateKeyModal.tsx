@@ -6,8 +6,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Languages, Plus, Trash2 } from 'lucide-react';
+import { X, Languages as LanguagesIcon, Plus, Trash2, Loader2 } from 'lucide-react';
 import { TranslationKey } from '@/src/core/domain/entities/TranslationKey';
+import { useLanguages } from '@/src/presentation/hooks/useLanguages';
 
 interface TranslateKeyModalProps {
   isOpen: boolean;
@@ -25,28 +26,26 @@ interface TranslateKeyData {
   }>;
 }
 
-const AVAILABLE_LANGUAGES = [
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
-  { code: 'pt', name: 'Português', flag: '🇵🇹' },
-  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
-  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-];
-
 export function TranslateKeyModal({ isOpen, onClose, onTranslate, availableKeys }: TranslateKeyModalProps) {
+  const { languages, loading: loadingLanguages } = useLanguages();
   const [selectedKeyId, setSelectedKeyId] = useState('');
-  const [translations, setTranslations] = useState<Array<{ languageCode: string; value: string }>>([
-    { languageCode: 'es', value: '' },
-  ]);
+  const [translations, setTranslations] = useState<Array<{ languageCode: string; value: string }>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Inicializar con el idioma por defecto cuando se carguen los idiomas
+  React.useEffect(() => {
+    if (languages.length > 0 && translations.length === 0) {
+      const defaultLang = languages.find(l => l.isDefault) || languages[0];
+      setTranslations([{ languageCode: defaultLang.code, value: '' }]);
+    }
+  }, [languages]);
 
   const selectedKey = availableKeys.find(k => k.id === selectedKeyId);
 
   const addLanguage = () => {
     const usedLanguages = new Set(translations.map(t => t.languageCode));
-    const availableToAdd = AVAILABLE_LANGUAGES.find(lang => !usedLanguages.has(lang.code));
-    
+    const availableToAdd = languages.find(lang => !usedLanguages.has(lang.code));
+
     if (availableToAdd) {
       setTranslations([...translations, { languageCode: availableToAdd.code, value: '' }]);
     }
@@ -99,7 +98,8 @@ export function TranslateKeyModal({ isOpen, onClose, onTranslate, availableKeys 
 
       // Reset
       setSelectedKeyId('');
-      setTranslations([{ languageCode: 'es', value: '' }]);
+      const defaultLang = languages.find(l => l.isDefault) || languages[0];
+      setTranslations([{ languageCode: defaultLang.code, value: '' }]);
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -108,9 +108,24 @@ export function TranslateKeyModal({ isOpen, onClose, onTranslate, availableKeys 
   };
 
   const usedLanguages = new Set(translations.map(t => t.languageCode));
-  const canAddMore = usedLanguages.size < AVAILABLE_LANGUAGES.length;
+  const canAddMore = usedLanguages.size < languages.length;
 
   if (!isOpen) return null;
+
+  if (loadingLanguages) {
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="flex min-h-screen items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-8">
+            <div className="flex items-center justify-center h-40">
+              <Loader2 size={32} className="animate-spin text-blue-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -127,7 +142,7 @@ export function TranslateKeyModal({ isOpen, onClose, onTranslate, availableKeys 
 
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Languages size={28} className="text-blue-600" />
+              <LanguagesIcon size={28} className="text-blue-600" />
               Traducir Clave
             </h2>
             <p className="text-gray-600 mt-1">Traduce una clave a múltiples idiomas simultáneamente</p>
@@ -186,13 +201,13 @@ export function TranslateKeyModal({ isOpen, onClose, onTranslate, availableKeys 
                         onChange={(e) => updateLanguage(index, e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        {AVAILABLE_LANGUAGES.map(lang => (
-                          <option 
-                            key={lang.code} 
+                        {languages.map(lang => (
+                          <option
+                            key={lang.code}
                             value={lang.code}
                             disabled={usedLanguages.has(lang.code) && translation.languageCode !== lang.code}
                           >
-                            {lang.flag} {lang.name}
+                            {lang.flagEmoji} {lang.displayName}
                           </option>
                         ))}
                       </select>
@@ -225,7 +240,7 @@ export function TranslateKeyModal({ isOpen, onClose, onTranslate, availableKeys 
               </div>
 
               <p className="mt-2 text-sm text-gray-500">
-                💡 Puedes agregar traducciones para {AVAILABLE_LANGUAGES.length} idiomas diferentes
+                💡 Puedes agregar traducciones para {languages.length} idiomas diferentes
               </p>
             </div>
 
