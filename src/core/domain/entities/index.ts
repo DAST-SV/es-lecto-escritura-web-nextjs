@@ -6,6 +6,7 @@
 // Permisos y RBAC
 export * from './Permission';
 export * from './Role';
+export * from './UserRole';
 
 // Traducciones
 export * from './Translation';

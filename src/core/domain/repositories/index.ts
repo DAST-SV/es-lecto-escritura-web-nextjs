@@ -9,6 +9,7 @@ export * from './IAuthRepository';
 // Permisos y Roles
 export * from './IPermissionRepository';
 export * from './IRoleRepository';
+export * from './IUserRoleRepository';
 
 // Traducciones
 export * from './ITranslationRepository';

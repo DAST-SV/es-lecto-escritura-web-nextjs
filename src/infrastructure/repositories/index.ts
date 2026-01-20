@@ -10,6 +10,7 @@ export { SupabaseAuthRepository } from './auth/SupabaseAuthRepository';
 // Permisos y Roles
 export { SupabasePermissionRepository } from './permissions/SupabasePermissionRepository';
 export { RoleRepository } from './roles/RoleRepository';
+export { UserRoleRepository } from './user-roles/UserRoleRepository';
 
 // Traducciones
 export { SupabaseTranslationRepository } from './translations/SupabaseTranslationRepository';
