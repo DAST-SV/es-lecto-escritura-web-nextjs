@@ -30,3 +30,12 @@ export { UserProfileRepository } from './user-profiles/UserProfileRepository';
 
 // User Relationships
 export { UserRelationshipRepository } from './user-relationships/UserRelationshipRepository';
+
+// Books
+export { BookRepository } from './books/BookRepository';
+
+// Organizations
+export { SupabaseOrganizationRepository } from './organizations/OrganizationRepository';
+
+// User Types
+export { SupabaseUserTypeRepository } from './user-types/UserTypeRepository';

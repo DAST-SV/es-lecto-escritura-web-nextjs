@@ -5,13 +5,13 @@
 
 import { createClient } from '@/src/infrastructure/config/supabase.config';
 import {
-  TranslationKeyRepository,
+  ITranslationKeyRepository,
   CreateTranslationKeyDTO,
   UpdateTranslationKeyDTO,
-} from '@/src/core/domain/repositories/TranslationKeyRepository';
+} from '@/src/core/domain/repositories/ITranslationKeyRepository';
 import { TranslationKey } from '@/src/core/domain/entities/TranslationKey';
 
-export class SupabaseTranslationKeyRepository implements TranslationKeyRepository {
+export class SupabaseTranslationKeyRepository implements ITranslationKeyRepository {
   private supabase = createClient();
 
   async findAll(): Promise<TranslationKey[]> {
