@@ -2,7 +2,7 @@
 // src/presentation/features/translation-keys/components/CreateKeyModal.tsx
 // ============================================
 
-import { EditModal } from '@/src/presentation/components/shared/Modals';
+import { EditModal } from "@/src/presentation/components/shared/Modals";
 
 interface CreateKeyModalProps {
   isOpen: boolean;

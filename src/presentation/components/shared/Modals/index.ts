@@ -1,6 +1,6 @@
 // ============================================
 // src/presentation/components/shared/Modals/index.ts
-// 📄 ARCHIVO 3/8 - Exports centralizados
+// Barrel export de modales reutilizables
 // ============================================
 
 export { EditModal } from './EditModal';

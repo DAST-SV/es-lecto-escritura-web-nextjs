@@ -1,26 +1,24 @@
 // ============================================
 // src/presentation/hooks/useTranslationNamespaces.ts
-// Hook: Translation Namespaces Management
+// Hook: Obtener namespaces
 // ============================================
 
-'use client';
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { TranslationNamespace } from '@/src/core/domain/entities/TranslationNamespace';
 import { TranslationNamespaceRepository } from '@/src/infrastructure/repositories/translation-namespaces/TranslationNamespaceRepository';
 
 const namespaceRepository = new TranslationNamespaceRepository();
 
-export function useTranslationNamespaces() {
+export function useTranslationNamespaces(includeInactive = false) {
   const [namespaces, setNamespaces] = useState<TranslationNamespace[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadNamespaces = async () => {
+  const loadNamespaces = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await namespaceRepository.findActive();
+      const data = await namespaceRepository.findAll(includeInactive);
       setNamespaces(data);
     } catch (err: any) {
       setError(err.message || 'Error al cargar namespaces');
@@ -28,16 +26,16 @@ export function useTranslationNamespaces() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [includeInactive]);
 
   useEffect(() => {
     loadNamespaces();
-  }, []);
+  }, [loadNamespaces]);
 
   return {
     namespaces,
     loading,
     error,
-    reload: loadNamespaces,
+    refresh: loadNamespaces,
   };
 }
