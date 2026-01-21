@@ -23,6 +23,12 @@ import {
   Route as RouteIcon,
   ChevronDown,
   Globe,
+  Building2,
+  Shield,
+  UserCircle,
+  Package,
+  Tag,
+  FolderTree,
 } from 'lucide-react';
 import { createClient } from '@/src/infrastructure/config/supabase.config';
 
@@ -83,7 +89,7 @@ export default function AdminLayout({
     );
   };
 
-  // ✅ NUEVO: Menú completo con sección de traducciones
+  // ✅ NUEVO: Menú completo con todas las secciones
   const menuItems: MenuItem[] = [
     {
       name: 'Dashboard',
@@ -91,15 +97,79 @@ export default function AdminLayout({
       icon: <LayoutDashboard size={20} />,
     },
     {
-      name: 'Libros',
-      href: `/${locale}/admin/books`,
-      icon: <BookOpen size={20} />,
+      name: 'Organizaciones',
+      href: `/${locale}/admin/organizations`,
+      icon: <Building2 size={20} />,
+    },
+    {
+      name: 'Usuarios',
+      href: '#',
+      icon: <Users size={20} />,
+      children: [
+        {
+          name: 'Perfiles de Usuario',
+          href: `/${locale}/admin/user-profiles`,
+          icon: <UserCircle size={18} />,
+        },
+        {
+          name: 'Relaciones de Usuario',
+          href: `/${locale}/admin/user-relationships`,
+          icon: <Users size={18} />,
+        },
+        {
+          name: 'Roles de Usuario',
+          href: `/${locale}/admin/user-roles`,
+          icon: <Shield size={18} />,
+        },
+      ],
+    },
+    {
+      name: 'Roles y Permisos',
+      href: '#',
+      icon: <Shield size={20} />,
+      children: [
+        {
+          name: 'Roles',
+          href: `/${locale}/admin/roles`,
+          icon: <Shield size={18} />,
+        },
+        {
+          name: 'Permisos de Rutas',
+          href: `/${locale}/admin/route-permissions`,
+          icon: <RouteIcon size={18} />,
+        },
+        {
+          name: 'Permisos de Usuario',
+          href: `/${locale}/admin/user-permissions`,
+          icon: <Key size={18} />,
+        },
+        {
+          name: 'Acceso por Rol e Idioma',
+          href: `/${locale}/admin/role-language-access`,
+          icon: <Globe size={18} />,
+        },
+      ],
+    },
+    {
+      name: 'Idiomas',
+      href: `/${locale}/admin/languages`,
+      icon: <Globe size={20} />,
     },
     {
       name: 'Sistema de Traducciones',
       href: '#',
-      icon: <Globe size={20} />,
+      icon: <Languages size={20} />,
       children: [
+        {
+          name: 'Namespaces',
+          href: `/${locale}/admin/translation-namespaces`,
+          icon: <FolderTree size={18} />,
+        },
+        {
+          name: 'Categorías',
+          href: `/${locale}/admin/translation-categories`,
+          icon: <Tag size={18} />,
+        },
         {
           name: 'Claves de Traducción',
           href: `/${locale}/admin/translation-keys`,
@@ -110,12 +180,12 @@ export default function AdminLayout({
           href: `/${locale}/admin/translations`,
           icon: <Languages size={18} />,
         },
-        {
-          name: 'Rutas del Sistema',
-          href: `/${locale}/admin/routes`,
-          icon: <RouteIcon size={18} />,
-        },
       ],
+    },
+    {
+      name: 'Miembros de Organización',
+      href: `/${locale}/admin/organization-members`,
+      icon: <Users size={20} />,
     },
     {
       name: 'Auditoría',
