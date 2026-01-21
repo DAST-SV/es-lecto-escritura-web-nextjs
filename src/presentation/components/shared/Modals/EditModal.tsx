@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { X } from 'lucide-react';
 
 interface FieldConfig {
@@ -46,6 +46,15 @@ export function EditModal({
     return initial;
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ✅ FIX: Actualizar formData cuando cambien los fields
+  useEffect(() => {
+    const newData: Record<string, any> = {};
+    fields.forEach(field => {
+      newData[field.name] = field.value;
+    });
+    setFormData(newData);
+  }, [fields]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

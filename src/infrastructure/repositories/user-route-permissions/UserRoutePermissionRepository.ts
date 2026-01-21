@@ -16,8 +16,7 @@ export class UserRoutePermissionRepository implements IUserRoutePermissionReposi
       .from('user_route_permissions')
       .select(`
         *,
-        users:user_id (email),
-        routes:route_id (path, name)
+        routes:route_id (pathname, display_name)
       `)
       .order('created_at', { ascending: false });
 
@@ -40,8 +39,7 @@ export class UserRoutePermissionRepository implements IUserRoutePermissionReposi
       .from('user_route_permissions')
       .select(`
         *,
-        users:user_id (email),
-        routes:route_id (path, name)
+        routes:route_id (pathname, display_name)
       `)
       .eq('id', id)
       .single();
@@ -60,8 +58,7 @@ export class UserRoutePermissionRepository implements IUserRoutePermissionReposi
       .from('user_route_permissions')
       .select(`
         *,
-        users:user_id (email),
-        routes:route_id (path, name)
+        routes:route_id (pathname, display_name)
       `)
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
@@ -79,8 +76,7 @@ export class UserRoutePermissionRepository implements IUserRoutePermissionReposi
       .from('user_route_permissions')
       .select(`
         *,
-        users:user_id (email),
-        routes:route_id (path, name)
+        routes:route_id (pathname, display_name)
       `)
       .eq('route_id', routeId)
       .order('created_at', { ascending: false });
@@ -98,8 +94,7 @@ export class UserRoutePermissionRepository implements IUserRoutePermissionReposi
       .from('user_route_permissions')
       .select(`
         *,
-        users:user_id (email),
-        routes:route_id (path, name)
+        routes:route_id (pathname, display_name)
       `)
       .eq('user_id', userId)
       .eq('route_id', routeId);
@@ -151,8 +146,7 @@ export class UserRoutePermissionRepository implements IUserRoutePermissionReposi
       })
       .select(`
         *,
-        users:user_id (email),
-        routes:route_id (path, name)
+        routes:route_id (pathname, display_name)
       `)
       .single();
 
@@ -180,8 +174,7 @@ export class UserRoutePermissionRepository implements IUserRoutePermissionReposi
       .eq('id', id)
       .select(`
         *,
-        users:user_id (email),
-        routes:route_id (path, name)
+        routes:route_id (pathname, display_name)
       `)
       .single();
 

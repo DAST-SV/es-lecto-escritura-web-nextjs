@@ -16,7 +16,6 @@ export class UserRoleRepository implements IUserRoleRepository {
       .from('user_roles')
       .select(`
         *,
-        users:user_id (email),
         roles:role_id (name, display_name)
       `)
       .order('created_at', { ascending: false });
@@ -40,7 +39,6 @@ export class UserRoleRepository implements IUserRoleRepository {
       .from('user_roles')
       .select(`
         *,
-        users:user_id (email),
         roles:role_id (name, display_name)
       `)
       .eq('id', id)
@@ -60,7 +58,6 @@ export class UserRoleRepository implements IUserRoleRepository {
       .from('user_roles')
       .select(`
         *,
-        users:user_id (email),
         roles:role_id (name, display_name)
       `)
       .eq('user_id', userId)
@@ -85,7 +82,6 @@ export class UserRoleRepository implements IUserRoleRepository {
       .from('user_roles')
       .select(`
         *,
-        users:user_id (email),
         roles:role_id (name, display_name)
       `)
       .eq('role_id', roleId)
@@ -110,7 +106,6 @@ export class UserRoleRepository implements IUserRoleRepository {
       .from('user_roles')
       .select(`
         *,
-        users:user_id (email),
         roles:role_id (name, display_name)
       `)
       .eq('user_id', userId)
@@ -131,7 +126,6 @@ export class UserRoleRepository implements IUserRoleRepository {
       .from('user_roles')
       .select(`
         *,
-        users:user_id (email),
         roles:role_id (name, display_name)
       `)
       .eq('user_id', userId)
@@ -176,7 +170,6 @@ export class UserRoleRepository implements IUserRoleRepository {
       })
       .select(`
         *,
-        users:user_id (email),
         roles:role_id (name, display_name)
       `)
       .single();
@@ -221,7 +214,6 @@ export class UserRoleRepository implements IUserRoleRepository {
       .eq('id', id)
       .select(`
         *,
-        users:user_id (email),
         roles:role_id (name, display_name)
       `)
       .single();
@@ -258,7 +250,6 @@ export class UserRoleRepository implements IUserRoleRepository {
       .eq('id', id)
       .select(`
         *,
-        users:user_id (email),
         roles:role_id (name, display_name)
       `)
       .single();

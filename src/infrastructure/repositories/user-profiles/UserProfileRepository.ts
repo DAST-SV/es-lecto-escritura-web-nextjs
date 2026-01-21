@@ -25,13 +25,7 @@ export class UserProfileRepository implements IUserProfileRepository {
     let query = supabase
       .schema('app')
       .from('user_profiles')
-      .select(`
-        *,
-        users:user_id (
-          id,
-          email
-        )
-      `)
+      .select('*')
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
@@ -64,8 +58,6 @@ export class UserProfileRepository implements IUserProfileRepository {
     console.log(`✅ Found ${data?.length || 0} profiles`);
 
     return (data || []).map(profile => {
-      const userData = profile.users as any;
-
       return new UserProfile(
         profile.id,
         profile.user_id,
@@ -81,7 +73,7 @@ export class UserProfileRepository implements IUserProfileRepository {
         profile.preferences || {},
         new Date(profile.created_at),
         new Date(profile.updated_at),
-        userData?.email
+        undefined
       );
     });
   }
@@ -97,13 +89,7 @@ export class UserProfileRepository implements IUserProfileRepository {
     const { data, error } = await supabase
       .schema('app')
       .from('user_profiles')
-      .select(`
-        *,
-        users:user_id (
-          id,
-          email
-        )
-      `)
+      .select('*')
       .eq('id', id)
       .is('deleted_at', null)
       .single();
@@ -118,8 +104,6 @@ export class UserProfileRepository implements IUserProfileRepository {
     }
 
     if (!data) return null;
-
-    const userData = data.users as any;
 
     console.log('✅ Profile found:', data);
 
@@ -153,13 +137,7 @@ export class UserProfileRepository implements IUserProfileRepository {
     const { data, error } = await supabase
       .schema('app')
       .from('user_profiles')
-      .select(`
-        *,
-        users:user_id (
-          id,
-          email
-        )
-      `)
+      .select('*')
       .eq('user_id', userId)
       .is('deleted_at', null)
       .single();
@@ -230,13 +208,7 @@ export class UserProfileRepository implements IUserProfileRepository {
         is_public: dto.isPublic ?? true,
         preferences: dto.preferences || {},
       })
-      .select(`
-        *,
-        users:user_id (
-          id,
-          email
-        )
-      `)
+      .select('*')
       .single();
 
     if (error) {
@@ -324,13 +296,7 @@ export class UserProfileRepository implements IUserProfileRepository {
       .from('user_profiles')
       .update(updateData)
       .eq('id', id)
-      .select(`
-        *,
-        users:user_id (
-          id,
-          email
-        )
-      `)
+      .select('*')
       .single();
 
     if (error) {

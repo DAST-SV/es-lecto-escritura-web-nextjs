@@ -23,19 +23,7 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
     const { data, error } = await supabase
       .schema('app')
       .from('user_relationships')
-      .select(`
-        *,
-        parent_user:parent_user_id (
-          id,
-          email,
-          raw_user_meta_data
-        ),
-        child_user:child_user_id (
-          id,
-          email,
-          raw_user_meta_data
-        )
-      `)
+      .select('*')
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
@@ -47,9 +35,6 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
     console.log(`✅ Found ${data?.length || 0} relationships`);
 
     return (data || []).map(relationship => {
-      const parentUserData = relationship.parent_user as any;
-      const childUserData = relationship.child_user as any;
-
       return new UserRelationship(
         relationship.id,
         relationship.parent_user_id,
@@ -59,16 +44,10 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
         relationship.approved_at ? new Date(relationship.approved_at) : null,
         new Date(relationship.created_at),
         new Date(relationship.updated_at),
-        parentUserData?.raw_user_meta_data?.full_name ||
-          parentUserData?.raw_user_meta_data?.name ||
-          parentUserData?.email?.split('@')[0] ||
-          'Usuario',
-        parentUserData?.email,
-        childUserData?.raw_user_meta_data?.full_name ||
-          childUserData?.raw_user_meta_data?.name ||
-          childUserData?.email?.split('@')[0] ||
-          'Usuario',
-        childUserData?.email
+        undefined,
+        undefined,
+        undefined,
+        undefined
       );
     });
   }
@@ -84,19 +63,7 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
     const { data, error } = await supabase
       .schema('app')
       .from('user_relationships')
-      .select(`
-        *,
-        parent_user:parent_user_id (
-          id,
-          email,
-          raw_user_meta_data
-        ),
-        child_user:child_user_id (
-          id,
-          email,
-          raw_user_meta_data
-        )
-      `)
+      .select('*')
       .eq('id', id)
       .is('deleted_at', null)
       .single();
@@ -111,9 +78,6 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
     }
 
     if (!data) return null;
-
-    const parentUserData = data.parent_user as any;
-    const childUserData = data.child_user as any;
 
     console.log('✅ Relationship found:', data);
 
@@ -150,19 +114,7 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
     const { data, error } = await supabase
       .schema('app')
       .from('user_relationships')
-      .select(`
-        *,
-        parent_user:parent_user_id (
-          id,
-          email,
-          raw_user_meta_data
-        ),
-        child_user:child_user_id (
-          id,
-          email,
-          raw_user_meta_data
-        )
-      `)
+      .select('*')
       .eq('parent_user_id', parentUserId)
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
@@ -175,9 +127,6 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
     console.log(`✅ Found ${data?.length || 0} relationships for parent user`);
 
     return (data || []).map(relationship => {
-      const parentUserData = relationship.parent_user as any;
-      const childUserData = relationship.child_user as any;
-
       return new UserRelationship(
         relationship.id,
         relationship.parent_user_id,
@@ -187,16 +136,10 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
         relationship.approved_at ? new Date(relationship.approved_at) : null,
         new Date(relationship.created_at),
         new Date(relationship.updated_at),
-        parentUserData?.raw_user_meta_data?.full_name ||
-          parentUserData?.raw_user_meta_data?.name ||
-          parentUserData?.email?.split('@')[0] ||
-          'Usuario',
-        parentUserData?.email,
-        childUserData?.raw_user_meta_data?.full_name ||
-          childUserData?.raw_user_meta_data?.name ||
-          childUserData?.email?.split('@')[0] ||
-          'Usuario',
-        childUserData?.email
+        undefined,
+        undefined,
+        undefined,
+        undefined
       );
     });
   }
@@ -212,19 +155,7 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
     const { data, error } = await supabase
       .schema('app')
       .from('user_relationships')
-      .select(`
-        *,
-        parent_user:parent_user_id (
-          id,
-          email,
-          raw_user_meta_data
-        ),
-        child_user:child_user_id (
-          id,
-          email,
-          raw_user_meta_data
-        )
-      `)
+      .select('*')
       .eq('child_user_id', childUserId)
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
@@ -237,9 +168,6 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
     console.log(`✅ Found ${data?.length || 0} relationships for child user`);
 
     return (data || []).map(relationship => {
-      const parentUserData = relationship.parent_user as any;
-      const childUserData = relationship.child_user as any;
-
       return new UserRelationship(
         relationship.id,
         relationship.parent_user_id,
@@ -249,16 +177,10 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
         relationship.approved_at ? new Date(relationship.approved_at) : null,
         new Date(relationship.created_at),
         new Date(relationship.updated_at),
-        parentUserData?.raw_user_meta_data?.full_name ||
-          parentUserData?.raw_user_meta_data?.name ||
-          parentUserData?.email?.split('@')[0] ||
-          'Usuario',
-        parentUserData?.email,
-        childUserData?.raw_user_meta_data?.full_name ||
-          childUserData?.raw_user_meta_data?.name ||
-          childUserData?.email?.split('@')[0] ||
-          'Usuario',
-        childUserData?.email
+        undefined,
+        undefined,
+        undefined,
+        undefined
       );
     });
   }
@@ -274,19 +196,7 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
     const { data, error } = await supabase
       .schema('app')
       .from('user_relationships')
-      .select(`
-        *,
-        parent_user:parent_user_id (
-          id,
-          email,
-          raw_user_meta_data
-        ),
-        child_user:child_user_id (
-          id,
-          email,
-          raw_user_meta_data
-        )
-      `)
+      .select('*')
       .eq('is_approved', false)
       .is('deleted_at', null)
       .order('created_at', { ascending: true });
@@ -299,9 +209,6 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
     console.log(`✅ Found ${data?.length || 0} pending relationships`);
 
     return (data || []).map(relationship => {
-      const parentUserData = relationship.parent_user as any;
-      const childUserData = relationship.child_user as any;
-
       return new UserRelationship(
         relationship.id,
         relationship.parent_user_id,
@@ -311,16 +218,10 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
         relationship.approved_at ? new Date(relationship.approved_at) : null,
         new Date(relationship.created_at),
         new Date(relationship.updated_at),
-        parentUserData?.raw_user_meta_data?.full_name ||
-          parentUserData?.raw_user_meta_data?.name ||
-          parentUserData?.email?.split('@')[0] ||
-          'Usuario',
-        parentUserData?.email,
-        childUserData?.raw_user_meta_data?.full_name ||
-          childUserData?.raw_user_meta_data?.name ||
-          childUserData?.email?.split('@')[0] ||
-          'Usuario',
-        childUserData?.email
+        undefined,
+        undefined,
+        undefined,
+        undefined
       );
     });
   }
@@ -357,28 +258,13 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
         is_approved: false,
         approved_at: null,
       })
-      .select(`
-        *,
-        parent_user:parent_user_id (
-          id,
-          email,
-          raw_user_meta_data
-        ),
-        child_user:child_user_id (
-          id,
-          email,
-          raw_user_meta_data
-        )
-      `)
+      .select('*')
       .single();
 
     if (error) {
       console.error('❌ Error creating relationship:', error);
       throw new Error(`Error creating relationship: ${error.message}`);
     }
-
-    const parentUserData = data.parent_user as any;
-    const childUserData = data.child_user as any;
 
     console.log('✅ Relationship created successfully:', data);
 
@@ -421,28 +307,13 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
-      .select(`
-        *,
-        parent_user:parent_user_id (
-          id,
-          email,
-          raw_user_meta_data
-        ),
-        child_user:child_user_id (
-          id,
-          email,
-          raw_user_meta_data
-        )
-      `)
+      .select('*')
       .single();
 
     if (error) {
       console.error('❌ Error approving relationship:', error);
       throw new Error(`Error approving relationship: ${error.message}`);
     }
-
-    const parentUserData = data.parent_user as any;
-    const childUserData = data.child_user as any;
 
     console.log('✅ Relationship approved successfully:', data);
 
