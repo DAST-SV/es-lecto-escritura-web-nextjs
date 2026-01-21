@@ -1,7 +1,6 @@
 // ============================================
 // src/infrastructure/repositories/index.ts
 // ✅ ÚNICO BARREL EXPORT DE IMPLEMENTACIONES
-// ✅ ORGANIZADO: Todos los repositorios en carpetas por dominio
 // ============================================
 
 // Auth
@@ -18,6 +17,15 @@ export { RoleLanguageAccessRepository } from './role-language-access/RoleLanguag
 // Traducciones
 export { SupabaseTranslationRepository } from './translations/SupabaseTranslationRepository';
 export { SupabaseTranslationKeyRepository } from './translations/SupabaseTranslationKeyRepository';
+
+// Languages
+export { LanguageRepository } from './languages/LanguageRepository';
+
+// Translation Namespaces
+export { TranslationNamespaceRepository } from './translation-namespaces/TranslationNamespaceRepository';
+
+// Translation Categories
+export { TranslationCategoryRepository } from './translation-categories/TranslationCategoryRepository';
 
 // Rutas
 export { RoutesRepository } from './routes/RoutesRepository';

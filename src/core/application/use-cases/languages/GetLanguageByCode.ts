@@ -1,15 +1,15 @@
 // ============================================
-// src/core/application/use-cases/languages/GetAllLanguages.ts
-// Use Case: Get All Languages
+// src/core/application/use-cases/languages/GetLanguageByCode.ts
+// Use Case: Get Language By Code
 // ============================================
 
 import { Language } from '@/src/core/domain/entities/Language';
 import { ILanguageRepository } from '@/src/core/domain/repositories/ILanguageRepository';
 
-export class GetAllLanguagesUseCase {
+export class GetLanguageByCodeUseCase {
   constructor(private languageRepository: ILanguageRepository) {}
 
-  async execute(includeInactive = false): Promise<Language[]> {
-    return this.languageRepository.findAll(includeInactive);
+  async execute(code: string): Promise<Language | null> {
+    return this.languageRepository.findByCode(code);
   }
 }
