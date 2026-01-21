@@ -1,30 +1,17 @@
 -- ============================================
 -- SCRIPT 14: SISTEMA DE TRADUCCIONES COMPLETO
 -- ============================================
--- Este script implementa un sistema completo de traducciones con:
--- - Gestión de idiomas (languages)
--- - Namespaces para organizar traducciones
--- - Traducciones con validaciones
--- ============================================
 
--- ============================================
--- PASO 1: LIMPIAR TODO (si existe)
--- ============================================
+-- Limpiar tablas existentes
 DROP TABLE IF EXISTS app.translations CASCADE;
+DROP TABLE IF EXISTS app.translation_keys CASCADE;
+DROP TABLE IF EXISTS app.translation_categories CASCADE;
 DROP TABLE IF EXISTS app.translation_namespaces CASCADE;
 DROP TABLE IF EXISTS app.languages CASCADE;
-DROP VIEW IF EXISTS app.active_languages CASCADE;
-DROP FUNCTION IF EXISTS app.get_default_language() CASCADE;
-DROP FUNCTION IF EXISTS app.get_translations(VARCHAR, VARCHAR) CASCADE;
-DROP FUNCTION IF EXISTS app.get_translation(VARCHAR, VARCHAR, VARCHAR) CASCADE;
-DROP FUNCTION IF EXISTS app.validate_single_default_language() CASCADE;
-DROP TRIGGER IF EXISTS validate_single_default_language_trigger ON app.languages CASCADE;
 
 -- ============================================
--- PASO 2: CREAR TABLAS
+-- TABLA: languages
 -- ============================================
-
--- Tabla de idiomas
 CREATE TABLE app.languages (
   code VARCHAR(10) PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
@@ -37,7 +24,9 @@ CREATE TABLE app.languages (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Tabla de namespaces
+-- ============================================
+-- TABLA: translation_namespaces
+-- ============================================
 CREATE TABLE app.translation_namespaces (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug VARCHAR(100) UNIQUE NOT NULL,
@@ -45,202 +34,151 @@ CREATE TABLE app.translation_namespaces (
   description TEXT,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_by UUID REFERENCES auth.users(id),
+  updated_by UUID REFERENCES auth.users(id)
 );
 
--- Tabla de traducciones
-CREATE TABLE app.translations (
+-- ============================================
+-- TABLA: translation_categories
+-- ============================================
+CREATE TABLE app.translation_categories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  namespace_slug VARCHAR(100) NOT NULL REFERENCES app.translation_namespaces(slug) ON DELETE CASCADE,
-  translation_key VARCHAR(500) NOT NULL,
-  language_code VARCHAR(10) NOT NULL REFERENCES app.languages(code) ON DELETE CASCADE,
-  value TEXT NOT NULL,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  description TEXT,
+  slug VARCHAR(100) NOT NULL UNIQUE,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(namespace_slug, translation_key, language_code)
+  created_by UUID REFERENCES auth.users(id),
+  updated_by UUID REFERENCES auth.users(id)
 );
 
 -- ============================================
--- PASO 3: CREAR ÍNDICES
+-- TABLA: translation_keys
+-- ============================================
+CREATE TABLE app.translation_keys (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  namespace_slug VARCHAR(100) NOT NULL REFERENCES app.translation_namespaces(slug) ON DELETE CASCADE,
+  key_name VARCHAR(500) NOT NULL,
+  category_id UUID REFERENCES app.translation_categories(id) ON DELETE SET NULL,
+  description TEXT,
+  context TEXT,
+  default_value TEXT,
+  is_system_key BOOLEAN DEFAULT false,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_by UUID REFERENCES auth.users(id),
+  updated_by UUID REFERENCES auth.users(id),
+  UNIQUE(namespace_slug, key_name)
+);
+
+-- ============================================
+-- TABLA: translations
+-- ============================================
+CREATE TABLE app.translations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  translation_key_id UUID NOT NULL REFERENCES app.translation_keys(id) ON DELETE CASCADE,
+  language_code VARCHAR(10) NOT NULL REFERENCES app.languages(code) ON DELETE CASCADE,
+  value TEXT NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  is_verified BOOLEAN DEFAULT false,
+  verified_by UUID REFERENCES auth.users(id),
+  verified_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_by UUID REFERENCES auth.users(id),
+  updated_by UUID REFERENCES auth.users(id),
+  UNIQUE(translation_key_id, language_code)
+);
+
+-- ============================================
+-- ÍNDICES
 -- ============================================
 CREATE INDEX idx_languages_active ON app.languages(is_active);
-CREATE INDEX idx_languages_default ON app.languages(is_default) WHERE is_default = true;
 CREATE INDEX idx_translation_namespaces_slug ON app.translation_namespaces(slug);
 CREATE INDEX idx_translation_namespaces_active ON app.translation_namespaces(is_active);
-CREATE INDEX idx_translations_namespace ON app.translations(namespace_slug);
+CREATE INDEX idx_translation_categories_slug ON app.translation_categories(slug);
+CREATE INDEX idx_translation_categories_active ON app.translation_categories(is_active);
+CREATE INDEX idx_translation_keys_namespace ON app.translation_keys(namespace_slug);
+CREATE INDEX idx_translation_keys_category ON app.translation_keys(category_id);
+CREATE INDEX idx_translation_keys_active ON app.translation_keys(is_active);
+CREATE INDEX idx_translations_key_id ON app.translations(translation_key_id);
 CREATE INDEX idx_translations_language ON app.translations(language_code);
-CREATE INDEX idx_translations_composite ON app.translations(namespace_slug, language_code);
-CREATE INDEX idx_translations_key ON app.translations(translation_key);
+CREATE INDEX idx_translations_active ON app.translations(is_active);
 
 -- ============================================
--- PASO 4: FUNCIONES
+-- TRIGGERS updated_at
 -- ============================================
-
--- Función: Obtener idioma por defecto
-CREATE OR REPLACE FUNCTION app.get_default_language()
-RETURNS VARCHAR(10) AS $$
-BEGIN
-  RETURN (SELECT code FROM app.languages WHERE is_default = true AND is_active = true LIMIT 1);
-END;
-$$ LANGUAGE plpgsql STABLE;
-
--- Función: Validar que solo haya un idioma por defecto
-CREATE OR REPLACE FUNCTION app.validate_single_default_language()
-RETURNS TRIGGER AS $$
-DECLARE
-  default_count INTEGER;
-BEGIN
-  IF NEW.is_default = true THEN
-    -- Contar cuántos idiomas por defecto hay (excluyendo el actual si es UPDATE)
-    SELECT COUNT(*) INTO default_count
-    FROM app.languages
-    WHERE is_default = true
-      AND is_active = true
-      AND code != NEW.code;
-
-    IF default_count > 0 THEN
-      RAISE EXCEPTION 'Solo puede haber un idioma por defecto activo';
-    END IF;
-  END IF;
-
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Trigger para validar idioma por defecto único
-CREATE TRIGGER validate_single_default_language_trigger
-  BEFORE INSERT OR UPDATE ON app.languages
-  FOR EACH ROW
-  EXECUTE FUNCTION app.validate_single_default_language();
-
--- Trigger para auto-actualizar updated_at en languages
 CREATE TRIGGER update_languages_updated_at
   BEFORE UPDATE ON app.languages
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
--- Trigger para auto-actualizar updated_at en translation_namespaces
 CREATE TRIGGER update_translation_namespaces_updated_at
   BEFORE UPDATE ON app.translation_namespaces
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
--- Trigger para auto-actualizar updated_at en translations
+CREATE TRIGGER update_translation_categories_updated_at
+  BEFORE UPDATE ON app.translation_categories
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_translation_keys_updated_at
+  BEFORE UPDATE ON app.translation_keys
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
 CREATE TRIGGER update_translations_updated_at
   BEFORE UPDATE ON app.translations
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================
--- PASO 5: VISTA DE IDIOMAS ACTIVOS
--- ============================================
-CREATE OR REPLACE VIEW app.active_languages AS
-SELECT * FROM app.languages
-WHERE is_active = true
-ORDER BY order_index, code;
-
--- ============================================
--- PASO 6: HABILITAR RLS (seguridad)
+-- RLS POLICIES
 -- ============================================
 ALTER TABLE app.languages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app.translation_namespaces ENABLE ROW LEVEL SECURITY;
+ALTER TABLE app.translation_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE app.translation_keys ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app.translations ENABLE ROW LEVEL SECURITY;
 
--- Políticas de lectura pública
-CREATE POLICY "Anyone can read languages"
-  ON app.languages FOR SELECT
-  USING (true);
+CREATE POLICY "Public read languages" ON app.languages FOR SELECT USING (true);
+CREATE POLICY "Auth manage languages" ON app.languages FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
-CREATE POLICY "Anyone can read namespaces"
-  ON app.translation_namespaces FOR SELECT
-  USING (true);
+CREATE POLICY "Public read namespaces" ON app.translation_namespaces FOR SELECT USING (true);
+CREATE POLICY "Auth manage namespaces" ON app.translation_namespaces FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
-CREATE POLICY "Anyone can read translations"
-  ON app.translations FOR SELECT
-  USING (true);
+CREATE POLICY "Public read categories" ON app.translation_categories FOR SELECT USING (true);
+CREATE POLICY "Auth manage categories" ON app.translation_categories FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
--- Políticas de escritura (solo autenticados)
-CREATE POLICY "Authenticated users can insert languages"
-  ON app.languages FOR INSERT
-  TO authenticated
-  WITH CHECK (true);
+CREATE POLICY "Public read keys" ON app.translation_keys FOR SELECT USING (true);
+CREATE POLICY "Auth manage keys" ON app.translation_keys FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
-CREATE POLICY "Authenticated users can update languages"
-  ON app.languages FOR UPDATE
-  TO authenticated
-  USING (true);
-
-CREATE POLICY "Authenticated users can delete languages"
-  ON app.languages FOR DELETE
-  TO authenticated
-  USING (true);
-
-CREATE POLICY "Authenticated users can insert namespaces"
-  ON app.translation_namespaces FOR INSERT
-  TO authenticated
-  WITH CHECK (true);
-
-CREATE POLICY "Authenticated users can update namespaces"
-  ON app.translation_namespaces FOR UPDATE
-  TO authenticated
-  USING (true);
-
-CREATE POLICY "Authenticated users can delete namespaces"
-  ON app.translation_namespaces FOR DELETE
-  TO authenticated
-  USING (true);
-
-CREATE POLICY "Authenticated users can insert translations"
-  ON app.translations FOR INSERT
-  TO authenticated
-  WITH CHECK (true);
-
-CREATE POLICY "Authenticated users can update translations"
-  ON app.translations FOR UPDATE
-  TO authenticated
-  USING (true);
-
-CREATE POLICY "Authenticated users can delete translations"
-  ON app.translations FOR DELETE
-  TO authenticated
-  USING (true);
+CREATE POLICY "Public read translations" ON app.translations FOR SELECT USING (true);
+CREATE POLICY "Auth manage translations" ON app.translations FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- ============================================
--- PASO 7: INSERTAR DATOS INICIALES
+-- DATOS INICIALES
 -- ============================================
-
--- Insertar idiomas iniciales
 INSERT INTO app.languages (code, name, native_name, flag_emoji, is_default, is_active, order_index) VALUES
   ('es', 'Spanish', 'Español', '🇪🇸', true, true, 1),
   ('en', 'English', 'English', '🇬🇧', false, true, 2),
-  ('fr', 'French', 'Français', '🇫🇷', false, true, 3)
-ON CONFLICT (code) DO UPDATE SET
-  name = EXCLUDED.name,
-  native_name = EXCLUDED.native_name,
-  flag_emoji = EXCLUDED.flag_emoji,
-  is_default = EXCLUDED.is_default,
-  is_active = EXCLUDED.is_active,
-  order_index = EXCLUDED.order_index;
+  ('fr', 'French', 'Français', '🇫🇷', false, true, 3);
 
--- Insertar namespaces iniciales
 INSERT INTO app.translation_namespaces (slug, name, description, is_active) VALUES
   ('common', 'Common Translations', 'Traducciones comunes usadas en toda la aplicación', true),
   ('auth', 'Authentication', 'Traducciones del sistema de autenticación', true),
   ('admin', 'Admin Panel', 'Traducciones del panel de administración', true),
-  ('books', 'Books Module', 'Traducciones del módulo de libros', true),
   ('errors', 'Error Messages', 'Mensajes de error del sistema', true),
-  ('navigation', 'Navigation', 'Traducciones de navegación y menús', true)
-ON CONFLICT (slug) DO UPDATE SET
-  name = EXCLUDED.name,
-  description = EXCLUDED.description,
-  is_active = EXCLUDED.is_active;
+  ('navigation', 'Navigation', 'Traducciones de navegación y menús', true);
 
--- ============================================
--- COMENTARIOS DE DOCUMENTACIÓN
--- ============================================
-COMMENT ON TABLE app.languages IS 'Idiomas disponibles en el sistema';
-COMMENT ON TABLE app.translation_namespaces IS 'Namespaces para organizar traducciones por módulo';
-COMMENT ON TABLE app.translations IS 'Traducciones del sistema organizadas por namespace, clave e idioma';
-COMMENT ON FUNCTION app.get_default_language() IS 'Retorna el código del idioma por defecto activo';
-COMMENT ON FUNCTION app.validate_single_default_language() IS 'Valida que solo haya un idioma marcado como por defecto';
+INSERT INTO app.translation_categories (name, description, slug) VALUES
+  ('UI Components', 'User interface components', 'ui-components'),
+  ('Forms', 'Form labels and validation messages', 'forms'),
+  ('Navigation', 'Navigation menus and links', 'navigation'),
+  ('Messages', 'System messages and notifications', 'messages'),
+  ('Errors', 'Error messages', 'errors'),
+  ('Actions', 'Action buttons and commands', 'actions');
