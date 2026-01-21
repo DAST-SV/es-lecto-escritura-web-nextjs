@@ -1,17 +1,20 @@
-// src/core/domain/repositories/ITranslationCategoryRepository.ts
+// ============================================
+// Ruta: src/core/domain/repositories/ITranslationCategoryRepository.ts
+// Descripción: Interface del repositorio de Translation Category
+// ============================================
 
 import { TranslationCategory } from '../entities/TranslationCategory';
 
 export interface CreateTranslationCategoryDTO {
   name: string;
-  description?: string;
+  description?: string | null;
   slug: string;
   isActive?: boolean;
 }
 
 export interface UpdateTranslationCategoryDTO {
   name?: string;
-  description?: string;
+  description?: string | null;
   slug?: string;
   isActive?: boolean;
 }

@@ -1,32 +1,40 @@
 // ============================================
-// src/core/domain/repositories/index.ts
-// ✅ ÚNICO BARREL EXPORT DE REPOSITORIOS
+// Ruta: src/core/domain/repositories/index.ts
+// Descripción: Barrel export de todas las interfaces de repositorios
 // ============================================
 
-// Auth
-export * from './IAuthRepository';
+// Languages
+export type { 
+  ILanguageRepository, 
+  CreateLanguageDTO, 
+  UpdateLanguageDTO 
+} from './ILanguageRepository';
 
-// Permisos y Roles
-export * from './IPermissionRepository';
-export * from './IRoleRepository';
-export * from './IUserRoleRepository';
-export * from './IRoutePermissionRepository';
-export * from './IUserRoutePermissionRepository';
-export * from './IRoleLanguageAccessRepository';
+// Translation Namespaces
+export type { 
+  ITranslationNamespaceRepository, 
+  CreateTranslationNamespaceDTO, 
+  UpdateTranslationNamespaceDTO 
+} from './ITranslationNamespaceRepository';
 
-// Traducciones
-export * from './ITranslationRepository';
-export * from './ITranslationKeyRepository';
+// Translation Categories
+export type { 
+  ITranslationCategoryRepository, 
+  CreateTranslationCategoryDTO, 
+  UpdateTranslationCategoryDTO 
+} from './ITranslationCategoryRepository';
 
-// Dominio principal (si existe)
-export * from './IBookRepository';
-// Tipos de usuario
-export * from './IUserTypeRepository';
+// Translation Keys
+export type { 
+  ITranslationKeyRepository, 
+  CreateTranslationKeyDTO, 
+  UpdateTranslationKeyDTO 
+} from './ITranslationKeyRepository';
 
-// Organizaciones y miembros
-export * from './IOrganizationRepository';
-export * from './IOrganizationMemberRepository';
-
-// Perfiles y relaciones entre usuarios
-export * from './IUserProfileRepository';
-export * from './IUserRelationshipRepository';
+// Translations
+export type { 
+  ITranslationRepository, 
+  CreateTranslationDTO, 
+  BulkCreateTranslationDTO, 
+  UpdateTranslationDTO 
+} from './ITranslationRepository';

@@ -1,23 +1,26 @@
-// src/core/domain/repositories/ITranslationKeyRepository.ts
+// ============================================
+// Ruta: src/core/domain/repositories/ITranslationKeyRepository.ts
+// Descripción: Interface del repositorio de Translation Key
+// ============================================
 
 import { TranslationKey } from '../entities/TranslationKey';
 
 export interface CreateTranslationKeyDTO {
   namespaceSlug: string;
   keyName: string;
-  categoryId?: string;
-  description?: string;
-  context?: string;
-  defaultValue?: string;
+  categoryId?: string | null;
+  description?: string | null;
+  context?: string | null;
+  defaultValue?: string | null;
   isSystemKey?: boolean;
 }
 
 export interface UpdateTranslationKeyDTO {
   keyName?: string;
-  categoryId?: string;
-  description?: string;
-  context?: string;
-  defaultValue?: string;
+  categoryId?: string | null;
+  description?: string | null;
+  context?: string | null;
+  defaultValue?: string | null;
   isActive?: boolean;
 }
 

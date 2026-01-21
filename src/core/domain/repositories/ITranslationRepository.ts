@@ -1,4 +1,7 @@
-// src/core/domain/repositories/ITranslationRepository.ts
+// ============================================
+// Ruta: src/core/domain/repositories/ITranslationRepository.ts
+// Descripción: Interface del repositorio de Translation
+// ============================================
 
 import { Translation } from '../entities/Translation';
 
@@ -9,18 +12,18 @@ export interface CreateTranslationDTO {
   value: string;
 }
 
-export interface UpdateTranslationDTO {
-  value?: string;
-  isActive?: boolean;
-}
-
 export interface BulkCreateTranslationDTO {
   namespaceSlug: string;
   translationKey: string;
-  translations: {
+  translations: Array<{
     languageCode: string;
     value: string;
-  }[];
+  }>;
+}
+
+export interface UpdateTranslationDTO {
+  value?: string;
+  isActive?: boolean;
 }
 
 export interface ITranslationRepository {

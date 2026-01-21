@@ -1,51 +1,37 @@
 // ============================================
 // src/presentation/features/translation-keys/hooks/useTranslationKeys.ts
-// Hook: Gestión de claves de traducción
+// ✅ MEJORADO: Con validaciones y manejo de errores completo
 // ============================================
 
 import { useState, useEffect, useCallback } from 'react';
 import { TranslationKey } from '@/src/core/domain/entities/TranslationKey';
-import { createClient } from '@/src/infrastructure/config/supabase.config';
+import { SupabaseTranslationKeyRepository } from '@/src/infrastructure/repositories/translations/SupabaseTranslationKeyRepository';
+import {
+  GetAllTranslationKeysUseCase,
+  CreateTranslationKeyUseCase,
+  UpdateTranslationKeyUseCase,
+  DeleteTranslationKeyUseCase,
+} from '@/src/core/application/use-cases/translation-keys';
+
+const repository = new SupabaseTranslationKeyRepository();
 
 export function useTranslationKeys() {
   const [keys, setKeys] = useState<TranslationKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const supabase = createClient();
 
   const loadKeys = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const { data, error: fetchError } = await supabase
-        .schema('app')
-        .from('translation_keys')
-        .select(`
-          *,
-          translation_categories (
-            name
-          ),
-          translations (count)
-        `)
-        .order('namespace_slug', { ascending: true })
-        .order('key_name', { ascending: true });
-
-      if (fetchError) {
-        throw new Error(fetchError.message);
-      }
-
-      const mappedKeys = (data || []).map((row: any) => {
-        return TranslationKey.fromDatabase({
-          ...row,
-          category_name: row.translation_categories?.name,
-          translation_count: row.translations?.[0]?.count || 0,
-        });
-      });
-
-      setKeys(mappedKeys);
+      const useCase = new GetAllTranslationKeysUseCase(repository);
+      const data = await useCase.execute();
+      
+      setKeys(data);
     } catch (err: any) {
-      setError(err.message || 'Error al cargar claves');
+      const errorMessage = err.message || 'Error al cargar claves de traducción';
+      setError(errorMessage);
       console.error('Error loading translation keys:', err);
     } finally {
       setLoading(false);
@@ -62,33 +48,47 @@ export function useTranslationKeys() {
     isSystemKey?: boolean;
   }) => {
     try {
-      const { data, error: createError } = await supabase
-        .schema('app')
-        .from('translation_keys')
-        .insert({
-          namespace_slug: dto.namespaceSlug,
-          key_name: dto.keyName,
-          category_id: dto.categoryId || null,
-          description: dto.description || null,
-          context: dto.context || null,
-          default_value: dto.defaultValue || null,
-          is_system_key: dto.isSystemKey || false,
-          is_active: true,
-        })
-        .select()
-        .single();
-
-      if (createError) {
-        throw new Error(createError.message);
+      // Validaciones de entrada
+      if (!dto.namespaceSlug || !dto.namespaceSlug.trim()) {
+        throw new Error('El namespace es requerido');
+      }
+      if (!dto.keyName || !dto.keyName.trim()) {
+        throw new Error('El nombre de la clave es requerido');
       }
 
-      const newKey = TranslationKey.fromDatabase(data);
+      // Validar formato del keyName (solo letras, números, guiones y puntos)
+      const keyNameRegex = /^[a-z0-9._-]+$/i;
+      if (!keyNameRegex.test(dto.keyName)) {
+        throw new Error('El nombre de la clave solo puede contener letras, números, puntos, guiones y guiones bajos');
+      }
+
+      // Validar que no exista ya
+      const existingKey = keys.find(
+        k => k.namespaceSlug === dto.namespaceSlug && k.keyName === dto.keyName
+      );
+      if (existingKey) {
+        throw new Error(`La clave ${dto.namespaceSlug}.${dto.keyName} ya existe`);
+      }
+
+      const useCase = new CreateTranslationKeyUseCase(repository);
+      const newKey = await useCase.execute({
+        namespaceSlug: dto.namespaceSlug.trim(),
+        keyName: dto.keyName.trim(),
+        categoryId: dto.categoryId || undefined,
+        description: dto.description?.trim() || undefined,
+        context: dto.context?.trim() || undefined,
+        defaultValue: dto.defaultValue?.trim() || undefined,
+        isSystemKey: dto.isSystemKey || false,
+      });
+
       setKeys(prev => [...prev, newKey]);
       return newKey;
     } catch (err: any) {
-      throw new Error(err.message || 'Error al crear clave');
+      const errorMessage = err.message || 'Error al crear clave';
+      console.error('Error creating translation key:', err);
+      throw new Error(errorMessage);
     }
-  }, []);
+  }, [keys]);
 
   const updateKey = useCallback(async (id: string, dto: {
     keyName?: string;
@@ -99,50 +99,95 @@ export function useTranslationKeys() {
     isActive?: boolean;
   }) => {
     try {
-      const updateData: any = {};
-      if (dto.keyName !== undefined) updateData.key_name = dto.keyName;
-      if (dto.categoryId !== undefined) updateData.category_id = dto.categoryId;
-      if (dto.description !== undefined) updateData.description = dto.description;
-      if (dto.context !== undefined) updateData.context = dto.context;
-      if (dto.defaultValue !== undefined) updateData.default_value = dto.defaultValue;
-      if (dto.isActive !== undefined) updateData.is_active = dto.isActive;
+      // Validaciones
+      if (dto.keyName !== undefined) {
+        if (!dto.keyName.trim()) {
+          throw new Error('El nombre de la clave no puede estar vacío');
+        }
 
-      const { data, error: updateError } = await supabase
-        .from('translation_keys')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
+        const keyNameRegex = /^[a-z0-9._-]+$/i;
+        if (!keyNameRegex.test(dto.keyName)) {
+          throw new Error('El nombre de la clave solo puede contener letras, números, puntos, guiones y guiones bajos');
+        }
 
-      if (updateError) {
-        throw new Error(updateError.message);
+        // Validar que no exista otra clave con el mismo nombre en el mismo namespace
+        const currentKey = keys.find(k => k.id === id);
+        if (currentKey) {
+          const duplicateKey = keys.find(
+            k => k.id !== id && 
+            k.namespaceSlug === currentKey.namespaceSlug && 
+            k.keyName === dto.keyName
+          );
+          if (duplicateKey) {
+            throw new Error(`Ya existe una clave con el nombre "${dto.keyName}" en el namespace "${currentKey.namespaceSlug}"`);
+          }
+        }
       }
 
-      const updated = TranslationKey.fromDatabase(data);
+      const useCase = new UpdateTranslationKeyUseCase(repository);
+      const updated = await useCase.execute(id, {
+        keyName: dto.keyName?.trim(),
+        categoryId: dto.categoryId || undefined,
+        description: dto.description?.trim() || undefined,
+        context: dto.context?.trim() || undefined,
+        defaultValue: dto.defaultValue?.trim() || undefined,
+        isActive: dto.isActive,
+      });
+
       setKeys(prev => prev.map(k => k.id === id ? updated : k));
       return updated;
     } catch (err: any) {
-      throw new Error(err.message || 'Error al actualizar clave');
+      const errorMessage = err.message || 'Error al actualizar clave';
+      console.error('Error updating translation key:', err);
+      throw new Error(errorMessage);
     }
-  }, []);
+  }, [keys]);
 
   const deleteKey = useCallback(async (id: string) => {
     try {
-      const { error: deleteError } = await supabase
-        .schema('app')
-        .from('translation_keys')
-        .delete()
-        .eq('id', id);
-
-      if (deleteError) {
-        throw new Error(deleteError.message);
+      const keyToDelete = keys.find(k => k.id === id);
+      if (!keyToDelete) {
+        throw new Error('Clave no encontrada');
       }
+
+      // Advertir si tiene traducciones
+      if (keyToDelete.translationCount > 0) {
+        const confirmMessage = `Esta clave tiene ${keyToDelete.translationCount} traducción(es) asociada(s). ¿Estás seguro de eliminarla? Esto eliminará también todas sus traducciones.`;
+        if (!window.confirm(confirmMessage)) {
+          throw new Error('Eliminación cancelada por el usuario');
+        }
+      }
+
+      const useCase = new DeleteTranslationKeyUseCase(repository);
+      await useCase.execute(id);
 
       setKeys(prev => prev.filter(k => k.id !== id));
     } catch (err: any) {
-      throw new Error(err.message || 'Error al eliminar clave');
+      const errorMessage = err.message || 'Error al eliminar clave';
+      console.error('Error deleting translation key:', err);
+      throw new Error(errorMessage);
     }
-  }, []);
+  }, [keys]);
+
+  const findByNamespace = useCallback((namespaceSlug: string): TranslationKey[] => {
+    return keys.filter(k => k.namespaceSlug === namespaceSlug);
+  }, [keys]);
+
+  const findByCategory = useCallback((categoryId: string): TranslationKey[] => {
+    return keys.filter(k => k.categoryId === categoryId);
+  }, [keys]);
+
+  const searchKeys = useCallback((searchTerm: string): TranslationKey[] => {
+    if (!searchTerm.trim()) return keys;
+    
+    const term = searchTerm.toLowerCase();
+    return keys.filter(k => 
+      k.keyName.toLowerCase().includes(term) ||
+      k.namespaceSlug.toLowerCase().includes(term) ||
+      (k.description && k.description.toLowerCase().includes(term)) ||
+      (k.categoryName && k.categoryName.toLowerCase().includes(term))
+    );
+  }, [keys]);
 
   const refresh = useCallback(() => {
     loadKeys();
@@ -159,6 +204,9 @@ export function useTranslationKeys() {
     createKey,
     updateKey,
     deleteKey,
+    findByNamespace,
+    findByCategory,
+    searchKeys,
     refresh,
   };
 }
