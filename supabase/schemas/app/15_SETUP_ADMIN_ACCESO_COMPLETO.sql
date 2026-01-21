@@ -72,9 +72,6 @@ END $$;
 -- ============================================
 -- PASO 4: REGISTRAR TODAS LAS RUTAS DE ADMIN
 -- ============================================
-RAISE NOTICE '================================================';
-RAISE NOTICE 'REGISTRANDO RUTAS DE ADMIN';
-RAISE NOTICE '================================================';
 
 -- Rutas principales de admin
 INSERT INTO app.routes (pathname, display_name, description, show_in_menu, menu_order, is_public) VALUES
@@ -123,42 +120,28 @@ DO UPDATE SET
   menu_order = EXCLUDED.menu_order,
   updated_at = NOW();
 
-RAISE NOTICE '✅ Rutas de admin registradas correctamente';
-RAISE NOTICE '';
-
 -- ============================================
 -- PASO 5: DAR PERMISOS A SUPER_ADMIN SOBRE TODAS LAS RUTAS DE ADMIN
 -- ============================================
-RAISE NOTICE '================================================';
-RAISE NOTICE 'CONFIGURANDO PERMISOS DE ACCESO';
-RAISE NOTICE '================================================';
 
 -- Dar acceso de lectura (grant) a todas las rutas de admin para el rol super_admin
-INSERT INTO app.route_permissions (route_id, role_id, permission_type, notes)
+INSERT INTO app.route_permissions (role_name, route_id, language_code, is_active)
 SELECT
+  'super_admin',
   r.id,
-  (SELECT id FROM app.roles WHERE name = 'super_admin'),
-  'grant',
-  'Acceso automático para super_admin via script 15'
+  NULL,
+  true
 FROM app.routes r
 WHERE r.pathname LIKE '/admin%'
   AND r.deleted_at IS NULL
-ON CONFLICT (route_id, role_id)
+ON CONFLICT (role_name, route_id, language_code)
 DO UPDATE SET
-  permission_type = 'grant',
-  revoked_at = NULL,
-  updated_at = NOW(),
-  notes = 'Acceso reasignado para super_admin via script 15';
-
-RAISE NOTICE '✅ Permisos configurados para todas las rutas de admin';
-RAISE NOTICE '';
+  is_active = true,
+  updated_at = NOW();
 
 -- ============================================
 -- PASO 6: VERIFICACIÓN FINAL
 -- ============================================
-RAISE NOTICE '================================================';
-RAISE NOTICE 'VERIFICACIÓN FINAL';
-RAISE NOTICE '================================================';
 
 -- Verificar roles del usuario
 DO $$
@@ -183,12 +166,11 @@ BEGIN
   SELECT COUNT(*) INTO v_route_count
   FROM app.routes r
   INNER JOIN app.route_permissions rp ON rp.route_id = r.id
-  INNER JOIN app.user_roles ur ON ur.role_id = rp.role_id
+  INNER JOIN app.user_roles ur ON ur.role_id = (SELECT id FROM app.roles WHERE name = rp.role_name)
   WHERE ur.user_id = v_user_id
     AND r.pathname LIKE '/admin%'
     AND r.deleted_at IS NULL
-    AND rp.permission_type = 'grant'
-    AND rp.revoked_at IS NULL
+    AND rp.is_active = true
     AND ur.is_active = true
     AND ur.revoked_at IS NULL;
 
@@ -268,15 +250,15 @@ ORDER BY menu_order;
 SELECT
   r.pathname,
   r.display_name,
-  rp.permission_type,
+  rp.is_active,
+  rp.language_code,
   rp.created_at
 FROM app.route_permissions rp
 JOIN app.routes r ON r.id = rp.route_id
-JOIN app.roles ro ON ro.id = rp.role_id
-WHERE ro.name = 'super_admin'
+WHERE rp.role_name = 'super_admin'
   AND r.pathname LIKE '/admin%'
   AND r.deleted_at IS NULL
-  AND rp.revoked_at IS NULL
+  AND rp.is_active = true
 ORDER BY r.menu_order;
 
 -- Probar acceso a todas las rutas de admin
