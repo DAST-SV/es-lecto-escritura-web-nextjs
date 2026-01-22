@@ -179,6 +179,18 @@
     "minLength": "Debe tener al menos {{count}} caracteres"
   },
   "auth": {
+    "form": {
+      "email_label": "Correo electrónico",
+      "email_placeholder": "Tu correo electrónico",
+      "password_label": "Contraseña",
+      "password_placeholder": "Tu contraseña",
+      "remember_me": "Recordarme",
+      "forgot_password": "¿Olvidaste tu contraseña?",
+      "login_button": "¡ENTRAR A APRENDER! 📚",
+      "login_button_loading": "Ingresando...",
+      "connect_with": "Conéctate con",
+      "or_use_email": "o usa tu email"
+    },
     "login": {
       "title": "¡Bienvenido de vuelta!",
       "subtitle": "Inicia sesión para continuar tu aventura de aprendizaje",

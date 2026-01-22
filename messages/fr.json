@@ -49,6 +49,18 @@
     }
   },
   "auth": {
+    "form": {
+      "email_label": "Email",
+      "email_placeholder": "Votre adresse email",
+      "password_label": "Mot de passe",
+      "password_placeholder": "Votre mot de passe",
+      "remember_me": "Se souvenir de moi",
+      "forgot_password": "Mot de passe oublié?",
+      "login_button": "CONNEXION POUR APPRENDRE! 📚",
+      "login_button_loading": "Connexion...",
+      "connect_with": "Connectez-vous avec",
+      "or_use_email": "ou utilisez votre email"
+    },
     "login": {
       "title": "Bon retour!",
       "subtitle": "Connectez-vous pour continuer votre aventure d'apprentissage",
