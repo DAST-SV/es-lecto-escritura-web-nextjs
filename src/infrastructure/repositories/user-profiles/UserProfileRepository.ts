@@ -26,7 +26,6 @@ export class UserProfileRepository implements IUserProfileRepository {
       .schema('app')
       .from('user_profiles')
       .select('*')
-      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     // Apply filters
@@ -91,7 +90,6 @@ export class UserProfileRepository implements IUserProfileRepository {
       .from('user_profiles')
       .select('*')
       .eq('id', id)
-      .is('deleted_at', null)
       .single();
 
     if (error) {
@@ -122,7 +120,7 @@ export class UserProfileRepository implements IUserProfileRepository {
       data.preferences || {},
       new Date(data.created_at),
       new Date(data.updated_at),
-      userData?.email
+      undefined
     );
   }
 
@@ -139,7 +137,6 @@ export class UserProfileRepository implements IUserProfileRepository {
       .from('user_profiles')
       .select('*')
       .eq('user_id', userId)
-      .is('deleted_at', null)
       .single();
 
     if (error) {
@@ -152,8 +149,6 @@ export class UserProfileRepository implements IUserProfileRepository {
     }
 
     if (!data) return null;
-
-    const userData = data.users as any;
 
     console.log('✅ Profile found for user');
 
@@ -172,7 +167,7 @@ export class UserProfileRepository implements IUserProfileRepository {
       data.preferences || {},
       new Date(data.created_at),
       new Date(data.updated_at),
-      userData?.email
+      undefined
     );
   }
 
@@ -216,8 +211,6 @@ export class UserProfileRepository implements IUserProfileRepository {
       throw new Error(`Error creating profile: ${error.message}`);
     }
 
-    const userData = data.users as any;
-
     console.log('✅ Profile created successfully:', data);
 
     return new UserProfile(
@@ -235,7 +228,7 @@ export class UserProfileRepository implements IUserProfileRepository {
       data.preferences || {},
       new Date(data.created_at),
       new Date(data.updated_at),
-      userData?.email
+      undefined
     );
   }
 
@@ -304,8 +297,6 @@ export class UserProfileRepository implements IUserProfileRepository {
       throw new Error(`Error updating profile: ${error.message}`);
     }
 
-    const userData = data.users as any;
-
     console.log('✅ Profile updated successfully:', data);
 
     return new UserProfile(
@@ -323,25 +314,23 @@ export class UserProfileRepository implements IUserProfileRepository {
       data.preferences || {},
       new Date(data.created_at),
       new Date(data.updated_at),
-      userData?.email
+      undefined
     );
   }
 
   /**
-   * Soft delete a user profile
+   * Delete a user profile
+   * Note: user_profiles table does not have deleted_at column, so this performs a hard delete
    */
   async delete(id: string): Promise<void> {
-    console.log('🗑️ Deleting user profile (soft delete):', id);
+    console.log('🗑️ Deleting user profile:', id);
 
     const supabase = createClient();
 
     const { error } = await supabase
       .schema('app')
       .from('user_profiles')
-      .update({
-        deleted_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
+      .delete()
       .eq('id', id);
 
     if (error) {
@@ -349,6 +338,6 @@ export class UserProfileRepository implements IUserProfileRepository {
       throw new Error(`Error deleting profile: ${error.message}`);
     }
 
-    console.log('✅ Profile deleted successfully (soft delete)');
+    console.log('✅ Profile deleted successfully');
   }
 }

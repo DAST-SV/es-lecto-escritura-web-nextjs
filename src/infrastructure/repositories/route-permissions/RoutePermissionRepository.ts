@@ -17,7 +17,7 @@ export class RoutePermissionRepository implements IRoutePermissionRepository {
       .select(`
         *,
         roles:role_name (display_name),
-        routes:route_id (path, name)
+        routes:route_id (pathname, display_name)
       `)
       .order('created_at', { ascending: false });
 
@@ -41,7 +41,7 @@ export class RoutePermissionRepository implements IRoutePermissionRepository {
       .select(`
         *,
         roles:role_name (display_name),
-        routes:route_id (path, name)
+        routes:route_id (pathname, display_name)
       `)
       .eq('id', id)
       .single();
@@ -61,7 +61,7 @@ export class RoutePermissionRepository implements IRoutePermissionRepository {
       .select(`
         *,
         roles:role_name (display_name),
-        routes:route_id (path, name)
+        routes:route_id (pathname, display_name)
       `)
       .eq('role_name', roleName)
       .order('created_at', { ascending: false });
@@ -80,7 +80,7 @@ export class RoutePermissionRepository implements IRoutePermissionRepository {
       .select(`
         *,
         roles:role_name (display_name),
-        routes:route_id (path, name)
+        routes:route_id (pathname, display_name)
       `)
       .eq('route_id', routeId)
       .order('created_at', { ascending: false });
@@ -99,7 +99,7 @@ export class RoutePermissionRepository implements IRoutePermissionRepository {
       .select(`
         *,
         roles:role_name (display_name),
-        routes:route_id (path, name)
+        routes:route_id (pathname, display_name)
       `)
       .eq('role_name', roleName)
       .eq('route_id', routeId);
@@ -146,7 +146,7 @@ export class RoutePermissionRepository implements IRoutePermissionRepository {
       .select(`
         *,
         roles:role_name (display_name),
-        routes:route_id (path, name)
+        routes:route_id (pathname, display_name)
       `)
       .single();
 
@@ -173,7 +173,7 @@ export class RoutePermissionRepository implements IRoutePermissionRepository {
       .select(`
         *,
         roles:role_name (display_name),
-        routes:route_id (path, name)
+        routes:route_id (pathname, display_name)
       `)
       .single();
 

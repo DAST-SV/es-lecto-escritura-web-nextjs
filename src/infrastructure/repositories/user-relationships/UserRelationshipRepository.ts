@@ -24,7 +24,6 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
       .schema('app')
       .from('user_relationships')
       .select('*')
-      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -37,8 +36,8 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
     return (data || []).map(relationship => {
       return new UserRelationship(
         relationship.id,
-        relationship.parent_user_id,
-        relationship.child_user_id,
+        relationship.primary_user_id,
+        relationship.related_user_id,
         relationship.relationship_type,
         relationship.is_approved ?? false,
         relationship.approved_at ? new Date(relationship.approved_at) : null,
@@ -65,7 +64,6 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
       .from('user_relationships')
       .select('*')
       .eq('id', id)
-      .is('deleted_at', null)
       .single();
 
     if (error) {
@@ -83,23 +81,17 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
 
     return new UserRelationship(
       data.id,
-      data.parent_user_id,
-      data.child_user_id,
+      data.primary_user_id,
+      data.related_user_id,
       data.relationship_type,
       data.is_approved ?? false,
       data.approved_at ? new Date(data.approved_at) : null,
       new Date(data.created_at),
       new Date(data.updated_at),
-      parentUserData?.raw_user_meta_data?.full_name ||
-        parentUserData?.raw_user_meta_data?.name ||
-        parentUserData?.email?.split('@')[0] ||
-        'Usuario',
-      parentUserData?.email,
-      childUserData?.raw_user_meta_data?.full_name ||
-        childUserData?.raw_user_meta_data?.name ||
-        childUserData?.email?.split('@')[0] ||
-        'Usuario',
-      childUserData?.email
+      undefined,
+      undefined,
+      undefined,
+      undefined
     );
   }
 
@@ -115,8 +107,7 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
       .schema('app')
       .from('user_relationships')
       .select('*')
-      .eq('parent_user_id', parentUserId)
-      .is('deleted_at', null)
+      .eq('primary_user_id', parentUserId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -129,8 +120,8 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
     return (data || []).map(relationship => {
       return new UserRelationship(
         relationship.id,
-        relationship.parent_user_id,
-        relationship.child_user_id,
+        relationship.primary_user_id,
+        relationship.related_user_id,
         relationship.relationship_type,
         relationship.is_approved ?? false,
         relationship.approved_at ? new Date(relationship.approved_at) : null,
@@ -156,8 +147,7 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
       .schema('app')
       .from('user_relationships')
       .select('*')
-      .eq('child_user_id', childUserId)
-      .is('deleted_at', null)
+      .eq('related_user_id', childUserId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -170,8 +160,8 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
     return (data || []).map(relationship => {
       return new UserRelationship(
         relationship.id,
-        relationship.parent_user_id,
-        relationship.child_user_id,
+        relationship.primary_user_id,
+        relationship.related_user_id,
         relationship.relationship_type,
         relationship.is_approved ?? false,
         relationship.approved_at ? new Date(relationship.approved_at) : null,
@@ -198,7 +188,6 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
       .from('user_relationships')
       .select('*')
       .eq('is_approved', false)
-      .is('deleted_at', null)
       .order('created_at', { ascending: true });
 
     if (error) {
@@ -211,8 +200,8 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
     return (data || []).map(relationship => {
       return new UserRelationship(
         relationship.id,
-        relationship.parent_user_id,
-        relationship.child_user_id,
+        relationship.primary_user_id,
+        relationship.related_user_id,
         relationship.relationship_type,
         relationship.is_approved ?? false,
         relationship.approved_at ? new Date(relationship.approved_at) : null,
@@ -252,8 +241,8 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
       .schema('app')
       .from('user_relationships')
       .insert({
-        parent_user_id: dto.parentUserId,
-        child_user_id: dto.childUserId,
+        primary_user_id: dto.parentUserId,
+        related_user_id: dto.childUserId,
         relationship_type: dto.relationshipType,
         is_approved: false,
         approved_at: null,
@@ -270,23 +259,17 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
 
     return new UserRelationship(
       data.id,
-      data.parent_user_id,
-      data.child_user_id,
+      data.primary_user_id,
+      data.related_user_id,
       data.relationship_type,
       data.is_approved ?? false,
       data.approved_at ? new Date(data.approved_at) : null,
       new Date(data.created_at),
       new Date(data.updated_at),
-      parentUserData?.raw_user_meta_data?.full_name ||
-        parentUserData?.raw_user_meta_data?.name ||
-        parentUserData?.email?.split('@')[0] ||
-        'Usuario',
-      parentUserData?.email,
-      childUserData?.raw_user_meta_data?.full_name ||
-        childUserData?.raw_user_meta_data?.name ||
-        childUserData?.email?.split('@')[0] ||
-        'Usuario',
-      childUserData?.email
+      undefined,
+      undefined,
+      undefined,
+      undefined
     );
   }
 
@@ -319,23 +302,17 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
 
     return new UserRelationship(
       data.id,
-      data.parent_user_id,
-      data.child_user_id,
+      data.primary_user_id,
+      data.related_user_id,
       data.relationship_type,
       data.is_approved ?? false,
       data.approved_at ? new Date(data.approved_at) : null,
       new Date(data.created_at),
       new Date(data.updated_at),
-      parentUserData?.raw_user_meta_data?.full_name ||
-        parentUserData?.raw_user_meta_data?.name ||
-        parentUserData?.email?.split('@')[0] ||
-        'Usuario',
-      parentUserData?.email,
-      childUserData?.raw_user_meta_data?.full_name ||
-        childUserData?.raw_user_meta_data?.name ||
-        childUserData?.email?.split('@')[0] ||
-        'Usuario',
-      childUserData?.email
+      undefined,
+      undefined,
+      undefined,
+      undefined
     );
   }
 
@@ -352,7 +329,6 @@ export class UserRelationshipRepository implements IUserRelationshipRepository {
       .from('user_relationships')
       .update({
         deleted_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
       })
       .eq('id', id);
 
