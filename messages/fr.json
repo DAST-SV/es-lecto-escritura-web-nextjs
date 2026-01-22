@@ -49,15 +49,142 @@
     }
   },
   "auth": {
+    "login": {
+      "title": "Bon retour!",
+      "subtitle": "Connectez-vous pour continuer votre aventure d'apprentissage",
+      "brand": "ESLECTOESCRITURA",
+      "email_label": "Email",
+      "email_placeholder": "Votre adresse email",
+      "password_label": "Mot de passe",
+      "password_placeholder": "Votre mot de passe",
+      "remember_me": "Se souvenir de moi",
+      "forgot_password": "Mot de passe oublié?",
+      "login_button": "CONNEXION POUR APPRENDRE! 📚",
+      "login_button_loading": "Connexion...",
+      "no_account": "Pas de compte?",
+      "register_link": "Inscrivez-vous ici",
+      "or_continue_with": "Ou continuez avec",
+      "divider": "ou utilisez votre email"
+    },
+    "register": {
+      "title": "Rejoignez l'aventure!",
+      "subtitle": "Créez votre compte et commencez à apprendre",
+      "brand": "ESLECTOESCRITURA",
+      "step1_title": "Informations de base",
+      "step2_title": "Choisissez votre rôle",
+      "step3_title": "Confirmez votre compte",
+      "name_label": "Nom complet",
+      "name_placeholder": "Votre nom complet",
+      "email_label": "Email",
+      "email_placeholder": "Votre adresse email",
+      "password_label": "Mot de passe",
+      "password_placeholder": "Au moins 6 caractères",
+      "confirm_password_label": "Confirmer le mot de passe",
+      "confirm_password_placeholder": "Répétez votre mot de passe",
+      "role_label": "Comment allez-vous utiliser la plateforme?",
+      "role_description": "Cela nous aide à personnaliser votre expérience",
+      "register_button": "CRÉER MON COMPTE! 🚀",
+      "register_button_loading": "Création du compte...",
+      "already_have_account": "Vous avez déjà un compte?",
+      "login_link": "Connectez-vous ici",
+      "terms_acceptance": "J'accepte les",
+      "terms_link": "termes et conditions",
+      "privacy_link": "politique de confidentialité",
+      "and": "et la",
+      "or_continue_with": "Ou inscrivez-vous avec",
+      "divider": "ou utilisez votre email",
+      "success_title": "Compte créé avec succès!",
+      "success_message": "Veuillez vérifier votre email pour confirmer votre compte.",
+      "success_button": "Aller à la connexion"
+    },
+    "roles": {
+      "student": {
+        "name": "Étudiant",
+        "description": "Je veux apprendre à lire et écrire",
+        "icon": "🎓",
+        "features": [
+          "Accès à tout le contenu",
+          "Suivi des progrès personnels",
+          "Réalisations et récompenses",
+          "Avatar personnalisable"
+        ]
+      },
+      "teacher": {
+        "name": "Enseignant",
+        "description": "Je veux enseigner à mes élèves",
+        "icon": "👩‍🏫",
+        "features": [
+          "Gestion des classes",
+          "Création de devoirs",
+          "Rapports de progrès",
+          "Création d'activités"
+        ]
+      },
+      "parent": {
+        "name": "Parent",
+        "description": "Je veux aider mes enfants",
+        "icon": "👨‍👩‍👧‍👦",
+        "features": [
+          "Inscription de plusieurs enfants",
+          "Suivi familial",
+          "Rapports de progrès",
+          "Communication avec les enseignants"
+        ]
+      },
+      "school": {
+        "name": "École",
+        "description": "Je veux gérer mon établissement",
+        "icon": "🏫",
+        "features": [
+          "Gestion des enseignants",
+          "Gestion des élèves",
+          "Rapports institutionnels",
+          "Administration complète"
+        ]
+      },
+      "individual": {
+        "name": "Utilisateur individuel",
+        "description": "Je veux apprendre par moi-même",
+        "icon": "🌟",
+        "features": [
+          "Apprentissage autonome",
+          "Contenu personnalisé",
+          "Apprenez à votre rythme",
+          "Sans engagement"
+        ]
+      }
+    },
+    "providers": {
+      "google": "Google",
+      "apple": "Apple",
+      "facebook": "Facebook",
+      "microsoft": "Microsoft",
+      "twitter": "Twitter",
+      "github": "GitHub"
+    },
     "errors": {
       "invalid_credentials": "Email ou mot de passe incorrect",
       "email_not_confirmed": "Veuillez confirmer votre email",
       "user_not_found": "Utilisateur non trouvé",
       "invalid_email": "Email invalide",
       "weak_password": "Le mot de passe doit avoir au moins 6 caractères",
+      "password_mismatch": "Les mots de passe ne correspondent pas",
       "email_already_registered": "Email déjà enregistré",
       "too_many_requests": "Trop de tentatives, veuillez réessayer plus tard",
-      "generic_error": "Une erreur s'est produite"
+      "generic_error": "Une erreur s'est produite",
+      "role_required": "Veuillez sélectionner un rôle",
+      "name_required": "Veuillez entrer votre nom complet",
+      "terms_required": "Vous devez accepter les termes et conditions",
+      "oauth_error": "Erreur de connexion avec le fournisseur. Veuillez réessayer"
+    },
+    "messages": {
+      "check_email": "Vérifiez votre email",
+      "check_email_description": "Nous vous avons envoyé un lien de confirmation. Veuillez vérifier votre boîte de réception.",
+      "password_reset_sent": "Lien de récupération envoyé",
+      "password_reset_description": "Si l'email existe, vous recevrez un lien pour réinitialiser votre mot de passe.",
+      "logout_success": "Déconnexion réussie",
+      "login_success": "Bon retour!",
+      "register_success": "Compte créé avec succès!"
     }
   }
 }

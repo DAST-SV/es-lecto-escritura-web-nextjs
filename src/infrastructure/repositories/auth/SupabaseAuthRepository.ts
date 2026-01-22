@@ -47,10 +47,23 @@ export class SupabaseAuthRepository implements IAuthRepository {
   }
 
   async signup(credentials: SignupCredentials): Promise<AuthResult> {
-    const { data, error } = await this.supabase.auth.signUp({
+    const signupOptions: any = {
       email: credentials.email,
       password: credentials.password,
-    });
+    };
+
+    // Add user metadata if provided
+    if (credentials.name || credentials.role || credentials.metadata) {
+      signupOptions.options = {
+        data: {
+          full_name: credentials.name,
+          role: credentials.role,
+          ...credentials.metadata,
+        },
+      };
+    }
+
+    const { data, error } = await this.supabase.auth.signUp(signupOptions);
 
     return {
       user: data.user,

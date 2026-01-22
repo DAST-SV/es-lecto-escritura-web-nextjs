@@ -16,5 +16,144 @@
     "title": "Bem-vindo!",
     "subtitle": "Website multilíngue com TypeScript",
     "description": "Implementação profissional com react-i18next"
+  },
+  "auth": {
+    "login": {
+      "title": "Bem-vindo de volta!",
+      "subtitle": "Faça login para continuar sua aventura de aprendizagem",
+      "brand": "ESLECTOESCRITURA",
+      "email_label": "E-mail",
+      "email_placeholder": "Seu endereço de e-mail",
+      "password_label": "Senha",
+      "password_placeholder": "Sua senha",
+      "remember_me": "Lembrar de mim",
+      "forgot_password": "Esqueceu sua senha?",
+      "login_button": "ENTRAR PARA APRENDER! 📚",
+      "login_button_loading": "Entrando...",
+      "no_account": "Não tem conta?",
+      "register_link": "Cadastre-se aqui",
+      "or_continue_with": "Ou continue com",
+      "divider": "ou use seu e-mail"
+    },
+    "register": {
+      "title": "Junte-se à aventura!",
+      "subtitle": "Crie sua conta e comece a aprender",
+      "brand": "ESLECTOESCRITURA",
+      "step1_title": "Informações básicas",
+      "step2_title": "Escolha seu papel",
+      "step3_title": "Confirme sua conta",
+      "name_label": "Nome completo",
+      "name_placeholder": "Seu nome completo",
+      "email_label": "E-mail",
+      "email_placeholder": "Seu endereço de e-mail",
+      "password_label": "Senha",
+      "password_placeholder": "Pelo menos 6 caracteres",
+      "confirm_password_label": "Confirmar senha",
+      "confirm_password_placeholder": "Repita sua senha",
+      "role_label": "Como você vai usar a plataforma?",
+      "role_description": "Isso nos ajuda a personalizar sua experiência",
+      "register_button": "CRIAR MINHA CONTA! 🚀",
+      "register_button_loading": "Criando conta...",
+      "already_have_account": "Já tem conta?",
+      "login_link": "Faça login aqui",
+      "terms_acceptance": "Aceito os",
+      "terms_link": "termos e condições",
+      "privacy_link": "política de privacidade",
+      "and": "e a",
+      "or_continue_with": "Ou cadastre-se com",
+      "divider": "ou use seu e-mail",
+      "success_title": "Conta criada com sucesso!",
+      "success_message": "Por favor, verifique seu e-mail para confirmar sua conta.",
+      "success_button": "Ir para login"
+    },
+    "roles": {
+      "student": {
+        "name": "Estudante",
+        "description": "Quero aprender a ler e escrever",
+        "icon": "🎓",
+        "features": [
+          "Acesso a todo o conteúdo",
+          "Acompanhamento de progresso pessoal",
+          "Conquistas e recompensas",
+          "Avatar personalizável"
+        ]
+      },
+      "teacher": {
+        "name": "Professor(a)",
+        "description": "Quero ensinar meus alunos",
+        "icon": "👩‍🏫",
+        "features": [
+          "Gestão de turmas",
+          "Criação de tarefas",
+          "Relatórios de progresso",
+          "Criação de atividades"
+        ]
+      },
+      "parent": {
+        "name": "Pai/Mãe",
+        "description": "Quero ajudar meus filhos",
+        "icon": "👨‍👩‍👧‍👦",
+        "features": [
+          "Registro de múltiplos filhos",
+          "Acompanhamento familiar",
+          "Relatórios de progresso",
+          "Comunicação com professores"
+        ]
+      },
+      "school": {
+        "name": "Escola",
+        "description": "Quero gerenciar minha instituição",
+        "icon": "🏫",
+        "features": [
+          "Gestão de professores",
+          "Gestão de alunos",
+          "Relatórios institucionais",
+          "Administração completa"
+        ]
+      },
+      "individual": {
+        "name": "Usuário Individual",
+        "description": "Quero aprender por conta própria",
+        "icon": "🌟",
+        "features": [
+          "Aprendizado autodirigido",
+          "Conteúdo personalizado",
+          "Aprenda no seu ritmo",
+          "Sem compromissos"
+        ]
+      }
+    },
+    "providers": {
+      "google": "Google",
+      "apple": "Apple",
+      "facebook": "Facebook",
+      "microsoft": "Microsoft",
+      "twitter": "Twitter",
+      "github": "GitHub"
+    },
+    "errors": {
+      "invalid_credentials": "Credenciais inválidas. Verifique seu e-mail e senha.",
+      "email_not_confirmed": "Por favor, confirme seu e-mail antes de fazer login.",
+      "user_not_found": "Não encontramos uma conta com este e-mail.",
+      "invalid_email": "O formato do e-mail não é válido.",
+      "weak_password": "A senha deve ter pelo menos 6 caracteres.",
+      "password_mismatch": "As senhas não correspondem.",
+      "email_already_registered": "Já existe uma conta com este e-mail.",
+      "too_many_requests": "Muitas tentativas. Tente novamente mais tarde.",
+      "generic_error": "Ocorreu um erro inesperado. Tente novamente.",
+      "role_required": "Por favor, selecione um papel.",
+      "name_required": "Por favor, insira seu nome completo.",
+      "terms_required": "Você deve aceitar os termos e condições.",
+      "oauth_error": "Erro ao fazer login com o provedor. Tente novamente."
+    },
+    "messages": {
+      "check_email": "Verifique seu e-mail",
+      "check_email_description": "Enviamos um link de confirmação. Por favor, verifique sua caixa de entrada.",
+      "password_reset_sent": "Link de recuperação enviado",
+      "password_reset_description": "Se o e-mail existir, você receberá um link para redefinir sua senha.",
+      "logout_success": "Logout realizado com sucesso",
+      "login_success": "Bem-vindo de volta!",
+      "register_success": "Conta criada com sucesso!"
+    }
   }
 }

@@ -179,24 +179,142 @@
     "minLength": "Debe tener al menos {{count}} caracteres"
   },
   "auth": {
+    "login": {
+      "title": "¡Bienvenido de vuelta!",
+      "subtitle": "Inicia sesión para continuar tu aventura de aprendizaje",
+      "brand": "ESLECTOESCRITURA",
+      "email_label": "Correo electrónico",
+      "email_placeholder": "Tu correo electrónico",
+      "password_label": "Contraseña",
+      "password_placeholder": "Tu contraseña",
+      "remember_me": "Recordarme",
+      "forgot_password": "¿Olvidaste tu contraseña?",
+      "login_button": "¡ENTRAR A APRENDER! 📚",
+      "login_button_loading": "Ingresando...",
+      "no_account": "¿No tienes cuenta?",
+      "register_link": "Regístrate aquí",
+      "or_continue_with": "O continúa con",
+      "divider": "o usa tu email"
+    },
+    "register": {
+      "title": "¡Únete a la aventura!",
+      "subtitle": "Crea tu cuenta y comienza a aprender",
+      "brand": "ESLECTOESCRITURA",
+      "step1_title": "Información básica",
+      "step2_title": "Elige tu rol",
+      "step3_title": "Confirma tu cuenta",
+      "name_label": "Nombre completo",
+      "name_placeholder": "Tu nombre completo",
+      "email_label": "Correo electrónico",
+      "email_placeholder": "Tu correo electrónico",
+      "password_label": "Contraseña",
+      "password_placeholder": "Mínimo 6 caracteres",
+      "confirm_password_label": "Confirmar contraseña",
+      "confirm_password_placeholder": "Repite tu contraseña",
+      "role_label": "¿Cómo vas a usar la plataforma?",
+      "role_description": "Esto nos ayuda a personalizar tu experiencia",
+      "register_button": "¡CREAR MI CUENTA! 🚀",
+      "register_button_loading": "Creando cuenta...",
+      "already_have_account": "¿Ya tienes cuenta?",
+      "login_link": "Inicia sesión aquí",
+      "terms_acceptance": "Acepto los",
+      "terms_link": "términos y condiciones",
+      "privacy_link": "política de privacidad",
+      "and": "y la",
+      "or_continue_with": "O regístrate con",
+      "divider": "o usa tu email",
+      "success_title": "¡Cuenta creada exitosamente!",
+      "success_message": "Por favor revisa tu correo para confirmar tu cuenta.",
+      "success_button": "Ir a iniciar sesión"
+    },
+    "roles": {
+      "student": {
+        "name": "Estudiante",
+        "description": "Quiero aprender a leer y escribir",
+        "icon": "🎓",
+        "features": [
+          "Acceso a todos los contenidos",
+          "Seguimiento de progreso personal",
+          "Logros y recompensas",
+          "Avatar personalizable"
+        ]
+      },
+      "teacher": {
+        "name": "Maestro/a",
+        "description": "Quiero enseñar a mis estudiantes",
+        "icon": "👩‍🏫",
+        "features": [
+          "Gestión de clases",
+          "Asignación de tareas",
+          "Reportes de progreso",
+          "Creación de actividades"
+        ]
+      },
+      "parent": {
+        "name": "Padre/Madre",
+        "description": "Quiero ayudar a mis hijos",
+        "icon": "👨‍👩‍👧‍👦",
+        "features": [
+          "Registro de múltiples hijos",
+          "Seguimiento familiar",
+          "Reportes de progreso",
+          "Comunicación con maestros"
+        ]
+      },
+      "school": {
+        "name": "Escuela",
+        "description": "Quiero gestionar mi institución",
+        "icon": "🏫",
+        "features": [
+          "Gestión de maestros",
+          "Gestión de estudiantes",
+          "Reportes institucionales",
+          "Administración completa"
+        ]
+      },
+      "individual": {
+        "name": "Usuario Individual",
+        "description": "Quiero aprender por mi cuenta",
+        "icon": "🌟",
+        "features": [
+          "Aprendizaje autodirigido",
+          "Contenido personalizado",
+          "Progreso a tu ritmo",
+          "Sin compromisos"
+        ]
+      }
+    },
+    "providers": {
+      "google": "Google",
+      "apple": "Apple",
+      "facebook": "Facebook",
+      "microsoft": "Microsoft",
+      "twitter": "Twitter",
+      "github": "GitHub"
+    },
     "errors": {
       "invalid_credentials": "Credenciales inválidas. Verifica tu email y contraseña.",
       "email_not_confirmed": "Por favor confirma tu email antes de iniciar sesión.",
       "user_not_found": "No encontramos una cuenta con este email.",
       "invalid_email": "El formato del email no es válido.",
       "weak_password": "La contraseña debe tener al menos 6 caracteres.",
+      "password_mismatch": "Las contraseñas no coinciden.",
       "email_already_registered": "Ya existe una cuenta con este email.",
       "too_many_requests": "Demasiados intentos. Inténtalo más tarde.",
-      "generic_error": "Ocurrió un error inesperado. Inténtalo de nuevo."
+      "generic_error": "Ocurrió un error inesperado. Inténtalo de nuevo.",
+      "role_required": "Por favor selecciona un rol.",
+      "name_required": "Por favor ingresa tu nombre completo.",
+      "terms_required": "Debes aceptar los términos y condiciones.",
+      "oauth_error": "Error al iniciar sesión con el proveedor. Intenta de nuevo."
     },
-    "form": {
-      "or_use_email": "o usa tu email",
-      "email_placeholder": "Tu correo electrónico",
-      "password_placeholder": "Tu contraseña",
-      "remember_me": "Recordarme",
-      "forgot_password": "¿Olvidaste tu contraseña?",
-      "login_button": "¡ENTRAR A APRENDER! 📚",
-      "connect_with": "Conecta con:"
+    "messages": {
+      "check_email": "Revisa tu correo electrónico",
+      "check_email_description": "Te enviamos un enlace de confirmación. Por favor revisa tu bandeja de entrada.",
+      "password_reset_sent": "Enlace de recuperación enviado",
+      "password_reset_description": "Si el correo existe, recibirás un enlace para restablecer tu contraseña.",
+      "logout_success": "Sesión cerrada exitosamente",
+      "login_success": "¡Bienvenido de vuelta!",
+      "register_success": "¡Cuenta creada exitosamente!"
     }
   },
   "cta": {

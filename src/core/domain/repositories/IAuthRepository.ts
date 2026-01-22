@@ -11,6 +11,9 @@ export interface LoginCredentials {
 export interface SignupCredentials {
   email: string;
   password: string;
+  name?: string;
+  role?: string;
+  metadata?: Record<string, any>;
 }
 
 export type OAuthProvider = 'google' | 'apple' | 'azure' | 'facebook' | 'twitter' | 'spotify';
