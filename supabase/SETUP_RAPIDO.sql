@@ -1,47 +1,118 @@
 -- ============================================================================
 -- SETUP RÁPIDO - ES LECTO ESCRITURA
 -- ============================================================================
--- Este script configura toda la base de datos de forma modular
--- Ejecutar en Supabase SQL Editor
+-- Este script configura toda la base de datos de forma modular y granular
+-- Ejecutar en Supabase SQL Editor o mediante psql
 -- ============================================================================
 
 -- ============================================================================
--- MÓDULOS CORE (REQUERIDOS)
+-- MÓDULO 1: AUTH - AUTENTICACIÓN
 -- ============================================================================
 
--- 1. AUTENTICACIÓN (roles, usuarios, perfiles, OAuth)
-\i supabase/schemas/app/auth/01_auth_core.sql
+-- 1.1 Inicialización (schema, extensiones, grants)
+\i supabase/schemas/app/auth/00_init.sql
 
--- 2. ORGANIZACIONES (escuelas, familias, grupos, miembros, relaciones)
-\i supabase/schemas/app/organizations/01_organizations.sql
+-- 1.2 Enums
+\i supabase/schemas/app/auth/enums/user_role.sql
+\i supabase/schemas/app/auth/enums/oauth_provider.sql
 
--- 3. LEGACY (compatibilidad con código antiguo)
+-- 1.3 Tablas
+\i supabase/schemas/app/auth/tables/roles.sql
+\i supabase/schemas/app/auth/tables/user_profiles.sql
+\i supabase/schemas/app/auth/tables/user_roles.sql
+
+-- 1.4 Funciones
+\i supabase/schemas/app/auth/functions/set_updated_at.sql
+\i supabase/schemas/app/auth/functions/get_user_primary_role.sql
+\i supabase/schemas/app/auth/functions/has_role.sql
+
+-- 1.5 Triggers
+\i supabase/schemas/app/auth/triggers/set_updated_at.sql
+\i supabase/schemas/app/auth/triggers/handle_new_user.sql
+
+-- 1.6 Row Level Security
+\i supabase/schemas/app/auth/rls/roles_policies.sql
+\i supabase/schemas/app/auth/rls/user_profiles_policies.sql
+\i supabase/schemas/app/auth/rls/user_roles_policies.sql
+
+-- ============================================================================
+-- MÓDULO 2: ORGANIZATIONS - ORGANIZACIONES Y RELACIONES
+-- ============================================================================
+
+-- 2.1 Enums
+\i supabase/schemas/app/organizations/enums/organization_type.sql
+\i supabase/schemas/app/organizations/enums/membership_status.sql
+
+-- 2.2 Tablas
+\i supabase/schemas/app/organizations/tables/organizations.sql
+\i supabase/schemas/app/organizations/tables/organization_members.sql
+\i supabase/schemas/app/organizations/tables/user_relationships.sql
+
+-- 2.3 Funciones
+\i supabase/schemas/app/organizations/functions/is_org_admin.sql
+\i supabase/schemas/app/organizations/functions/get_user_organizations.sql
+
+-- 2.4 Vistas
+\i supabase/schemas/app/organizations/views/v_organization_active_members.sql
+\i supabase/schemas/app/organizations/views/v_organization_stats.sql
+
+-- 2.5 Row Level Security
+\i supabase/schemas/app/organizations/rls/organizations_policies.sql
+\i supabase/schemas/app/organizations/rls/organization_members_policies.sql
+\i supabase/schemas/app/organizations/rls/user_relationships_policies.sql
+
+-- ============================================================================
+-- MÓDULO 3: TRANSLATIONS - SISTEMA DE TRADUCCIONES (OPCIONAL)
+-- ============================================================================
+
+-- 3.1 Schema
+\i supabase/schemas/app/translations/schema/00_tables.sql
+\i supabase/schemas/app/translations/schema/01_triggers.sql
+\i supabase/schemas/app/translations/schema/02_rls.sql
+\i supabase/schemas/app/translations/schema/03_initial_data.sql
+
+-- 3.2 Data - Helper function
+\i supabase/schemas/app/translations/data/00_helper_function.sql
+
+-- 3.3 Data - Auth translations
+\i supabase/schemas/app/translations/data/auth/01_forms.sql
+\i supabase/schemas/app/translations/data/auth/02_login.sql
+\i supabase/schemas/app/translations/data/auth/03_register.sql
+\i supabase/schemas/app/translations/data/auth/04_roles.sql
+\i supabase/schemas/app/translations/data/auth/05_providers.sql
+\i supabase/schemas/app/translations/data/auth/06_errors.sql
+\i supabase/schemas/app/translations/data/auth/07_messages.sql
+
+-- 3.4 Data - Other namespaces
+\i supabase/schemas/app/translations/data/navigation.sql
+\i supabase/schemas/app/translations/data/common.sql
+\i supabase/schemas/app/translations/data/errors.sql
+
+-- 3.5 Cleanup y verificación
+\i supabase/schemas/app/translations/data/99_cleanup.sql
+
+-- ============================================================================
+-- MÓDULO 4: LEGACY - COMPATIBILIDAD (REQUERIDO)
+-- ============================================================================
+
 \i supabase/schemas/app/legacy/user_types.sql
-
--- ============================================================================
--- MÓDULOS OPCIONALES
--- ============================================================================
-
--- 4. SISTEMA DE TRADUCCIONES (opcional pero recomendado)
-\i supabase/schemas/app/translations/01_translations_schema.sql
-
--- 5. INSERTS DE TRADUCCIONES (auth, navigation, common, errors)
-\i supabase/schemas/app/translations/02_translations_inserts.sql
 
 -- ============================================================================
 -- PARA SUPABASE SQL EDITOR
 -- ============================================================================
 -- Si estás usando el SQL Editor de Supabase (no tienes acceso a \i):
--- Copia y pega el contenido de cada archivo en este orden:
+-- Copia y pega el contenido de cada archivo en este mismo orden
 --
--- 1. supabase/schemas/app/auth/01_auth_core.sql
--- 2. supabase/schemas/app/organizations/01_organizations.sql
--- 3. supabase/schemas/app/legacy/user_types.sql
--- 4. supabase/schemas/app/translations/01_translations_schema.sql (opcional)
--- 5. supabase/schemas/app/translations/02_translations_inserts.sql (opcional)
+-- ORDEN DE INSTALACIÓN:
+-- 1. AUTH (00_init → enums → tables → functions → triggers → rls)
+-- 2. ORGANIZATIONS (enums → tables → functions → views → rls)
+-- 3. TRANSLATIONS (schema → data/helper → data/auth → data/otros → cleanup)
+-- 4. LEGACY (user_types)
+--
+-- ============================================================================
 
 -- ============================================================================
--- VERIFICACIÓN
+-- VERIFICACIÓN FINAL
 -- ============================================================================
 
 -- Ver roles creados
