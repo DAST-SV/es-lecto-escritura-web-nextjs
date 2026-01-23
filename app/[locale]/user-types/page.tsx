@@ -1,88 +1,204 @@
+// ============================================
+// app/[locale]/user-types/page.tsx
+// ✅ CON BULK OPERATIONS Y FIX COMPLETO
+// ============================================
+
 'use client';
-import React, { useState, useEffect } from "react";
-import TiposUsuariosList from '@/src/components/user-types/TiposUsuariosList';
-import { UserType } from '@/src/components/user-types/types';
-import UnifiedLayout from "@/src/components/nav/UnifiedLayout";
-import ModalNuevoTipo from "@/src/components/user-types/ModalNuevoTipo";
-import ModalEditarTipo from "@/src/components/user-types/ModalEditarTipo";
-import ModalEliminarTipo from "@/src/components/user-types/ModalEliminarTipo";
-export default function Page() {
-  const [tipos, setTipos] = useState<UserType[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  
-  // Estados de los modales
+
+import React, { useState } from 'react';
+import { UnifiedLayout } from '@/src/presentation/features/navigation';
+import { DataTable, Column } from '@/src/presentation/components/shared/DataTable';
+import { Loader2, AlertCircle } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
+import { useUserTypes } from '@/src/presentation/features/user-types/hooks';
+import { CreateUserTypeModal, DeleteUserTypeModal, EditUserTypeModal } from '@/src/presentation/features/user-types/components';
+import { UserType } from '@/src/core/domain/entities/UserType';
+
+export default function UserTypesPage() {
+  const {
+    userTypes,
+    loading,
+    error,
+    createUserType,
+    updateUserType,
+    deleteUserType,
+    restoreUserType,
+    hardDeleteUserType,
+    refresh,
+  } = useUserTypes();
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedTipo, setSelectedTipo] = useState<UserType | null>(null);
+  const [selectedUserType, setSelectedUserType] = useState<UserType | null>(null);
 
-  const fetchTipos = async () => {
-    try {
-      const res = await fetch(`/api/users/usertypes`, {
-        method: 'GET',
-        cache: 'no-store',
-      });
-
-      if (!res.ok) {
-        throw new Error(`Error ${res.status}: No se pudieron cargar los tipos de usuario`);
-      }
-
-      const data: UserType[] = await res.json();
-      setTipos(data);
-    } catch (err: any) {
-      setError(err.message || "Error inesperado");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTipos();
-  }, []);
-
-  // Handlers para los modales
-  const handleOpenEditModal = (tipo: UserType) => {
-    setSelectedTipo(tipo);
+  const handleOpenEdit = (userType: UserType) => {
+    setSelectedUserType(userType);
     setShowEditModal(true);
   };
 
-  const handleOpenDeleteModal = (tipo: UserType) => {
-    setSelectedTipo(tipo);
+  const handleOpenDelete = (userType: UserType) => {
+    setSelectedUserType(userType);
     setShowDeleteModal(true);
   };
 
-  const handleCreated = () => {
-    fetchTipos();
+  const handleCreate = async (data: { name: string; description: string | null }) => {
+    try {
+      await createUserType(data);
+      toast.success('Tipo de usuario creado exitosamente');
+      setShowCreateModal(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Error al crear tipo de usuario');
+      throw err;
+    }
   };
 
-  const handleUpdated = () => {
-    fetchTipos();
+  const handleUpdate = async (id: number, data: { name: string; description: string | null }) => {
+    try {
+      await updateUserType(id, data);
+      toast.success('Tipo de usuario actualizado exitosamente');
+      setShowEditModal(false);
+      setSelectedUserType(null);
+    } catch (err: any) {
+      toast.error(err.message || 'Error al actualizar tipo de usuario');
+      throw err;
+    }
   };
 
-  const handleDeleted = () => {
-    fetchTipos();
+  const handleDelete = async (id: number, hardDelete: boolean) => {
+    try {
+      if (hardDelete) {
+        await hardDeleteUserType(id);
+        toast.success('Tipo de usuario eliminado permanentemente');
+      } else {
+        await deleteUserType(id);
+        toast.success('Tipo de usuario movido a papelera');
+      }
+      setShowDeleteModal(false);
+      setSelectedUserType(null);
+    } catch (err: any) {
+      toast.error(err.message || 'Error al eliminar tipo de usuario');
+      throw err;
+    }
   };
 
-  if (loading) {
+  const handleRestore = async (userType: UserType) => {
+    try {
+      await restoreUserType(userType.id);
+      toast.success('Tipo de usuario restaurado exitosamente');
+    } catch (err: any) {
+      toast.error(err.message || 'Error al restaurar tipo de usuario');
+    }
+  };
+
+  const handleBulkRestore = async (items: UserType[]) => {
+    try {
+      for (const item of items) {
+        await restoreUserType(item.id);
+      }
+      toast.success(`${items.length} tipos de usuario restaurados`);
+    } catch (err: any) {
+      toast.error(err.message || 'Error al restaurar tipos de usuario');
+    }
+  };
+
+  const handleBulkDelete = async (items: UserType[]) => {
+    if (!confirm(`¿Está seguro de eliminar permanentemente ${items.length} tipos de usuario? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+    
+    try {
+      for (const item of items) {
+        await hardDeleteUserType(item.id);
+      }
+      toast.success(`${items.length} tipos de usuario eliminados permanentemente`);
+    } catch (err: any) {
+      toast.error(err.message || 'Error al eliminar tipos de usuario');
+    }
+  };
+
+  // Columnas para la tabla
+  const columns: Column<UserType>[] = [
+    {
+      key: 'id',
+      label: 'ID',
+      width: '80px',
+      align: 'center',
+      render: (item) => (
+        <span className="font-semibold text-teal-600">{item.id}</span>
+      ),
+    },
+    {
+      key: 'name',
+      label: 'Nombre',
+      align: 'center',
+      render: (item) => (
+        <span className="font-semibold text-slate-800">{item.name}</span>
+      ),
+    },
+    {
+      key: 'description',
+      label: 'Descripción',
+      align: 'center',
+      render: (item) => (
+        <span className="text-slate-600">{item.description || 'Sin descripción'}</span>
+      ),
+    },
+    {
+      key: 'status',
+      label: 'Estado',
+      width: '120px',
+      align: 'center',
+      render: (item) => (
+        <div className="flex justify-center">
+          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+            item.isActive 
+              ? 'bg-emerald-100 text-emerald-700'
+              : 'bg-slate-100 text-slate-600'
+          }`}>
+            {item.isActive ? '✅ Activo' : '⏸️ Inactivo'}
+          </span>
+        </div>
+      ),
+    },
+  ];
+
+  // Función de búsqueda
+  const handleSearch = (term: string) => {
+    return userTypes.filter(item =>
+      item.name.toLowerCase().includes(term.toLowerCase()) ||
+      (item.description && item.description.toLowerCase().includes(term.toLowerCase()))
+    );
+  };
+
+  if (loading && userTypes.length === 0) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-lg font-medium text-slate-600">Cargando...</div>
-      </div>
+      <UnifiedLayout showNavbar={true}>
+        <div className="h-screen flex items-center justify-center bg-gradient-to-b from-blue-400 via-blue-300 to-green-300">
+          <div className="text-center">
+            <Loader2 size={48} className="animate-spin text-teal-600 mx-auto mb-4" />
+            <p className="text-gray-600 font-medium">Cargando tipos de usuario...</p>
+          </div>
+        </div>
+      </UnifiedLayout>
     );
   }
 
-  if (error) {
+  if (error && userTypes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen text-red-600">
-        <p className="text-lg font-medium">{error}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-4 px-5 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors cursor-pointer"
-        >
-          Reintentar
-        </button>
-      </div>
+      <UnifiedLayout showNavbar={true}>
+        <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-b from-red-400 via-red-300 to-orange-300">
+          <AlertCircle size={64} className="text-red-500 mb-4" />
+          <h2 className="text-xl font-bold text-red-700 mb-2">Error al cargar</h2>
+          <p className="text-gray-600 mb-6 max-w-md text-center">{error}</p>
+          <button
+            onClick={refresh}
+            className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-semibold shadow-md"
+          >
+            Reintentar
+          </button>
+        </div>
+      </UnifiedLayout>
     );
   }
 
@@ -94,40 +210,49 @@ export default function Page() {
       }
       mainClassName="h-full w-full flex flex-col bg-gradient-to-b from-blue-400 via-blue-300 to-green-300 p-2 sm:p-4 lg:p-6"
     >
-      <TiposUsuariosList
-        tipos={tipos}
-        onOpenCreateModal={() => setShowCreateModal(true)}
-        onOpenEditModal={handleOpenEditModal}
-        onOpenDeleteModal={handleOpenDeleteModal}
+      <Toaster position="top-right" />
+      
+      <DataTable
+        title="Tipos de Usuarios"
+        data={userTypes}
+        columns={columns}
+        onSearch={handleSearch}
+        onEdit={handleOpenEdit}
+        onDelete={handleOpenDelete}
+        onRestore={handleRestore}
+        onBulkRestore={handleBulkRestore}
+        onBulkDelete={handleBulkDelete}
+        onCreate={() => setShowCreateModal(true)}
+        getItemKey={(item) => item.id}
+        isDeleted={(item) => !!item.deletedAt}
+        showTrash={true}
+        createButtonText="Nuevo Tipo"
       />
 
-      {/* Modal Crear */}
-      <ModalNuevoTipo
+      <CreateUserTypeModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onCreated={handleCreated}
+        onCreate={handleCreate}
       />
 
-      {/* Modal Editar */}
-      <ModalEditarTipo
+      <EditUserTypeModal
         isOpen={showEditModal}
         onClose={() => {
           setShowEditModal(false);
-          setSelectedTipo(null);
+          setSelectedUserType(null);
         }}
-        onUpdated={handleUpdated}
-        tipo={selectedTipo}
+        onUpdate={handleUpdate}
+        userType={selectedUserType}
       />
 
-      {/* Modal Eliminar */}
-      <ModalEliminarTipo
+      <DeleteUserTypeModal
         isOpen={showDeleteModal}
         onClose={() => {
           setShowDeleteModal(false);
-          setSelectedTipo(null);
+          setSelectedUserType(null);
         }}
-        onDeleted={handleDeleted}
-        tipo={selectedTipo}
+        onDelete={handleDelete}
+        userType={selectedUserType}
       />
     </UnifiedLayout>
   );

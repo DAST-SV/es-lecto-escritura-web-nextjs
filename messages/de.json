@@ -22,5 +22,144 @@
     "title": "Willkommen!",
     "subtitle": "Mehrsprachige Website mit TypeScript",
     "description": "Professionelle Implementierung mit react-i18next"
+  },
+  "auth": {
+    "login": {
+      "title": "Willkommen zurück!",
+      "subtitle": "Melden Sie sich an, um Ihr Lernabenteuer fortzusetzen",
+      "brand": "ESLECTOESCRITURA",
+      "email_label": "E-Mail",
+      "email_placeholder": "Ihre E-Mail-Adresse",
+      "password_label": "Passwort",
+      "password_placeholder": "Ihr Passwort",
+      "remember_me": "Angemeldet bleiben",
+      "forgot_password": "Passwort vergessen?",
+      "login_button": "ANMELDEN ZUM LERNEN! 📚",
+      "login_button_loading": "Anmeldung...",
+      "no_account": "Noch kein Konto?",
+      "register_link": "Hier registrieren",
+      "or_continue_with": "Oder fortfahren mit",
+      "divider": "oder verwenden Sie Ihre E-Mail"
+    },
+    "register": {
+      "title": "Werden Sie Teil des Abenteuers!",
+      "subtitle": "Erstellen Sie Ihr Konto und beginnen Sie zu lernen",
+      "brand": "ESLECTOESCRITURA",
+      "step1_title": "Grundlegende Informationen",
+      "step2_title": "Wählen Sie Ihre Rolle",
+      "step3_title": "Bestätigen Sie Ihr Konto",
+      "name_label": "Vollständiger Name",
+      "name_placeholder": "Ihr vollständiger Name",
+      "email_label": "E-Mail",
+      "email_placeholder": "Ihre E-Mail-Adresse",
+      "password_label": "Passwort",
+      "password_placeholder": "Mindestens 6 Zeichen",
+      "confirm_password_label": "Passwort bestätigen",
+      "confirm_password_placeholder": "Wiederholen Sie Ihr Passwort",
+      "role_label": "Wie werden Sie die Plattform nutzen?",
+      "role_description": "Dies hilft uns, Ihre Erfahrung zu personalisieren",
+      "register_button": "KONTO ERSTELLEN! 🚀",
+      "register_button_loading": "Konto wird erstellt...",
+      "already_have_account": "Haben Sie bereits ein Konto?",
+      "login_link": "Hier anmelden",
+      "terms_acceptance": "Ich akzeptiere die",
+      "terms_link": "Allgemeinen Geschäftsbedingungen",
+      "privacy_link": "Datenschutzrichtlinie",
+      "and": "und die",
+      "or_continue_with": "Oder registrieren Sie sich mit",
+      "divider": "oder verwenden Sie Ihre E-Mail",
+      "success_title": "Konto erfolgreich erstellt!",
+      "success_message": "Bitte überprüfen Sie Ihre E-Mail, um Ihr Konto zu bestätigen.",
+      "success_button": "Zur Anmeldung gehen"
+    },
+    "roles": {
+      "student": {
+        "name": "Schüler",
+        "description": "Ich möchte lesen und schreiben lernen",
+        "icon": "🎓",
+        "features": [
+          "Zugang zu allen Inhalten",
+          "Persönliche Fortschrittsverfolgung",
+          "Erfolge und Belohnungen",
+          "Anpassbarer Avatar"
+        ]
+      },
+      "teacher": {
+        "name": "Lehrer",
+        "description": "Ich möchte meine Schüler unterrichten",
+        "icon": "👩‍🏫",
+        "features": [
+          "Klassenverwaltung",
+          "Aufgabenerstellung",
+          "Fortschrittsberichte",
+          "Aktivitätserstellung"
+        ]
+      },
+      "parent": {
+        "name": "Elternteil",
+        "description": "Ich möchte meinen Kindern helfen",
+        "icon": "👨‍👩‍👧‍👦",
+        "features": [
+          "Registrierung mehrerer Kinder",
+          "Familienverfolgung",
+          "Fortschrittsberichte",
+          "Kommunikation mit Lehrern"
+        ]
+      },
+      "school": {
+        "name": "Schule",
+        "description": "Ich möchte meine Einrichtung verwalten",
+        "icon": "🏫",
+        "features": [
+          "Lehrerverwaltung",
+          "Schülerverwaltung",
+          "Institutionelle Berichte",
+          "Vollständige Verwaltung"
+        ]
+      },
+      "individual": {
+        "name": "Einzelbenutzer",
+        "description": "Ich möchte selbstständig lernen",
+        "icon": "🌟",
+        "features": [
+          "Selbstgesteuertes Lernen",
+          "Personalisierte Inhalte",
+          "In Ihrem Tempo lernen",
+          "Keine Verpflichtungen"
+        ]
+      }
+    },
+    "providers": {
+      "google": "Google",
+      "apple": "Apple",
+      "facebook": "Facebook",
+      "microsoft": "Microsoft",
+      "twitter": "Twitter",
+      "github": "GitHub"
+    },
+    "errors": {
+      "invalid_credentials": "Ungültige Anmeldedaten. Überprüfen Sie Ihre E-Mail und Ihr Passwort.",
+      "email_not_confirmed": "Bitte bestätigen Sie Ihre E-Mail, bevor Sie sich anmelden.",
+      "user_not_found": "Wir haben kein Konto mit dieser E-Mail gefunden.",
+      "invalid_email": "Das E-Mail-Format ist ungültig.",
+      "weak_password": "Das Passwort muss mindestens 6 Zeichen lang sein.",
+      "password_mismatch": "Die Passwörter stimmen nicht überein.",
+      "email_already_registered": "Es existiert bereits ein Konto mit dieser E-Mail.",
+      "too_many_requests": "Zu viele Versuche. Bitte versuchen Sie es später erneut.",
+      "generic_error": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+      "role_required": "Bitte wählen Sie eine Rolle aus.",
+      "name_required": "Bitte geben Sie Ihren vollständigen Namen ein.",
+      "terms_required": "Sie müssen die Allgemeinen Geschäftsbedingungen akzeptieren.",
+      "oauth_error": "Fehler bei der Anmeldung mit dem Anbieter. Bitte versuchen Sie es erneut."
+    },
+    "messages": {
+      "check_email": "Überprüfen Sie Ihre E-Mail",
+      "check_email_description": "Wir haben Ihnen einen Bestätigungslink gesendet. Bitte überprüfen Sie Ihren Posteingang.",
+      "password_reset_sent": "Wiederherstellungslink gesendet",
+      "password_reset_description": "Wenn die E-Mail existiert, erhalten Sie einen Link zum Zurücksetzen Ihres Passworts.",
+      "logout_success": "Erfolgreich abgemeldet",
+      "login_success": "Willkommen zurück!",
+      "register_success": "Konto erfolgreich erstellt!"
+    }
   }
 }

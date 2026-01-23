@@ -1,10 +1,10 @@
 /**
  * UBICACIÓN: src/infrastructure/repositories/books/BookRepository.ts
- * ✅ CORREGIDO: Trabaja directamente con las tablas del schema books
- * usando supabaseAdmin con acceso directo
+ * ✅ COMPLETO: Soporte para PDFs + Etiquetas + Todas las relaciones
  */
 
-import { supabaseAdmin } from '@/src/utils/supabase/admin';
+import { getSupabaseAdmin } from "../../config/supabase.config";
+
 
 interface PageData {
   layout: string;
@@ -18,6 +18,7 @@ interface BookData {
   titulo: string;
   descripcion: string;
   portada?: string;
+  pdfUrl?: string;
   autores: string[];
   personajes: string[];
   categorias: number[];
@@ -25,152 +26,161 @@ interface BookData {
   etiquetas: number[];
   valores: number[];
   nivel: number;
-  pages: PageData[];
+  pages?: PageData[];
 }
 
 export class BookRepository {
   
   /**
-   * Crear un nuevo libro
+   * ============================================
+   * CREATE - Crear un nuevo libro
+   * ============================================
    */
   static async create(userId: string, bookData: BookData): Promise<string> {
-    console.log('📚 BookRepository.create - Iniciando creación de libro');
+    console.log('📚 BookRepository.create');
     console.log('👤 Usuario:', userId);
     console.log('📖 Datos:', {
       titulo: bookData.titulo,
-      pagesCount: bookData.pages.length,
-      autoresCount: bookData.autores.length
+      pdfUrl: bookData.pdfUrl ? '✅ Tiene PDF' : '❌ Sin PDF',
+      pagesCount: bookData.pages?.length || 0,
+      autoresCount: bookData.autores.length,
+      etiquetasCount: bookData.etiquetas?.length || 0,
     });
 
-    // 1. Crear el libro principal usando RPC o inserción directa
-    const { data: libro, error: libroError } = await supabaseAdmin
-      .from('books')
-      .insert({
-        user_id: userId,
-        type_id: 2, // Usuario
-        title: bookData.titulo,
-        description: bookData.descripcion,
-        cover_url: bookData.portada || null,
-        level_id: bookData.nivel || null,
-        is_published: false,
-      })
-      .select('id')
-      .single();
-
-    if (libroError) {
-      console.error('❌ Error creando libro:', libroError);
-      throw new Error(`Error al crear libro: ${libroError.message}`);
-    }
-
-    if (!libro?.id) {
-      throw new Error('No se pudo obtener el ID del libro creado');
-    }
-
-    const libroId = libro.id;
-    console.log('✅ Libro creado con ID:', libroId);
-
-    // 2. Guardar páginas primero (es lo más importante)
     try {
-      await this.savePages(libroId, bookData.pages);
-      console.log('✅ Páginas guardadas');
-    } catch (pageError: any) {
-      console.error('❌ Error guardando páginas:', pageError);
-      // Limpiar libro si fallan las páginas
-      await supabaseAdmin.from('books').delete().eq('id', libroId);
-      throw new Error(`Error al guardar páginas: ${pageError.message}`);
-    }
+      const supabaseAdmin = getSupabaseAdmin();
 
-    // 3. Guardar relaciones (sin fallar si alguna falla)
-    try {
+      // 1️⃣ Crear libro principal
+      const { data: libro, error: libroError } = await supabaseAdmin
+        .from('books')
+        .insert({
+          user_id: userId,
+          type_id: 2, // Usuario
+          title: bookData.titulo,
+          description: bookData.descripcion,
+          cover_url: bookData.portada || null,
+          pdf_url: bookData.pdfUrl || null,
+          level_id: bookData.nivel || null,
+          is_published: false,
+        })
+        .select('id')
+        .single();
+
+      if (libroError || !libro?.id) {
+        console.error('❌ Error creando libro:', libroError);
+        throw new Error(`Error al crear libro: ${libroError?.message || 'ID no generado'}`);
+      }
+
+      const libroId = libro.id;
+      console.log('✅ Libro creado con ID:', libroId);
+
+      // 2️⃣ Guardar páginas (SOLO si hay pages)
+      if (bookData.pages && bookData.pages.length > 0) {
+        try {
+          await this.savePages(libroId, bookData.pages);
+          console.log('✅ Páginas guardadas');
+        } catch (pageError: any) {
+          console.error('❌ Error guardando páginas:', pageError);
+          // Rollback: eliminar libro
+          await getSupabaseAdmin().from('books').delete().eq('id', libroId);
+          throw new Error(`Error al guardar páginas: ${pageError.message}`);
+        }
+      } else {
+        console.log('ℹ️ Libro sin páginas editables (PDF directo)');
+      }
+
+      // 3️⃣ Guardar relaciones (sin fallar si alguna falla)
       await Promise.allSettled([
         this.saveAutores(libroId, bookData.autores),
         this.savePersonajes(libroId, bookData.personajes),
         this.saveCategorias(libroId, bookData.categorias),
         this.saveGeneros(libroId, bookData.generos),
-        this.saveEtiquetas(libroId, bookData.etiquetas),
+        this.saveEtiquetas(libroId, bookData.etiquetas),  // ✅ AGREGADO
         this.saveValores(libroId, bookData.valores),
       ]);
-      console.log('✅ Relaciones guardadas');
-    } catch (relError: any) {
-      console.warn('⚠️ Algunas relaciones no se guardaron:', relError.message);
-      // No fallamos aquí, el libro ya está creado
-    }
+      console.log('✅ Relaciones guardadas (incluyendo etiquetas)');
 
-    return libroId;
+      return libroId;
+    } catch (error) {
+      console.error('❌ Error en create:', error);
+      throw error;
+    }
   }
 
   /**
-   * Actualizar un libro existente
+   * ============================================
+   * UPDATE - Actualizar libro existente
+   * ============================================
    */
   static async update(libroId: string, bookData: BookData): Promise<void> {
-    console.log('📚 BookRepository.update - Actualizando libro:', libroId);
+    console.log('📚 BookRepository.update:', libroId);
 
-    // 1. Actualizar libro principal
-    const { error: updateError } = await supabaseAdmin
-      .from('books')
-      .update({
+    try {
+      // 1️⃣ Actualizar libro principal
+      const updateData: any = {
         title: bookData.titulo,
         description: bookData.descripcion,
         cover_url: bookData.portada || null,
         level_id: bookData.nivel || null,
         updated_at: new Date().toISOString(),
-      })
-      .eq('id', libroId);
+      };
 
-    if (updateError) {
-      console.error('❌ Error actualizando libro:', updateError);
-      throw new Error(`Error al actualizar libro: ${updateError.message}`);
-    }
+      if (bookData.pdfUrl !== undefined) {
+        updateData.pdf_url = bookData.pdfUrl;
+      }
 
-    // 2. Reemplazar páginas
-    try {
-      await this.replacePages(libroId, bookData.pages);
-      console.log('✅ Páginas actualizadas');
-    } catch (pageError: any) {
-      console.error('❌ Error actualizando páginas:', pageError);
-      throw new Error(`Error al actualizar páginas: ${pageError.message}`);
-    }
+      const { error: updateError } = await getSupabaseAdmin()
+        .from('books')
+        .update(updateData)
+        .eq('id', libroId);
 
-    // 3. Actualizar relaciones
-    try {
+      if (updateError) {
+        throw new Error(`Error al actualizar libro: ${updateError.message}`);
+      }
+
+      // 2️⃣ Reemplazar páginas (solo si se proporcionan)
+      if (bookData.pages) {
+        await this.replacePages(libroId, bookData.pages);
+      }
+
+      // 3️⃣ Actualizar relaciones
       await Promise.allSettled([
         this.replaceAutores(libroId, bookData.autores),
         this.replacePersonajes(libroId, bookData.personajes),
         this.replaceCategorias(libroId, bookData.categorias),
         this.replaceGeneros(libroId, bookData.generos),
-        this.replaceEtiquetas(libroId, bookData.etiquetas),
+        this.replaceEtiquetas(libroId, bookData.etiquetas),  // ✅ AGREGADO
         this.replaceValores(libroId, bookData.valores),
       ]);
-      console.log('✅ Relaciones actualizadas');
-    } catch (relError: any) {
-      console.warn('⚠️ Algunas relaciones no se actualizaron:', relError.message);
+
+      console.log('✅ Libro actualizado (incluyendo etiquetas)');
+    } catch (error) {
+      console.error('❌ Error en update:', error);
+      throw error;
     }
   }
 
   /**
-   * Obtener libro completo con todas las relaciones
+   * ============================================
+   * GET COMPLETE - Obtener libro con relaciones
+   * ============================================
    */
   static async getComplete(libroId: string): Promise<any> {
-    console.log('📚 BookRepository.getComplete - Obteniendo libro:', libroId);
+    console.log('📚 BookRepository.getComplete:', libroId);
 
-    const { data: libro, error } = await supabaseAdmin
+    const { data: libro, error } = await getSupabaseAdmin()
       .from('books')
       .select('*')
       .eq('id', libroId)
       .is('deleted_at', null)
       .single();
 
-    if (error) {
-      console.error('❌ Error obteniendo libro:', error);
+    if (error || !libro) {
+      console.error('❌ Libro no encontrado:', error);
       return null;
     }
 
-    if (!libro) {
-      console.warn('⚠️ Libro no encontrado');
-      return null;
-    }
-
-    // Obtener todas las relaciones en paralelo
+    // Obtener todas las relaciones en paralelo (incluyendo etiquetas)
     const [autores, personajes, categorias, generos, valores, etiquetas, nivel, paginas] = 
       await Promise.all([
         this.getAutores(libroId),
@@ -178,56 +188,49 @@ export class BookRepository {
         this.getCategorias(libroId),
         this.getGeneros(libroId),
         this.getValores(libroId),
-        this.getEtiquetas(libroId),
+        this.getEtiquetas(libroId),  // ✅ AGREGADO
         this.getNivel(libro.level_id),
         this.getPages(libroId),
       ]);
 
-    const result = {
+    return {
       id: libro.id,
       titulo: libro.title,
       descripcion: libro.description,
       portada: libro.cover_url,
+      pdfUrl: libro.pdf_url,
       autores,
       personajes,
       categorias,
       generos,
       valores,
-      etiquetas,
+      etiquetas,  // ✅ AGREGADO
       nivel,
       paginas,
       fecha_creacion: libro.created_at,
       is_published: libro.is_published,
     };
-
-    console.log('✅ Libro obtenido:', {
-      id: result.id,
-      titulo: result.titulo,
-      paginasCount: result.paginas.length
-    });
-
-    return result;
   }
 
   /**
-   * Encontrar libros por usuario
+   * ============================================
+   * FIND BY USER - Libros por usuario
+   * ============================================
    */
   static async findByUserId(userId: string): Promise<any[]> {
-    console.log('📚 BookRepository.findByUserId - Usuario:', userId);
+    console.log('📚 BookRepository.findByUserId:', userId);
 
-    const { data: libros, error } = await supabaseAdmin
+    const { data: libros, error } = await getSupabaseAdmin()
       .from('books')
-      .select('id, title, description, cover_url, created_at')
+      .select('id, title, description, cover_url, pdf_url, created_at')
       .eq('user_id', userId)
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('❌ Error obteniendo libros:', error);
       throw new Error(`Error al obtener libros: ${error.message}`);
     }
 
-    // Obtener autores para cada libro
     const librosConAutores = await Promise.all(
       (libros || []).map(async (libro) => {
         const autores = await this.getAutores(libro.id);
@@ -236,48 +239,40 @@ export class BookRepository {
           titulo: libro.title,
           descripcion: libro.description,
           portada: libro.cover_url,
+          pdfUrl: libro.pdf_url,
           autores,
           fecha_creacion: libro.created_at,
         };
       })
     );
 
-    console.log('✅ Libros encontrados:', librosConAutores.length);
     return librosConAutores;
   }
 
   /**
-   * Eliminar libro (soft delete)
+   * ============================================
+   * DELETE - Soft delete
+   * ============================================
    */
   static async delete(libroId: string): Promise<void> {
-    console.log('📚 BookRepository.delete - Eliminando libro:', libroId);
-
-    const { error } = await supabaseAdmin
+    const { error } = await getSupabaseAdmin()
       .from('books')
-      .update({
-        deleted_at: new Date().toISOString(),
-      })
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', libroId);
 
     if (error) {
-      console.error('❌ Error eliminando libro:', error);
       throw new Error(`Error al eliminar libro: ${error.message}`);
     }
-
-    console.log('✅ Libro eliminado (soft delete)');
   }
 
-  // ============================================
-  // MÉTODOS PRIVADOS - PÁGINAS
-  // ============================================
+  /**
+   * ============================================
+   * PÁGINAS - CRUD
+   * ============================================
+   */
   
   private static async savePages(libroId: string, pages: PageData[]): Promise<void> {
-    if (!pages.length) {
-      console.warn('⚠️ No hay páginas para guardar');
-      return;
-    }
-    
-    console.log('📝 Guardando páginas:', pages.length);
+    if (!pages.length) return;
 
     const paginasToInsert = pages.map((p, idx) => ({
       book_id: libroId,
@@ -290,53 +285,31 @@ export class BookRepository {
       background_color: this.isColor(p.background) ? p.background : null,
     }));
 
-    console.log('📄 Páginas a insertar:', paginasToInsert.map(p => ({
-      page_number: p.page_number,
-      layout: p.layout,
-      hasImage: !!p.image_url,
-      hasBackground: !!(p.background_url || p.background_color)
-    })));
-
-    const { error } = await supabaseAdmin
+    const { error } = await getSupabaseAdmin()
       .from('book_pages')
       .insert(paginasToInsert);
 
     if (error) {
-      console.error('❌ Error guardando páginas:', error);
       throw new Error(`Error al guardar páginas: ${error.message}`);
     }
-
-    console.log('✅ Páginas guardadas correctamente');
   }
 
   private static async replacePages(libroId: string, pages: PageData[]): Promise<void> {
-    // Eliminar páginas existentes
-    const { error: deleteError } = await supabaseAdmin
-      .from('book_pages')
-      .delete()
-      .eq('book_id', libroId);
-
-    if (deleteError) {
-      console.error('❌ Error eliminando páginas:', deleteError);
+    await getSupabaseAdmin().from('book_pages').delete().eq('book_id', libroId);
+    if (pages.length > 0) {
+      await this.savePages(libroId, pages);
     }
-
-    // Insertar nuevas
-    await this.savePages(libroId, pages);
   }
 
   private static async getPages(libroId: string): Promise<any[]> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await getSupabaseAdmin()
       .from('book_pages')
       .select('*')
       .eq('book_id', libroId)
       .order('page_number');
 
-    if (error) {
-      console.error('Error obteniendo páginas:', error);
-      return [];
-    }
+    if (error) return [];
 
-    // Transformar al formato esperado por el frontend
     return (data || []).map(page => ({
       id: page.id,
       layout: page.layout || 'TextCenterLayout',
@@ -348,22 +321,21 @@ export class BookRepository {
     }));
   }
 
-  // ============================================
-  // MÉTODOS PRIVADOS - AUTORES
-  // ============================================
+  /**
+   * ============================================
+   * AUTORES
+   * ============================================
+   */
   
   private static async saveAutores(libroId: string, autores: string[]): Promise<void> {
     if (!autores.length) return;
-    
-    console.log('📝 Guardando autores:', autores);
 
     for (let idx = 0; idx < autores.length; idx++) {
       const nombre = autores[idx]?.trim();
       if (!nombre) continue;
 
       try {
-        // Buscar autor existente
-        let { data: existingAutor } = await supabaseAdmin
+        let { data: existingAutor } = await getSupabaseAdmin()
           .from('book_authors')
           .select('id')
           .eq('name', nombre)
@@ -374,22 +346,17 @@ export class BookRepository {
         if (existingAutor?.id) {
           autorId = existingAutor.id;
         } else {
-          // Crear nuevo autor
-          const { data: newAutor, error: createError } = await supabaseAdmin
+          const { data: newAutor, error } = await getSupabaseAdmin()
             .from('book_authors')
             .insert({ name: nombre })
             .select('id')
             .single();
 
-          if (createError || !newAutor?.id) {
-            console.warn('⚠️ No se pudo crear autor:', nombre, createError);
-            continue;
-          }
+          if (error || !newAutor?.id) continue;
           autorId = newAutor.id;
         }
 
-        // Crear relación libro-autor
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('books_authors')
           .insert({ 
             book_id: libroId, 
@@ -404,12 +371,12 @@ export class BookRepository {
   }
 
   private static async replaceAutores(libroId: string, autores: string[]): Promise<void> {
-    await supabaseAdmin.from('books_authors').delete().eq('book_id', libroId);
+    await getSupabaseAdmin().from('books_authors').delete().eq('book_id', libroId);
     await this.saveAutores(libroId, autores);
   }
 
   private static async getAutores(libroId: string): Promise<string[]> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await getSupabaseAdmin()
       .from('books_authors')
       .select('author_id, author_order')
       .eq('book_id', libroId)
@@ -419,33 +386,33 @@ export class BookRepository {
 
     const autores: string[] = [];
     for (const rel of data) {
-      const { data: autor } = await supabaseAdmin
+      const { data: autor } = await getSupabaseAdmin()
         .from('book_authors')
         .select('name')
         .eq('id', rel.author_id)
         .single();
       
-      if (autor?.name) {
-        autores.push(autor.name);
-      }
+      if (autor?.name) autores.push(autor.name);
     }
 
     return autores;
   }
 
-  // ============================================
-  // MÉTODOS PRIVADOS - PERSONAJES
-  // ============================================
+  /**
+   * ============================================
+   * PERSONAJES
+   * ============================================
+   */
   
   private static async savePersonajes(libroId: string, personajes: string[]): Promise<void> {
     if (!personajes.length) return;
-    
+
     for (const nombre of personajes) {
       const trimmed = nombre?.trim();
       if (!trimmed) continue;
 
       try {
-        let { data: existing } = await supabaseAdmin
+        let { data: existing } = await getSupabaseAdmin()
           .from('book_characters')
           .select('id')
           .eq('name', trimmed)
@@ -456,7 +423,7 @@ export class BookRepository {
         if (existing?.id) {
           personajeId = existing.id;
         } else {
-          const { data: newChar, error } = await supabaseAdmin
+          const { data: newChar, error } = await getSupabaseAdmin()
             .from('book_characters')
             .insert({ name: trimmed })
             .select('id')
@@ -466,23 +433,23 @@ export class BookRepository {
           personajeId = newChar.id;
         }
 
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('books_characters')
           .insert({ book_id: libroId, character_id: personajeId });
 
       } catch (err) {
-        console.warn('⚠️ Error con personaje:', trimmed, err);
+        console.warn('⚠️ Error con personaje:', trimmed);
       }
     }
   }
 
   private static async replacePersonajes(libroId: string, personajes: string[]): Promise<void> {
-    await supabaseAdmin.from('books_characters').delete().eq('book_id', libroId);
+    await getSupabaseAdmin().from('books_characters').delete().eq('book_id', libroId);
     await this.savePersonajes(libroId, personajes);
   }
 
   private static async getPersonajes(libroId: string): Promise<string[]> {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await getSupabaseAdmin()
       .from('books_characters')
       .select('character_id')
       .eq('book_id', libroId);
@@ -491,110 +458,101 @@ export class BookRepository {
 
     const personajes: string[] = [];
     for (const rel of data) {
-      const { data: char } = await supabaseAdmin
+      const { data: char } = await getSupabaseAdmin()
         .from('book_characters')
         .select('name')
         .eq('id', rel.character_id)
         .single();
       
-      if (char?.name) {
-        personajes.push(char.name);
-      }
+      if (char?.name) personajes.push(char.name);
     }
 
     return personajes;
   }
 
-  // ============================================
-  // MÉTODOS PRIVADOS - CATEGORÍAS
-  // ============================================
+  /**
+   * ============================================
+   * CATEGORÍAS
+   * ============================================
+   */
   
   private static async saveCategorias(libroId: string, categorias: number[]): Promise<void> {
     if (!categorias.length) return;
-    
     const inserts = categorias.map((category_id, idx) => ({ 
       book_id: libroId, 
       category_id,
       is_primary: idx === 0
     }));
-
-    const { error } = await supabaseAdmin.from('books_categories').insert(inserts);
-    if (error) console.warn('⚠️ Error guardando categorías:', error);
+    await getSupabaseAdmin().from('books_categories').insert(inserts);
   }
 
   private static async replaceCategorias(libroId: string, categorias: number[]): Promise<void> {
-    await supabaseAdmin.from('books_categories').delete().eq('book_id', libroId);
+    await getSupabaseAdmin().from('books_categories').delete().eq('book_id', libroId);
     await this.saveCategorias(libroId, categorias);
   }
 
   private static async getCategorias(libroId: string): Promise<string[]> {
-    const { data, error } = await supabaseAdmin
+    const { data } = await getSupabaseAdmin()
       .from('books_categories')
       .select('category_id')
       .eq('book_id', libroId);
 
-    if (error || !data?.length) return [];
+    if (!data?.length) return [];
 
     const categorias: string[] = [];
     for (const rel of data) {
-      const { data: cat } = await supabaseAdmin
+      const { data: cat } = await getSupabaseAdmin()
         .from('book_categories')
         .select('name')
         .eq('id', rel.category_id)
         .single();
-      
-      if (cat?.name) {
-        categorias.push(cat.name);
-      }
+      if (cat?.name) categorias.push(cat.name);
     }
-
     return categorias;
   }
 
-  // ============================================
-  // MÉTODOS PRIVADOS - GÉNEROS
-  // ============================================
+  /**
+   * ============================================
+   * GÉNEROS
+   * ============================================
+   */
   
   private static async saveGeneros(libroId: string, generos: number[]): Promise<void> {
     if (!generos.length) return;
-    
     const inserts = generos.map(genre_id => ({ book_id: libroId, genre_id }));
-    const { error } = await supabaseAdmin.from('books_genres').insert(inserts);
-    if (error) console.warn('⚠️ Error guardando géneros:', error);
+    await getSupabaseAdmin().from('books_genres').insert(inserts);
   }
 
   private static async replaceGeneros(libroId: string, generos: number[]): Promise<void> {
-    await supabaseAdmin.from('books_genres').delete().eq('book_id', libroId);
+    await getSupabaseAdmin().from('books_genres').delete().eq('book_id', libroId);
     await this.saveGeneros(libroId, generos);
   }
 
   private static async getGeneros(libroId: string): Promise<string[]> {
-    const { data, error } = await supabaseAdmin
+    const { data } = await getSupabaseAdmin()
       .from('books_genres')
       .select('genre_id')
       .eq('book_id', libroId);
 
-    if (error || !data?.length) return [];
+    if (!data?.length) return [];
 
     const generos: string[] = [];
     for (const rel of data) {
-      const { data: genre } = await supabaseAdmin
+      const { data: genre } = await getSupabaseAdmin()
         .from('book_genres')
         .select('name')
         .eq('id', rel.genre_id)
         .single();
-      
-      if (genre?.name) {
-        generos.push(genre.name);
-      }
+      if (genre?.name) generos.push(genre.name);
     }
-
     return generos;
   }
 
-  // ============================================
-  // MÉTODOS PRIVADOS - ETIQUETAS
-  // ============================================
+  /**
+   * ============================================
+   * ETIQUETAS ✅ NUEVO
+   * ============================================
+   */
   
   private static async saveEtiquetas(libroId: string, etiquetas: number[]): Promise<void> {
     if (!etiquetas.length) return;
@@ -604,123 +562,115 @@ export class BookRepository {
       tag_id,
       is_primary: idx === 0
     }));
-
-    const { error } = await supabaseAdmin.from('books_tags').insert(inserts);
-    if (error) console.warn('⚠️ Error guardando etiquetas:', error);
+    
+    await getSupabaseAdmin().from('books_tags').insert(inserts);
+    console.log(`✅ Etiquetas guardadas: ${etiquetas.length}`);
   }
 
   private static async replaceEtiquetas(libroId: string, etiquetas: number[]): Promise<void> {
-    await supabaseAdmin.from('books_tags').delete().eq('book_id', libroId);
+    await getSupabaseAdmin().from('books_tags').delete().eq('book_id', libroId);
     await this.saveEtiquetas(libroId, etiquetas);
+    console.log(`✅ Etiquetas reemplazadas: ${etiquetas.length}`);
   }
 
   private static async getEtiquetas(libroId: string): Promise<string[]> {
-    const { data, error } = await supabaseAdmin
+    const { data } = await getSupabaseAdmin()
       .from('books_tags')
       .select('tag_id')
       .eq('book_id', libroId);
 
-    if (error || !data?.length) return [];
+    if (!data?.length) return [];
 
     const etiquetas: string[] = [];
     for (const rel of data) {
-      const { data: tag } = await supabaseAdmin
+      const { data: tag } = await getSupabaseAdmin()
         .from('book_tags')
         .select('name')
         .eq('id', rel.tag_id)
         .single();
-      
-      if (tag?.name) {
-        etiquetas.push(tag.name);
-      }
+      if (tag?.name) etiquetas.push(tag.name);
     }
-
+    
+    console.log(`✅ Etiquetas recuperadas: ${etiquetas.length}`);
     return etiquetas;
   }
 
-  // ============================================
-  // MÉTODOS PRIVADOS - VALORES
-  // ============================================
+  /**
+   * ============================================
+   * VALORES
+   * ============================================
+   */
   
   private static async saveValores(libroId: string, valores: number[]): Promise<void> {
     if (!valores.length) return;
-    
     const inserts = valores.map((value_id, idx) => ({ 
       book_id: libroId, 
       value_id,
       is_primary: idx === 0
     }));
-
-    const { error } = await supabaseAdmin.from('books_values').insert(inserts);
-    if (error) console.warn('⚠️ Error guardando valores:', error);
+    await getSupabaseAdmin().from('books_values').insert(inserts);
   }
 
   private static async replaceValores(libroId: string, valores: number[]): Promise<void> {
-    await supabaseAdmin.from('books_values').delete().eq('book_id', libroId);
+    await getSupabaseAdmin().from('books_values').delete().eq('book_id', libroId);
     await this.saveValores(libroId, valores);
   }
 
   private static async getValores(libroId: string): Promise<string[]> {
-    const { data, error } = await supabaseAdmin
+    const { data } = await getSupabaseAdmin()
       .from('books_values')
       .select('value_id')
       .eq('book_id', libroId);
 
-    if (error || !data?.length) return [];
+    if (!data?.length) return [];
 
     const valores: string[] = [];
     for (const rel of data) {
-      const { data: value } = await supabaseAdmin
+      const { data: value } = await getSupabaseAdmin()
         .from('book_values')
         .select('name')
         .eq('id', rel.value_id)
         .single();
-      
-      if (value?.name) {
-        valores.push(value.name);
-      }
+      if (value?.name) valores.push(value.name);
     }
-
     return valores;
   }
 
-  // ============================================
-  // MÉTODOS PRIVADOS - NIVEL
-  // ============================================
+  /**
+   * ============================================
+   * NIVEL
+   * ============================================
+   */
   
   private static async getNivel(idNivel: number | null): Promise<any> {
     if (!idNivel) return null;
-    
-    const { data } = await supabaseAdmin
+    const { data } = await getSupabaseAdmin()
       .from('book_levels')
       .select('*')
       .eq('id', idNivel)
       .single();
-    
     return data || null;
   }
 
-  // ============================================
-  // HELPERS
-  // ============================================
+  /**
+   * ============================================
+   * HELPERS
+   * ============================================
+   */
 
   private static cleanUrl(url: string | null | undefined): string | null {
     if (!url) return null;
-    // No guardar URLs blob: temporales
     if (url.startsWith('blob:')) return null;
     return url;
   }
 
   private static isImageUrl(value: string | null | undefined): boolean {
     if (!value) return false;
-    return value.startsWith('http://') || 
-           value.startsWith('https://');
+    return value.startsWith('http://') || value.startsWith('https://');
   }
 
   private static isColor(value: string | null | undefined): boolean {
     if (!value) return false;
-    // Color hex o nombre de preset
-    return value.startsWith('#') || 
-           (!value.startsWith('http') && !value.startsWith('blob:'));
+    return value.startsWith('#') || (!value.startsWith('http') && !value.startsWith('blob:'));
   }
 }

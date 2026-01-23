@@ -1,537 +1,278 @@
 /**
  * UBICACIÓN: app/[locale]/books/[id]/read/page.tsx
- * ✅ CORREGIDO: Sin UnifiedLayout para control total de la pantalla
+ * ✅ VERSIÓN CORREGIDA: Sin errores de servidor
  */
 
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import HTMLFlipBook from 'react-pageflip';
-import { 
-  X, ChevronLeft, ChevronRight, Maximize, Minimize, 
-  BookOpen, FileText, Loader2, AlertCircle, ArrowLeft
-} from 'lucide-react';
-import { Page, LayoutType } from '@/src/core/domain/types';
-import { PageRenderer } from '@/src/presentation/features/layouts/components/PageRenderer';
-import { GetBookUseCase } from '@/src/core/application/use-cases/books/GetBook.usecase';
-import '@/src/presentation/features/layouts/styles/book-shared.css';
+import { useLocale } from 'next-intl';
+import { Loader2, AlertCircle, BarChart3 } from 'lucide-react';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
+import dynamic from 'next/dynamic';
+import { useReadingAnalytics } from '@/src/presentation/features/books/hooks/useReadingAnalytics';
+import type { Page } from '@/src/core/domain/types';
+import toast from 'react-hot-toast';
+
+// ✅ CRÍTICO: Cargar PDFPreviewMode dinámicamente solo en cliente
+const PDFPreviewMode = dynamic(
+  () => import('@/src/presentation/features/books/components/PDFPreview/PDFPreviewMode').then(mod => ({ default: mod.PDFPreviewMode })),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 size={48} className="animate-spin text-indigo-400 mx-auto mb-4" />
+          <p className="text-white font-medium text-lg">Cargando visor...</p>
+        </div>
+      </div>
+    )
+  }
+);
 
 export default function ReadBookPage() {
   const params = useParams();
   const router = useRouter();
+  const locale = useLocale();
+  const supabase = createClient();
   const bookId = params?.id as string;
 
-  const bookRef = useRef<any>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  
-  // Estados de carga
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // Datos del libro
-  const [bookData, setBookData] = useState<{
-    pages: Page[];
-    title: string;
-    authors: string[];
-    description: string;
-    characters: string[];
-    categories: string[];
-    genres: string[];
-    values: string[];
-    coverImage: string | null;
-  } | null>(null);
+  const [extractedPages, setExtractedPages] = useState<Page[]>([]);
+  const [pdfDimensions, setPdfDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [bookTitle, setBookTitle] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
 
-  // Estados del visor
-  const [currentPage, setCurrentPage] = useState(0);
-  const [bookDimensions, setBookDimensions] = useState({ width: 400, height: 520 });
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isClient, setIsClient] = useState(false);
-  const [isReady, setIsReady] = useState(false);
-  const [activePage, setActivePage] = useState(0);
-  const [showLiteraryCard, setShowLiteraryCard] = useState(false);
+  // Analytics hook
+  const {
+    sessionId,
+    isTracking,
+    trackPageChange,
+    handleEndSession,
+    goToStatistics,
+  } = useReadingAnalytics({
+    bookId,
+    totalPages: extractedPages.length,
+    userId: userId || undefined,
+    onComplete: () => {
+      setShowCompletionModal(true);
+    },
+  });
 
-  // Cargar libro
   useEffect(() => {
+    let isMounted = true;
+
     async function loadBook() {
+      // Solo ejecutar en cliente
+      if (typeof window === 'undefined') return;
+
       if (!bookId) {
-        setError('ID de libro no válido');
-        setIsLoading(false);
+        if (isMounted) {
+          setError('ID de libro no válido');
+          setIsLoading(false);
+        }
         return;
       }
 
       try {
-        const libro = await GetBookUseCase.execute(bookId);
+        const { data: { user } } = await supabase.auth.getUser();
 
-        if (!libro) {
-          setError('Libro no encontrado');
-          setIsLoading(false);
+        if (user && isMounted) {
+          setUserId(user.id);
+        }
+
+        console.log('📖 Cargando libro:', bookId);
+
+        const { data: libro, error: bookError } = await supabase
+          .from('books')
+          .select('id, title, pdf_url')
+          .eq('id', bookId)
+          .is('deleted_at', null)
+          .single();
+
+        if (bookError || !libro) {
+          console.error('❌ Error cargando libro:', bookError);
+          if (isMounted) {
+            setError('Libro no encontrado');
+            setIsLoading(false);
+          }
           return;
         }
 
-        // Transformar páginas
-        const pages: Page[] = (libro.paginas || []).map((p: any, idx: number) => ({
-          id: p.id || `page-${idx}`,
-          layout: (p.layout || 'TextCenterLayout') as LayoutType,
-          title: p.title || '',
-          text: p.text || p.content || '',
-          image: p.image || p.image_url || null,
-          background: p.background || p.background_url || p.background_color || 'blanco',
-        }));
+        if (!libro.pdf_url) {
+          if (isMounted) {
+            setError('Este libro no tiene un archivo PDF asociado');
+            setIsLoading(false);
+          }
+          return;
+        }
 
-        setBookData({
-          pages,
-          title: libro.titulo || 'Sin título',
-          authors: libro.autores || [],
-          description: libro.descripcion || '',
-          characters: libro.personajes || [],
-          categories: libro.categorias || [],
-          genres: libro.generos || [],
-          values: libro.valores || [],
-          coverImage: libro.portada || null,
-        });
+        if (isMounted) {
+          setBookTitle(libro.title || 'Libro sin título');
+        }
 
-        setIsLoading(false);
+        console.log('📄 Descargando PDF:', libro.pdf_url);
+
+        const response = await fetch(libro.pdf_url);
+        const blob = await response.blob();
+        const file = new File([blob], 'libro.pdf', { type: 'application/pdf' });
+
+        // ✅ Importar dinámicamente el servicio
+        const { PDFExtractorService } = await import('@/src/infrastructure/services/books');
+        
+        console.log('🔄 Extrayendo páginas del PDF...');
+        const result = await PDFExtractorService.extractPagesFromPDF(file);
+
+        if (isMounted) {
+          setExtractedPages(result.pages);
+
+          if (result.pageWidth && result.pageHeight) {
+            setPdfDimensions({
+              width: result.pageWidth,
+              height: result.pageHeight
+            });
+          }
+
+          console.log(`✅ ${result.pages.length} páginas extraídas correctamente`);
+          setIsLoading(false);
+        }
+
       } catch (err: any) {
-        console.error('Error cargando libro:', err);
-        setError(err.message || 'Error al cargar el libro');
-        setIsLoading(false);
+        console.error('❌ Error cargando libro:', err);
+        if (isMounted) {
+          setError(err.message || 'Error al cargar el libro');
+          setIsLoading(false);
+        }
       }
     }
 
     loadBook();
+
+    return () => {
+      isMounted = false;
+      if (extractedPages.length > 0) {
+        // Cleanup dinámico
+        import('@/src/infrastructure/services/books').then(({ PDFExtractorService }) => {
+          PDFExtractorService.cleanupBlobUrls(extractedPages);
+        });
+      }
+    };
   }, [bookId]);
 
-  useEffect(() => {
-    setIsClient(true);
-    const timer = setTimeout(() => setIsReady(true), 150);
-    return () => clearTimeout(timer);
-  }, []);
+  const handleClose = async () => {
+    await handleEndSession();
 
-  // Calcular dimensiones
-  useEffect(() => {
-    if (!isClient || !bookData) return;
-
-    const calculateDimensions = () => {
-      if (!containerRef.current) return;
-
-      const containerHeight = containerRef.current.clientHeight;
-      const containerWidth = containerRef.current.clientWidth;
-
-      if (containerHeight <= 0 || containerWidth <= 0) return;
-
-      const reservedHeight = 160;
-      const availableHeight = containerHeight - reservedHeight;
-      const availableWidth = containerWidth - 100;
-      const aspectRatio = 5 / 6;
-
-      let bookWidth = 400;
-      let bookHeight = 520;
-
-      if (availableHeight > 0 && availableWidth > 0) {
-        bookHeight = Math.min(availableHeight, 700);
-        bookWidth = bookHeight * aspectRatio;
-
-        if (bookWidth > availableWidth) {
-          bookWidth = availableWidth;
-          bookHeight = bookWidth / aspectRatio;
-        }
-      }
-
-      setBookDimensions({
-        width: Math.max(Math.round(bookWidth), 300),
-        height: Math.max(Math.round(bookHeight), 390)
-      });
-    };
-
-    calculateDimensions();
-    const timer = setTimeout(calculateDimensions, 100);
-    const timer2 = setTimeout(calculateDimensions, 300);
-    
-    window.addEventListener('resize', calculateDimensions);
-    
-    let resizeObserver: ResizeObserver | null = null;
-    if (containerRef.current) {
-      resizeObserver = new ResizeObserver(calculateDimensions);
-      resizeObserver.observe(containerRef.current);
+    if (extractedPages.length > 0) {
+      const { PDFExtractorService } = await import('@/src/infrastructure/services/books');
+      PDFExtractorService.cleanupBlobUrls(extractedPages);
     }
-    
-    return () => {
-      clearTimeout(timer);
-      clearTimeout(timer2);
-      window.removeEventListener('resize', calculateDimensions);
-      if (resizeObserver) resizeObserver.disconnect();
-    };
-  }, [isClient, isFullscreen, bookData]);
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
+    router.push(`/${locale}/books`);
   };
 
-  const goToNextPage = () => {
-    if (bookData && currentPage < bookData.pages.length - 1) {
-      bookRef.current?.pageFlip().flipNext();
-    }
+  const handlePageFlip = (pageNumber: number) => {
+    trackPageChange(pageNumber + 1);
   };
 
-  const goToPrevPage = () => {
-    if (currentPage > 0) {
-      bookRef.current?.pageFlip().flipPrev();
-    }
+  const handleViewStatistics = () => {
+    setShowCompletionModal(false);
+    goToStatistics();
   };
 
-  const handleClose = () => {
-    router.back();
-  };
-
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') goToNextPage();
-      if (e.key === 'ArrowLeft') goToPrevPage();
-      if (e.key === 'Escape') {
-        if (showLiteraryCard) {
-          setShowLiteraryCard(false);
-        } else {
-          handleClose();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentPage, bookData?.pages.length, showLiteraryCard]);
-
-  // Memoizar páginas
-  const memoizedPages = useMemo(() => {
-    if (!bookData) return [];
-    return bookData.pages.map((page, idx) => ({
-      ...page,
-      key: `page-${page.id}-${idx}`,
-    }));
-  }, [bookData]);
-
-  // Estado de carga
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+      <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 size={64} className="animate-spin text-indigo-400 mx-auto mb-6" />
-          <h2 className="text-2xl font-bold text-white mb-2">Cargando libro...</h2>
-          <p className="text-slate-400">Por favor espera un momento</p>
+          <Loader2 size={48} className="animate-spin text-indigo-400 mx-auto mb-4" />
+          <p className="text-white font-medium text-lg">Cargando libro...</p>
+          <p className="text-white/60 text-sm mt-2">Preparando páginas del PDF</p>
         </div>
       </div>
     );
   }
 
-  // Estado de error
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
           <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <AlertCircle size={40} className="text-red-600" />
           </div>
-          
+
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            No se pudo cargar el libro
+            No se puede leer el libro
           </h2>
-          
+
           <p className="text-gray-600 mb-6">{error}</p>
-          
+
           <button
-            onClick={() => router.back()}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg font-medium transition-colors w-full"
+            onClick={handleClose}
+            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors w-full"
           >
-            <ArrowLeft size={20} />
-            Volver
+            Volver a biblioteca
           </button>
         </div>
       </div>
     );
   }
 
-  // Sin datos
-  if (!bookData || bookData.pages.length === 0) {
+  if (extractedPages.length > 0 && pdfDimensions) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
-          <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <BookOpen size={40} className="text-amber-600" />
+      <>
+        {isTracking && (
+          <div className="fixed top-4 right-4 z-[10001] bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 shadow-lg">
+            <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+            Registrando lectura
           </div>
-          
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Libro sin contenido
-          </h2>
-          
-          <p className="text-gray-600 mb-6">
-            Este libro no tiene páginas disponibles.
-          </p>
-          
-          <button
-            onClick={() => router.back()}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors w-full"
-          >
-            <ArrowLeft size={20} />
-            Volver
-          </button>
-        </div>
-      </div>
-    );
-  }
+        )}
 
-  if (!isClient || !isReady) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
-        <div className="text-white text-center">
-          <BookOpen size={48} className="mx-auto mb-4 animate-pulse" />
-          <p>Cargando visor...</p>
-        </div>
-      </div>
-    );
-  }
+        <PDFPreviewMode
+          pages={extractedPages}
+          title={bookTitle}
+          pdfDimensions={pdfDimensions}
+          onClose={handleClose}
+          onPageFlip={handlePageFlip}
+        />
 
-  const flipBookProps: React.ComponentProps<typeof HTMLFlipBook> = {
-    width: bookDimensions.width,
-    height: bookDimensions.height,
-    maxShadowOpacity: 0.5,
-    drawShadow: true,
-    showCover: true,
-    flippingTime: 700,
-    size: "fixed",
-    className: "book-flipbook-container",
-    onFlip: (e: any) => {
-      setCurrentPage(e.data);
-      setActivePage(e.data);
-    },
-    startPage: 0,
-    minWidth: bookDimensions.width,
-    maxWidth: bookDimensions.width,
-    minHeight: bookDimensions.height,
-    maxHeight: bookDimensions.height,
-    usePortrait: false,
-    startZIndex: 0,
-    autoSize: false,
-    mobileScrollSupport: false,
-    clickEventForward: true,
-    useMouseEvents: true,
-    swipeDistance: 10,
-    showPageCorners: true,
-    disableFlipByClick: false,
-    style: {},
-    children: memoizedPages.map((page, idx) => {
-      const isActive = idx === activePage;
-      
-      return (
-        <div className="page w-full h-full" key={page.key}>
-          <div className="page-inner w-full h-full">
-            <PageRenderer page={page} isActive={isActive} />
-          </div>
-        </div>
-      );
-    }),
-  };
+        {showCompletionModal && (
+          <div className="fixed inset-0 z-[10002] bg-black/50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <BarChart3 size={40} className="text-green-600" />
+              </div>
 
-  return (
-    <div 
-      ref={containerRef}
-      className="w-full h-screen relative bg-gradient-to-br from-slate-900 to-slate-800"
-      style={{ zIndex: 9999 }} // ✅ Z-index alto para estar por encima de todo
-    >
-      {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-[10000] bg-gradient-to-b from-black/60 to-transparent px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <BookOpen className="text-white" size={24} />
-            <div>
-              <h1 className="text-white font-bold text-lg">{bookData.title}</h1>
-              {bookData.authors.length > 0 && (
-                <p className="text-white/70 text-sm">
-                  por {bookData.authors.join(', ')}
-                </p>
-              )}
-            </div>
-          </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                ¡Felicitaciones! 🎉
+              </h2>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowLiteraryCard(true)}
-              className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-lg transition-all"
-              title="Ver ficha literaria"
-            >
-              <FileText size={20} />
-            </button>
+              <p className="text-gray-600 mb-6">
+                Has completado <strong>"{bookTitle}"</strong>
+              </p>
 
-            <button
-              onClick={toggleFullscreen}
-              className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-lg transition-all"
-            >
-              {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
-            </button>
-
-            <button
-              onClick={handleClose}
-              className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-lg transition-all"
-            >
-              <X size={20} />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* ✅ Libro CENTRADO con z-index apropiado */}
-      <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 9998 }}>
-        <div 
-          className="relative"
-          style={{
-            width: `${bookDimensions.width}px`,
-            height: `${bookDimensions.height}px`,
-          }}
-        >
-          <div className="drop-shadow-2xl">
-            <HTMLFlipBook {...flipBookProps} ref={bookRef} />
-          </div>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="absolute bottom-0 left-0 right-0 z-[10000] bg-gradient-to-t from-black/60 to-transparent px-6 py-6">
-        <div className="flex items-center justify-center gap-6">
-          <button
-            onClick={goToPrevPage}
-            disabled={currentPage === 0}
-            className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-full transition-all disabled:opacity-30"
-          >
-            <ChevronLeft size={24} />
-          </button>
-
-          <div className="px-6 py-3 bg-white/10 backdrop-blur-sm text-white rounded-full font-medium">
-            {currentPage + 1} / {bookData.pages.length}
-          </div>
-
-          <button
-            onClick={goToNextPage}
-            disabled={currentPage === bookData.pages.length - 1}
-            className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-full transition-all disabled:opacity-30"
-          >
-            <ChevronRight size={24} />
-          </button>
-        </div>
-
-        <p className="text-center text-white/60 text-xs mt-3">
-          Usa las flechas ← → para navegar | ESC para salir
-        </p>
-      </div>
-
-      {/* Modal Ficha Literaria */}
-      {showLiteraryCard && (
-        <div 
-          className="fixed inset-0 z-[10001] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={() => setShowLiteraryCard(false)}
-        >
-          <div 
-            className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 rounded-t-2xl">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <FileText size={24} />
-                  Ficha Literaria
-                </h2>
+              <div className="space-y-3">
                 <button
-                  onClick={() => setShowLiteraryCard(false)}
-                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                  onClick={handleViewStatistics}
+                  className="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
                 >
-                  <X size={20} className="text-white" />
+                  <BarChart3 size={20} />
+                  Ver estadísticas
+                </button>
+
+                <button
+                  onClick={() => setShowCompletionModal(false)}
+                  className="w-full px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors"
+                >
+                  Continuar leyendo
                 </button>
               </div>
             </div>
-
-            <div className="p-6 space-y-4">
-              <div className="flex gap-6">
-                {bookData.coverImage && (
-                  <img
-                    src={bookData.coverImage}
-                    alt={bookData.title}
-                    className="w-32 h-44 object-cover rounded-lg shadow-md flex-shrink-0"
-                  />
-                )}
-                <div className="flex-1">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{bookData.title}</h3>
-                  {bookData.authors.length > 0 && (
-                    <p className="text-gray-600 mb-2">
-                      <span className="font-medium">Autor(es):</span> {bookData.authors.join(', ')}
-                    </p>
-                  )}
-                  {bookData.description && (
-                    <p className="text-gray-700 text-sm leading-relaxed">{bookData.description}</p>
-                  )}
-                </div>
-              </div>
-
-              {bookData.characters.length > 0 && (
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Personajes</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {bookData.characters.map((char, idx) => (
-                      <span key={idx} className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">
-                        {char}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-4">
-                {bookData.categories.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Categorías</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {bookData.categories.map((cat, idx) => (
-                        <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                          {cat}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {bookData.genres.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Géneros</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {bookData.genres.map((genre, idx) => (
-                        <span key={idx} className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
-                          {genre}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {bookData.values.length > 0 && (
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Valores</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {bookData.values.map((val, idx) => (
-                      <span key={idx} className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                        {val}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        )}
+      </>
+    );
+  }
+
+  return null;
 }

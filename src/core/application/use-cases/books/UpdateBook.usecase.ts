@@ -1,18 +1,11 @@
 /**
  * UBICACIÓN: src/core/application/use-cases/books/UpdateBook.usecase.ts
+ * ✅ CORREGIDO: Usar BookRepository.update en lugar de acceso directo a Supabase
  */
 
 import { BookRepository } from '@/src/infrastructure/repositories/books/BookRepository';
 
-interface PageData {
-  layout: string;
-  title?: string;
-  text?: string;
-  image?: string;
-  background?: string;
-}
-
-interface UpdateBookDTO {
+interface UpdateBookData {
   titulo: string;
   descripcion: string;
   portada?: string;
@@ -23,19 +16,38 @@ interface UpdateBookDTO {
   etiquetas: number[];
   valores: number[];
   nivel: number;
-  pages: PageData[];
 }
 
 export class UpdateBookUseCase {
-  static async execute(bookId: string, bookData: UpdateBookDTO): Promise<void> {
-    if (!bookData.titulo || bookData.titulo.trim() === '') {
+  static async execute(bookId: string, data: UpdateBookData): Promise<void> {
+    // Validaciones básicas
+    if (!bookId) {
+      throw new Error('El ID del libro es obligatorio');
+    }
+
+    if (!data.titulo || data.titulo.trim() === '') {
       throw new Error('El título es obligatorio');
     }
 
-    if (!bookData.pages || bookData.pages.length === 0) {
-      throw new Error('Debe haber al menos una página');
+    if (data.autores.length === 0) {
+      throw new Error('Debe haber al menos un autor');
     }
 
-    await BookRepository.update(bookId, bookData);
+    // ✅ Usar BookRepository.update que maneja correctamente todas las relaciones
+    await BookRepository.update(bookId, {
+      titulo: data.titulo,
+      descripcion: data.descripcion,
+      portada: data.portada,
+      pdfUrl: undefined, // No se actualiza el PDF aquí
+      autores: data.autores,
+      personajes: data.personajes,
+      categorias: data.categorias,
+      generos: data.generos,
+      etiquetas: data.etiquetas,
+      valores: data.valores,
+      nivel: data.nivel,
+    });
+
+    console.log('✅ Libro actualizado correctamente:', bookId);
   }
 }

@@ -174,24 +174,154 @@
     }
   },
   "auth": {
+    "form": {
+      "email_label": "Email",
+      "email_placeholder": "Your email address",
+      "password_label": "Password",
+      "password_placeholder": "Your password",
+      "remember_me": "Remember me",
+      "forgot_password": "Forgot your password?",
+      "login_button": "LOGIN TO LEARN! 📚",
+      "login_button_loading": "Logging in...",
+      "connect_with": "Connect with",
+      "or_use_email": "or use your email"
+    },
+    "login": {
+      "title": "Welcome back!",
+      "subtitle": "Log in to continue your learning adventure",
+      "brand": "ESLECTOESCRITURA",
+      "email_label": "Email",
+      "email_placeholder": "Your email address",
+      "password_label": "Password",
+      "password_placeholder": "Your password",
+      "remember_me": "Remember me",
+      "forgot_password": "Forgot your password?",
+      "login_button": "LOGIN TO LEARN! 📚",
+      "login_button_loading": "Logging in...",
+      "no_account": "Don't have an account?",
+      "register_link": "Sign up here",
+      "or_continue_with": "Or continue with",
+      "divider": "or use your email"
+    },
+    "register": {
+      "title": "Join the adventure!",
+      "subtitle": "Create your account and start learning",
+      "brand": "ESLECTOESCRITURA",
+      "step1_title": "Basic information",
+      "step2_title": "Choose your role",
+      "step3_title": "Confirm your account",
+      "name_label": "Full name",
+      "name_placeholder": "Your full name",
+      "email_label": "Email",
+      "email_placeholder": "Your email address",
+      "password_label": "Password",
+      "password_placeholder": "At least 6 characters",
+      "confirm_password_label": "Confirm password",
+      "confirm_password_placeholder": "Repeat your password",
+      "role_label": "How will you use the platform?",
+      "role_description": "This helps us personalize your experience",
+      "register_button": "CREATE MY ACCOUNT! 🚀",
+      "register_button_loading": "Creating account...",
+      "already_have_account": "Already have an account?",
+      "login_link": "Log in here",
+      "terms_acceptance": "I accept the",
+      "terms_link": "terms and conditions",
+      "privacy_link": "privacy policy",
+      "and": "and",
+      "or_continue_with": "Or sign up with",
+      "divider": "or use your email",
+      "success_title": "Account created successfully!",
+      "success_message": "Please check your email to confirm your account.",
+      "success_button": "Go to log in"
+    },
+    "roles": {
+      "student": {
+        "name": "Student",
+        "description": "I want to learn reading and writing",
+        "icon": "🎓",
+        "features": [
+          "Access to all content",
+          "Personal progress tracking",
+          "Achievements and rewards",
+          "Customizable avatar"
+        ]
+      },
+      "teacher": {
+        "name": "Teacher",
+        "description": "I want to teach my students",
+        "icon": "👩‍🏫",
+        "features": [
+          "Class management",
+          "Assignment creation",
+          "Progress reports",
+          "Activity creation"
+        ]
+      },
+      "parent": {
+        "name": "Parent",
+        "description": "I want to help my children",
+        "icon": "👨‍👩‍👧‍👦",
+        "features": [
+          "Multiple children registration",
+          "Family tracking",
+          "Progress reports",
+          "Teacher communication"
+        ]
+      },
+      "school": {
+        "name": "School",
+        "description": "I want to manage my institution",
+        "icon": "🏫",
+        "features": [
+          "Teacher management",
+          "Student management",
+          "Institutional reports",
+          "Complete administration"
+        ]
+      },
+      "individual": {
+        "name": "Individual User",
+        "description": "I want to learn on my own",
+        "icon": "🌟",
+        "features": [
+          "Self-directed learning",
+          "Personalized content",
+          "Learn at your pace",
+          "No commitments"
+        ]
+      }
+    },
+    "providers": {
+      "google": "Google",
+      "apple": "Apple",
+      "facebook": "Facebook",
+      "microsoft": "Microsoft",
+      "twitter": "Twitter",
+      "github": "GitHub"
+    },
     "errors": {
       "invalid_credentials": "Invalid login credentials. Please check your email and password.",
       "email_not_confirmed": "Please confirm your email before signing in.",
       "user_not_found": "No account found with this email.",
       "invalid_email": "Invalid email format.",
       "weak_password": "Password must be at least 6 characters long.",
+      "password_mismatch": "Passwords don't match.",
       "email_already_registered": "An account with this email already exists.",
       "too_many_requests": "Too many attempts. Please try again later.",
-      "generic_error": "An unexpected error occurred. Please try again."
+      "generic_error": "An unexpected error occurred. Please try again.",
+      "role_required": "Please select a role.",
+      "name_required": "Please enter your full name.",
+      "terms_required": "You must accept the terms and conditions.",
+      "oauth_error": "Error signing in with provider. Please try again."
     },
-    "form": {
-      "or_use_email": "or use your email",
-      "email_placeholder": "Your email address",
-      "password_placeholder": "Your password",
-      "remember_me": "Remember me",
-      "forgot_password": "Forgot your password?",
-      "login_button": "LOGIN TO LEARN! 📚",
-      "connect_with": "Connect with:"
+    "messages": {
+      "check_email": "Check your email",
+      "check_email_description": "We sent you a confirmation link. Please check your inbox.",
+      "password_reset_sent": "Recovery link sent",
+      "password_reset_description": "If the email exists, you'll receive a link to reset your password.",
+      "logout_success": "Successfully logged out",
+      "login_success": "Welcome back!",
+      "register_success": "Account created successfully!"
     }
   },
   "errors": {

@@ -1,14 +1,22 @@
-'use client';
+// ============================================
+// app/[locale]/auth/login/page.tsx
+// ✅ CORREGIDO: Imports agregados
+// ============================================
+"use client";
 
-import React, { useActionState } from 'react';
+import { useActionState } from 'react';
+import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import UnifiedLayout from '@/src/components/nav/UnifiedLayout';
-import { AuthState, login } from '@/src/utils/supabase/actions/auth';
-import LoginBackground from '@/src/components/auth/LoginBackground';
-import ErrorMessage from '@/src/components/auth/ErrorMessage';
-import SocialLoginSection from '@/src/components/auth/SocialLoginSectionProps';
-import FormDivider from '@/src/components/auth/FormDivider';
-import LoginFormFields from '@/src/components/auth/LoginFormFields';
+import { login } from '@/src/presentation/actions/auth.actions';
+import type { AuthState } from '@/src/core/domain/types/Auth.types'; // ✅ Import agregado
+import {
+  ErrorMessage,
+  FormDivider,
+  LoginBackground,
+  LoginFormFields,
+  SocialLoginSection,
+} from '@/src/presentation/features/auth/components';
+import { UnifiedLayout } from '@/src/presentation/features/navigation';
 
 export default function LoginPage() {
   const t = useTranslations('auth');
