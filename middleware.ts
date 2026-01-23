@@ -9,7 +9,7 @@ const LOCALES = ['es', 'en', 'fr', 'it'] as const;
 const DEFAULT_LOCALE = 'es';
 type Locale = typeof LOCALES[number];
 
-const PUBLIC_ROUTES = ['/', '/auth/login', '/auth/signup', '/auth/callback', '/error'];
+const PUBLIC_ROUTES = ['/', '/auth/login', '/auth/register', '/auth/callback', '/error'];
 const STATIC_ROUTES = ['/_next', '/api', '/favicon.ico', '/images', '/fonts'];
 
 // ✅ Cache con TTL más corto
