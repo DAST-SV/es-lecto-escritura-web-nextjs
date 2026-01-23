@@ -5,11 +5,17 @@
 -- Ejecutar en Supabase SQL Editor
 -- ============================================================================
 
--- 1. EJECUTAR SETUP COMPLETO DE AUTENTICACIÓN
-\i supabase/schemas/auth/00_SETUP_COMPLETO_AUTH.sql
+-- 1. EJECUTAR SETUP COMPLETO DE APLICACIÓN (incluye auth, roles, organizaciones)
+\i supabase/schemas/app/01_app.sql
 
 -- Si estás usando el SQL Editor de Supabase, copia y pega directamente
--- el contenido de: supabase/schemas/auth/00_SETUP_COMPLETO_AUTH.sql
+-- el contenido de: supabase/schemas/app/01_app.sql
+
+-- 2. (Opcional) EJECUTAR SISTEMA DE TRADUCCIONES
+\i supabase/schemas/app/14_SISTEMA_TRADUCCIONES_COMPLETO.sql
+
+-- 3. (Opcional) INSERTAR TRADUCCIONES INICIALES
+\i supabase/schemas/auth/01_INSERTS_TRADUCCIONES_COMPLETAS.sql
 
 -- ============================================================================
 -- VERIFICACIÓN
@@ -45,6 +51,16 @@ FROM information_schema.tables t
 WHERE table_schema = 'app'
   AND table_type = 'BASE TABLE'
 ORDER BY table_name;
+
+-- Ver triggers creados
+SELECT
+  trigger_name,
+  event_object_table,
+  action_timing,
+  event_manipulation
+FROM information_schema.triggers
+WHERE trigger_schema = 'app'
+ORDER BY event_object_table, trigger_name;
 
 -- ============================================================================
 -- SIGUIENTE PASO: CONFIGURAR OAuth PROVIDERS

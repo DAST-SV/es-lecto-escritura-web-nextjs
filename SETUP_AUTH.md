@@ -59,7 +59,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 1. Ve a tu proyecto Supabase
 2. Abre el **SQL Editor**
-3. Copia y pega el contenido de: `supabase/schemas/auth/00_SETUP_COMPLETO_AUTH.sql`
+3. Copia y pega el contenido de: `supabase/schemas/app/01_app.sql`
 4. Haz clic en **RUN**
 5. Espera que se complete (verás "Setup completado exitosamente")
 
@@ -277,7 +277,7 @@ LIMIT 10;
 
 **Solución:**
 1. Ve a Supabase SQL Editor
-2. Ejecuta: `supabase/schemas/auth/00_SETUP_COMPLETO_AUTH.sql`
+2. Ejecuta: `supabase/schemas/app/01_app.sql`
 3. Verifica que se complete sin errores
 
 ### ❌ Error: "User already registered"
