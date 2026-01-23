@@ -57,11 +57,21 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 ### 4. Configurar Base de Datos en Supabase
 
+**Opción A: Setup Rápido (Recomendado)**
+
 1. Ve a tu proyecto Supabase
 2. Abre el **SQL Editor**
-3. Copia y pega el contenido de: `supabase/schemas/app/01_app.sql`
-4. Haz clic en **RUN**
-5. Espera que se complete (verás "Setup completado exitosamente")
+3. Copia el contenido de cada módulo en este orden:
+   - `supabase/schemas/app/auth/01_auth_core.sql`
+   - `supabase/schemas/app/organizations/01_organizations.sql`
+   - `supabase/schemas/app/legacy/user_types.sql`
+4. Pega cada uno y haz clic en **RUN**
+5. Espera que cada uno complete exitosamente
+
+**Opción B: Script Completo**
+
+1. Usa el script `supabase/SETUP_RAPIDO.sql` que ejecuta todos los módulos
+2. Ver verificación al final del script
 
 ### 5. Configurar OAuth Providers (Opcional)
 
