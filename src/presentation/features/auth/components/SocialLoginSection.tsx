@@ -1,11 +1,11 @@
 // ============================================
 // src/presentation/features/auth/components/SocialLoginSection.tsx
+// ✅ ACTUALIZADO: Usa traducciones de Supabase
 // ============================================
 "use client";
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useTranslations } from 'next-intl';
 import {
   GoogleIcon,
   AppleIcon,
@@ -16,41 +16,40 @@ import {
 } from '@/src/presentation/components/ui/SocialIcon';
 import { loginWithProvider } from '@/src/presentation/actions/auth.actions';
 import type { OAuthProvider } from '@/src/core/domain/types/Auth.types';
+import { useAuthTranslations } from '../hooks/useAuthTranslations';
 
 interface SocialLoginSectionProps {
-  connectWithText: string;
   providers?: OAuthProvider[];
 }
 
 export function SocialLoginSection({
-  connectWithText,
-  providers = ['google', 'apple', 'facebook', 'azure', 'github']
+  providers = ["google", "apple", "azure", "facebook", "twitter", "spotify"]
 }: SocialLoginSectionProps) {
-  const t = useTranslations('auth.providers');
+  const { form, providers: providerLabels, loading } = useAuthTranslations();
 
   const availableProviders = {
     google: {
-      name: t('google'),
+      name: providerLabels.google,
       color: "bg-red-500 hover:bg-red-600",
       icon: <GoogleIcon />,
     },
     apple: {
-      name: t('apple'),
+      name: providerLabels.apple,
       color: "bg-gray-800 hover:bg-gray-900",
       icon: <AppleIcon />,
     },
     facebook: {
-      name: t('facebook'),
+      name: providerLabels.facebook,
       color: "bg-blue-600 hover:bg-blue-700",
       icon: <FacebookIcon />,
     },
     azure: {
-      name: t('microsoft'),
+      name: providerLabels.microsoft,
       color: "bg-blue-500 hover:bg-blue-600",
       icon: <MicrosoftIcon />,
     },
     github: {
-      name: t('github'),
+      name: providerLabels.github,
       color: "bg-gray-700 hover:bg-gray-800",
       icon: <GithubIcon />,
     },
@@ -63,6 +62,20 @@ export function SocialLoginSection({
       ...availableProviders[p as keyof typeof availableProviders]
     }));
 
+  // Skeleton mientras carga
+  if (loading) {
+    return (
+      <div className="mb-6">
+        <div className="h-6 bg-gray-200 rounded w-48 mx-auto mb-3 animate-pulse" />
+        <div className="flex justify-center flex-wrap gap-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="w-12 h-12 bg-gray-200 rounded-full animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
@@ -74,7 +87,7 @@ export function SocialLoginSection({
         className="text-center text-blue-600 mb-3 font-bold text-lg"
         style={{ fontFamily: "Comic Sans MS, cursive" }}
       >
-        {connectWithText}
+        {form.connectWith}
       </h3>
 
       <div className="flex justify-center flex-wrap gap-3">

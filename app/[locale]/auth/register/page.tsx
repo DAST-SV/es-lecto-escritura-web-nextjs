@@ -1,13 +1,11 @@
 // ============================================
 // app/[locale]/auth/register/page.tsx
-// Registration Page with Role Selection
+// Registration Page with Supabase Translations
 // ============================================
 "use client";
 
 import { useActionState, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signup } from '@/src/presentation/actions/auth.actions';
 import type { AuthState } from '@/src/core/domain/types/Auth.types';
@@ -20,13 +18,12 @@ import {
   SocialLoginSection,
 } from '@/src/presentation/features/auth/components';
 import { UnifiedLayout } from '@/src/presentation/features/navigation';
+import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 
 type RoleType = 'student' | 'teacher' | 'parent' | 'school' | 'individual';
 
 export default function RegisterPage() {
-  const t = useTranslations('auth.register');
-  const tLogin = useTranslations('auth.login');
-  const router = useRouter();
+  const { t, loading } = useSupabaseTranslations('auth.register');
   const [selectedRole, setSelectedRole] = useState<RoleType | null>(null);
   const [showForm, setShowForm] = useState(false);
 
@@ -41,6 +38,28 @@ export default function RegisterPage() {
   const handleBackToRoles = () => {
     setShowForm(false);
   };
+
+  if (loading) {
+    return (
+      <UnifiedLayout
+        mainClassName="flex items-center justify-center py-8"
+        className="bg-gradient-to-b from-green-400 via-blue-300 to-purple-300"
+        backgroundComponent={<LoginBackground />}
+      >
+        <div className="relative z-20 w-full max-w-2xl mx-auto px-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 border-4 border-yellow-300">
+            <div className="h-8 bg-gray-200 rounded w-2/3 mx-auto mb-4 animate-pulse"></div>
+            <div className="h-6 bg-gray-100 rounded w-1/2 mx-auto mb-8 animate-pulse"></div>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-20 bg-gray-100 rounded animate-pulse"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </UnifiedLayout>
+    );
+  }
 
   return (
     <UnifiedLayout
@@ -60,7 +79,7 @@ export default function RegisterPage() {
               className="text-3xl font-bold text-gray-700 mb-2"
               style={{ fontFamily: 'Comic Sans MS, cursive' }}
             >
-              {t('brand')}
+              ESLECTOESCRITURA
             </h1>
             <h2 className="text-xl font-semibold text-gray-600 mb-1">
               {t('title')}
@@ -129,8 +148,8 @@ export default function RegisterPage() {
                   <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                     <p className="text-sm text-gray-600">
                       Registrándote como:{' '}
-                      <span className="font-bold text-blue-700">
-                        {t(`../roles.${selectedRole}.name`)}
+                      <span className="font-bold text-blue-700 capitalize">
+                        {selectedRole}
                       </span>
                     </p>
                   </div>

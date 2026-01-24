@@ -1,12 +1,8 @@
-// ============================================
-// src/presentation/features/auth/components/RoleSelector.tsx
-// Component: Role Selection Cards
-// ============================================
-"use client";
+'use client';
 
 import { motion } from 'framer-motion';
-import { useTranslations } from 'next-intl';
 import { Check } from 'lucide-react';
+import { useAuthTranslations } from '../hooks/useAuthTranslations';
 
 type RoleType = 'student' | 'teacher' | 'parent' | 'school' | 'individual';
 
@@ -16,29 +12,36 @@ interface RoleSelectorProps {
 }
 
 export function RoleSelector({ selectedRole, onSelectRole }: RoleSelectorProps) {
-  const t = useTranslations('auth.roles');
+  const { roles, register, loading } = useAuthTranslations();
 
-  const roles: RoleType[] = ['student', 'teacher', 'parent', 'school', 'individual'];
+  const rolesList: RoleType[] = ['student', 'teacher', 'parent', 'school', 'individual'];
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="text-center mb-6">
+          <div className="h-6 bg-gray-200 rounded w-48 mx-auto mb-2 animate-pulse" />
+          <div className="h-4 bg-gray-200 rounded w-64 mx-auto animate-pulse" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
       <div className="text-center mb-6">
         <h3 className="text-xl font-bold text-gray-800 mb-2">
-          {t('student.name')}
+          {register.roleLabel}
         </h3>
         <p className="text-sm text-gray-600">
-          {useTranslations('auth.register')('role_description')}
+          {register.roleDescription}
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-3">
-        {roles.map((role) => {
+        {rolesList.map((role) => {
           const isSelected = selectedRole === role;
-          const roleData = {
-            name: t(`${role}.name`),
-            description: t(`${role}.description`),
-            icon: t(`${role}.icon`),
-          };
+          const roleData = roles[role];
 
           return (
             <motion.button

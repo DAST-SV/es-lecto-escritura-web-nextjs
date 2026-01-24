@@ -1,5 +1,6 @@
 // ============================================
 // src/presentation/features/auth/components/LoginFormFields.tsx
+// Component: Login Form Fields con traducciones de Supabase
 // ============================================
 "use client";
 
@@ -7,28 +8,35 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Lock, Mail } from 'lucide-react';
 import { Input, Button } from '@/src/presentation/components/ui';
+import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 
 interface LoginFormFieldsProps {
-  emailPlaceholder: string;
-  passwordPlaceholder: string;
-  rememberMeText: string;
-  forgotPasswordText: string;
-  loginButtonText: string;
   isPending: boolean;
   defaultEmail?: string;
   formAction?: (formData: FormData) => void;
 }
 
 export function LoginFormFields({
-  emailPlaceholder,
-  passwordPlaceholder,
-  rememberMeText,
-  forgotPasswordText,
-  loginButtonText,
   isPending,
   defaultEmail = '',
   formAction
 }: LoginFormFieldsProps) {
+  const { t, loading } = useSupabaseTranslations('auth.form');
+
+  if (loading) {
+    return (
+      <div className="space-y-5">
+        <div className="h-12 bg-gray-100 rounded animate-pulse"></div>
+        <div className="h-12 bg-gray-100 rounded animate-pulse"></div>
+        <div className="flex items-center justify-between py-2">
+          <div className="h-5 bg-gray-100 rounded w-24 animate-pulse"></div>
+          <div className="h-5 bg-gray-100 rounded w-32 animate-pulse"></div>
+        </div>
+        <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+    );
+  }
+
   return (
     <motion.form
       action={formAction}
@@ -41,7 +49,7 @@ export function LoginFormFields({
         name="email"
         type="email"
         defaultValue={defaultEmail}
-        placeholder={emailPlaceholder}
+        placeholder={t('email_placeholder')}
         icon={<Mail size={18} />}
         className="text-base transition-all duration-300 ease-in-out focus:ring-2 focus:ring-blue-400"
       />
@@ -49,7 +57,7 @@ export function LoginFormFields({
       <Input
         name="password"
         type="password"
-        placeholder={passwordPlaceholder}
+        placeholder={t('password_placeholder')}
         icon={<Lock size={18} />}
         showToggle={true}
         className="text-base transition-all duration-300 ease-in-out focus:ring-2 focus:ring-blue-400"
@@ -66,7 +74,7 @@ export function LoginFormFields({
             className="ml-3 text-green-600 font-bold"
             style={{ fontFamily: "Comic Sans MS, cursive" }}
           >
-            {rememberMeText}
+            {t('remember_me')}
           </span>
         </label>
 
@@ -76,7 +84,7 @@ export function LoginFormFields({
           size="sm"
           className="text-base transition-all duration-300 ease-in-out hover:text-blue-600"
         >
-          {forgotPasswordText} 🤔
+          {t('forgot_password')} 🤔
         </Button>
       </div>
 
@@ -88,7 +96,7 @@ export function LoginFormFields({
           loading={isPending}
           className="w-full text-lg py-3 mt-5 transition-all duration-300 ease-in-out"
         >
-          {loginButtonText}
+          {t('login_button')}
         </Button>
       </motion.div>
     </motion.form>

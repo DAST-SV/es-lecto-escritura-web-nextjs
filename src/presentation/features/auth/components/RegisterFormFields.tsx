@@ -1,12 +1,12 @@
 // ============================================
 // src/presentation/features/auth/components/RegisterFormFields.tsx
-// Component: Register Form Fields with Name, Email, Password, Confirm Password
+// Component: Register Form Fields con traducciones de Supabase
 // ============================================
 "use client";
 
 import { Mail, Lock, User } from 'lucide-react';
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 
 interface RegisterFormFieldsProps {
   formAction: (formData: FormData) => void;
@@ -19,8 +19,9 @@ export function RegisterFormFields({
   isPending,
   selectedRole
 }: RegisterFormFieldsProps) {
-  const t = useTranslations('auth.register');
-  const tErrors = useTranslations('auth.errors');
+  const { t: tRegister, loading: loadingRegister } = useSupabaseTranslations('auth.register');
+  const { t: tErrors, loading: loadingErrors } = useSupabaseTranslations('auth.errors');
+  
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
@@ -69,12 +70,26 @@ export function RegisterFormFields({
     }
   };
 
+  if (loadingRegister || loadingErrors) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="space-y-2">
+            <div className="h-5 bg-gray-200 rounded w-32 animate-pulse"></div>
+            <div className="h-10 bg-gray-100 rounded animate-pulse"></div>
+          </div>
+        ))}
+        <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Name Field */}
       <div className="space-y-2">
         <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-          {t('name_label')}
+          {tRegister('name_label')}
         </label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -89,7 +104,7 @@ export function RegisterFormFields({
             className={`block w-full pl-10 pr-3 py-2 border ${
               localErrors.name ? 'border-red-500' : 'border-gray-300'
             } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-            placeholder={t('name_placeholder')}
+            placeholder={tRegister('name_placeholder')}
             disabled={isPending}
           />
         </div>
@@ -101,7 +116,7 @@ export function RegisterFormFields({
       {/* Email Field */}
       <div className="space-y-2">
         <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          {t('email_label')}
+          {tRegister('email_label')}
         </label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -116,7 +131,7 @@ export function RegisterFormFields({
             className={`block w-full pl-10 pr-3 py-2 border ${
               localErrors.email ? 'border-red-500' : 'border-gray-300'
             } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-            placeholder={t('email_placeholder')}
+            placeholder={tRegister('email_placeholder')}
             disabled={isPending}
           />
         </div>
@@ -128,7 +143,7 @@ export function RegisterFormFields({
       {/* Password Field */}
       <div className="space-y-2">
         <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-          {t('password_label')}
+          {tRegister('password_label')}
         </label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -143,7 +158,7 @@ export function RegisterFormFields({
             className={`block w-full pl-10 pr-10 py-2 border ${
               localErrors.password ? 'border-red-500' : 'border-gray-300'
             } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-            placeholder={t('password_placeholder')}
+            placeholder={tRegister('password_placeholder')}
             disabled={isPending}
           />
           <button
@@ -164,7 +179,7 @@ export function RegisterFormFields({
       {/* Confirm Password Field */}
       <div className="space-y-2">
         <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-          {t('confirm_password_label')}
+          {tRegister('confirm_password_label')}
         </label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -179,7 +194,7 @@ export function RegisterFormFields({
             className={`block w-full pl-10 pr-10 py-2 border ${
               localErrors.confirmPassword ? 'border-red-500' : 'border-gray-300'
             } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-            placeholder={t('confirm_password_placeholder')}
+            placeholder={tRegister('confirm_password_placeholder')}
             disabled={isPending}
           />
           <button
@@ -214,7 +229,7 @@ export function RegisterFormFields({
             : 'bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 transform hover:scale-105'
         }`}
       >
-        {isPending ? t('register_button_loading') : t('register_button')}
+        {isPending ? tRegister('register_button_loading') : tRegister('register_button')}
       </button>
     </form>
   );
