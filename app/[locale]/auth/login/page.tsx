@@ -65,8 +65,8 @@ export default function LoginPage() {
             {/* Error Message */}
             <ErrorMessage error={state.error} />
 
-            {/* Social Login Section */}
-            <SocialLoginSection connectWithText={t('connect_with')} />
+            {/* Social Login Section - SIN PROPS */}
+            <SocialLoginSection />
 
             {/* Form Divider */}
             <FormDivider text={t('or_use_email')} />

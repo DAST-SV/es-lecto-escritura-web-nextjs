@@ -1,6 +1,5 @@
 // ============================================
 // src/presentation/features/auth/components/SocialLoginSection.tsx
-// ✅ ACTUALIZADO: Usa traducciones de Supabase
 // ============================================
 "use client";
 

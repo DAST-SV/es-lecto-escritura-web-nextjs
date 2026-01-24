@@ -103,7 +103,7 @@ export default function RegisterPage() {
               >
                 {/* Social Registration */}
                 <div className="mb-6">
-                  <SocialLoginSection connectWithText={t('or_continue_with')} />
+                  <SocialLoginSection />
                   <FormDivider text={t('divider')} />
                 </div>
 
