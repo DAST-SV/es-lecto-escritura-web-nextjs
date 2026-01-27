@@ -1,40 +1,60 @@
-# 📁 Estructura Modular y Granular de Base de Datos
+# 📁 Schema: App
 
-Esta carpeta contiene el esquema de base de datos organizado en **módulos independientes y granulares** para facilitar el mantenimiento, escalabilidad y claridad del código.
+Estructura modular y granular de base de datos para el sistema de la aplicación.
 
 ## 🎯 Estructura Completa
 
 ```
 app/
-├── auth/                           # 🔐 AUTENTICACIÓN
-│   ├── 00_init.sql                 # Inicialización (schema, extensiones)
-│   ├── enums/                      # Enumeraciones
-│   │   ├── user_role.sql           # Roles del sistema
-│   │   └── oauth_provider.sql      # Providers OAuth
-│   ├── tables/                     # Tablas
-│   │   ├── roles.sql               # Catálogo de roles (6 roles)
-│   │   ├── user_profiles.sql       # Perfiles extendidos con OAuth
-│   │   └── user_roles.sql          # Asignación de roles
-│   ├── functions/                  # Funciones
-│   │   ├── set_updated_at.sql      # Actualizar updated_at
+├── auth/                              # 🔐 AUTENTICACIÓN
+│   ├── 00_init.sql                    # Inicialización (schema, extensiones)
+│   ├── enums/
+│   │   ├── user_role.sql              # Roles del sistema
+│   │   └── oauth_provider.sql         # Providers OAuth
+│   ├── tables/
+│   │   ├── roles.sql                  # Catálogo de roles (6 roles)
+│   │   ├── user_profiles.sql          # Perfiles extendidos con OAuth
+│   │   └── user_roles.sql             # Asignación de roles
+│   ├── functions/
+│   │   ├── set_updated_at.sql         # Actualizar updated_at
 │   │   ├── get_user_primary_role.sql  # Rol principal
-│   │   └── has_role.sql            # Verificar rol
-│   ├── triggers/                   # Triggers
-│   │   ├── set_updated_at.sql      # Triggers updated_at
-│   │   └── handle_new_user.sql     # Crear perfil auto
-│   └── rls/                        # Row Level Security
+│   │   └── has_role.sql               # Verificar rol
+│   ├── triggers/
+│   │   ├── set_updated_at.sql         # Triggers updated_at
+│   │   └── handle_new_user.sql        # Crear perfil auto
+│   └── rls/
 │       ├── roles_policies.sql
 │       ├── user_profiles_policies.sql
 │       └── user_roles_policies.sql
 │
-├── organizations/                  # 🏢 ORGANIZACIONES
-│   ├── enums/
-│   │   ├── organization_type.sql   # Tipos de orgs
-│   │   └── membership_status.sql   # Estados
+├── routes/                            # 🛤️ RUTAS DEL SISTEMA
 │   ├── tables/
-│   │   ├── organizations.sql       # Escuelas, familias
-│   │   ├── organization_members.sql  # Miembros
-│   │   └── user_relationships.sql  # Relaciones
+│   │   ├── routes.sql                 # Rutas físicas
+│   │   └── route_translations.sql     # Traducciones de rutas
+│   └── data.sql                       # Datos iniciales
+│
+├── permissions/                       # 🔒 PERMISOS
+│   ├── tables/
+│   │   ├── route_permissions.sql      # Permisos por rol
+│   │   └── user_route_permissions.sql # Permisos individuales
+│   ├── functions/
+│   │   ├── can_access_route.sql       # Verificar acceso
+│   │   └── search_users.sql           # Buscar usuarios
+│   └── data.sql                       # Datos iniciales
+│
+├── role_language_access/              # 🌍 ACCESO POR IDIOMA
+│   ├── tables/
+│   │   └── role_language_access.sql   # Idiomas por rol
+│   └── data.sql                       # Datos iniciales
+│
+├── organizations/                     # 🏢 ORGANIZACIONES
+│   ├── enums/
+│   │   ├── organization_type.sql      # Tipos de orgs
+│   │   └── membership_status.sql      # Estados
+│   ├── tables/
+│   │   ├── organizations.sql          # Escuelas, familias
+│   │   ├── organization_members.sql   # Miembros
+│   │   └── user_relationships.sql     # Relaciones
 │   ├── functions/
 │   │   ├── is_org_admin.sql
 │   │   └── get_user_organizations.sql
@@ -46,15 +66,15 @@ app/
 │       ├── organization_members_policies.sql
 │       └── user_relationships_policies.sql
 │
-├── translations/                   # 🌍 TRADUCCIONES
-│   ├── schema/                     # Sistema i18n
-│   │   ├── 00_tables.sql           # Tablas
-│   │   ├── 01_triggers.sql         # Triggers
-│   │   ├── 02_rls.sql              # RLS
-│   │   └── 03_initial_data.sql     # Datos iniciales
-│   └── data/                       # Traducciones
+├── translations/                      # 🌍 TRADUCCIONES
+│   ├── schema/
+│   │   ├── 00_tables.sql              # Tablas
+│   │   ├── 01_triggers.sql            # Triggers
+│   │   ├── 02_rls.sql                 # RLS
+│   │   └── 03_initial_data.sql        # Datos iniciales
+│   └── data/
 │       ├── 00_helper_function.sql
-│       ├── auth/                   # Auth (61 traducciones)
+│       ├── auth/                      # Traducciones de auth
 │       │   ├── 01_forms.sql
 │       │   ├── 02_login.sql
 │       │   ├── 03_register.sql
@@ -62,13 +82,23 @@ app/
 │       │   ├── 05_providers.sql
 │       │   ├── 06_errors.sql
 │       │   └── 07_messages.sql
-│       ├── navigation.sql          # 11 traducciones
-│       ├── common.sql              # 14 traducciones
-│       ├── errors.sql              # 4 traducciones
+│       ├── navigation.sql             # Navegación
+│       ├── common.sql                 # Común
+│       ├── errors.sql                 # Errores
 │       └── 99_cleanup.sql
 │
-└── legacy/                         # 📦 COMPATIBILIDAD
-    └── user_types.sql              # Tabla legacy
+├── admin/                             # ⚙️ ADMINISTRACIÓN
+│   ├── setup/
+│   │   ├── assign_super_admin.sql     # Asignar super_admin
+│   │   └── complete_admin_access.sql  # Setup completo
+│   └── rls/
+│       └── admin_policies.sql         # Políticas admin
+│
+├── cleanup/                           # 🧹 LIMPIEZA
+│   └── cleanup_all.sql                # Eliminar todo
+│
+└── legacy/                            # 📦 COMPATIBILIDAD
+    └── user_types.sql                 # Tabla legacy
 ```
 
 ---
@@ -76,83 +106,123 @@ app/
 ## 📦 Descripción de Módulos
 
 ### 1. 🔐 AUTH (14 archivos)
-Sistema completo de autenticación con roles y OAuth
+Sistema completo de autenticación con roles y OAuth.
 
-**Archivos:** 00_init + 2 enums + 3 tables + 3 functions + 2 triggers + 3 rls = 14
-
-**Contenido principal:**
-- 6 roles: super_admin, school, teacher, parent, student, individual
+**Contenido:**
+- 6 roles: super_admin, admin, teacher, parent, student, guest
 - 5 providers OAuth: google, apple, facebook, azure, github
 - Trigger automático de creación de perfiles
 
-### 2. 🏢 ORGANIZATIONS (12 archivos)  
-Organizaciones, miembros y relaciones
+### 2. 🛤️ ROUTES (3 archivos)
+Gestión de rutas del sistema con traducciones multiidioma.
 
-**Archivos:** 2 enums + 3 tables + 2 functions + 2 views + 3 rls = 12
+**Contenido:**
+- Rutas físicas con metadata
+- Traducciones por idioma (es, en, fr, it)
+- Soporte para menús dinámicos
 
-**Contenido principal:**
+### 3. 🔒 PERMISSIONS (5 archivos)
+Sistema de permisos granular.
+
+**Contenido:**
+- Permisos por rol (route_permissions)
+- Permisos individuales (user_route_permissions)
+- Función `can_access_route()` para verificar acceso
+- Soporte para GRANT/DENY por idioma
+
+### 4. 🌍 ROLE_LANGUAGE_ACCESS (2 archivos)
+Control de acceso por idioma según rol.
+
+### 5. 🏢 ORGANIZATIONS (12 archivos)
+Organizaciones, miembros y relaciones.
+
+**Contenido:**
 - 5 tipos de organizaciones
 - 4 estados de membresía
 - Relaciones padre-hijo, maestro-estudiante
 
-### 3. 🌍 TRANSLATIONS (15 archivos)
-Sistema completo de traducciones
+### 6. 🌍 TRANSLATIONS (16 archivos)
+Sistema completo de traducciones dinámicas.
 
-**Archivos:** 4 schema + 1 helper + 7 auth + 3 otros + 1 cleanup = 16 
-
-**Contenido principal:**
+**Contenido:**
 - 3 idiomas: ES, EN, FR
 - ~90 claves de traducción
 - ~270 traducciones totales
 
-### 4. 📦 LEGACY (1 archivo)
-Compatibilidad con código antiguo
+### 7. ⚙️ ADMIN (3 archivos)
+Scripts de configuración administrativa.
+
+### 8. 📦 LEGACY (1 archivo)
+Compatibilidad con código antiguo.
 
 ---
 
-## 🚀 Instalación Rápida
-
-```bash
-psql -f supabase/SETUP_RAPIDO.sql
-```
-
-O copia/pega cada archivo en SQL Editor siguiendo el orden del script.
-
----
-
-## ✅ Verificación
+## 🚀 Orden de Ejecución
 
 ```sql
-SELECT 'auth' as modulo, (SELECT COUNT(*) FROM app.roles) as total
-UNION SELECT 'orgs', (SELECT COUNT(*) FROM app.organizations)
-UNION SELECT 'translations', (SELECT COUNT(*) FROM app.translation_keys)
-UNION SELECT 'legacy', (SELECT COUNT(*) FROM app.user_types);
+-- 1. Auth (base)
+\i auth/00_init.sql
+\i auth/enums/*.sql
+\i auth/tables/*.sql
+\i auth/functions/*.sql
+\i auth/triggers/*.sql
+\i auth/rls/*.sql
+
+-- 2. Routes
+\i routes/tables/routes.sql
+\i routes/tables/route_translations.sql
+\i routes/data.sql
+
+-- 3. Permissions
+\i permissions/tables/route_permissions.sql
+\i permissions/tables/user_route_permissions.sql
+\i permissions/functions/can_access_route.sql
+\i permissions/functions/search_users.sql
+\i permissions/data.sql
+
+-- 4. Role Language Access
+\i role_language_access/tables/role_language_access.sql
+\i role_language_access/data.sql
+
+-- 5. Organizations
+\i organizations/**/*.sql
+
+-- 6. Translations
+\i translations/schema/*.sql
+\i translations/data/*.sql
+
+-- 7. Admin
+\i admin/rls/admin_policies.sql
 ```
 
-**Esperado:** 6, 0, ~90, 5
+---
+
+## 📊 Estadísticas
+
+| Módulo | Archivos |
+|--------|----------|
+| Auth | 14 |
+| Routes | 3 |
+| Permissions | 5 |
+| Role Language Access | 2 |
+| Organizations | 12 |
+| Translations | 16 |
+| Admin | 3 |
+| Legacy | 1 |
+| **Total** | **56** |
 
 ---
 
 ## 🔍 Búsqueda Rápida
 
 - **Enums de roles?** → `auth/enums/user_role.sql`
-- **Tabla de perfiles?** → `auth/tables/user_profiles.sql`  
+- **Tabla de perfiles?** → `auth/tables/user_profiles.sql`
 - **Trigger de nuevo usuario?** → `auth/triggers/handle_new_user.sql`
 - **Traducciones de login?** → `translations/data/auth/02_login.sql`
 - **Funciones de orgs?** → `organizations/functions/`
 - **RLS de roles?** → `auth/rls/roles_policies.sql`
-
----
-
-## 📊 Estadísticas
-
-- **Módulos:** 4
-- **Archivos SQL:** 42
-- **Tablas:** 13
-- **Funciones:** 8
-- **Enums:** 4
-- **Vistas:** 3
-- **Traducciones:** ~270
+- **Verificar acceso a ruta?** → `permissions/functions/can_access_route.sql`
+- **Permisos por idioma?** → `role_language_access/tables/role_language_access.sql`
 
 ---
 
@@ -166,5 +236,5 @@ UNION SELECT 'legacy', (SELECT COUNT(*) FROM app.user_types);
 
 ---
 
-**Versión:** 4.0 - Estructura Granular
-**Actualizado:** 2026-01-23
+**Versión:** 5.0 - Estructura Granular Completa
+**Actualizado:** 2026-01-27
