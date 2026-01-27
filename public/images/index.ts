@@ -1,1 +1,17 @@
-﻿export const images = { heroSlide1: '/images/placeholder.jpg', heroSlide2: '/images/placeholder.jpg', heroSlide3: '/images/placeholder.jpg', placeholder: '/images/placeholder.jpg' };
+/**
+ * Public Images Export
+ * @file public/images/index.ts
+ * @description Re-exports image configuration from infrastructure
+ *
+ * Prefer importing directly from: @/src/infrastructure/config/images.config
+ */
+
+export {
+  imagesConfig as images,
+  getImageUrl,
+  getAvatarUrl,
+  heroSlideImages,
+  heroSlideRoutes,
+  type ImageCategory,
+  type ImageKey,
+} from '@/src/infrastructure/config/images.config';
