@@ -10,29 +10,31 @@ import React from 'react';
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 
 // ============================================
+// CONSTANTS
+// ============================================
+
+const DEFAULT_CONTENT = {
+  title: 'Ready to Start Learning?',
+  description: 'Join thousands of students who are improving their reading and writing skills every day.',
+  button: 'Get Started Now',
+};
+
+// ============================================
 // COMPONENT
 // ============================================
 
 export const CTASection: React.FC = () => {
-  const { t, loading } = useSupabaseTranslations('cta');
+  const { t } = useSupabaseTranslations('cta');
 
-  // ============================================
-  // LOADING STATE
-  // ============================================
+  // Get translations with fallbacks
+  const title = t('title');
+  const description = t('description');
+  const buttonText = t('button');
 
-  if (loading) {
-    return (
-      <section className="py-16 px-8 md:px-16 bg-gradient-to-r from-blue-50 to-green-50">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="animate-pulse space-y-6">
-            <div className="h-10 bg-gray-200 rounded w-2/3 mx-auto" />
-            <div className="h-6 bg-gray-200 rounded w-3/4 mx-auto" />
-            <div className="h-12 w-48 bg-gray-200 rounded-xl mx-auto" />
-          </div>
-        </div>
-      </section>
-    );
-  }
+  // Use fallbacks if translations not loaded
+  const displayTitle = title.startsWith('[') ? DEFAULT_CONTENT.title : title;
+  const displayDescription = description.startsWith('[') ? DEFAULT_CONTENT.description : description;
+  const displayButton = buttonText.startsWith('[') ? DEFAULT_CONTENT.button : buttonText;
 
   // ============================================
   // RENDER
@@ -42,13 +44,13 @@ export const CTASection: React.FC = () => {
     <section className="py-16 px-8 md:px-16 bg-gradient-to-r from-blue-50 to-green-50">
       <div className="max-w-4xl mx-auto text-center">
         <h3 className="text-3xl md:text-4xl font-bold mb-8 text-gray-800">
-          {t('title')}
+          {displayTitle}
         </h3>
         <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-          {t('description')}
+          {displayDescription}
         </p>
         <button className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold px-10 py-4 rounded-xl shadow-lg hover:from-orange-600 hover:to-red-600 transition-all duration-300 transform hover:scale-105 text-lg">
-          {t('button')}
+          {displayButton}
         </button>
       </div>
     </section>

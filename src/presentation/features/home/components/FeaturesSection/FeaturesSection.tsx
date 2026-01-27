@@ -6,7 +6,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { BookOpen, Zap, Award, LucideIcon } from 'lucide-react';
 
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
@@ -19,6 +19,8 @@ import type { FeatureTab, FeatureTabId, Stat } from '../../types';
 // CONSTANTS
 // ============================================
 
+const TAB_IDS: FeatureTabId[] = ['personalized', 'simplified', 'flexibility'];
+
 const ICON_MAP: Record<FeatureTabId, LucideIcon> = {
   personalized: BookOpen,
   simplified: Zap,
@@ -28,45 +30,71 @@ const ICON_MAP: Record<FeatureTabId, LucideIcon> = {
 const STAT_ICONS: LucideIcon[] = [BookOpen, Zap, Award];
 const STAT_COLORS: string[] = ['blue', 'green', 'yellow'];
 
+// Default data (fallback)
+const DEFAULT_TABS: FeatureTab[] = [
+  { id: 'personalized', label: 'Personalized', title: 'Personalized Attention', content: 'We understand that each student is unique.' },
+  { id: 'simplified', label: 'Simplified', title: 'Simplified Process', content: 'Our learning process is simple and effective.' },
+  { id: 'flexibility', label: 'Flexibility', title: 'Flexibility & Transparency', content: 'We offer flexible schedules and clear communication.' },
+];
+
+const DEFAULT_STATS: Stat[] = [
+  { number: '1000+', label: 'Active Students' },
+  { number: '95%', label: 'Improvement Rate' },
+  { number: '50+', label: 'Partner Institutions' },
+];
+
 // ============================================
 // COMPONENT
 // ============================================
 
 export const FeaturesSection: React.FC = () => {
-  const { t, loading } = useSupabaseTranslations('features');
+  const { t } = useSupabaseTranslations('features');
   const [activeTab, setActiveTab] = useState<FeatureTabId>('personalized');
 
-  // Get data from translations
-  const tabs: FeatureTab[] = !loading ? (t('tabs') as unknown as FeatureTab[]) || [] : [];
-  const stats: Stat[] = !loading ? (t('stats') as unknown as Stat[]) || [] : [];
+  // Build tabs from individual translation keys
+  const tabs = useMemo<FeatureTab[]>(() => {
+    return TAB_IDS.map((id, i) => {
+      const label = t(`tabs.${i}.label`);
+      const title = t(`tabs.${i}.title`);
+      const content = t(`tabs.${i}.content`);
+
+      const hasTranslation = !label.startsWith('[') && !label.endsWith(']');
+
+      if (hasTranslation) {
+        return { id, label, title, content };
+      }
+
+      return DEFAULT_TABS[i];
+    });
+  }, [t]);
+
+  // Build stats from individual translation keys
+  const stats = useMemo<Stat[]>(() => {
+    return Array.from({ length: 3 }, (_, i) => {
+      const number = t(`stats.${i}.number`);
+      const label = t(`stats.${i}.label`);
+
+      const hasTranslation = !number.startsWith('[') && !number.endsWith(']');
+
+      if (hasTranslation) {
+        return { number, label };
+      }
+
+      return DEFAULT_STATS[i];
+    });
+  }, [t]);
+
+  // Get header texts
   const title = t('title');
   const subtitle = t('subtitle');
   const buttonText = t('button');
 
-  const activeTabData = tabs.find((tab) => tab.id === activeTab);
+  // Use fallbacks if translations not loaded
+  const displayTitle = title.startsWith('[') ? 'What Makes Us Different' : title;
+  const displaySubtitle = subtitle.startsWith('[') ? 'Why EslectoEscritura is different from other platforms' : subtitle;
+  const displayButton = buttonText.startsWith('[') ? 'Learn More' : buttonText;
 
-  // ============================================
-  // LOADING STATE
-  // ============================================
-
-  if (loading) {
-    return (
-      <section className="py-16 px-8 md:px-16 bg-gray-50">
-        <div className="container mx-auto max-w-6xl">
-          <div className="animate-pulse space-y-8">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mx-auto" />
-            <div className="h-12 bg-gray-200 rounded w-2/3 mx-auto" />
-            <div className="flex justify-center gap-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-12 w-40 bg-gray-200 rounded-full" />
-              ))}
-            </div>
-            <div className="h-80 bg-gray-200 rounded-2xl" />
-          </div>
-        </div>
-      </section>
-    );
-  }
+  const activeTabData = tabs.find((tab) => tab.id === activeTab) || DEFAULT_TABS[0];
 
   // ============================================
   // RENDER
@@ -112,16 +140,16 @@ export const FeaturesSection: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <p className="text-blue-600 text-sm font-bold uppercase tracking-wide mb-3">
-            {title}
+            {displayTitle}
           </p>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-800 leading-tight">
-            {subtitle}
+            {displaySubtitle}
           </h2>
         </div>
 
         {/* Tabs Navigation */}
         <div className="flex flex-wrap justify-center gap-4 mb-8">
-          {tabs.map((tab: FeatureTab) => {
+          {tabs.map((tab) => {
             const IconComponent = ICON_MAP[tab.id];
             return (
               <button
@@ -147,14 +175,14 @@ export const FeaturesSection: React.FC = () => {
             {/* Content */}
             <div className="order-2 lg:order-1">
               <h3 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
-                {activeTabData?.title}
+                {activeTabData.title}
               </h3>
               <div className="text-gray-600 text-lg leading-relaxed">
-                <p>{activeTabData?.content}</p>
+                <p>{activeTabData.content}</p>
               </div>
               <div className="mt-8">
                 <button className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold px-8 py-3 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                  {buttonText}
+                  {displayButton}
                 </button>
               </div>
             </div>
@@ -165,7 +193,7 @@ export const FeaturesSection: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-green-400 rounded-2xl transform rotate-3 opacity-20" />
                 <NextImage
                   src={imagesConfig.literacy.v1}
-                  alt={activeTabData?.title || 'Feature image'}
+                  alt={activeTabData.title}
                   width={400}
                   height={320}
                   className="relative w-full max-w-md mx-auto h-80 object-fill rounded-2xl"
@@ -177,23 +205,16 @@ export const FeaturesSection: React.FC = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
-          {stats.map((stat: Stat, index: number) => {
+          {stats.map((stat, index) => {
             const IconComponent = STAT_ICONS[index];
             const color = STAT_COLORS[index];
 
             return (
-              <div
-                key={index}
-                className="text-center p-6 bg-white rounded-xl shadow-lg"
-              >
-                <div
-                  className={`w-16 h-16 bg-${color}-100 rounded-full flex items-center justify-center mx-auto mb-4`}
-                >
+              <div key={index} className="text-center p-6 bg-white rounded-xl shadow-lg">
+                <div className={`w-16 h-16 bg-${color}-100 rounded-full flex items-center justify-center mx-auto mb-4`}>
                   <IconComponent className={`w-8 h-8 text-${color}-600`} />
                 </div>
-                <h4 className="text-xl font-semibold text-gray-800 mb-2">
-                  {stat.number}
-                </h4>
+                <h4 className="text-xl font-semibold text-gray-800 mb-2">{stat.number}</h4>
                 <p className="text-gray-600">{stat.label}</p>
               </div>
             );

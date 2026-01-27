@@ -6,7 +6,7 @@
 
 'use client';
 
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -27,6 +27,20 @@ import type { HeroSlide } from '../../types';
 
 const AUTO_PLAY_INTERVAL = 6000;
 const PAUSE_TIMEOUT = 3000;
+const SLIDE_COUNT = 9;
+
+// Default slide data (used while loading or as fallback)
+const DEFAULT_SLIDES: HeroSlide[] = [
+  { title: 'Literacy', icon: '📚', description: 'Learn to read and write', button: 'Explore' },
+  { title: 'Stories', icon: '📖', description: 'Discover amazing stories', button: 'Read' },
+  { title: 'Fables', icon: '🦊', description: 'Learn moral lessons', button: 'Discover' },
+  { title: 'Poems', icon: '✨', description: 'Express with poetry', button: 'Create' },
+  { title: 'Legends', icon: '🏰', description: 'Explore ancient tales', button: 'Adventure' },
+  { title: 'Riddles', icon: '🤔', description: 'Challenge your mind', button: 'Solve' },
+  { title: 'Comics', icon: '💥', description: 'Visual storytelling', button: 'View' },
+  { title: 'Tongue Twisters', icon: '👅', description: 'Fun with words', button: 'Try' },
+  { title: 'Rhymes', icon: '🎵', description: 'Musical language', button: 'Listen' },
+];
 
 // ============================================
 // COMPONENT
@@ -35,6 +49,31 @@ const PAUSE_TIMEOUT = 3000;
 export const HeroCarousel: React.FC = () => {
   const { t, loading } = useSupabaseTranslations('hero');
   const router = useRouter();
+
+  // Build slides from individual translation keys
+  const slides = useMemo<HeroSlide[]>(() => {
+    return Array.from({ length: SLIDE_COUNT }, (_, i) => {
+      const titleKey = `slides.${i}.title`;
+      const iconKey = `slides.${i}.icon`;
+      const descriptionKey = `slides.${i}.description`;
+      const buttonKey = `slides.${i}.button`;
+
+      const title = t(titleKey);
+      const icon = t(iconKey);
+      const description = t(descriptionKey);
+      const button = t(buttonKey);
+
+      // Check if translation exists (not returning the [key] fallback)
+      const hasTranslation = !title.startsWith('[') && !title.endsWith(']');
+
+      if (hasTranslation) {
+        return { title, icon, description, button };
+      }
+
+      // Fallback to default
+      return DEFAULT_SLIDES[i];
+    });
+  }, [t]);
 
   // Embla carousel configuration
   const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -55,9 +94,6 @@ export const HeroCarousel: React.FC = () => {
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
   const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Get slides from translations
-  const slides: HeroSlide[] = !loading ? (t('slides') as unknown as HeroSlide[]) || [] : [];
-
   // ============================================
   // CALLBACKS
   // ============================================
@@ -68,53 +104,18 @@ export const HeroCarousel: React.FC = () => {
   }, [emblaApi]);
 
   const scrollPrev = useCallback(() => {
-    if (!emblaApi) return;
-    emblaApi.scrollPrev();
+    emblaApi?.scrollPrev();
   }, [emblaApi]);
 
   const scrollNext = useCallback(() => {
-    if (!emblaApi) return;
-    emblaApi.scrollNext();
+    emblaApi?.scrollNext();
   }, [emblaApi]);
 
   const scrollTo = useCallback(
     (targetIndex: number) => {
-      if (!emblaApi) return;
-
-      const currentIndex = emblaApi.selectedScrollSnap();
-      const slideCount = slides.length;
-
-      if (currentIndex === targetIndex) return;
-
-      const forwardDistance =
-        targetIndex > currentIndex
-          ? targetIndex - currentIndex
-          : slideCount - currentIndex + targetIndex;
-
-      const backwardDistance =
-        currentIndex > targetIndex
-          ? currentIndex - targetIndex
-          : currentIndex + slideCount - targetIndex;
-
-      if (forwardDistance <= backwardDistance) {
-        if (forwardDistance <= 3) {
-          emblaApi.scrollTo(targetIndex);
-        } else {
-          for (let i = 0; i < forwardDistance; i++) {
-            setTimeout(() => emblaApi.scrollNext(), i * 25);
-          }
-        }
-      } else {
-        if (backwardDistance <= 3) {
-          emblaApi.scrollTo(targetIndex);
-        } else {
-          for (let i = 0; i < backwardDistance; i++) {
-            setTimeout(() => emblaApi.scrollPrev(), i * 25);
-          }
-        }
-      }
+      emblaApi?.scrollTo(targetIndex);
     },
-    [emblaApi, slides.length]
+    [emblaApi]
   );
 
   const handlePause = useCallback(() => {
@@ -134,79 +135,45 @@ export const HeroCarousel: React.FC = () => {
   // EFFECTS
   // ============================================
 
-  // Setup Embla listeners
   useEffect(() => {
     if (!emblaApi) return;
-
     onSelect();
     emblaApi.on('select', onSelect);
-
     return () => {
       emblaApi.off('select', onSelect);
     };
   }, [emblaApi, onSelect]);
 
-  // Auto-play
   useEffect(() => {
-    const startAutoPlay = () => {
-      if (autoPlayRef.current) clearInterval(autoPlayRef.current);
-      autoPlayRef.current = setInterval(() => {
-        if (emblaApi && isPlaying && isVisible) {
-          emblaApi.scrollNext();
-        }
-      }, AUTO_PLAY_INTERVAL);
-    };
-
-    if (emblaApi && isPlaying && isVisible) {
-      startAutoPlay();
-    } else {
+    if (!emblaApi || !isPlaying || !isVisible) {
       if (autoPlayRef.current) {
         clearInterval(autoPlayRef.current);
         autoPlayRef.current = null;
       }
+      return;
     }
 
+    autoPlayRef.current = setInterval(() => {
+      emblaApi.scrollNext();
+    }, AUTO_PLAY_INTERVAL);
+
     return () => {
-      if (autoPlayRef.current) {
-        clearInterval(autoPlayRef.current);
-      }
+      if (autoPlayRef.current) clearInterval(autoPlayRef.current);
     };
   }, [emblaApi, isPlaying, isVisible]);
 
-  // Visibility detection
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      setIsVisible(!document.hidden);
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange, {
-      passive: true,
-    });
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
+    const handleVisibilityChange = () => setIsVisible(!document.hidden);
+    document.addEventListener('visibilitychange', handleVisibilityChange, { passive: true });
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
-  // Cleanup
   useEffect(() => {
     return () => {
       if (autoPlayRef.current) clearInterval(autoPlayRef.current);
       if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
     };
   }, []);
-
-  // ============================================
-  // LOADING STATE
-  // ============================================
-
-  if (loading || slides.length === 0) {
-    return (
-      <div className="relative h-[calc(100vh-56px)] overflow-hidden bg-gradient-to-r from-blue-100 to-green-100 flex items-center justify-center">
-        <div className="animate-pulse text-gray-500">Loading...</div>
-      </div>
-    );
-  }
 
   // ============================================
   // RENDER
@@ -220,7 +187,6 @@ export const HeroCarousel: React.FC = () => {
       onTouchStart={handlePause}
       onTouchEnd={handleResume}
     >
-      {/* Background */}
       <div
         ref={emblaRef}
         className="embla h-full bg-cover bg-center bg-fixed"
@@ -230,20 +196,14 @@ export const HeroCarousel: React.FC = () => {
         }}
       >
         <div className="embla__container flex h-full">
-          {slides.map((slide: HeroSlide, i: number) => (
-            <div
-              key={i}
-              className="embla__slide w-full flex-shrink-0 h-full will-change-transform"
-            >
+          {slides.map((slide, i) => (
+            <div key={i} className="embla__slide w-full flex-shrink-0 h-full will-change-transform">
               <div className="w-full flex items-center px-6 md:px-16 py-10">
                 {/* Desktop Layout */}
                 <div className="hidden md:flex w-full h-full items-center max-w-7xl mx-auto">
-                  {/* Text Content */}
                   <div className="w-1/2 pr-12 text-slate-800 flex flex-col justify-center ml-8 lg:ml-16">
                     <div className="flex items-center mb-6">
-                      <span className="text-6xl mr-6 drop-shadow-lg select-none">
-                        {slide.icon}
-                      </span>
+                      <span className="text-6xl mr-6 drop-shadow-lg select-none">{slide.icon}</span>
                       <h2 className="text-4xl lg:text-5xl font-black leading-tight text-slate-900 drop-shadow-sm select-none">
                         {slide.title}
                       </h2>
@@ -252,21 +212,19 @@ export const HeroCarousel: React.FC = () => {
                       &quot;{slide.description}&quot;
                     </p>
                     <button
-                      onClick={() => router.push(heroSlideRoutes[i])}
-                      className="bg-gradient-to-r from-slate-800 to-slate-900 text-white font-bold px-8 py-4 rounded-xl shadow-2xl hover:from-slate-700 hover:to-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 w-fit text-lg border-2 border-slate-600 hover:border-slate-500 will-change-transform"
+                      onClick={() => router.push(heroSlideRoutes[i] || '/explore')}
+                      className="bg-gradient-to-r from-slate-800 to-slate-900 text-white font-bold px-8 py-4 rounded-xl shadow-2xl hover:from-slate-700 hover:to-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 w-fit text-lg border-2 border-slate-600"
                     >
                       {slide.button}
                     </button>
                   </div>
-
-                  {/* Image */}
                   <div className="w-1/2 flex justify-center items-center pr-8 lg:pr-16">
                     <NextImage
-                      src={heroSlideImages[i]}
+                      src={heroSlideImages[i] || imagesConfig.placeholders.default}
                       alt={slide.title}
                       width={500}
                       height={500}
-                      className="rounded-2xl object-fill max-h-[70vh] shadow-2xl will-change-transform"
+                      className="rounded-2xl object-fill max-h-[70vh] shadow-2xl"
                       priority={i <= 2}
                     />
                   </div>
@@ -275,20 +233,18 @@ export const HeroCarousel: React.FC = () => {
                 {/* Mobile Layout */}
                 <div className="md:hidden w-full h-full flex flex-col justify-center items-center text-slate-800 text-center px-4">
                   <div className="flex items-center justify-center mb-6">
-                    <span className="text-5xl mr-4 drop-shadow-lg select-none">
-                      {slide.icon}
-                    </span>
+                    <span className="text-5xl mr-4 drop-shadow-lg select-none">{slide.icon}</span>
                     <h2 className="text-3xl font-black text-slate-900 drop-shadow-sm select-none">
                       {slide.title}
                     </h2>
                   </div>
                   <div className="mb-6">
                     <NextImage
-                      src={heroSlideImages[i]}
+                      src={heroSlideImages[i] || imagesConfig.placeholders.default}
                       alt={slide.title}
                       width={320}
                       height={320}
-                      className="rounded-xl object-fill shadow-2xl will-change-transform"
+                      className="rounded-xl object-fill shadow-2xl"
                       priority={i <= 2}
                     />
                   </div>
@@ -296,8 +252,8 @@ export const HeroCarousel: React.FC = () => {
                     &quot;{slide.description}&quot;
                   </p>
                   <button
-                    onClick={() => router.push(heroSlideRoutes[i])}
-                    className="bg-gradient-to-r from-slate-800 to-slate-900 text-white font-bold px-6 py-3 rounded-lg shadow-2xl border-2 border-slate-600 transition-all duration-200 transform active:scale-95 will-change-transform"
+                    onClick={() => router.push(heroSlideRoutes[i] || '/explore')}
+                    className="bg-gradient-to-r from-slate-800 to-slate-900 text-white font-bold px-6 py-3 rounded-lg shadow-2xl border-2 border-slate-600 transition-all duration-200 transform active:scale-95"
                   >
                     {slide.button}
                   </button>
@@ -311,7 +267,7 @@ export const HeroCarousel: React.FC = () => {
       {/* Navigation Buttons */}
       <button
         onClick={scrollPrev}
-        className="absolute left-6 lg:left-8 top-1/2 -translate-y-1/2 bg-slate-800/80 hover:bg-slate-700/90 p-3 rounded-full transition-all duration-200 z-20 backdrop-blur-sm shadow-xl border-2 border-slate-600 hover:scale-110 active:scale-95 will-change-transform"
+        className="absolute left-6 lg:left-8 top-1/2 -translate-y-1/2 bg-slate-800/80 hover:bg-slate-700/90 p-3 rounded-full transition-all duration-200 z-20 backdrop-blur-sm shadow-xl border-2 border-slate-600 hover:scale-110 active:scale-95"
         aria-label="Previous slide"
       >
         <ChevronLeft className="w-6 h-6 text-white" />
@@ -319,7 +275,7 @@ export const HeroCarousel: React.FC = () => {
 
       <button
         onClick={scrollNext}
-        className="absolute right-6 lg:right-8 top-1/2 -translate-y-1/2 bg-slate-800/80 hover:bg-slate-700/90 p-3 rounded-full transition-all duration-200 z-20 backdrop-blur-sm shadow-xl border-2 border-slate-600 hover:scale-110 active:scale-95 will-change-transform"
+        className="absolute right-6 lg:right-8 top-1/2 -translate-y-1/2 bg-slate-800/80 hover:bg-slate-700/90 p-3 rounded-full transition-all duration-200 z-20 backdrop-blur-sm shadow-xl border-2 border-slate-600 hover:scale-110 active:scale-95"
         aria-label="Next slide"
       >
         <ChevronRight className="w-6 h-6 text-white" />
@@ -327,14 +283,14 @@ export const HeroCarousel: React.FC = () => {
 
       {/* Dots Indicator */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-20">
-        {slides.map((_, i: number) => (
+        {slides.map((_, i) => (
           <button
             key={i}
             onClick={() => {
               scrollTo(i);
               handlePause();
             }}
-            className={`w-4 h-4 rounded-full transition-all duration-200 border-2 will-change-transform ${
+            className={`w-4 h-4 rounded-full transition-all duration-200 border-2 ${
               selected === i
                 ? 'bg-slate-800 border-slate-600 scale-125 shadow-lg'
                 : 'bg-white/70 border-slate-800/50 hover:bg-white hover:border-slate-600 hover:scale-110 active:scale-95'
@@ -344,27 +300,10 @@ export const HeroCarousel: React.FC = () => {
         ))}
       </div>
 
-      {/* Global Styles */}
       <style jsx global>{`
-        .embla {
-          overflow: hidden;
-          transform: translate3d(0, 0, 0);
-        }
-        .embla__container {
-          display: flex;
-          backface-visibility: hidden;
-          transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-          will-change: transform;
-        }
-        .embla__slide {
-          flex: 0 0 100%;
-          min-width: 0;
-          transform: translate3d(0, 0, 0);
-        }
-        .embla__slide > div {
-          transition: opacity 0.4s ease-out, transform 0.4s ease-out;
-          will-change: opacity, transform;
-        }
+        .embla { overflow: hidden; transform: translate3d(0, 0, 0); }
+        .embla__container { display: flex; backface-visibility: hidden; will-change: transform; }
+        .embla__slide { flex: 0 0 100%; min-width: 0; transform: translate3d(0, 0, 0); }
       `}</style>
     </div>
   );
