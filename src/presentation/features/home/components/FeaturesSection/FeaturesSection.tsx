@@ -1,12 +1,12 @@
 /**
  * FeaturesSection Component
  * @file src/presentation/features/home/components/FeaturesSection/FeaturesSection.tsx
- * @description Features section with tabs for the home page
+ * @description Features section with tabs for the home page with dynamic Supabase translations
  */
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { BookOpen, Zap, Award, LucideIcon } from 'lucide-react';
 
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
@@ -30,71 +30,60 @@ const ICON_MAP: Record<FeatureTabId, LucideIcon> = {
 const STAT_ICONS: LucideIcon[] = [BookOpen, Zap, Award];
 const STAT_COLORS: string[] = ['blue', 'green', 'yellow'];
 
-// Default data (fallback)
-const DEFAULT_TABS: FeatureTab[] = [
-  { id: 'personalized', label: 'Personalized', title: 'Personalized Attention', content: 'We understand that each student is unique.' },
-  { id: 'simplified', label: 'Simplified', title: 'Simplified Process', content: 'Our learning process is simple and effective.' },
-  { id: 'flexibility', label: 'Flexibility', title: 'Flexibility & Transparency', content: 'We offer flexible schedules and clear communication.' },
-];
-
-const DEFAULT_STATS: Stat[] = [
-  { number: '1000+', label: 'Active Students' },
-  { number: '95%', label: 'Improvement Rate' },
-  { number: '50+', label: 'Partner Institutions' },
-];
-
 // ============================================
 // COMPONENT
 // ============================================
 
 export const FeaturesSection: React.FC = () => {
-  const { t } = useSupabaseTranslations('features');
+  const { t, tArray, loading } = useSupabaseTranslations('features');
   const [activeTab, setActiveTab] = useState<FeatureTabId>('personalized');
 
-  // Build tabs from individual translation keys
-  const tabs = useMemo<FeatureTab[]>(() => {
-    return TAB_IDS.map((id, i) => {
-      const label = t(`tabs.${i}.label`);
-      const title = t(`tabs.${i}.title`);
-      const content = t(`tabs.${i}.content`);
+  // Get tabs dynamically from Supabase translations
+  const tabsData = tArray<{ label: string; title: string; content: string }>('tabs', ['label', 'title', 'content']);
 
-      const hasTranslation = !label.startsWith('[') && !label.endsWith(']');
+  // Map tab data to include IDs
+  const tabs: FeatureTab[] = tabsData.map((tab, i) => ({
+    id: TAB_IDS[i] || `tab-${i}` as FeatureTabId,
+    ...tab,
+  }));
 
-      if (hasTranslation) {
-        return { id, label, title, content };
-      }
-
-      return DEFAULT_TABS[i];
-    });
-  }, [t]);
-
-  // Build stats from individual translation keys
-  const stats = useMemo<Stat[]>(() => {
-    return Array.from({ length: 3 }, (_, i) => {
-      const number = t(`stats.${i}.number`);
-      const label = t(`stats.${i}.label`);
-
-      const hasTranslation = !number.startsWith('[') && !number.endsWith(']');
-
-      if (hasTranslation) {
-        return { number, label };
-      }
-
-      return DEFAULT_STATS[i];
-    });
-  }, [t]);
+  // Get stats dynamically from Supabase translations
+  const stats = tArray<Stat>('stats', ['number', 'label']);
 
   // Get header texts
   const title = t('title');
   const subtitle = t('subtitle');
   const buttonText = t('button');
 
-  // Use fallbacks if translations not loaded
-  const displayTitle = title.startsWith('[') ? 'What Makes Us Different' : title;
-  const displaySubtitle = subtitle.startsWith('[') ? 'Why EslectoEscritura is different from other platforms' : subtitle;
-  const displayButton = buttonText.startsWith('[') ? 'Learn More' : buttonText;
+  // Check if translations are loaded
+  const hasTranslations = !title.startsWith('[');
 
-  const activeTabData = tabs.find((tab) => tab.id === activeTab) || DEFAULT_TABS[0];
+  const activeTabData = tabs.find((tab) => tab.id === activeTab);
+
+  // ============================================
+  // LOADING STATE
+  // ============================================
+
+  if (loading || tabs.length === 0) {
+    return (
+      <section className="py-16 px-8 md:px-16 bg-gray-50">
+        <div className="container mx-auto max-w-6xl">
+          <div className="animate-pulse space-y-8">
+            <div className="text-center space-y-4">
+              <div className="h-4 bg-gray-200 rounded w-32 mx-auto" />
+              <div className="h-8 bg-gray-200 rounded w-2/3 mx-auto" />
+            </div>
+            <div className="flex justify-center gap-4">
+              <div className="h-12 w-32 bg-gray-200 rounded-full" />
+              <div className="h-12 w-32 bg-gray-200 rounded-full" />
+              <div className="h-12 w-32 bg-gray-200 rounded-full" />
+            </div>
+            <div className="bg-white rounded-2xl p-8 h-64" />
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   // ============================================
   // RENDER
@@ -140,17 +129,17 @@ export const FeaturesSection: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <p className="text-blue-600 text-sm font-bold uppercase tracking-wide mb-3">
-            {displayTitle}
+            {hasTranslations ? title : 'What Makes Us Different'}
           </p>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-800 leading-tight">
-            {displaySubtitle}
+            {hasTranslations ? subtitle : 'Why EslectoEscritura is different from other platforms'}
           </h2>
         </div>
 
         {/* Tabs Navigation */}
         <div className="flex flex-wrap justify-center gap-4 mb-8">
           {tabs.map((tab) => {
-            const IconComponent = ICON_MAP[tab.id];
+            const IconComponent = ICON_MAP[tab.id] || BookOpen;
             return (
               <button
                 key={tab.id}
@@ -170,56 +159,60 @@ export const FeaturesSection: React.FC = () => {
         </div>
 
         {/* Tab Content */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            {/* Content */}
-            <div className="order-2 lg:order-1">
-              <h3 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
-                {activeTabData.title}
-              </h3>
-              <div className="text-gray-600 text-lg leading-relaxed">
-                <p>{activeTabData.content}</p>
+        {activeTabData && (
+          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+              {/* Content */}
+              <div className="order-2 lg:order-1">
+                <h3 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
+                  {activeTabData.title}
+                </h3>
+                <div className="text-gray-600 text-lg leading-relaxed">
+                  <p>{activeTabData.content}</p>
+                </div>
+                <div className="mt-8">
+                  <button className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold px-8 py-3 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                    {hasTranslations ? buttonText : 'Learn More'}
+                  </button>
+                </div>
               </div>
-              <div className="mt-8">
-                <button className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold px-8 py-3 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                  {displayButton}
-                </button>
-              </div>
-            </div>
 
-            {/* Image */}
-            <div className="order-1 lg:order-2 text-center">
-              <div className="relative inline-block">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-green-400 rounded-2xl transform rotate-3 opacity-20" />
-                <NextImage
-                  src={imagesConfig.literacy.v1}
-                  alt={activeTabData.title}
-                  width={400}
-                  height={320}
-                  className="relative w-full max-w-md mx-auto h-80 object-fill rounded-2xl"
-                />
+              {/* Image */}
+              <div className="order-1 lg:order-2 text-center">
+                <div className="relative inline-block">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-green-400 rounded-2xl transform rotate-3 opacity-20" />
+                  <NextImage
+                    src={imagesConfig.literacy.v1}
+                    alt={activeTabData.title}
+                    width={400}
+                    height={320}
+                    className="relative w-full max-w-md mx-auto h-80 object-fill rounded-2xl"
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
-          {stats.map((stat, index) => {
-            const IconComponent = STAT_ICONS[index];
-            const color = STAT_COLORS[index];
+        {stats.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
+            {stats.map((stat, index) => {
+              const IconComponent = STAT_ICONS[index] || BookOpen;
+              const color = STAT_COLORS[index] || 'blue';
 
-            return (
-              <div key={index} className="text-center p-6 bg-white rounded-xl shadow-lg">
-                <div className={`w-16 h-16 bg-${color}-100 rounded-full flex items-center justify-center mx-auto mb-4`}>
-                  <IconComponent className={`w-8 h-8 text-${color}-600`} />
+              return (
+                <div key={index} className="text-center p-6 bg-white rounded-xl shadow-lg">
+                  <div className={`w-16 h-16 bg-${color}-100 rounded-full flex items-center justify-center mx-auto mb-4`}>
+                    <IconComponent className={`w-8 h-8 text-${color}-600`} />
+                  </div>
+                  <h4 className="text-xl font-semibold text-gray-800 mb-2">{stat.number}</h4>
+                  <p className="text-gray-600">{stat.label}</p>
                 </div>
-                <h4 className="text-xl font-semibold text-gray-800 mb-2">{stat.number}</h4>
-                <p className="text-gray-600">{stat.label}</p>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );

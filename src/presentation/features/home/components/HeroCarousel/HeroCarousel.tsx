@@ -1,12 +1,12 @@
 /**
  * HeroCarousel Component
  * @file src/presentation/features/home/components/HeroCarousel/HeroCarousel.tsx
- * @description Main hero carousel for the home page
+ * @description Main hero carousel for the home page with dynamic Supabase translations
  */
 
 'use client';
 
-import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -27,53 +27,17 @@ import type { HeroSlide } from '../../types';
 
 const AUTO_PLAY_INTERVAL = 6000;
 const PAUSE_TIMEOUT = 3000;
-const SLIDE_COUNT = 9;
-
-// Default slide data (used while loading or as fallback)
-const DEFAULT_SLIDES: HeroSlide[] = [
-  { title: 'Literacy', icon: '📚', description: 'Learn to read and write', button: 'Explore' },
-  { title: 'Stories', icon: '📖', description: 'Discover amazing stories', button: 'Read' },
-  { title: 'Fables', icon: '🦊', description: 'Learn moral lessons', button: 'Discover' },
-  { title: 'Poems', icon: '✨', description: 'Express with poetry', button: 'Create' },
-  { title: 'Legends', icon: '🏰', description: 'Explore ancient tales', button: 'Adventure' },
-  { title: 'Riddles', icon: '🤔', description: 'Challenge your mind', button: 'Solve' },
-  { title: 'Comics', icon: '💥', description: 'Visual storytelling', button: 'View' },
-  { title: 'Tongue Twisters', icon: '👅', description: 'Fun with words', button: 'Try' },
-  { title: 'Rhymes', icon: '🎵', description: 'Musical language', button: 'Listen' },
-];
 
 // ============================================
 // COMPONENT
 // ============================================
 
 export const HeroCarousel: React.FC = () => {
-  const { t, loading } = useSupabaseTranslations('hero');
+  const { tArray, loading } = useSupabaseTranslations('hero');
   const router = useRouter();
 
-  // Build slides from individual translation keys
-  const slides = useMemo<HeroSlide[]>(() => {
-    return Array.from({ length: SLIDE_COUNT }, (_, i) => {
-      const titleKey = `slides.${i}.title`;
-      const iconKey = `slides.${i}.icon`;
-      const descriptionKey = `slides.${i}.description`;
-      const buttonKey = `slides.${i}.button`;
-
-      const title = t(titleKey);
-      const icon = t(iconKey);
-      const description = t(descriptionKey);
-      const button = t(buttonKey);
-
-      // Check if translation exists (not returning the [key] fallback)
-      const hasTranslation = !title.startsWith('[') && !title.endsWith(']');
-
-      if (hasTranslation) {
-        return { title, icon, description, button };
-      }
-
-      // Fallback to default
-      return DEFAULT_SLIDES[i];
-    });
-  }, [t]);
+  // Get slides dynamically from Supabase translations
+  const slides = tArray<HeroSlide>('slides', ['title', 'icon', 'description', 'button']);
 
   // Embla carousel configuration
   const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -145,7 +109,7 @@ export const HeroCarousel: React.FC = () => {
   }, [emblaApi, onSelect]);
 
   useEffect(() => {
-    if (!emblaApi || !isPlaying || !isVisible) {
+    if (!emblaApi || !isPlaying || !isVisible || slides.length === 0) {
       if (autoPlayRef.current) {
         clearInterval(autoPlayRef.current);
         autoPlayRef.current = null;
@@ -160,7 +124,7 @@ export const HeroCarousel: React.FC = () => {
     return () => {
       if (autoPlayRef.current) clearInterval(autoPlayRef.current);
     };
-  }, [emblaApi, isPlaying, isVisible]);
+  }, [emblaApi, isPlaying, isVisible, slides.length]);
 
   useEffect(() => {
     const handleVisibilityChange = () => setIsVisible(!document.hidden);
@@ -174,6 +138,23 @@ export const HeroCarousel: React.FC = () => {
       if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
     };
   }, []);
+
+  // ============================================
+  // LOADING STATE
+  // ============================================
+
+  if (loading || slides.length === 0) {
+    return (
+      <div className="relative h-[calc(100vh-56px)] overflow-hidden bg-gradient-to-br from-cyan-400 to-blue-500">
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent mx-auto mb-4" />
+            <p className="text-white text-xl font-medium">Loading...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ============================================
   // RENDER

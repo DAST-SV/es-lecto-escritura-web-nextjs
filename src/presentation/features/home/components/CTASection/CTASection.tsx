@@ -1,7 +1,7 @@
 /**
  * CTASection Component
  * @file src/presentation/features/home/components/CTASection/CTASection.tsx
- * @description Call-to-action section for the home page
+ * @description Call-to-action section for the home page with dynamic Supabase translations
  */
 
 'use client';
@@ -10,31 +10,37 @@ import React from 'react';
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 
 // ============================================
-// CONSTANTS
-// ============================================
-
-const DEFAULT_CONTENT = {
-  title: 'Ready to Start Learning?',
-  description: 'Join thousands of students who are improving their reading and writing skills every day.',
-  button: 'Get Started Now',
-};
-
-// ============================================
 // COMPONENT
 // ============================================
 
 export const CTASection: React.FC = () => {
-  const { t } = useSupabaseTranslations('cta');
+  const { t, hasTranslation, loading } = useSupabaseTranslations('cta');
 
-  // Get translations with fallbacks
+  // Get translations dynamically
   const title = t('title');
   const description = t('description');
   const buttonText = t('button');
 
-  // Use fallbacks if translations not loaded
-  const displayTitle = title.startsWith('[') ? DEFAULT_CONTENT.title : title;
-  const displayDescription = description.startsWith('[') ? DEFAULT_CONTENT.description : description;
-  const displayButton = buttonText.startsWith('[') ? DEFAULT_CONTENT.button : buttonText;
+  // Check if translations are loaded
+  const isLoaded = hasTranslation('title');
+
+  // ============================================
+  // LOADING STATE
+  // ============================================
+
+  if (loading || !isLoaded) {
+    return (
+      <section className="py-16 px-8 md:px-16 bg-gradient-to-r from-blue-50 to-green-50">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="animate-pulse space-y-6">
+            <div className="h-10 bg-gray-200 rounded w-2/3 mx-auto" />
+            <div className="h-6 bg-gray-200 rounded w-3/4 mx-auto" />
+            <div className="h-12 w-48 bg-gray-200 rounded-xl mx-auto" />
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   // ============================================
   // RENDER
@@ -44,13 +50,13 @@ export const CTASection: React.FC = () => {
     <section className="py-16 px-8 md:px-16 bg-gradient-to-r from-blue-50 to-green-50">
       <div className="max-w-4xl mx-auto text-center">
         <h3 className="text-3xl md:text-4xl font-bold mb-8 text-gray-800">
-          {displayTitle}
+          {title}
         </h3>
         <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-          {displayDescription}
+          {description}
         </p>
         <button className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold px-10 py-4 rounded-xl shadow-lg hover:from-orange-600 hover:to-red-600 transition-all duration-300 transform hover:scale-105 text-lg">
-          {displayButton}
+          {buttonText}
         </button>
       </div>
     </section>
