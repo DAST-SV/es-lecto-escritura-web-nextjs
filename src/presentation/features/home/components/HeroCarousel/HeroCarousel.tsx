@@ -37,7 +37,7 @@ export const HeroCarousel: React.FC = () => {
   const router = useRouter();
 
   // Get slides dynamically from Supabase translations
-  const slides = tArray<HeroSlide>('slides', ['title', 'icon', 'description', 'button']);
+  const slides = tArray('slides', ['title', 'icon', 'description', 'button']) as unknown as HeroSlide[];
 
   // Embla carousel configuration
   const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -145,12 +145,93 @@ export const HeroCarousel: React.FC = () => {
 
   if (loading || slides.length === 0) {
     return (
-      <div className="relative h-[calc(100vh-56px)] overflow-hidden bg-gradient-to-br from-cyan-400 to-blue-500">
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent mx-auto mb-4" />
-            <p className="text-white text-xl font-medium">Loading...</p>
+      <div className="relative h-[calc(100vh-56px)] overflow-hidden bg-gradient-to-br from-cyan-400/90 to-blue-500/90 animate-pulse">
+        <div
+          className="h-full bg-cover bg-center bg-fixed opacity-30"
+          style={{
+            backgroundImage: `url(${imagesConfig.dashboard.backgroundV1})`,
+          }}
+        />
+        
+        <div className="absolute inset-0 flex items-center px-6 md:px-16 py-10">
+          {/* Desktop Skeleton */}
+          <div className="hidden md:flex w-full h-full items-center max-w-7xl mx-auto">
+            {/* Left Content Skeleton */}
+            <div className="w-1/2 pr-12 flex flex-col justify-center ml-8 lg:ml-16 space-y-6">
+              {/* Icon and Title Skeleton */}
+              <div className="flex items-center mb-6">
+                <div className="w-16 h-16 bg-white/30 rounded-lg mr-6 animate-pulse" />
+                <div className="flex-1 space-y-3">
+                  <div className="h-10 bg-white/30 rounded-lg w-3/4 animate-pulse" />
+                  <div className="h-10 bg-white/30 rounded-lg w-1/2 animate-pulse" />
+                </div>
+              </div>
+              
+              {/* Description Skeleton */}
+              <div className="bg-white/20 backdrop-blur-sm p-4 rounded-lg border-l-4 border-white/30 space-y-2">
+                <div className="h-6 bg-white/30 rounded w-full animate-pulse" />
+                <div className="h-6 bg-white/30 rounded w-5/6 animate-pulse" />
+                <div className="h-6 bg-white/30 rounded w-4/6 animate-pulse" />
+              </div>
+              
+              {/* Button Skeleton */}
+              <div className="h-14 bg-white/30 rounded-xl w-48 animate-pulse" />
+            </div>
+            
+            {/* Right Image Skeleton */}
+            <div className="w-1/2 flex justify-center items-center pr-8 lg:pr-16">
+              <div className="w-[500px] h-[500px] bg-white/30 rounded-2xl shadow-2xl animate-pulse" />
+            </div>
           </div>
+
+          {/* Mobile Skeleton */}
+          <div className="md:hidden w-full h-full flex flex-col justify-center items-center text-center px-4 space-y-6">
+            {/* Icon and Title Skeleton */}
+            <div className="flex items-center justify-center mb-6">
+              <div className="w-14 h-14 bg-white/30 rounded-lg mr-4 animate-pulse" />
+              <div className="h-8 bg-white/30 rounded-lg w-40 animate-pulse" />
+            </div>
+            
+            {/* Image Skeleton */}
+            <div className="w-80 h-80 bg-white/30 rounded-xl shadow-2xl animate-pulse" />
+            
+            {/* Description Skeleton */}
+            <div className="bg-white/20 backdrop-blur-sm p-4 rounded-lg max-w-md w-full space-y-2">
+              <div className="h-5 bg-white/30 rounded w-full animate-pulse" />
+              <div className="h-5 bg-white/30 rounded w-4/5 animate-pulse" />
+              <div className="h-5 bg-white/30 rounded w-3/5 animate-pulse" />
+            </div>
+            
+            {/* Button Skeleton */}
+            <div className="h-12 bg-white/30 rounded-lg w-40 animate-pulse" />
+          </div>
+        </div>
+
+        {/* Disabled Navigation Buttons */}
+        <button
+          disabled
+          className="absolute left-6 lg:left-8 top-1/2 -translate-y-1/2 bg-white/20 p-3 rounded-full backdrop-blur-sm shadow-xl border-2 border-white/30 cursor-not-allowed opacity-50"
+          aria-label="Previous slide"
+        >
+          <ChevronLeft className="w-6 h-6 text-white" />
+        </button>
+
+        <button
+          disabled
+          className="absolute right-6 lg:right-8 top-1/2 -translate-y-1/2 bg-white/20 p-3 rounded-full backdrop-blur-sm shadow-xl border-2 border-white/30 cursor-not-allowed opacity-50"
+          aria-label="Next slide"
+        >
+          <ChevronRight className="w-6 h-6 text-white" />
+        </button>
+
+        {/* Skeleton Dots Indicator */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+          {[...Array(3)].map((_, i) => (
+            <div
+              key={i}
+              className="w-4 h-4 rounded-full bg-white/30 border-2 border-white/50 animate-pulse"
+            />
+          ))}
         </div>
       </div>
     );
