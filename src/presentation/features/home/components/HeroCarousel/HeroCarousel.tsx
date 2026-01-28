@@ -145,91 +145,102 @@ export const HeroCarousel: React.FC = () => {
 
   if (loading || slides.length === 0) {
     return (
-      <div className="relative h-[calc(100vh-56px)] overflow-hidden bg-gradient-to-br from-cyan-400/90 to-blue-500/90 animate-pulse">
+      <div className="relative h-[calc(100vh-56px)] overflow-hidden will-change-transform">
         <div
-          className="h-full bg-cover bg-center bg-fixed opacity-30"
+          className="h-full bg-cover bg-center bg-fixed"
           style={{
             backgroundImage: `url(${imagesConfig.dashboard.backgroundV1})`,
+            transform: 'translate3d(0,0,0)',
           }}
-        />
-        
-        <div className="absolute inset-0 flex items-center px-6 md:px-16 py-10">
-          {/* Desktop Skeleton */}
-          <div className="hidden md:flex w-full h-full items-center max-w-7xl mx-auto">
-            {/* Left Content Skeleton */}
-            <div className="w-1/2 pr-12 flex flex-col justify-center ml-8 lg:ml-16 space-y-6">
-              {/* Icon and Title Skeleton */}
-              <div className="flex items-center mb-6">
-                <div className="w-16 h-16 bg-white/30 rounded-lg mr-6 animate-pulse" />
-                <div className="flex-1 space-y-3">
-                  <div className="h-10 bg-white/30 rounded-lg w-3/4 animate-pulse" />
-                  <div className="h-10 bg-white/30 rounded-lg w-1/2 animate-pulse" />
+        >
+          <div className="w-full h-full flex items-center px-6 md:px-16 py-10">
+            {/* Desktop Skeleton Layout */}
+            <div className="hidden md:flex w-full h-full items-center max-w-7xl mx-auto">
+              {/* Left Content - Exact structure */}
+              <div className="w-1/2 pr-12 text-slate-800 flex flex-col justify-center ml-8 lg:ml-16">
+                {/* Icon + Title Skeleton */}
+                <div className="flex items-center mb-6">
+                  <div className="w-[60px] h-[60px] bg-slate-700/20 rounded-xl mr-6 animate-pulse shadow-lg" />
+                  <div className="flex-1 space-y-3">
+                    <div className="h-12 bg-slate-800/20 rounded-lg w-[85%] animate-pulse" />
+                    <div className="h-12 bg-slate-800/20 rounded-lg w-[60%] animate-pulse" />
+                  </div>
                 </div>
+                
+                {/* Description Skeleton - matches the quote box */}
+                <div className="bg-white/20 backdrop-blur-sm p-4 rounded-lg border-l-4 border-slate-800 mb-8">
+                  <div className="space-y-3">
+                    <div className="h-6 bg-slate-700/30 rounded w-full animate-pulse" />
+                    <div className="h-6 bg-slate-700/30 rounded w-[95%] animate-pulse" />
+                    <div className="h-6 bg-slate-700/30 rounded w-[75%] animate-pulse" />
+                  </div>
+                </div>
+                
+                {/* Button Skeleton - exact dimensions */}
+                <div className="h-[56px] bg-slate-800/40 rounded-xl w-[200px] animate-pulse shadow-2xl border-2 border-slate-600/30" />
+              </div>
+              
+              {/* Right Image Skeleton - exact dimensions */}
+              <div className="w-1/2 flex justify-center items-center pr-8 lg:pr-16">
+                <div className="w-[500px] h-[500px] bg-slate-700/20 rounded-2xl shadow-2xl animate-pulse max-h-[70vh]" />
+              </div>
+            </div>
+
+            {/* Mobile Skeleton Layout */}
+            <div className="md:hidden w-full h-full flex flex-col justify-center items-center text-slate-800 text-center px-4">
+              {/* Icon + Title Skeleton */}
+              <div className="flex items-center justify-center mb-6">
+                <div className="w-[50px] h-[50px] bg-slate-700/20 rounded-lg mr-4 animate-pulse shadow-lg" />
+                <div className="h-10 bg-slate-800/20 rounded-lg w-[180px] animate-pulse" />
+              </div>
+              
+              {/* Image Skeleton - mobile dimensions */}
+              <div className="mb-6">
+                <div className="w-[320px] h-[320px] bg-slate-700/20 rounded-xl shadow-2xl animate-pulse" />
               </div>
               
               {/* Description Skeleton */}
-              <div className="bg-white/20 backdrop-blur-sm p-4 rounded-lg border-l-4 border-white/30 space-y-2">
-                <div className="h-6 bg-white/30 rounded w-full animate-pulse" />
-                <div className="h-6 bg-white/30 rounded w-5/6 animate-pulse" />
-                <div className="h-6 bg-white/30 rounded w-4/6 animate-pulse" />
+              <div className="bg-white/20 backdrop-blur-sm p-4 rounded-lg mb-6 max-w-md w-full">
+                <div className="space-y-2">
+                  <div className="h-4 bg-slate-700/30 rounded w-full animate-pulse" />
+                  <div className="h-4 bg-slate-700/30 rounded w-[90%] mx-auto animate-pulse" />
+                  <div className="h-4 bg-slate-700/30 rounded w-[70%] mx-auto animate-pulse" />
+                </div>
               </div>
               
-              {/* Button Skeleton */}
-              <div className="h-14 bg-white/30 rounded-xl w-48 animate-pulse" />
+              {/* Button Skeleton - mobile */}
+              <div className="h-[48px] bg-slate-800/40 rounded-lg w-[160px] animate-pulse shadow-2xl border-2 border-slate-600/30" />
             </div>
-            
-            {/* Right Image Skeleton */}
-            <div className="w-1/2 flex justify-center items-center pr-8 lg:pr-16">
-              <div className="w-[500px] h-[500px] bg-white/30 rounded-2xl shadow-2xl animate-pulse" />
-            </div>
-          </div>
-
-          {/* Mobile Skeleton */}
-          <div className="md:hidden w-full h-full flex flex-col justify-center items-center text-center px-4 space-y-6">
-            {/* Icon and Title Skeleton */}
-            <div className="flex items-center justify-center mb-6">
-              <div className="w-14 h-14 bg-white/30 rounded-lg mr-4 animate-pulse" />
-              <div className="h-8 bg-white/30 rounded-lg w-40 animate-pulse" />
-            </div>
-            
-            {/* Image Skeleton */}
-            <div className="w-80 h-80 bg-white/30 rounded-xl shadow-2xl animate-pulse" />
-            
-            {/* Description Skeleton */}
-            <div className="bg-white/20 backdrop-blur-sm p-4 rounded-lg max-w-md w-full space-y-2">
-              <div className="h-5 bg-white/30 rounded w-full animate-pulse" />
-              <div className="h-5 bg-white/30 rounded w-4/5 animate-pulse" />
-              <div className="h-5 bg-white/30 rounded w-3/5 animate-pulse" />
-            </div>
-            
-            {/* Button Skeleton */}
-            <div className="h-12 bg-white/30 rounded-lg w-40 animate-pulse" />
           </div>
         </div>
 
-        {/* Disabled Navigation Buttons */}
+        {/* Disabled Navigation Buttons - exact styling */}
         <button
           disabled
-          className="absolute left-6 lg:left-8 top-1/2 -translate-y-1/2 bg-white/20 p-3 rounded-full backdrop-blur-sm shadow-xl border-2 border-white/30 cursor-not-allowed opacity-50"
+          className="absolute left-6 lg:left-8 top-1/2 -translate-y-1/2 bg-slate-800/30 p-3 rounded-full backdrop-blur-sm shadow-xl border-2 border-slate-600/30 cursor-not-allowed opacity-50"
           aria-label="Previous slide"
         >
-          <ChevronLeft className="w-6 h-6 text-white" />
+          <ChevronLeft className="w-6 h-6 text-white/50" />
         </button>
 
         <button
           disabled
-          className="absolute right-6 lg:right-8 top-1/2 -translate-y-1/2 bg-white/20 p-3 rounded-full backdrop-blur-sm shadow-xl border-2 border-white/30 cursor-not-allowed opacity-50"
+          className="absolute right-6 lg:right-8 top-1/2 -translate-y-1/2 bg-slate-800/30 p-3 rounded-full backdrop-blur-sm shadow-xl border-2 border-slate-600/30 cursor-not-allowed opacity-50"
           aria-label="Next slide"
         >
-          <ChevronRight className="w-6 h-6 text-white" />
+          <ChevronRight className="w-6 h-6 text-white/50" />
         </button>
 
-        {/* Skeleton Dots Indicator */}
+        {/* Skeleton Dots Indicator - exact styling */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-20">
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="w-4 h-4 rounded-full bg-white/30 border-2 border-white/50 animate-pulse"
+              className={`w-4 h-4 rounded-full border-2 animate-pulse ${
+                i === 0
+                  ? 'bg-slate-800/40 border-slate-600/40 scale-125'
+                  : 'bg-white/40 border-slate-800/30'
+              }`}
             />
           ))}
         </div>

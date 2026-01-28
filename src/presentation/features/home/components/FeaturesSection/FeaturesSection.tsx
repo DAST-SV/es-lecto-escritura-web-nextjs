@@ -39,7 +39,7 @@ export const FeaturesSection: React.FC = () => {
   const [activeTab, setActiveTab] = useState<FeatureTabId>('personalized');
 
   // Get tabs dynamically from Supabase translations
-  const tabsData = tArray<{ label: string; title: string; content: string }>('tabs', ['label', 'title', 'content']);
+  const tabsData = tArray('tabs', ['label', 'title', 'content']) as unknown as { label: string; title: string; content: string }[];
 
   // Map tab data to include IDs
   const tabs: FeatureTab[] = tabsData.map((tab, i) => ({
@@ -48,7 +48,7 @@ export const FeaturesSection: React.FC = () => {
   }));
 
   // Get stats dynamically from Supabase translations
-  const stats = tArray<Stat>('stats', ['number', 'label']);
+  const stats = tArray('stats', ['number', 'label']) as unknown as Stat[];
 
   // Get header texts
   const title = t('title');
@@ -66,19 +66,120 @@ export const FeaturesSection: React.FC = () => {
 
   if (loading || tabs.length === 0) {
     return (
-      <section className="py-16 px-8 md:px-16 bg-gray-50">
-        <div className="container mx-auto max-w-6xl">
-          <div className="animate-pulse space-y-8">
-            <div className="text-center space-y-4">
-              <div className="h-4 bg-gray-200 rounded w-32 mx-auto" />
-              <div className="h-8 bg-gray-200 rounded w-2/3 mx-auto" />
+      <section className="py-16 px-8 md:px-16 bg-gray-50 relative overflow-hidden">
+        {/* Decorative Background Shapes */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <svg
+            className="absolute -left-20 top-10 text-blue-100"
+            width="200"
+            height="400"
+            viewBox="0 0 200 400"
+            fill="none"
+          >
+            <path
+              d="M-50 50C-50 100 0 150 50 150C100 150 150 200 150 250C150 300 100 350 50 350"
+              stroke="currentColor"
+              strokeWidth="2"
+              fill="none"
+              opacity="0.3"
+            />
+          </svg>
+          <svg
+            className="absolute -right-20 bottom-10 text-orange-100"
+            width="200"
+            height="400"
+            viewBox="0 0 200 400"
+            fill="none"
+          >
+            <path
+              d="M250 350C250 300 200 250 150 250C100 250 50 200 50 150C50 100 100 50 150 50"
+              stroke="currentColor"
+              strokeWidth="2"
+              fill="none"
+              opacity="0.3"
+            />
+          </svg>
+        </div>
+
+        <div className="container mx-auto max-w-6xl relative z-10">
+          {/* Header Skeleton */}
+          <div className="text-center mb-12">
+            <div className="h-4 bg-blue-200/50 rounded w-48 mx-auto mb-3 animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-8 bg-gray-200 rounded w-3/4 mx-auto animate-pulse" />
+              <div className="h-8 bg-gray-200 rounded w-2/3 mx-auto animate-pulse" />
             </div>
-            <div className="flex justify-center gap-4">
-              <div className="h-12 w-32 bg-gray-200 rounded-full" />
-              <div className="h-12 w-32 bg-gray-200 rounded-full" />
-              <div className="h-12 w-32 bg-gray-200 rounded-full" />
+          </div>
+
+          {/* Tabs Navigation Skeleton */}
+          <div className="flex flex-wrap justify-center gap-4 mb-8">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className={`flex items-center gap-2 px-6 py-3 rounded-full shadow-md animate-pulse ${
+                  i === 0
+                    ? 'bg-gradient-to-r from-blue-500/30 to-blue-600/30'
+                    : 'bg-white'
+                }`}
+              >
+                <div className={`w-5 h-5 rounded ${i === 0 ? 'bg-white/50' : 'bg-gray-300'}`} />
+                <div className={`hidden sm:block h-4 w-24 rounded ${i === 0 ? 'bg-white/50' : 'bg-gray-300'}`} />
+                <div className={`sm:hidden h-4 w-16 rounded ${i === 0 ? 'bg-white/50' : 'bg-gray-300'}`} />
+              </div>
+            ))}
+          </div>
+
+          {/* Tab Content Skeleton */}
+          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+              {/* Content Skeleton */}
+              <div className="order-2 lg:order-1">
+                {/* Title Skeleton */}
+                <div className="space-y-3 mb-6">
+                  <div className="h-8 bg-gray-200 rounded w-4/5 animate-pulse" />
+                  <div className="h-8 bg-gray-200 rounded w-3/5 animate-pulse" />
+                </div>
+                
+                {/* Content Skeleton */}
+                <div className="space-y-3 mb-8">
+                  <div className="h-5 bg-gray-100 rounded w-full animate-pulse" />
+                  <div className="h-5 bg-gray-100 rounded w-[95%] animate-pulse" />
+                  <div className="h-5 bg-gray-100 rounded w-[90%] animate-pulse" />
+                  <div className="h-5 bg-gray-100 rounded w-[85%] animate-pulse" />
+                </div>
+                
+                {/* Button Skeleton */}
+                <div className="mt-8">
+                  <div className="h-12 w-40 bg-gradient-to-r from-orange-400/40 to-red-400/40 rounded-lg animate-pulse shadow-lg" />
+                </div>
+              </div>
+
+              {/* Image Skeleton */}
+              <div className="order-1 lg:order-2 text-center">
+                <div className="relative inline-block w-full max-w-md mx-auto">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-green-400/20 rounded-2xl transform rotate-3" />
+                  <div className="relative w-full h-80 bg-gray-200 rounded-2xl animate-pulse" />
+                </div>
+              </div>
             </div>
-            <div className="bg-white rounded-2xl p-8 h-64" />
+          </div>
+
+          {/* Stats Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
+            {[...Array(3)].map((_, index) => {
+              const colors = ['blue', 'green', 'yellow'];
+              const color = colors[index];
+              
+              return (
+                <div key={index} className="text-center p-6 bg-white rounded-xl shadow-lg">
+                  <div className={`w-16 h-16 bg-${color}-100 rounded-full flex items-center justify-center mx-auto mb-4`}>
+                    <div className={`w-8 h-8 bg-${color}-300/50 rounded animate-pulse`} />
+                  </div>
+                  <div className="h-6 bg-gray-200 rounded w-20 mx-auto mb-2 animate-pulse" />
+                  <div className="h-4 bg-gray-100 rounded w-32 mx-auto animate-pulse" />
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
