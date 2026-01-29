@@ -30,3 +30,10 @@ export * from './OrganizationMember';
 
 // Relaciones entre usuarios
 export * from './UserRelationship';
+
+// Sistema de libros extendido
+export * from './BookTranslation';
+export * from './BookCollaborator';
+export * from './AuthorProfile';
+export * from './Community';
+export * from './BookReview';
