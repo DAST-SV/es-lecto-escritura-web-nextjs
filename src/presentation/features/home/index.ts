@@ -1,18 +1,15 @@
 /**
- * Home Feature Export
+ * Home Feature Exports
  * @file src/presentation/features/home/index.ts
  */
 
-// Components
-export { HeroCarousel, FeaturesSection, CTASection } from './components';
+export { HeroCarousel } from './components/HeroCarousel/HeroCarousel';
+export { FeaturesSection } from './components/FeaturesSection/FeaturesSection';
+export { CTASection } from './components/CTASection/CTASection';
 
-// Types
 export type {
   HeroSlide,
-  HeroCarouselProps,
   FeatureTab,
   FeatureTabId,
   Stat,
-  FeaturesSectionProps,
-  CTASectionProps,
 } from './types';

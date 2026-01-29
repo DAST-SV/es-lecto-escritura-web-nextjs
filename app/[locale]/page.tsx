@@ -21,12 +21,23 @@ import {
 const HomePage: React.FC = () => {
   return (
     <UnifiedLayout
-      className="bg-gradient-to-r bg-[#39cffd]"
+      className="min-h-screen bg-gradient-to-b from-blue-400 via-blue-300 to-cyan-200"
       mainClassName="pt-0"
     >
-      <HeroCarousel />
-      <FeaturesSection />
-      <CTASection />
+      {/* Hero Carousel - con loading state interno */}
+      <div className="w-full">
+        <HeroCarousel />
+      </div>
+      
+      {/* Features Section - con loading state interno */}
+      <div className="w-full">
+        <FeaturesSection />
+      </div>
+      
+      {/* CTA Section - con loading state interno */}
+      <div className="w-full">
+        <CTASection />
+      </div>
     </UnifiedLayout>
   );
 };

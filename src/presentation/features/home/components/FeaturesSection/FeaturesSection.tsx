@@ -1,319 +1,301 @@
 /**
  * FeaturesSection Component
  * @file src/presentation/features/home/components/FeaturesSection/FeaturesSection.tsx
- * @description Features section with tabs for the home page with dynamic Supabase translations
+ * @description Features section with professional design
  */
 
 'use client';
 
-import React, { useState } from 'react';
-import { BookOpen, Zap, Award, LucideIcon } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
+import { BookOpen, Zap, Award, Users, DollarSign, LucideIcon, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 
-import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
+import type { FeatureTab, FeatureTabId, Stat } from '../../types';
 import { NextImage } from '@/src/presentation/components/ui/NextImage';
 import { imagesConfig } from '@/src/infrastructure/config/images.config';
 
-import type { FeatureTab, FeatureTabId, Stat } from '../../types';
-
-// ============================================
-// CONSTANTS
-// ============================================
-
-const TAB_IDS: FeatureTabId[] = ['personalized', 'simplified', 'flexibility'];
-
-const ICON_MAP: Record<FeatureTabId, LucideIcon> = {
-  personalized: BookOpen,
-  simplified: Zap,
-  flexibility: Award,
+const iconMap: Record<FeatureTabId, LucideIcon> = {
+  'our_difference': BookOpen,
+  'for_students': Zap,
+  'for_parents': Award,
+  'for_teachers': Users,
+  'plans_and_pricing': DollarSign
 };
 
-const STAT_ICONS: LucideIcon[] = [BookOpen, Zap, Award];
-const STAT_COLORS: string[] = ['blue', 'green', 'yellow'];
-
-// ============================================
-// COMPONENT
-// ============================================
+const imageMap: Record<FeatureTabId, string> = {
+  'our_difference': imagesConfig.featureTabs.difference,
+  'for_students': imagesConfig.featureTabs.student,
+  'for_parents': imagesConfig.featureTabs.parent,
+  'for_teachers': imagesConfig.featureTabs.teacher,
+  'plans_and_pricing': imagesConfig.featureTabs.pricing
+};
 
 export const FeaturesSection: React.FC = () => {
-  const { t, tArray, loading } = useSupabaseTranslations('features');
-  const [activeTab, setActiveTab] = useState<FeatureTabId>('personalized');
+  const t = useTranslations('features');
+  const tabs: FeatureTab[] = t.raw('tabs');
+  const stats: Stat[] = t.raw('stats');
+  const [activeTab, setActiveTab] = useState<FeatureTabId>('our_difference');
+  const [isImageLoaded, setIsImageLoaded] = useState<Record<FeatureTabId, boolean>>({} as Record<FeatureTabId, boolean>);
 
-  // Get tabs dynamically from Supabase translations
-  const tabsData = tArray('tabs', ['label', 'title', 'content']) as unknown as { label: string; title: string; content: string }[];
+  const activeTabData = tabs.find(tab => tab.id === activeTab);
 
-  // Map tab data to include IDs
-  const tabs: FeatureTab[] = tabsData.map((tab, i) => ({
-    id: TAB_IDS[i] || `tab-${i}` as FeatureTabId,
-    ...tab,
-  }));
+  // Auto-rotación optimizada cada 8 segundos
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
+      const nextIndex = (currentIndex + 1) % tabs.length;
+      setActiveTab(tabs[nextIndex].id as FeatureTabId);
+    }, 8000);
 
-  // Get stats dynamically from Supabase translations
-  const stats = tArray('stats', ['number', 'label']) as unknown as Stat[];
+    return () => clearInterval(interval);
+  }, [activeTab, tabs]);
 
-  // Get header texts
-  const title = t('title');
-  const subtitle = t('subtitle');
-  const buttonText = t('button');
+  // Precargar solo las 2 primeras imágenes
+  useEffect(() => {
+    const priorityTabs: FeatureTabId[] = ['our_difference', 'for_students'];
+    priorityTabs.forEach((tabId) => {
+      const img = new Image();
+      img.src = imageMap[tabId];
+      img.onload = () => {
+        setIsImageLoaded(prev => ({ ...prev, [tabId]: true }));
+      };
+    });
+  }, []);
 
-  // Check if translations are loaded
-  const hasTranslations = !title.startsWith('[');
+  const handleTabChange = useCallback((tabId: FeatureTabId) => {
+    setActiveTab(tabId);
+    
+    // Cargar imagen del tab si no está cargada
+    if (!isImageLoaded[tabId]) {
+      const img = new Image();
+      img.src = imageMap[tabId];
+      img.onload = () => {
+        setIsImageLoaded(prev => ({ ...prev, [tabId]: true }));
+      };
+    }
+  }, [isImageLoaded]);
 
-  const activeTabData = tabs.find((tab) => tab.id === activeTab);
+  // Navegación mobile optimizada
+  const handleMobileNavigation = (direction: 'prev' | 'next') => {
+    const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
+    const newIndex = direction === 'prev' 
+      ? (currentIndex === 0 ? tabs.length - 1 : currentIndex - 1)
+      : (currentIndex + 1) % tabs.length;
+    
+    handleTabChange(tabs[newIndex].id as FeatureTabId);
+  };
 
-  // ============================================
-  // LOADING STATE
-  // ============================================
+  return (
+    <section className="py-16 lg:py-20 px-4 md:px-8 lg:px-16 bg-gradient-to-br from-slate-50 to-blue-50 relative overflow-hidden">
+      {/* Patrón decorativo sutil - Optimizado */}
+      <div className="absolute inset-0 opacity-[0.03]" style={{
+        backgroundImage: `radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)`,
+        backgroundSize: '48px 48px'
+      }}></div>
 
-  if (loading || tabs.length === 0) {
-    return (
-      <section className="py-16 px-8 md:px-16 bg-gray-50 relative overflow-hidden">
-        {/* Decorative Background Shapes */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <svg
-            className="absolute -left-20 top-10 text-blue-100"
-            width="200"
-            height="400"
-            viewBox="0 0 200 400"
-            fill="none"
-          >
-            <path
-              d="M-50 50C-50 100 0 150 50 150C100 150 150 200 150 250C150 300 100 350 50 350"
-              stroke="currentColor"
-              strokeWidth="2"
-              fill="none"
-              opacity="0.3"
-            />
-          </svg>
-          <svg
-            className="absolute -right-20 bottom-10 text-orange-100"
-            width="200"
-            height="400"
-            viewBox="0 0 200 400"
-            fill="none"
-          >
-            <path
-              d="M250 350C250 300 200 250 150 250C100 250 50 200 50 150C50 100 100 50 150 50"
-              stroke="currentColor"
-              strokeWidth="2"
-              fill="none"
-              opacity="0.3"
-            />
-          </svg>
+      <div className="container mx-auto max-w-7xl relative z-10">
+        {/* Título profesional */}
+        <div className="text-center mb-12 lg:mb-16">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 leading-tight mb-3">
+            {t('title')}
+          </h2>
+          <div className="w-20 h-1.5 bg-gradient-to-r from-teal-500 to-cyan-500 mx-auto rounded-full"></div>
         </div>
 
-        <div className="container mx-auto max-w-6xl relative z-10">
-          {/* Header Skeleton */}
-          <div className="text-center mb-12">
-            <div className="h-4 bg-blue-200/50 rounded w-48 mx-auto mb-3 animate-pulse" />
-            <div className="space-y-2">
-              <div className="h-8 bg-gray-200 rounded w-3/4 mx-auto animate-pulse" />
-              <div className="h-8 bg-gray-200 rounded w-2/3 mx-auto animate-pulse" />
-            </div>
-          </div>
-
-          {/* Tabs Navigation Skeleton */}
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                className={`flex items-center gap-2 px-6 py-3 rounded-full shadow-md animate-pulse ${
-                  i === 0
-                    ? 'bg-gradient-to-r from-blue-500/30 to-blue-600/30'
-                    : 'bg-white'
-                }`}
-              >
-                <div className={`w-5 h-5 rounded ${i === 0 ? 'bg-white/50' : 'bg-gray-300'}`} />
-                <div className={`hidden sm:block h-4 w-24 rounded ${i === 0 ? 'bg-white/50' : 'bg-gray-300'}`} />
-                <div className={`sm:hidden h-4 w-16 rounded ${i === 0 ? 'bg-white/50' : 'bg-gray-300'}`} />
-              </div>
-            ))}
-          </div>
-
-          {/* Tab Content Skeleton */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-              {/* Content Skeleton */}
-              <div className="order-2 lg:order-1">
-                {/* Title Skeleton */}
-                <div className="space-y-3 mb-6">
-                  <div className="h-8 bg-gray-200 rounded w-4/5 animate-pulse" />
-                  <div className="h-8 bg-gray-200 rounded w-3/5 animate-pulse" />
-                </div>
-                
-                {/* Content Skeleton */}
-                <div className="space-y-3 mb-8">
-                  <div className="h-5 bg-gray-100 rounded w-full animate-pulse" />
-                  <div className="h-5 bg-gray-100 rounded w-[95%] animate-pulse" />
-                  <div className="h-5 bg-gray-100 rounded w-[90%] animate-pulse" />
-                  <div className="h-5 bg-gray-100 rounded w-[85%] animate-pulse" />
-                </div>
-                
-                {/* Button Skeleton */}
-                <div className="mt-8">
-                  <div className="h-12 w-40 bg-gradient-to-r from-orange-400/40 to-red-400/40 rounded-lg animate-pulse shadow-lg" />
-                </div>
-              </div>
-
-              {/* Image Skeleton */}
-              <div className="order-1 lg:order-2 text-center">
-                <div className="relative inline-block w-full max-w-md mx-auto">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-green-400/20 rounded-2xl transform rotate-3" />
-                  <div className="relative w-full h-80 bg-gray-200 rounded-2xl animate-pulse" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Stats Skeleton */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
-            {[...Array(3)].map((_, index) => {
-              const colors = ['blue', 'green', 'yellow'];
-              const color = colors[index];
+        {/* Desktop Tabs - Profesionales */}
+        <div className="hidden md:block mb-10 lg:mb-12">
+          <div className="flex flex-wrap justify-center gap-3">
+            {tabs.map((tab: FeatureTab, index: number) => {
+              const IconComponent = iconMap[tab.id as FeatureTabId] || BookOpen;
+              const isActive = activeTab === tab.id;
               
               return (
-                <div key={index} className="text-center p-6 bg-white rounded-xl shadow-lg">
-                  <div className={`w-16 h-16 bg-${color}-100 rounded-full flex items-center justify-center mx-auto mb-4`}>
-                    <div className={`w-8 h-8 bg-${color}-300/50 rounded animate-pulse`} />
-                  </div>
-                  <div className="h-6 bg-gray-200 rounded w-20 mx-auto mb-2 animate-pulse" />
-                  <div className="h-4 bg-gray-100 rounded w-32 mx-auto animate-pulse" />
-                </div>
+                <button
+                  key={tab.id || index}
+                  onClick={() => handleTabChange(tab.id as FeatureTabId)}
+                  className={`group relative flex items-center gap-2 px-5 lg:px-6 py-3 lg:py-3.5 rounded-xl font-bold text-sm lg:text-base transition-all duration-300 ${
+                    isActive
+                      ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg scale-105'
+                      : 'bg-white text-slate-700 hover:bg-slate-50 hover:text-teal-700 shadow-md hover:shadow-lg border border-slate-200'
+                  }`}
+                >
+                  <IconComponent className={`w-4 lg:w-5 h-4 lg:h-5 transition-colors ${
+                    isActive ? 'text-white' : 'text-slate-600 group-hover:text-teal-600'
+                  }`} />
+                  
+                  <span className="whitespace-nowrap">{tab.label}</span>
+                  
+                  {isActive && (
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-white rounded-full shadow-lg"></div>
+                  )}
+                </button>
               );
             })}
           </div>
         </div>
-      </section>
-    );
-  }
 
-  // ============================================
-  // RENDER
-  // ============================================
-
-  return (
-    <section className="py-16 px-8 md:px-16 bg-gray-50 relative overflow-hidden">
-      {/* Decorative Background Shapes */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <svg
-          className="absolute -left-20 top-10 text-blue-100"
-          width="200"
-          height="400"
-          viewBox="0 0 200 400"
-          fill="none"
-        >
-          <path
-            d="M-50 50C-50 100 0 150 50 150C100 150 150 200 150 250C150 300 100 350 50 350"
-            stroke="currentColor"
-            strokeWidth="2"
-            fill="none"
-            opacity="0.3"
-          />
-        </svg>
-        <svg
-          className="absolute -right-20 bottom-10 text-orange-100"
-          width="200"
-          height="400"
-          viewBox="0 0 200 400"
-          fill="none"
-        >
-          <path
-            d="M250 350C250 300 200 250 150 250C100 250 50 200 50 150C50 100 100 50 150 50"
-            stroke="currentColor"
-            strokeWidth="2"
-            fill="none"
-            opacity="0.3"
-          />
-        </svg>
-      </div>
-
-      <div className="container mx-auto max-w-6xl relative z-10">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <p className="text-blue-600 text-sm font-bold uppercase tracking-wide mb-3">
-            {hasTranslations ? title : 'What Makes Us Different'}
-          </p>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 leading-tight">
-            {hasTranslations ? subtitle : 'Why EslectoEscritura is different from other platforms'}
-          </h2>
-        </div>
-
-        {/* Tabs Navigation */}
-        <div className="flex flex-wrap justify-center gap-4 mb-8">
-          {tabs.map((tab) => {
-            const IconComponent = ICON_MAP[tab.id] || BookOpen;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-300 ${
-                  activeTab === tab.id
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
-                    : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 shadow-md'
-                }`}
-              >
-                <IconComponent className="w-5 h-5" />
-                <span className="hidden sm:inline">{tab.label}</span>
-                <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Tab Content */}
-        {activeTabData && (
-          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-              {/* Content */}
-              <div className="order-2 lg:order-1">
-                <h3 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
-                  {activeTabData.title}
-                </h3>
-                <div className="text-gray-600 text-lg leading-relaxed">
-                  <p>{activeTabData.content}</p>
+        {/* Mobile Navigation - Mejorada */}
+        <div className="md:hidden mb-8">
+          <div className="flex items-center justify-between gap-3">
+            <button
+              onClick={() => handleMobileNavigation('prev')}
+              className="p-2.5 rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-300 hover:bg-teal-50 border border-slate-200"
+              aria-label="Tab anterior"
+            >
+              <ChevronLeft className="w-5 h-5 text-slate-700" />
+            </button>
+            
+            <div className="flex-1">
+              <div className="text-center space-y-2">
+                <span className="text-xs text-slate-600 font-semibold">
+                  {tabs.findIndex(tab => tab.id === activeTab) + 1} / {tabs.length}
+                </span>
+                <div className="flex justify-center gap-1.5">
+                  {tabs.map((_, index) => (
+                    <div
+                      key={index}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        tabs.findIndex(tab => tab.id === activeTab) === index
+                          ? 'w-8 bg-gradient-to-r from-teal-500 to-cyan-500'
+                          : 'w-1.5 bg-slate-300'
+                      }`}
+                    />
+                  ))}
                 </div>
-                <div className="mt-8">
-                  <button className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold px-8 py-3 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                    {hasTranslations ? buttonText : 'Learn More'}
+              </div>
+            </div>
+            
+            <button
+              onClick={() => handleMobileNavigation('next')}
+              className="p-2.5 rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-300 hover:bg-teal-50 border border-slate-200"
+              aria-label="Tab siguiente"
+            >
+              <ChevronRight className="w-5 h-5 text-slate-700" />
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Content - Optimizado */}
+        <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200">
+          <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[480px] lg:min-h-[560px]">
+            
+            {/* Content */}
+            <div className="p-6 sm:p-8 lg:p-12 xl:p-16 flex flex-col justify-center order-2 lg:order-1">
+              <div className="space-y-5 lg:space-y-6">
+                {/* Badge */}
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200">
+                  {(() => {
+                    const IconComponent = iconMap[activeTab] || BookOpen;
+                    return <IconComponent className="w-4 h-4 text-teal-600" />;
+                  })()}
+                  <span className="text-sm font-bold text-teal-700">{activeTabData?.label}</span>
+                </div>
+
+                {/* Título */}
+                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 leading-tight">
+                  {activeTabData?.title}
+                </h3>
+                
+                {/* Descripción */}
+                <p className="text-base lg:text-lg text-slate-600 leading-relaxed font-medium">
+                  {activeTabData?.content}
+                </p>
+                
+                {/* CTA */}
+                <div className="pt-2">
+                  <button className="group inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white font-bold px-7 py-3.5 rounded-xl hover:shadow-xl transition-all duration-300 hover:scale-105">
+                    <span>{t('button')}</span>
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </button>
                 </div>
               </div>
+            </div>
 
-              {/* Image */}
-              <div className="order-1 lg:order-2 text-center">
-                <div className="relative inline-block">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-green-400 rounded-2xl transform rotate-3 opacity-20" />
-                  <NextImage
-                    src={imagesConfig.literacy.v1}
-                    alt={activeTabData.title}
-                    width={400}
-                    height={320}
-                    className="relative w-full max-w-md mx-auto h-80 object-fill rounded-2xl"
-                  />
+            {/* Image */}
+            <div className="relative bg-gradient-to-br from-teal-50 to-cyan-50 p-6 sm:p-8 lg:p-12 order-1 lg:order-2 flex items-center justify-center">
+              <div className="relative w-full max-w-sm h-72 sm:h-80 lg:h-96">
+                {/* Decoración de fondo */}
+                <div className="absolute inset-0 bg-white/40 rounded-2xl transform rotate-3 blur-sm"></div>
+                <div className="absolute inset-0 bg-white/30 rounded-2xl transform -rotate-3 blur-sm"></div>
+                
+                {/* Contenedor de imágenes */}
+                <div className="relative z-10 w-full h-full">
+                  {Object.entries(imageMap).map(([tabId, imageSrc]) => {
+                    const isActive = activeTab === tabId;
+                    return (
+                      <div
+                        key={tabId}
+                        className={`absolute inset-0 transition-all duration-500 ${
+                          isActive 
+                            ? 'opacity-100 scale-100' 
+                            : 'opacity-0 scale-95 pointer-events-none'
+                        }`}
+                      >
+                        <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl">
+                          {/* Loading skeleton */}
+                          {!isImageLoaded[tabId as FeatureTabId] && (
+                            <div className="absolute inset-0 bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 animate-pulse"></div>
+                          )}
+                          
+                          <NextImage
+                            src={imageSrc}
+                            alt={tabs.find(tab => tab.id === tabId)?.title || 'Feature'}
+                            width={500}
+                            height={400}
+                            className="object-cover w-full h-full"
+                            priority={tabId === 'our_difference' || tabId === 'for_students'}
+                            quality={90}
+                            sizes="(max-width: 640px) 90vw, (max-width: 1024px) 80vw, 45vw"
+                          />
+                          
+                          {/* Overlay sutil */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent"></div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Stats */}
-        {stats.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
-            {stats.map((stat, index) => {
-              const IconComponent = STAT_ICONS[index] || BookOpen;
-              const color = STAT_COLORS[index] || 'blue';
+        {/* Stats - Profesionales */}
+        <div className="mt-12 lg:mt-16">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 lg:gap-8">
+            {stats.map((stat: Stat, index: number) => {
+              const icons: LucideIcon[] = [BookOpen, Zap, Award];
+              const IconComponent = icons[index];
+              const gradients = [
+                'from-blue-500 to-cyan-500',
+                'from-teal-500 to-emerald-500',
+                'from-orange-500 to-pink-500'
+              ];
+              const bgGradients = [
+                'from-blue-50 to-cyan-50',
+                'from-teal-50 to-emerald-50',
+                'from-orange-50 to-pink-50'
+              ];
 
               return (
-                <div key={index} className="text-center p-6 bg-white rounded-xl shadow-lg">
-                  <div className={`w-16 h-16 bg-${color}-100 rounded-full flex items-center justify-center mx-auto mb-4`}>
-                    <IconComponent className={`w-8 h-8 text-${color}-600`} />
+                <div 
+                  key={index} 
+                  className="group text-center p-6 lg:p-8 bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border border-slate-200"
+                >
+                  <div className={`w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br ${bgGradients[index]} rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                    <IconComponent className={`w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-br ${gradients[index]} bg-clip-text text-transparent`} strokeWidth={2.5} />
                   </div>
-                  <h4 className="text-xl font-semibold text-gray-800 mb-2">{stat.number}</h4>
-                  <p className="text-gray-600">{stat.label}</p>
+                  <h4 className="text-3xl lg:text-4xl font-black text-slate-900 mb-2">
+                    {stat.number}
+                  </h4>
+                  <p className="text-slate-600 text-sm lg:text-base font-semibold">
+                    {stat.label}
+                  </p>
                 </div>
               );
             })}
           </div>
-        )}
+        </div>
       </div>
     </section>
   );

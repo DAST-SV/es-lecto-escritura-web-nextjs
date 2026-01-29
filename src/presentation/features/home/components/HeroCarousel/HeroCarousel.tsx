@@ -1,382 +1,636 @@
 /**
  * HeroCarousel Component
  * @file src/presentation/features/home/components/HeroCarousel/HeroCarousel.tsx
- * @description Main hero carousel for the home page with dynamic Supabase translations
+ * @description Hero carousel with vibrant design
  */
 
 'use client';
 
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useRef, useMemo, memo } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
+import Autoplay from 'embla-carousel-autoplay';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-
-import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
-import { NextImage } from '@/src/presentation/components/ui/NextImage';
-import {
-  imagesConfig,
-  heroSlideImages,
-  heroSlideRoutes,
-} from '@/src/infrastructure/config/images.config';
+import { ChevronLeft, ChevronRight, Sparkles, BookOpen } from 'lucide-react';
 
 import type { HeroSlide } from '../../types';
+import { NextImage } from '@/src/presentation/components/ui/NextImage';
+import { imagesConfig } from '@/src/infrastructure/config/images.config';
 
-// ============================================
-// CONSTANTS
-// ============================================
+const SLIDE_IMAGES = [
+  imagesConfig.literacy.v1,
+  imagesConfig.stories.v1,
+  imagesConfig.fables.v1,
+  imagesConfig.poems.v1,
+  imagesConfig.legends.v1,
+  imagesConfig.dashboard.riddlesV1,
+  imagesConfig.comics.v1,
+  imagesConfig.tongueTwisters.v1,
+  imagesConfig.rhymes.v1,
+] as const;
 
-const AUTO_PLAY_INTERVAL = 6000;
-const PAUSE_TIMEOUT = 3000;
+const SLIDE_ROUTES = [
+  '/explorar',
+  '/categoria/cuentos',
+  '/categoria/fabulas',
+  '/categoria/poemas',
+  '/categoria/leyendas',
+  '/categoria/adivinanzas',
+  '/categoria/historietas',
+  '/categoria/trabalenguas',
+  '/categoria/refranes',
+] as const;
 
-// ============================================
-// COMPONENT
-// ============================================
+const AUTOPLAY_CONFIG = {
+  delay: 6000,
+  stopOnInteraction: true,
+  stopOnMouseEnter: true,
+  stopOnFocusIn: true,
+} as const;
+
+const EMBLA_CONFIG = {
+  loop: true,
+  duration: 30,
+  skipSnaps: false,
+  dragFree: false,
+} as const;
+
+const SlideContent = memo<{
+  slide: HeroSlide;
+  imageSrc: string;
+  route: string;
+  index: number;
+  isActive: boolean;
+  onNavigate: (route: string) => void;
+}>(({ slide, imageSrc, route, index, isActive, onNavigate }) => {
+  const isPriority = index === 0;
+
+  return (
+    <>
+      {/* DESKTOP (1280px+) */}
+      <div className="hidden xl:flex w-full max-w-5xl items-center justify-between gap-8 mx-auto">
+        <div className="w-[50%] space-y-4 slide-content">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-yellow-300">
+            <BookOpen className="w-4 h-4 text-blue-600 animate-pulse" />
+            <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              EXPLORAR CONTENIDO
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            <h1
+              className="text-4xl font-black text-white leading-none drop-shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+              style={{
+                fontFamily: 'Comic Sans MS, cursive',
+                textShadow: '3px 3px 0px rgba(0,0,0,0.3), 6px 6px 0px rgba(0,0,0,0.1)'
+              }}
+            >
+              {slide.title}
+            </h1>
+
+            <div className="flex items-center gap-3">
+              <div className="h-1.5 w-16 bg-yellow-300 rounded-full" />
+              <div className="h-1.5 w-10 bg-green-300 rounded-full" />
+              <div className="h-1.5 w-6 bg-blue-300 rounded-full" />
+            </div>
+          </div>
+
+          <p className="text-lg text-white font-bold leading-relaxed drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)] max-w-xl" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+            {slide.description}
+          </p>
+
+          <button
+            onClick={() => onNavigate(route)}
+            className="group relative px-8 py-3.5 bg-yellow-300 text-blue-700 font-black text-base rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-110 border-2 border-white overflow-hidden"
+            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            type="button"
+            tabIndex={isActive ? 0 : -1}
+          >
+            <span className="relative z-10 flex items-center gap-2">
+              {slide.button}
+              <Sparkles className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </button>
+        </div>
+
+        <div className="w-[50%] flex justify-end items-end slide-image">
+          <div className="relative z-20">
+            <div className="absolute -inset-6 bg-gradient-to-r from-yellow-300 via-orange-300 to-yellow-300 rounded-full blur-3xl opacity-60 animate-pulse" />
+            <div className="relative bg-white rounded-3xl p-3 shadow-2xl border-4 border-yellow-300 transform hover:rotate-2 transition-transform duration-500">
+              <NextImage
+                src={imageSrc}
+                alt={slide.title}
+                width={350}
+                height={350}
+                className="rounded-2xl object-cover w-full h-[320px]"
+                priority={isPriority}
+                quality={90}
+                loading={isPriority ? "eager" : "lazy"}
+                sizes="(min-width: 1280px) 350px, 0px"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* LAPTOP (1024-1279px) */}
+      <div className="hidden lg:flex xl:hidden w-full max-w-4xl items-center justify-between gap-8 mx-auto">
+        <div className="w-[50%] space-y-3 slide-content">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-yellow-300">
+            <BookOpen className="w-4 h-4 text-blue-600 animate-pulse" />
+            <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              EXPLORAR CONTENIDO
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            <h1
+              className="text-3xl font-black text-white leading-tight drop-shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+              style={{
+                fontFamily: 'Comic Sans MS, cursive',
+                textShadow: '3px 3px 0px rgba(0,0,0,0.3), 6px 6px 0px rgba(0,0,0,0.1)'
+              }}
+            >
+              {slide.title}
+            </h1>
+
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 w-14 bg-yellow-300 rounded-full" />
+              <div className="h-1.5 w-8 bg-green-300 rounded-full" />
+              <div className="h-1.5 w-5 bg-blue-300 rounded-full" />
+            </div>
+          </div>
+
+          <p className="text-base text-white font-bold leading-relaxed drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)] max-w-md" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+            {slide.description}
+          </p>
+
+          <button
+            onClick={() => onNavigate(route)}
+            className="group relative px-7 py-3 bg-yellow-300 text-blue-700 font-black text-base rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-110 border-2 border-white overflow-hidden"
+            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            type="button"
+            tabIndex={isActive ? 0 : -1}
+          >
+            <span className="relative z-10 flex items-center gap-2">
+              {slide.button}
+              <Sparkles className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </button>
+        </div>
+
+        <div className="w-[50%] flex justify-end items-end slide-image">
+          <div className="relative">
+            <div className="absolute -inset-5 bg-gradient-to-r from-yellow-300 via-orange-300 to-yellow-300 rounded-full blur-3xl opacity-60 animate-pulse" />
+            <div className="relative bg-white rounded-3xl p-3 shadow-2xl border-4 border-yellow-300 transform hover:rotate-2 transition-transform duration-500">
+              <NextImage
+                src={imageSrc}
+                alt={slide.title}
+                width={300}
+                height={300}
+                className="rounded-2xl object-cover w-full h-[280px]"
+                priority={isPriority}
+                quality={85}
+                loading={isPriority ? "eager" : "lazy"}
+                sizes="(min-width: 1024px) and (max-width: 1279px) 300px, 0px"
+              />
+              <div className="absolute -top-3 -right-3 bg-green-400 text-white font-black text-sm px-3 py-1.5 rounded-full shadow-xl border-2 border-white transform rotate-12 animate-bounce">
+                🎉 NUEVO
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* TABLET (768-1023px) */}
+      <div className="hidden md:flex lg:hidden w-full max-w-3xl flex-col items-center text-center space-y-4 mx-auto px-6">
+        <div className="space-y-3 slide-content">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-yellow-300">
+            <BookOpen className="w-4 h-4 text-blue-600 animate-pulse" />
+            <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              EXPLORAR CONTENIDO
+            </span>
+          </div>
+
+          <h1
+            className="text-3xl font-black text-white leading-tight drop-shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+            style={{
+              fontFamily: 'Comic Sans MS, cursive',
+              textShadow: '3px 3px 0px rgba(0,0,0,0.3), 6px 6px 0px rgba(0,0,0,0.1)'
+            }}
+          >
+            {slide.title}
+          </h1>
+
+          <div className="flex items-center gap-2 justify-center">
+            <div className="h-1.5 w-12 bg-yellow-300 rounded-full" />
+            <div className="h-1.5 w-8 bg-green-300 rounded-full" />
+            <div className="h-1.5 w-5 bg-blue-300 rounded-full" />
+          </div>
+        </div>
+
+        <div className="slide-image">
+          <div className="relative inline-block">
+            <div className="absolute -inset-4 bg-gradient-to-r from-yellow-300 via-orange-300 to-yellow-300 rounded-full blur-2xl opacity-60 animate-pulse" />
+            <div className="relative bg-white rounded-3xl p-3 shadow-2xl border-4 border-yellow-300">
+              <NextImage
+                src={imageSrc}
+                alt={slide.title}
+                width={320}
+                height={320}
+                className="rounded-2xl object-cover h-[300px] w-[320px]"
+                priority={isPriority}
+                quality={80}
+                loading={isPriority ? "eager" : "lazy"}
+                sizes="(min-width: 768px) and (max-width: 1023px) 320px, 0px"
+              />
+            </div>
+          </div>
+        </div>
+
+        <p className="text-base text-white font-bold leading-relaxed drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)] max-w-xl" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          {slide.description}
+        </p>
+
+        <button
+          onClick={() => onNavigate(route)}
+          className="group relative px-7 py-3 bg-yellow-300 text-blue-700 font-black text-base rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-105 border-2 border-white overflow-hidden"
+          style={{ fontFamily: 'Comic Sans MS, cursive' }}
+          type="button"
+          tabIndex={isActive ? 0 : -1}
+        >
+          <span className="relative z-10 flex items-center gap-2">
+            {slide.button}
+            <Sparkles className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
+          </span>
+          <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        </button>
+      </div>
+
+      {/* MOBILE (640-767px) */}
+      <div className="hidden sm:flex md:hidden w-full max-w-md flex-col items-center text-center space-y-4 mx-auto px-4">
+        <div className="space-y-2 slide-content">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-full shadow-xl border-2 border-yellow-300">
+            <BookOpen className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
+            <span className="text-xs font-black text-blue-700 tracking-wide" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              EXPLORAR CONTENIDO
+            </span>
+          </div>
+
+          <h1
+            className="text-2xl font-black text-white leading-tight drop-shadow-[0_6px_24px_rgba(0,0,0,0.5)]"
+            style={{
+              fontFamily: 'Comic Sans MS, cursive',
+              textShadow: '2px 2px 0px rgba(0,0,0,0.3), 4px 4px 0px rgba(0,0,0,0.1)'
+            }}
+          >
+            {slide.title}
+          </h1>
+        </div>
+
+        <div className="slide-image">
+          <div className="relative inline-block">
+            <div className="absolute -inset-3 bg-gradient-to-r from-yellow-300 via-orange-300 to-yellow-300 rounded-full blur-xl opacity-60 animate-pulse" />
+            <div className="relative bg-white rounded-2xl p-3 shadow-2xl border-2 border-yellow-300">
+              <NextImage
+                src={imageSrc}
+                alt={slide.title}
+                width={260}
+                height={260}
+                className="rounded-xl object-cover h-[240px] w-[260px]"
+                priority={isPriority}
+                quality={75}
+                loading={isPriority ? "eager" : "lazy"}
+                sizes="(min-width: 640px) and (max-width: 767px) 260px, 0px"
+              />
+            </div>
+          </div>
+        </div>
+
+        <p className="text-sm text-white font-bold leading-relaxed drop-shadow-[0_3px_10px_rgba(0,0,0,0.4)]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          {slide.description}
+        </p>
+
+        <button
+          onClick={() => onNavigate(route)}
+          className="group relative w-full px-6 py-3 bg-yellow-300 text-blue-700 font-black text-sm rounded-full shadow-xl hover:shadow-yellow-400/50 transition-all duration-300 border-2 border-white overflow-hidden"
+          style={{ fontFamily: 'Comic Sans MS, cursive' }}
+          type="button"
+          tabIndex={isActive ? 0 : -1}
+        >
+          <span className="relative z-10 flex items-center gap-2 justify-center">
+            {slide.button}
+            <Sparkles className="w-4 h-4" />
+          </span>
+          <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        </button>
+      </div>
+
+      {/* MOBILE SMALL (<640px) */}
+      <div className="flex sm:hidden w-full max-w-[300px] flex-col items-center text-center space-y-3 mx-auto px-4">
+        <div className="space-y-2 slide-content">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-full shadow-lg border-2 border-yellow-300">
+            <BookOpen className="w-3 h-3 text-blue-600 animate-pulse" />
+            <span className="text-[10px] font-black text-blue-700 tracking-wide" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              EXPLORAR
+            </span>
+          </div>
+
+          <h1
+            className="text-xl font-black text-white leading-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.5)]"
+            style={{
+              fontFamily: 'Comic Sans MS, cursive',
+              textShadow: '2px 2px 0px rgba(0,0,0,0.3)'
+            }}
+          >
+            {slide.title}
+          </h1>
+        </div>
+
+        <div className="slide-image">
+          <div className="relative bg-white rounded-2xl p-2 shadow-xl border-2 border-yellow-300">
+            <NextImage
+              src={imageSrc}
+              alt={slide.title}
+              width={220}
+              height={220}
+              className="rounded-xl object-cover h-[200px] w-[220px]"
+              priority={isPriority}
+              quality={70}
+              loading={isPriority ? "eager" : "lazy"}
+              sizes="(max-width: 639px) 220px, 0px"
+            />
+            <div className="absolute -top-2 -right-2 bg-green-400 text-white font-black text-[10px] px-2 py-1 rounded-full shadow-lg border-2 border-white transform rotate-12 animate-bounce">
+              🎉
+            </div>
+          </div>
+        </div>
+
+        <p className="text-xs text-white font-bold leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          {slide.description}
+        </p>
+
+        <button
+          onClick={() => onNavigate(route)}
+          className="w-full px-5 py-2.5 bg-yellow-300 text-blue-700 font-black text-sm rounded-xl shadow-lg border-2 border-white flex items-center gap-1.5 justify-center"
+          style={{ fontFamily: 'Comic Sans MS, cursive' }}
+          type="button"
+          tabIndex={isActive ? 0 : -1}
+        >
+          {slide.button}
+          <Sparkles className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </>
+  );
+});
+
+SlideContent.displayName = 'SlideContent';
 
 export const HeroCarousel: React.FC = () => {
-  const { tArray, loading } = useSupabaseTranslations('hero');
+  const t = useTranslations('hero');
   const router = useRouter();
+  const slides: HeroSlide[] = useMemo(() => t.raw('slides'), [t]);
+  
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const autoplay = useMemo(() => Autoplay(AUTOPLAY_CONFIG), []);
+  const [emblaRef, emblaApi] = useEmblaCarousel(EMBLA_CONFIG, [autoplay]);
 
-  // Get slides dynamically from Supabase translations
-  const slides = tArray('slides', ['title', 'icon', 'description', 'button']) as unknown as HeroSlide[];
-
-  // Embla carousel configuration
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    loop: true,
-    skipSnaps: false,
-    dragFree: false,
-    duration: 25,
-    startIndex: 0,
-    containScroll: 'trimSnaps',
-    inViewThreshold: 0.7,
-  });
-
-  const [selected, setSelected] = useState<number>(0);
-  const [isPlaying, setIsPlaying] = useState<boolean>(true);
-  const [isVisible, setIsVisible] = useState<boolean>(true);
-
-  // Refs for timers
-  const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
-  const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // ============================================
-  // CALLBACKS
-  // ============================================
+  const [selected, setSelected] = useState(0);
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
     setSelected(emblaApi.selectedScrollSnap());
   }, [emblaApi]);
 
-  const scrollPrev = useCallback(() => {
-    emblaApi?.scrollPrev();
-  }, [emblaApi]);
-
-  const scrollNext = useCallback(() => {
-    emblaApi?.scrollNext();
-  }, [emblaApi]);
-
-  const scrollTo = useCallback(
-    (targetIndex: number) => {
-      emblaApi?.scrollTo(targetIndex);
-    },
-    [emblaApi]
-  );
-
-  const handlePause = useCallback(() => {
-    setIsPlaying(false);
-    if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
-    pauseTimeoutRef.current = setTimeout(() => {
-      setIsPlaying(true);
-    }, PAUSE_TIMEOUT);
-  }, []);
-
-  const handleResume = useCallback(() => {
-    if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
-    setIsPlaying(true);
-  }, []);
-
-  // ============================================
-  // EFFECTS
-  // ============================================
-
   useEffect(() => {
     if (!emblaApi) return;
     onSelect();
     emblaApi.on('select', onSelect);
+    emblaApi.on('reInit', onSelect);
     return () => {
       emblaApi.off('select', onSelect);
+      emblaApi.off('reInit', onSelect);
     };
   }, [emblaApi, onSelect]);
 
   useEffect(() => {
-    if (!emblaApi || !isPlaying || !isVisible || slides.length === 0) {
-      if (autoPlayRef.current) {
-        clearInterval(autoPlayRef.current);
-        autoPlayRef.current = null;
-      }
-      return;
-    }
+    if (!carouselRef.current || !emblaApi) return;
 
-    autoPlayRef.current = setInterval(() => {
-      emblaApi.scrollNext();
-    }, AUTO_PLAY_INTERVAL);
-
-    return () => {
-      if (autoPlayRef.current) clearInterval(autoPlayRef.current);
-    };
-  }, [emblaApi, isPlaying, isVisible, slides.length]);
-
-  useEffect(() => {
-    const handleVisibilityChange = () => setIsVisible(!document.hidden);
-    document.addEventListener('visibilitychange', handleVisibilityChange, { passive: true });
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (autoPlayRef.current) clearInterval(autoPlayRef.current);
-      if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
-    };
-  }, []);
-
-  // ============================================
-  // LOADING STATE
-  // ============================================
-
-  if (loading || slides.length === 0) {
-    return (
-      <div className="relative h-[calc(100vh-56px)] overflow-hidden will-change-transform">
-        <div
-          className="h-full bg-cover bg-center bg-fixed"
-          style={{
-            backgroundImage: `url(${imagesConfig.dashboard.backgroundV1})`,
-            transform: 'translate3d(0,0,0)',
-          }}
-        >
-          <div className="w-full h-full flex items-center px-6 md:px-16 py-10">
-            {/* Desktop Skeleton Layout */}
-            <div className="hidden md:flex w-full h-full items-center max-w-7xl mx-auto">
-              {/* Left Content - Exact structure */}
-              <div className="w-1/2 pr-12 text-slate-800 flex flex-col justify-center ml-8 lg:ml-16">
-                {/* Icon + Title Skeleton */}
-                <div className="flex items-center mb-6">
-                  <div className="w-[60px] h-[60px] bg-slate-700/20 rounded-xl mr-6 animate-pulse shadow-lg" />
-                  <div className="flex-1 space-y-3">
-                    <div className="h-12 bg-slate-800/20 rounded-lg w-[85%] animate-pulse" />
-                    <div className="h-12 bg-slate-800/20 rounded-lg w-[60%] animate-pulse" />
-                  </div>
-                </div>
-                
-                {/* Description Skeleton - matches the quote box */}
-                <div className="bg-white/20 backdrop-blur-sm p-4 rounded-lg border-l-4 border-slate-800 mb-8">
-                  <div className="space-y-3">
-                    <div className="h-6 bg-slate-700/30 rounded w-full animate-pulse" />
-                    <div className="h-6 bg-slate-700/30 rounded w-[95%] animate-pulse" />
-                    <div className="h-6 bg-slate-700/30 rounded w-[75%] animate-pulse" />
-                  </div>
-                </div>
-                
-                {/* Button Skeleton - exact dimensions */}
-                <div className="h-[56px] bg-slate-800/40 rounded-xl w-[200px] animate-pulse shadow-2xl border-2 border-slate-600/30" />
-              </div>
-              
-              {/* Right Image Skeleton - exact dimensions */}
-              <div className="w-1/2 flex justify-center items-center pr-8 lg:pr-16">
-                <div className="w-[500px] h-[500px] bg-slate-700/20 rounded-2xl shadow-2xl animate-pulse max-h-[70vh]" />
-              </div>
-            </div>
-
-            {/* Mobile Skeleton Layout */}
-            <div className="md:hidden w-full h-full flex flex-col justify-center items-center text-slate-800 text-center px-4">
-              {/* Icon + Title Skeleton */}
-              <div className="flex items-center justify-center mb-6">
-                <div className="w-[50px] h-[50px] bg-slate-700/20 rounded-lg mr-4 animate-pulse shadow-lg" />
-                <div className="h-10 bg-slate-800/20 rounded-lg w-[180px] animate-pulse" />
-              </div>
-              
-              {/* Image Skeleton - mobile dimensions */}
-              <div className="mb-6">
-                <div className="w-[320px] h-[320px] bg-slate-700/20 rounded-xl shadow-2xl animate-pulse" />
-              </div>
-              
-              {/* Description Skeleton */}
-              <div className="bg-white/20 backdrop-blur-sm p-4 rounded-lg mb-6 max-w-md w-full">
-                <div className="space-y-2">
-                  <div className="h-4 bg-slate-700/30 rounded w-full animate-pulse" />
-                  <div className="h-4 bg-slate-700/30 rounded w-[90%] mx-auto animate-pulse" />
-                  <div className="h-4 bg-slate-700/30 rounded w-[70%] mx-auto animate-pulse" />
-                </div>
-              </div>
-              
-              {/* Button Skeleton - mobile */}
-              <div className="h-[48px] bg-slate-800/40 rounded-lg w-[160px] animate-pulse shadow-2xl border-2 border-slate-600/30" />
-            </div>
-          </div>
-        </div>
-
-        {/* Disabled Navigation Buttons - exact styling */}
-        <button
-          disabled
-          className="absolute left-6 lg:left-8 top-1/2 -translate-y-1/2 bg-slate-800/30 p-3 rounded-full backdrop-blur-sm shadow-xl border-2 border-slate-600/30 cursor-not-allowed opacity-50"
-          aria-label="Previous slide"
-        >
-          <ChevronLeft className="w-6 h-6 text-white/50" />
-        </button>
-
-        <button
-          disabled
-          className="absolute right-6 lg:right-8 top-1/2 -translate-y-1/2 bg-slate-800/30 p-3 rounded-full backdrop-blur-sm shadow-xl border-2 border-slate-600/30 cursor-not-allowed opacity-50"
-          aria-label="Next slide"
-        >
-          <ChevronRight className="w-6 h-6 text-white/50" />
-        </button>
-
-        {/* Skeleton Dots Indicator - exact styling */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-20">
-          {[...Array(3)].map((_, i) => (
-            <div
-              key={i}
-              className={`w-4 h-4 rounded-full border-2 animate-pulse ${
-                i === 0
-                  ? 'bg-slate-800/40 border-slate-600/40 scale-125'
-                  : 'bg-white/40 border-slate-800/30'
-              }`}
-            />
-          ))}
-        </div>
-      </div>
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) {
+          emblaApi.emit('pointerDown' as any);
+        }
+      },
+      { threshold: 0.5 }
     );
-  }
 
-  // ============================================
-  // RENDER
-  // ============================================
+    observer.observe(carouselRef.current);
+    return () => observer.disconnect();
+  }, [emblaApi]);
+
+  const scrollPrev = useCallback(() => {
+    emblaApi?.scrollPrev();
+    autoplay.reset();
+  }, [emblaApi, autoplay]);
+
+  const scrollNext = useCallback(() => {
+    emblaApi?.scrollNext();
+    autoplay.reset();
+  }, [emblaApi, autoplay]);
+
+  const scrollTo = useCallback(
+    (index: number) => {
+      emblaApi?.scrollTo(index);
+      autoplay.reset();
+    },
+    [emblaApi, autoplay]
+  );
+
+  const handleNavigate = useCallback(
+    (route: string) => {
+      router.push(route);
+    },
+    [router]
+  );
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        scrollPrev();
+      }
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        scrollNext();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [scrollPrev, scrollNext]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        emblaApi.emit('pointerDown' as any);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [emblaApi]);
 
   return (
     <div
-      className="relative h-[calc(100vh-56px)] overflow-hidden will-change-transform"
-      onMouseEnter={handlePause}
-      onMouseLeave={handleResume}
-      onTouchStart={handlePause}
-      onTouchEnd={handleResume}
+      ref={carouselRef}
+      className="relative h-[calc(100vh-56px)] overflow-hidden"
+      role="region"
+      aria-label="Carrusel de contenido educativo"
+      aria-live="polite"
     >
-      <div
-        ref={emblaRef}
-        className="embla h-full bg-cover bg-center bg-fixed"
-        style={{
-          backgroundImage: `url(${imagesConfig.dashboard.backgroundV1})`,
-          transform: 'translate3d(0,0,0)',
-        }}
-      >
+      <div ref={emblaRef} className="embla h-full relative z-10">
         <div className="embla__container flex h-full">
-          {slides.map((slide, i) => (
-            <div key={i} className="embla__slide w-full flex-shrink-0 h-full will-change-transform">
-              <div className="w-full flex items-center px-6 md:px-16 py-10">
-                {/* Desktop Layout */}
-                <div className="hidden md:flex w-full h-full items-center max-w-7xl mx-auto">
-                  <div className="w-1/2 pr-12 text-slate-800 flex flex-col justify-center ml-8 lg:ml-16">
-                    <div className="flex items-center mb-6">
-                      <span className="text-6xl mr-6 drop-shadow-lg select-none">{slide.icon}</span>
-                      <h2 className="text-4xl lg:text-5xl font-black leading-tight text-slate-900 drop-shadow-sm select-none">
-                        {slide.title}
-                      </h2>
-                    </div>
-                    <p className="text-xl leading-relaxed font-medium mb-8 text-slate-700 bg-white/20 backdrop-blur-sm p-4 rounded-lg border-l-4 border-slate-800 select-none">
-                      &quot;{slide.description}&quot;
-                    </p>
-                    <button
-                      onClick={() => router.push(heroSlideRoutes[i] || '/explore')}
-                      className="bg-gradient-to-r from-slate-800 to-slate-900 text-white font-bold px-8 py-4 rounded-xl shadow-2xl hover:from-slate-700 hover:to-slate-800 transition-all duration-200 transform hover:scale-105 active:scale-95 w-fit text-lg border-2 border-slate-600"
-                    >
-                      {slide.button}
-                    </button>
-                  </div>
-                  <div className="w-1/2 flex justify-center items-center pr-8 lg:pr-16">
-                    <NextImage
-                      src={heroSlideImages[i] || imagesConfig.placeholders.default}
-                      alt={slide.title}
-                      width={500}
-                      height={500}
-                      className="rounded-2xl object-fill max-h-[70vh] shadow-2xl"
-                      priority={i <= 2}
-                    />
-                  </div>
-                </div>
-
-                {/* Mobile Layout */}
-                <div className="md:hidden w-full h-full flex flex-col justify-center items-center text-slate-800 text-center px-4">
-                  <div className="flex items-center justify-center mb-6">
-                    <span className="text-5xl mr-4 drop-shadow-lg select-none">{slide.icon}</span>
-                    <h2 className="text-3xl font-black text-slate-900 drop-shadow-sm select-none">
-                      {slide.title}
-                    </h2>
-                  </div>
-                  <div className="mb-6">
-                    <NextImage
-                      src={heroSlideImages[i] || imagesConfig.placeholders.default}
-                      alt={slide.title}
-                      width={320}
-                      height={320}
-                      className="rounded-xl object-fill shadow-2xl"
-                      priority={i <= 2}
-                    />
-                  </div>
-                  <p className="text-base leading-relaxed font-medium mb-6 max-w-md text-slate-700 bg-white/20 backdrop-blur-sm p-4 rounded-lg select-none">
-                    &quot;{slide.description}&quot;
-                  </p>
-                  <button
-                    onClick={() => router.push(heroSlideRoutes[i] || '/explore')}
-                    className="bg-gradient-to-r from-slate-800 to-slate-900 text-white font-bold px-6 py-3 rounded-lg shadow-2xl border-2 border-slate-600 transition-all duration-200 transform active:scale-95"
-                  >
-                    {slide.button}
-                  </button>
-                </div>
+          {slides.map((slide: HeroSlide, i: number) => (
+            <div
+              key={i}
+              className="embla__slide flex-[0_0_100%] min-w-0"
+              role="group"
+              aria-roledescription="slide"
+              aria-label={`${i + 1} de ${slides.length}`}
+            >
+              <div className="w-full h-full flex items-start justify-center pt-8 pb-4 px-20 md:px-24 lg:px-32">
+                <SlideContent
+                  slide={slide}
+                  imageSrc={SLIDE_IMAGES[i]}
+                  route={SLIDE_ROUTES[i]}
+                  index={i}
+                  isActive={selected === i}
+                  onNavigate={handleNavigate}
+                />
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Navigation Buttons */}
+      {/* Botones de Navegación */}
       <button
         onClick={scrollPrev}
-        className="absolute left-6 lg:left-8 top-1/2 -translate-y-1/2 bg-slate-800/80 hover:bg-slate-700/90 p-3 rounded-full transition-all duration-200 z-20 backdrop-blur-sm shadow-xl border-2 border-slate-600 hover:scale-110 active:scale-95"
-        aria-label="Previous slide"
+        className="absolute top-1/2 -translate-y-1/2 left-4 md:left-6 z-40 p-3 md:p-4 rounded-full bg-white shadow-2xl hover:scale-125 transition-all duration-300 border-2 border-yellow-300 hover:bg-yellow-50 group"
+        aria-label="Slide anterior"
+        type="button"
       >
-        <ChevronLeft className="w-6 h-6 text-white" />
+        <ChevronLeft className="w-6 h-6 md:w-7 md:h-7 text-blue-700 group-hover:text-blue-900" strokeWidth={4} />
       </button>
 
       <button
         onClick={scrollNext}
-        className="absolute right-6 lg:right-8 top-1/2 -translate-y-1/2 bg-slate-800/80 hover:bg-slate-700/90 p-3 rounded-full transition-all duration-200 z-20 backdrop-blur-sm shadow-xl border-2 border-slate-600 hover:scale-110 active:scale-95"
-        aria-label="Next slide"
+        className="absolute top-1/2 -translate-y-1/2 right-4 md:right-6 z-40 p-3 md:p-4 rounded-full bg-white shadow-2xl hover:scale-125 transition-all duration-300 border-2 border-yellow-300 hover:bg-yellow-50 group"
+        aria-label="Slide siguiente"
+        type="button"
       >
-        <ChevronRight className="w-6 h-6 text-white" />
+        <ChevronRight className="w-6 h-6 md:w-7 md:h-7 text-blue-700 group-hover:text-blue-900" strokeWidth={4} />
       </button>
 
-      {/* Dots Indicator */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-20">
-        {slides.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => {
-              scrollTo(i);
-              handlePause();
-            }}
-            className={`w-4 h-4 rounded-full transition-all duration-200 border-2 ${
-              selected === i
-                ? 'bg-slate-800 border-slate-600 scale-125 shadow-lg'
-                : 'bg-white/70 border-slate-800/50 hover:bg-white hover:border-slate-600 hover:scale-110 active:scale-95'
-            }`}
-            aria-label={`Go to slide ${i + 1}`}
-          />
-        ))}
-      </div>
+      {/* Indicadores con colores decorativos */}
+      <nav
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-white px-6 py-3"
+        aria-label="Navegación del carrusel"
+      >
+        <div className="flex items-center justify-center gap-2">
+          {slides.map((_, i: number) => {
+            const colors = ['bg-yellow-400', 'bg-green-400', 'bg-blue-400', 'bg-orange-400', 'bg-pink-400', 'bg-purple-400', 'bg-cyan-400', 'bg-lime-400', 'bg-rose-400'];
+            const borderColors = ['border-yellow-600', 'border-green-600', 'border-blue-600', 'border-orange-600', 'border-pink-600', 'border-purple-600', 'border-cyan-600', 'border-lime-600', 'border-rose-600'];
+            const colorClass = colors[i % colors.length];
+            const borderClass = borderColors[i % borderColors.length];
+            
+            return (
+              <button
+                key={i}
+                onClick={() => scrollTo(i)}
+                className={`rounded-full transition-all duration-300 border-2 ${borderClass} ${
+                  selected === i
+                    ? `w-10 h-3 ${colorClass} shadow-lg scale-110`
+                    : `w-3 h-3 ${colorClass} opacity-50 hover:opacity-100 hover:scale-125`
+                }`}
+                aria-label={`Ir al slide ${i + 1}`}
+                aria-current={selected === i ? 'true' : 'false'}
+                type="button"
+              />
+            );
+          })}
+        </div>
+      </nav>
 
       <style jsx global>{`
-        .embla { overflow: hidden; transform: translate3d(0, 0, 0); }
-        .embla__container { display: flex; backface-visibility: hidden; will-change: transform; }
-        .embla__slide { flex: 0 0 100%; min-width: 0; transform: translate3d(0, 0, 0); }
+        .embla {
+          overflow: hidden;
+          transform: translateZ(0);
+          will-change: transform;
+        }
+        
+        .embla__container {
+          display: flex;
+          touch-action: pan-y pinch-zoom;
+          backface-visibility: hidden;
+        }
+        
+        .embla__slide {
+          flex: 0 0 100%;
+          min-width: 0;
+        }
+
+        .slide-content {
+          animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .slide-image {
+          animation: fadeInScale 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
+          opacity: 0;
+        }
+
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fadeInScale {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+          }
+          .slide-content,
+          .slide-image {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+          }
+        }
       `}</style>
     </div>
   );
