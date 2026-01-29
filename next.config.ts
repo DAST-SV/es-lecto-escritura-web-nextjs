@@ -5,8 +5,18 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   
   images: {
-    domains: ["hxxtkzshnnrwxvvgtgsh.supabase.co"], // ✅ host de Supabase
-    qualities: [75, 85, 95], // Define los valores de calidad permitidos
+    // Agregar 90 a las qualities configuradas
+    qualities: [75, 80, 70,  85, 90, 95],
+    
+    // Si tienes dominio de Supabase, agrégalo aquí
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
   },
 };
 

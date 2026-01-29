@@ -1,7 +1,7 @@
 /**
  * HomePage
  * @file app/[locale]/page.tsx
- * @description Main landing page with hero carousel, features, and CTA sections
+ * @description Main landing page with unified background and hero carousel, features, and CTA sections
  */
 
 'use client';
@@ -12,6 +12,7 @@ import {
   HeroCarousel,
   FeaturesSection,
   CTASection,
+  HomeBackground,
 } from '@/src/presentation/features/home';
 
 // ============================================
@@ -21,20 +22,21 @@ import {
 const HomePage: React.FC = () => {
   return (
     <UnifiedLayout
-      className="min-h-screen bg-gradient-to-b from-blue-400 via-blue-300 to-cyan-200"
+      className="bg-gradient-to-b from-blue-400 via-blue-300 to-cyan-200"
       mainClassName="pt-0"
+      backgroundComponent={<HomeBackground />}
     >
-      {/* Hero Carousel - con loading state interno */}
+      {/* Hero Carousel */}
       <div className="w-full">
         <HeroCarousel />
       </div>
       
-      {/* Features Section - con loading state interno */}
+      {/* Features Section */}
       <div className="w-full">
         <FeaturesSection />
       </div>
       
-      {/* CTA Section - con loading state interno */}
+      {/* CTA Section */}
       <div className="w-full">
         <CTASection />
       </div>

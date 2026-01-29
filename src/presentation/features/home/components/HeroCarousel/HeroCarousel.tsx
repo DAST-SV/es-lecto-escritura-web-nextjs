@@ -1,7 +1,7 @@
 /**
  * HeroCarousel Component
  * @file src/presentation/features/home/components/HeroCarousel/HeroCarousel.tsx
- * @description Hero carousel with vibrant design
+ * @description Hero carousel with vibrant design, optimized performance, and professional skeleton loading
  */
 
 'use client';
@@ -9,13 +9,17 @@
 import React, { useCallback, useEffect, useState, useRef, useMemo, memo } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
-import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Sparkles, BookOpen } from 'lucide-react';
 
 import type { HeroSlide } from '../../types';
 import { NextImage } from '@/src/presentation/components/ui/NextImage';
 import { imagesConfig } from '@/src/infrastructure/config/images.config';
+import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
+
+// ============================================
+// CONSTANTS
+// ============================================
 
 const SLIDE_IMAGES = [
   imagesConfig.literacy.v1,
@@ -54,6 +58,144 @@ const EMBLA_CONFIG = {
   skipSnaps: false,
   dragFree: false,
 } as const;
+
+// ============================================
+// SKELETON COMPONENT
+// ============================================
+
+const CarouselSkeleton: React.FC = memo(() => {
+  return (
+    <div className="w-full h-full flex items-center justify-center">
+      {/* DESKTOP Skeleton (1280px+) */}
+      <div className="hidden xl:flex w-full max-w-5xl items-center justify-between gap-8 mx-auto">
+        {/* Left Content */}
+        <div className="w-[50%] space-y-4 animate-pulse">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-200 rounded-full w-52 h-8"></div>
+          
+          {/* Title */}
+          <div className="space-y-3">
+            <div className="h-10 bg-slate-200 rounded-lg w-full"></div>
+            <div className="h-10 bg-slate-200 rounded-lg w-4/5"></div>
+            <div className="flex items-center gap-3 mt-2">
+              <div className="h-1.5 w-16 bg-slate-200 rounded-full" />
+              <div className="h-1.5 w-10 bg-slate-200 rounded-full" />
+              <div className="h-1.5 w-6 bg-slate-200 rounded-full" />
+            </div>
+          </div>
+          
+          {/* Description */}
+          <div className="space-y-2 pt-2">
+            <div className="h-5 bg-slate-200 rounded w-full"></div>
+            <div className="h-5 bg-slate-200 rounded w-11/12"></div>
+            <div className="h-5 bg-slate-200 rounded w-9/12"></div>
+          </div>
+          
+          {/* Button */}
+          <div className="h-12 bg-slate-200 rounded-full w-48 mt-4"></div>
+        </div>
+
+        {/* Right Image */}
+        <div className="w-[50%] flex justify-end items-end">
+          <div className="relative">
+            <div className="relative bg-slate-200 rounded-3xl p-3 w-[350px] h-[350px] animate-pulse">
+              <div className="rounded-2xl bg-slate-300 w-full h-full"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* LAPTOP Skeleton (1024-1279px) */}
+      <div className="hidden lg:flex xl:hidden w-full max-w-4xl items-center justify-between gap-8 mx-auto">
+        <div className="w-[50%] space-y-3 animate-pulse">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-200 rounded-full w-52 h-8"></div>
+          <div className="space-y-3">
+            <div className="h-9 bg-slate-200 rounded-lg w-full"></div>
+            <div className="h-9 bg-slate-200 rounded-lg w-4/5"></div>
+            <div className="flex items-center gap-2 mt-2">
+              <div className="h-1.5 w-14 bg-slate-200 rounded-full" />
+              <div className="h-1.5 w-8 bg-slate-200 rounded-full" />
+              <div className="h-1.5 w-5 bg-slate-200 rounded-full" />
+            </div>
+          </div>
+          <div className="space-y-2 pt-2">
+            <div className="h-4 bg-slate-200 rounded w-full"></div>
+            <div className="h-4 bg-slate-200 rounded w-11/12"></div>
+            <div className="h-4 bg-slate-200 rounded w-9/12"></div>
+          </div>
+          <div className="h-11 bg-slate-200 rounded-full w-44 mt-4"></div>
+        </div>
+        <div className="w-[50%] flex justify-end items-end">
+          <div className="relative bg-slate-200 rounded-3xl p-3 w-[300px] h-[300px] animate-pulse">
+            <div className="rounded-2xl bg-slate-300 w-full h-full"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* TABLET Skeleton (768-1023px) */}
+      <div className="hidden md:flex lg:hidden w-full max-w-3xl flex-col items-center text-center space-y-4 mx-auto px-6">
+        <div className="space-y-3 animate-pulse w-full">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-200 rounded-full w-52 h-8 mx-auto"></div>
+          <div className="h-9 bg-slate-200 rounded-lg w-3/4 mx-auto"></div>
+          <div className="h-9 bg-slate-200 rounded-lg w-2/3 mx-auto"></div>
+          <div className="flex items-center gap-2 justify-center mt-2">
+            <div className="h-1.5 w-12 bg-slate-200 rounded-full" />
+            <div className="h-1.5 w-8 bg-slate-200 rounded-full" />
+            <div className="h-1.5 w-5 bg-slate-200 rounded-full" />
+          </div>
+        </div>
+        <div className="relative bg-slate-200 rounded-3xl p-3 w-[320px] h-[320px] animate-pulse">
+          <div className="rounded-2xl bg-slate-300 w-full h-full"></div>
+        </div>
+        <div className="space-y-2 animate-pulse w-full">
+          <div className="h-4 bg-slate-200 rounded w-2/3 mx-auto"></div>
+          <div className="h-4 bg-slate-200 rounded w-1/2 mx-auto"></div>
+        </div>
+        <div className="h-11 bg-slate-200 rounded-full w-44 mx-auto animate-pulse"></div>
+      </div>
+
+      {/* MOBILE Skeleton (640-767px) */}
+      <div className="hidden sm:flex md:hidden w-full max-w-md flex-col items-center text-center space-y-4 mx-auto px-4">
+        <div className="space-y-2 animate-pulse w-full">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-200 rounded-full w-48 h-7 mx-auto"></div>
+          <div className="h-8 bg-slate-200 rounded-lg w-3/4 mx-auto"></div>
+          <div className="h-8 bg-slate-200 rounded-lg w-2/3 mx-auto"></div>
+        </div>
+        <div className="relative bg-slate-200 rounded-2xl p-3 w-[260px] h-[260px] animate-pulse">
+          <div className="rounded-xl bg-slate-300 w-full h-full"></div>
+        </div>
+        <div className="space-y-2 animate-pulse w-full">
+          <div className="h-3 bg-slate-200 rounded w-2/3 mx-auto"></div>
+          <div className="h-3 bg-slate-200 rounded w-1/2 mx-auto"></div>
+        </div>
+        <div className="h-10 bg-slate-200 rounded-full w-full animate-pulse"></div>
+      </div>
+
+      {/* MOBILE SMALL Skeleton (<640px) */}
+      <div className="flex sm:hidden w-full max-w-[300px] flex-col items-center text-center space-y-3 mx-auto px-4">
+        <div className="space-y-2 animate-pulse w-full">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-200 rounded-full w-32 h-6 mx-auto"></div>
+          <div className="h-7 bg-slate-200 rounded-lg w-full"></div>
+          <div className="h-7 bg-slate-200 rounded-lg w-4/5 mx-auto"></div>
+        </div>
+        <div className="relative bg-slate-200 rounded-2xl p-2 w-[220px] h-[220px] animate-pulse">
+          <div className="rounded-xl bg-slate-300 w-full h-full"></div>
+        </div>
+        <div className="space-y-1 animate-pulse w-full">
+          <div className="h-3 bg-slate-200 rounded w-3/4 mx-auto"></div>
+          <div className="h-3 bg-slate-200 rounded w-2/3 mx-auto"></div>
+        </div>
+        <div className="h-9 bg-slate-200 rounded-xl w-full animate-pulse"></div>
+      </div>
+    </div>
+  );
+});
+
+CarouselSkeleton.displayName = 'CarouselSkeleton';
+
+// ============================================
+// SLIDE CONTENT COMPONENT
+// ============================================
 
 const SlideContent = memo<{
   slide: HeroSlide;
@@ -389,16 +531,24 @@ const SlideContent = memo<{
 
 SlideContent.displayName = 'SlideContent';
 
+// ============================================
+// MAIN COMPONENT
+// ============================================
+
 export const HeroCarousel: React.FC = () => {
-  const t = useTranslations('hero');
   const router = useRouter();
-  const slides: HeroSlide[] = useMemo(() => t.raw('slides'), [t]);
+  const { tArray, loading } = useSupabaseTranslations('hero');
   
   const carouselRef = useRef<HTMLDivElement>(null);
   const autoplay = useMemo(() => Autoplay(AUTOPLAY_CONFIG), []);
   const [emblaRef, emblaApi] = useEmblaCarousel(EMBLA_CONFIG, [autoplay]);
-
   const [selected, setSelected] = useState(0);
+
+  // Obtener slides usando tArray
+  const slides = useMemo(() => 
+    tArray<HeroSlide>('slides', ['title', 'icon', 'description', 'button']),
+    [tArray]
+  );
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
@@ -488,10 +638,62 @@ export const HeroCarousel: React.FC = () => {
     };
   }, [emblaApi]);
 
+  // Show skeleton while loading
+  if (loading || slides.length === 0) {
+    return (
+      <div
+        className="relative overflow-hidden"
+        style={{ height: 'calc(100vh - 60px)' }}
+        role="region"
+        aria-label="Carrusel de contenido educativo"
+        aria-busy="true"
+      >
+        <div className="h-full flex items-center justify-center">
+          <CarouselSkeleton />
+        </div>
+
+        {/* Navigation buttons disabled during loading */}
+        <button
+          disabled
+          className="absolute top-1/2 -translate-y-1/2 left-4 md:left-6 z-40 p-3 md:p-4 rounded-full bg-slate-200 shadow-lg border-2 border-slate-300 cursor-not-allowed opacity-50"
+          aria-label="Slide anterior"
+          type="button"
+        >
+          <ChevronLeft className="w-6 h-6 md:w-7 md:h-7 text-slate-400" strokeWidth={4} />
+        </button>
+
+        <button
+          disabled
+          className="absolute top-1/2 -translate-y-1/2 right-4 md:right-6 z-40 p-3 md:p-4 rounded-full bg-slate-200 shadow-lg border-2 border-slate-300 cursor-not-allowed opacity-50"
+          aria-label="Slide siguiente"
+          type="button"
+        >
+          <ChevronRight className="w-6 h-6 md:w-7 md:h-7 text-slate-400" strokeWidth={4} />
+        </button>
+
+        {/* Skeleton indicators */}
+        <nav
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-white px-6 py-3"
+          aria-label="Navegación del carrusel"
+        >
+          <div className="flex items-center justify-center gap-2">
+            {[...Array(9)].map((_, i) => (
+              <div
+                key={i}
+                className="w-3 h-3 rounded-full bg-slate-200 animate-pulse"
+              />
+            ))}
+          </div>
+        </nav>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={carouselRef}
-      className="relative h-[calc(100vh-56px)] overflow-hidden"
+      className="relative overflow-hidden"
+      style={{ height: 'calc(100vh - 60px)' }}
       role="region"
       aria-label="Carrusel de contenido educativo"
       aria-live="polite"
@@ -506,7 +708,7 @@ export const HeroCarousel: React.FC = () => {
               aria-roledescription="slide"
               aria-label={`${i + 1} de ${slides.length}`}
             >
-              <div className="w-full h-full flex items-start justify-center pt-8 pb-4 px-20 md:px-24 lg:px-32">
+              <div className="w-full h-full flex items-center justify-center px-4 sm:px-6 md:px-12 lg:px-20 xl:px-32">
                 <SlideContent
                   slide={slide}
                   imageSrc={SLIDE_IMAGES[i]}

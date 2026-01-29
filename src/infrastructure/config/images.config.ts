@@ -80,6 +80,28 @@ export const imagesConfig = {
   },
 
   // ============================================
+  // FEATURE TABS (for FeaturesSection)
+  // ============================================
+  featureTabs: {
+    difference: getImageUrl('tabs/diferencia/9997a10622f3b74bfe7d644e5c39baf8400c6350a66547864ce7ba3831e60da1.png'),
+    student: getImageUrl('tabs/estudiante/bbf107f2547d1e8623b9571a4f18beb078fbbd77ed6b2b00f89383d9ee3e265b.png'),
+    parent: getImageUrl('tabs/padre/3e921843ee47403fcdc7f85e7d08f9e7be1a3336db2859a4ecb19c49dc907c95.png'),
+    teacher: getImageUrl('tabs/docente/d611fd590d1beb39e8d854100dd2583ec6f7b0d4e17b8379713a9e84d159be62.png'),
+    pricing: getImageUrl('tabs/precio/00f3f50127af3e8df221b3983a925e2a47045bfbfe38a34c317d3ee5b04ef514.png'),
+  },
+
+  // ============================================
+  // FEATURE TABS (for FeaturesSection)
+  // ============================================
+  // featureTabs: {
+  //   difference: getImageUrl('tabs/diferencia/9997a10622f3b74bfe7d644e5c39baf8400c6350a66547864ce7ba3831e60da1.png'),
+  //   student: getImageUrl('tabs/estudiante/bbf107f2547d1e8623b9571a4f18beb078fbbd77ed6b2b00f89383d9ee3e265b.png'),
+  //   parent: getImageUrl('tabs/padre/3e921843ee47403fcdc7f85e7d08f9e7be1a3336db2859a4ecb19c49dc907c95.png'),
+  //   teacher: getImageUrl('tabs/docente/d611fd590d1beb39e8d854100dd2583ec6f7b0d4e17b8379713a9e84d159be62.png'),
+  //   pricing: getImageUrl('tabs/precio/00f3f50127af3e8df221b3983a925e2a47045bfbfe38a34c317d3ee5b04ef514.png'),
+  // },
+
+  // ============================================
   // PLACEHOLDERS
   // ============================================
   placeholders: {
@@ -88,32 +110,6 @@ export const imagesConfig = {
     avatar: getImageUrl('placeholders/avatar.webp'),
   },
 } as const;
-
-// ============================================
-// SLIDE IMAGES ARRAY (for HeroCarousel)
-// ============================================
-// ⚠️ IMPORTANTE: Estos deben coincidir con el número de slides en las traducciones
-// Actualmente: 4 slides (índices 0-3)
-
-export const heroSlideImages: string[] = [
-  imagesConfig.literacy.v1,         // Slide 0: "Aprende a Leer y Escribir" 📚
-  imagesConfig.stories.v1,          // Slide 1: "Ejercicios Interactivos" ✍️
-  imagesConfig.dashboard.riddlesV1, // Slide 2: "Progreso Personalizado" 📊
-  imagesConfig.poems.v1,            // Slide 3: "Comunidad de Aprendizaje" 👥
-];
-
-// ============================================
-// SLIDE ROUTES (for HeroCarousel navigation)
-// ============================================
-// ⚠️ IMPORTANTE: Estas rutas deben coincidir con el número de slides
-// Actualmente: 4 rutas (índices 0-3)
-
-export const heroSlideRoutes: string[] = [
-  '/explore',           // Slide 0: "Comenzar Ahora"
-  '/category/stories',  // Slide 1: "Ver Ejercicios"
-  '/dashboard',         // Slide 2: "Ver Mi Progreso"
-  '/community',         // Slide 3: "Unirme a la Comunidad"
-];
 
 // ============================================
 // TYPES

@@ -6,3 +6,4 @@
 export { HeroCarousel } from './HeroCarousel';
 export { FeaturesSection } from './FeaturesSection';
 export { CTASection } from './CTASection';
+export { HomeBackground } from './HomeBackground';
