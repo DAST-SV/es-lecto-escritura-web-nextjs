@@ -9,9 +9,6 @@
 export {
   imagesConfig as images,
   getImageUrl,
-  getAvatarUrl,
-  heroSlideImages,
-  heroSlideRoutes,
   type ImageCategory,
   type ImageKey,
 } from '@/src/infrastructure/config/images.config';

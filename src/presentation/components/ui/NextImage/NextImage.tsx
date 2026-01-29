@@ -6,6 +6,9 @@
 
 import Image, { ImageProps, StaticImageData } from 'next/image';
 
+// Export the ImageProps type as NextImageProps
+export type NextImageProps = ImageProps;
+
 /**
  * Componente funcional 'NextImage' que extiende las propiedades estándar de una imagen.
  * @param {ImageProps} props - Propiedades estándar de una imagen, incluyendo 'src', 'alt', 'width', 'height', etc.
@@ -36,3 +39,6 @@ export const NextImage: React.FC<ImageProps> = ({ src, alt, width, height, ...pr
     />
   );
 };
+
+// Default export
+export default NextImage;
