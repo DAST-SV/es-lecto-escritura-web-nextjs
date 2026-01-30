@@ -384,6 +384,31 @@
       }
     ]
   },
+  "biblioteca": {
+    "title": "Biblioteca",
+    "description": "Explora nuestra colección de cuentos, poemas, fábulas y más contenido educativo para todas las edades",
+    "searchPlaceholder": "Buscar libros, cuentos, poemas...",
+    "categories": "Categorías",
+    "backToLibrary": "Volver a la biblioteca",
+    "backToCategory": "Volver a la categoría",
+    "noBooks": "No hay libros disponibles",
+    "startReading": "Comenzar a leer",
+    "readTime": "min de lectura",
+    "pages": "páginas",
+    "featured": "Destacado",
+    "premium": "Premium",
+    "difficulty": {
+      "beginner": "Principiante",
+      "elementary": "Elemental",
+      "intermediate": "Intermedio",
+      "advanced": "Avanzado"
+    }
+  },
+  "books": {
+    "viewBook": "Ver libro",
+    "readNow": "Leer ahora",
+    "minutes": "min"
+  },
   "hero": {
     "slides": [
       {

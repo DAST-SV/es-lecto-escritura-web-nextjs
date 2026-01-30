@@ -1,0 +1,68 @@
+// src/presentation/features/books-catalog/components/BookGrid.tsx
+'use client';
+
+import { BookCard } from './BookCard';
+import type { BookListItem } from '@/src/core/domain/entities/BookWithTranslations';
+
+interface BookGridProps {
+  books: BookListItem[];
+  categorySlug?: string;
+  isLoading?: boolean;
+  emptyMessage?: string;
+}
+
+export function BookGrid({
+  books,
+  categorySlug,
+  isLoading,
+  emptyMessage = 'No hay libros disponibles'
+}: BookGridProps) {
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        {Array.from({ length: 10 }).map((_, i) => (
+          <div key={i} className="animate-pulse">
+            <div className="aspect-[3/4] bg-gray-200 rounded-2xl mb-3" />
+            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+            <div className="h-3 bg-gray-200 rounded w-1/2" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (books.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+          <svg
+            className="w-12 h-12 text-gray-300"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+            />
+          </svg>
+        </div>
+        <p className="text-gray-500">{emptyMessage}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+      {books.map((book) => (
+        <BookCard
+          key={book.id}
+          book={book}
+          categorySlug={categorySlug}
+        />
+      ))}
+    </div>
+  );
+}

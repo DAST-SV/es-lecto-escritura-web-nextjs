@@ -198,5 +198,30 @@
       "login_success": "Bon retour!",
       "register_success": "Compte créé avec succès!"
     }
+  },
+  "biblioteca": {
+    "title": "Bibliothèque",
+    "description": "Explorez notre collection de contes, poèmes, fables et plus de contenu éducatif pour tous les âges",
+    "searchPlaceholder": "Rechercher des livres, contes, poèmes...",
+    "categories": "Catégories",
+    "backToLibrary": "Retour à la bibliothèque",
+    "backToCategory": "Retour à la catégorie",
+    "noBooks": "Aucun livre disponible",
+    "startReading": "Commencer à lire",
+    "readTime": "min de lecture",
+    "pages": "pages",
+    "featured": "En vedette",
+    "premium": "Premium",
+    "difficulty": {
+      "beginner": "Débutant",
+      "elementary": "Élémentaire",
+      "intermediate": "Intermédiaire",
+      "advanced": "Avancé"
+    }
+  },
+  "books": {
+    "viewBook": "Voir le livre",
+    "readNow": "Lire maintenant",
+    "minutes": "min"
   }
 }

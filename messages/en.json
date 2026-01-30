@@ -384,6 +384,31 @@
       }
     ]
   },
+  "biblioteca": {
+    "title": "Library",
+    "description": "Explore our collection of stories, poems, fables and more educational content for all ages",
+    "searchPlaceholder": "Search books, stories, poems...",
+    "categories": "Categories",
+    "backToLibrary": "Back to library",
+    "backToCategory": "Back to category",
+    "noBooks": "No books available",
+    "startReading": "Start reading",
+    "readTime": "min read",
+    "pages": "pages",
+    "featured": "Featured",
+    "premium": "Premium",
+    "difficulty": {
+      "beginner": "Beginner",
+      "elementary": "Elementary",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    }
+  },
+  "books": {
+    "viewBook": "View book",
+    "readNow": "Read now",
+    "minutes": "min"
+  },
   "hero": {
     "slides": [
       {
