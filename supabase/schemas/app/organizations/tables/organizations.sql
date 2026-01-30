@@ -1,3 +1,4 @@
+-- supabase/schemas/app/organizations/tables/organizations.sql
 -- ============================================================================
 -- TABLA: organizations
 -- DESCRIPCIÓN: Organizaciones (escuelas, familias, grupos)

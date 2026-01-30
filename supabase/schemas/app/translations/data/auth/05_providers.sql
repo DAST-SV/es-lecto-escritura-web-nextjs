@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/data/auth/05_providers.sql
 -- ============================================================================
 -- TRANSLATIONS DATA: AUTH - PROVIDERS
 -- DESCRIPCIÓN: Traducciones de proveedores OAuth

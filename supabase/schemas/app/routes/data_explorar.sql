@@ -1,6 +1,6 @@
+-- supabase/schemas/app/routes/data_explorar.sql
 -- ============================================
 -- DATOS: Ruta /explorar (Exploración de libros)
--- Archivo: routes/data_explorar.sql
 -- ============================================
 
 -- Insertar ruta principal (pública)

@@ -1,3 +1,4 @@
+-- supabase/schemas/app/auth/enums/oauth_provider.sql
 -- ============================================================================
 -- ENUM: oauth_provider
 -- DESCRIPCIÓN: Proveedores de autenticación OAuth soportados

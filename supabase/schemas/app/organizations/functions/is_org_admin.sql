@@ -1,3 +1,4 @@
+-- supabase/schemas/app/organizations/functions/is_org_admin.sql
 -- ============================================================================
 -- FUNCIÓN: is_org_admin
 -- DESCRIPCIÓN: Verifica si un usuario es administrador de una organización

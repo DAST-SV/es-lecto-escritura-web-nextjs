@@ -1,6 +1,6 @@
+-- supabase/schemas/app/routes/tables/route_translations.sql
 -- ============================================
 -- TABLA: route_translations
--- Archivo: routes/tables/route_translations.sql
 -- ============================================
 
 CREATE TABLE app.route_translations (

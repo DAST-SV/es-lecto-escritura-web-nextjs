@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/data/auth/06_errors.sql
 -- ============================================================================
 -- TRANSLATIONS DATA: AUTH - ERRORES
 -- DESCRIPCIÓN: Mensajes de error de autenticación

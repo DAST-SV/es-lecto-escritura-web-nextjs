@@ -1,6 +1,6 @@
+-- supabase/schemas/app/admin/rls/admin_policies.sql
 -- ============================================
 -- RLS: Políticas adicionales para admin
--- Archivo: admin/rls/admin_policies.sql
 -- ============================================
 
 -- ============================================

@@ -1,3 +1,4 @@
+-- supabase/schemas/app/auth/tables/user_profiles.sql
 -- ============================================================================
 -- TABLA: user_profiles
 -- DESCRIPCIÓN: Perfiles extendidos de usuarios con soporte OAuth

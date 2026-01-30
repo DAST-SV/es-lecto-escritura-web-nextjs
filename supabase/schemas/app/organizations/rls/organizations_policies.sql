@@ -1,3 +1,4 @@
+-- supabase/schemas/app/organizations/rls/organizations_policies.sql
 -- ============================================================================
 -- RLS: organizations
 -- DESCRIPCIÓN: Políticas de seguridad para tabla organizations

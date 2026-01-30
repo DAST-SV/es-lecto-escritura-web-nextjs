@@ -1,6 +1,6 @@
+-- supabase/schemas/app/admin/setup/complete_admin_access.sql
 -- ============================================
 -- SCRIPT: Setup completo de acceso admin
--- Archivo: admin/setup/complete_admin_access.sql
 -- ⚠️ CAMBIAR EL EMAIL ANTES DE EJECUTAR
 -- ============================================
 

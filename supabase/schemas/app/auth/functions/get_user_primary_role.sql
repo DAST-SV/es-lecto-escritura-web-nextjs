@@ -1,3 +1,4 @@
+-- supabase/schemas/app/auth/functions/get_user_primary_role.sql
 -- ============================================================================
 -- FUNCIÓN: get_user_primary_role
 -- DESCRIPCIÓN: Obtiene el rol principal de un usuario

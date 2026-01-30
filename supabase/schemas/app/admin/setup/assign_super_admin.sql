@@ -1,6 +1,6 @@
+-- supabase/schemas/app/admin/setup/assign_super_admin.sql
 -- ============================================
 -- SCRIPT: Asignar rol super_admin a un usuario
--- Archivo: admin/setup/assign_super_admin.sql
 -- ⚠️ CAMBIAR EL EMAIL ANTES DE EJECUTAR
 -- ============================================
 

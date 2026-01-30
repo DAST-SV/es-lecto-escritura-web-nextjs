@@ -1,3 +1,4 @@
+-- supabase/schemas/app/organizations/enums/organization_type.sql
 -- ============================================================================
 -- ENUM: organization_type
 -- DESCRIPCIÓN: Tipos de organizaciones soportadas

@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/data/common.sql
 -- ============================================================================
 -- TRANSLATIONS DATA: COMMON
 -- DESCRIPCIÓN: Traducciones comunes usadas en toda la aplicación

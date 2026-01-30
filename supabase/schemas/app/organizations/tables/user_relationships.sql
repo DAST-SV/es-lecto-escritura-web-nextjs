@@ -1,3 +1,4 @@
+-- supabase/schemas/app/organizations/tables/user_relationships.sql
 -- ============================================================================
 -- TABLA: user_relationships
 -- DESCRIPCIÓN: Relaciones entre usuarios (padre-hijo, maestro-estudiante)

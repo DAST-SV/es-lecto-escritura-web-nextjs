@@ -1,3 +1,4 @@
+-- supabase/schemas/app/legacy/user_types.sql
 -- ============================================================================
 -- MÓDULO: LEGACY - USER TYPES
 -- DESCRIPCIÓN: Tabla legacy para compatibilidad con código antiguo

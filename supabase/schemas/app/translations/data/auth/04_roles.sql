@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/data/auth/04_roles.sql
 -- ============================================================================
 -- TRANSLATIONS DATA: AUTH - ROLES
 -- DESCRIPCIÓN: Traducciones de nombres y descripciones de roles

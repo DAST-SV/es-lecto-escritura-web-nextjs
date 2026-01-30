@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/data/99_cleanup.sql
 -- ============================================================================
 -- TRANSLATIONS DATA: CLEANUP Y VERIFICACIÓN
 -- DESCRIPCIÓN: Limpieza de funciones temporales y verificación final

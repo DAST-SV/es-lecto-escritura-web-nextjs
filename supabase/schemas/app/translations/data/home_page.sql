@@ -1,5 +1,5 @@
--- ============================================================================
 -- supabase/schemas/app/translations/data/home_page.sql
+-- ============================================================================
 -- TRANSLATIONS DATA: HOME PAGE
 -- DESCRIPTION: Translations for the home page components (hero, features, cta)
 -- ============================================================================

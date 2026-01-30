@@ -1,3 +1,4 @@
+-- supabase/schemas/app/auth/triggers/set_updated_at.sql
 -- ============================================================================
 -- TRIGGERS: set_updated_at
 -- DESCRIPCIÓN: Triggers para actualizar updated_at automáticamente

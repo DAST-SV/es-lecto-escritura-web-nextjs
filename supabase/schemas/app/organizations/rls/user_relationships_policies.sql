@@ -1,3 +1,4 @@
+-- supabase/schemas/app/organizations/rls/user_relationships_policies.sql
 -- ============================================================================
 -- RLS: user_relationships
 -- DESCRIPCIÓN: Políticas de seguridad para tabla user_relationships

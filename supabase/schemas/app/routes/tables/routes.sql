@@ -1,6 +1,6 @@
+-- supabase/schemas/app/routes/tables/routes.sql
 -- ============================================
 -- TABLA: routes
--- Archivo: routes/tables/routes.sql
 -- ============================================
 
 CREATE TABLE app.routes (

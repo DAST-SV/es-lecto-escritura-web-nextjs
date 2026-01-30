@@ -1,6 +1,6 @@
+-- supabase/schemas/app/permissions/data.sql
 -- ============================================
 -- DATOS INICIALES: route_permissions
--- Archivo: permissions/data.sql
 -- ============================================
 
 -- super_admin: TODAS las rutas

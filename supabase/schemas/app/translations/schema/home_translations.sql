@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/schema/home_translations.sql
 -- ============================================
 -- TRADUCCIONES PARA HOMEPAGE (ESPAÑOL)
 -- ============================================

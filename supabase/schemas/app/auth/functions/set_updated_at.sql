@@ -1,3 +1,4 @@
+-- supabase/schemas/app/auth/functions/set_updated_at.sql
 -- ============================================================================
 -- FUNCIÓN: set_updated_at
 -- DESCRIPCIÓN: Actualiza automáticamente el campo updated_at

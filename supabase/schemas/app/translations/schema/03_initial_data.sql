@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/schema/03_initial_data.sql
 -- ============================================================================
 -- TRANSLATIONS SCHEMA: DATOS INICIALES
 -- DESCRIPCIÓN: Idiomas, namespaces y categorías del sistema

@@ -1,3 +1,4 @@
+-- supabase/schemas/app/organizations/enums/membership_status.sql
 -- ============================================================================
 -- ENUM: membership_status
 -- DESCRIPCIÓN: Estados de membresía en una organización

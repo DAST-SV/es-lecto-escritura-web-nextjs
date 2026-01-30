@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/schema/00_tables.sql
 -- ============================================================================
 -- TRANSLATIONS SCHEMA: TABLAS
 -- DESCRIPCIÓN: Definición de todas las tablas del sistema de traducciones

@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/data/auth/07_messages.sql
 -- ============================================================================
 -- TRANSLATIONS DATA: AUTH - MENSAJES
 -- DESCRIPCIÓN: Mensajes del sistema de autenticación

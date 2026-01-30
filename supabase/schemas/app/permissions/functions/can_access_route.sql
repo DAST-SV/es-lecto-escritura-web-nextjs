@@ -1,6 +1,6 @@
+-- supabase/schemas/app/permissions/functions/can_access_route.sql
 -- ============================================
 -- FUNCIÓN: can_access_route
--- Archivo: permissions/functions/can_access_route.sql
 -- Descripción: Verifica permisos de acceso a rutas
 -- ============================================
 

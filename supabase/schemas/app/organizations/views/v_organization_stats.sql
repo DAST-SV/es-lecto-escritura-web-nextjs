@@ -1,3 +1,4 @@
+-- supabase/schemas/app/organizations/views/v_organization_stats.sql
 -- ============================================================================
 -- VISTA: v_organization_stats
 -- DESCRIPCIÓN: Estadísticas de organizaciones (miembros activos, pendientes)

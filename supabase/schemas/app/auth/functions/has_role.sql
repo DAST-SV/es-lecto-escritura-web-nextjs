@@ -1,3 +1,4 @@
+-- supabase/schemas/app/auth/functions/has_role.sql
 -- ============================================================================
 -- FUNCIÓN: has_role
 -- DESCRIPCIÓN: Verifica si un usuario tiene un rol específico

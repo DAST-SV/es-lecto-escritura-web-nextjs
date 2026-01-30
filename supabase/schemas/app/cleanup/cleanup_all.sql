@@ -1,6 +1,6 @@
+-- supabase/schemas/app/cleanup/cleanup_all.sql
 -- ============================================
 -- SCRIPT: Limpiar todo el schema app
--- Archivo: cleanup/cleanup_all.sql
 -- ⚠️ PRECAUCIÓN: Esto elimina TODAS las tablas y funciones
 -- ============================================
 

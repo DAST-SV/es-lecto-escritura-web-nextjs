@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/data/complete_system.sql
 -- ============================================
 -- MEGA SCRIPT: Complete System Translations
 -- Propósito: TODAS las traducciones del sistema completo

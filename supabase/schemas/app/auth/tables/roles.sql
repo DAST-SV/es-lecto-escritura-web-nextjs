@@ -1,3 +1,4 @@
+-- supabase/schemas/app/auth/tables/roles.sql
 -- ============================================================================
 -- TABLA: roles
 -- DESCRIPCIÓN: Catálogo de roles del sistema

@@ -1,6 +1,6 @@
+-- supabase/schemas/app/role_language_access/tables/role_language_access.sql
 -- ============================================
 -- TABLA: role_language_access
--- Archivo: role_language_access/tables/role_language_access.sql
 -- ============================================
 
 CREATE TABLE app.role_language_access (

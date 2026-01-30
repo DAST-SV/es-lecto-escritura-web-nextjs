@@ -1,3 +1,4 @@
+-- supabase/schemas/app/organizations/views/v_organization_active_members.sql
 -- ============================================================================
 -- VISTA: v_organization_active_members
 -- DESCRIPCIÓN: Miembros activos de organizaciones con información de perfil

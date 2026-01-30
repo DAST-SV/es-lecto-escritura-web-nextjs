@@ -1,6 +1,6 @@
+-- supabase/schemas/app/permissions/functions/search_users.sql
 -- ============================================
 -- FUNCIÓN: search_users_by_email
--- Archivo: permissions/functions/search_users.sql
 -- ============================================
 
 DROP FUNCTION IF EXISTS public.search_users_by_email(text) CASCADE;

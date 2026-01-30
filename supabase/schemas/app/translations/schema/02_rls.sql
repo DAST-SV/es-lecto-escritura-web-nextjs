@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/schema/02_rls.sql
 -- ============================================================================
 -- TRANSLATIONS SCHEMA: ROW LEVEL SECURITY
 -- DESCRIPCIÓN: Políticas de seguridad para tablas de traducciones

@@ -1,8 +1,7 @@
+-- supabase/CLEANUP_COMPLETO.sql
 -- ============================================================================
 -- CLEANUP COMPLETO - ES LECTO ESCRITURA
 -- ============================================================================
--- Ubicación: supabase/CLEANUP_COMPLETO.sql
---
 -- Este script ELIMINA COMPLETAMENTE todos los objetos de la base de datos
 -- para permitir una instalación limpia con SETUP_RAPIDO.sql
 --

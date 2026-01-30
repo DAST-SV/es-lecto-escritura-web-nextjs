@@ -1,3 +1,4 @@
+-- supabase/schemas/app/auth/tables/user_roles.sql
 -- ============================================================================
 -- TABLA: user_roles
 -- DESCRIPCIÓN: Asignación de roles a usuarios

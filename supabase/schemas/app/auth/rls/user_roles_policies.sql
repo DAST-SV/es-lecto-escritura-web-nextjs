@@ -1,3 +1,4 @@
+-- supabase/schemas/app/auth/rls/user_roles_policies.sql
 -- ============================================================================
 -- RLS: user_roles
 -- DESCRIPCIÓN: Políticas de seguridad para tabla user_roles

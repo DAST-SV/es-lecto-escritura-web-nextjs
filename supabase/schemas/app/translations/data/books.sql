@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/data/books.sql
 -- ============================================================================
 -- TRANSLATIONS DATA: BOOKS MODULE
 -- DESCRIPCION: Traducciones completas para el modulo de libros

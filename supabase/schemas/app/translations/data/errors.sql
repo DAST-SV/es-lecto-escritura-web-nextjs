@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/data/errors.sql
 -- ============================================================================
 -- TRANSLATIONS DATA: ERRORS
 -- DESCRIPCIÓN: Mensajes de error comunes del sistema

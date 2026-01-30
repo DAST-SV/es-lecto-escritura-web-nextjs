@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/data/auth/01_forms.sql
 -- ============================================================================
 -- TRANSLATIONS DATA: AUTH - FORMULARIOS
 -- DESCRIPCIÓN: Traducciones de campos de formularios de autenticación

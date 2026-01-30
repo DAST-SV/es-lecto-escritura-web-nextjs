@@ -1,3 +1,4 @@
+-- supabase/setup_admin_access_simple.sql
 -- ============================================
 -- SCRIPT PARA SUPABASE: SETUP ACCESO ADMIN COMPLETO
 -- ⚠️ IMPORTANTE: Reemplaza 'tu_email@example.com' con tu email real

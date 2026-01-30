@@ -1,6 +1,6 @@
+-- supabase/schemas/app/routes/data.sql
 -- ============================================
 -- DATOS INICIALES: routes y route_translations
--- Archivo: routes/data.sql
 -- ============================================
 
 -- Rutas principales

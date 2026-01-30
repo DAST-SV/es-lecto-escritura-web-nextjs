@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/data/auth/03_register.sql
 -- ============================================================================
 -- TRANSLATIONS DATA: AUTH - REGISTER
 -- DESCRIPCIÓN: Traducciones de la página de registro

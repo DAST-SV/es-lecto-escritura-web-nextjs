@@ -1,3 +1,4 @@
+-- supabase/schemas/app/organizations/tables/organization_members.sql
 -- ============================================================================
 -- TABLA: organization_members
 -- DESCRIPCIÓN: Miembros de organizaciones

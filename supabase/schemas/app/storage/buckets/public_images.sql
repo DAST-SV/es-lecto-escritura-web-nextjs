@@ -1,3 +1,4 @@
+-- supabase/schemas/app/storage/buckets/public_images.sql
 -- ============================================
 -- SUPABASE STORAGE BUCKETS CONFIGURATION
 -- Configuración de Buckets de Storage en Supabase

@@ -1,3 +1,4 @@
+-- supabase/schemas/app/auth/enums/user_role.sql
 -- ============================================================================
 -- ENUM: user_role
 -- DESCRIPCIÓN: Roles disponibles en el sistema

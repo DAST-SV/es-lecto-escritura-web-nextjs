@@ -1,3 +1,4 @@
+-- supabase/schemas/app/permissions/rbac_data.sql
 -- ============================================
 -- PARTE 2: Datos Iniciales + Funciones Helper
 -- ============================================

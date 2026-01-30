@@ -1,6 +1,6 @@
+-- supabase/schemas/app/role_language_access/data.sql
 -- ============================================
 -- DATOS INICIALES: role_language_access
--- Archivo: role_language_access/data.sql
 -- ============================================
 
 -- super_admin: TODOS los idiomas

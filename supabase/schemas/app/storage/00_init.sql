@@ -1,6 +1,6 @@
+-- supabase/schemas/app/storage/00_init.sql
 -- ============================================
 -- Storage: Initialization
--- File: storage/00_init.sql
 -- Description: Enable storage extensions and base permissions
 -- ============================================
 

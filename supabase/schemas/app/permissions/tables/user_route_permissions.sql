@@ -1,6 +1,6 @@
+-- supabase/schemas/app/permissions/tables/user_route_permissions.sql
 -- ============================================
 -- TABLA: user_route_permissions
--- Archivo: permissions/tables/user_route_permissions.sql
 -- ============================================
 
 CREATE TABLE app.user_route_permissions (

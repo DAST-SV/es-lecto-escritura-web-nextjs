@@ -1,3 +1,4 @@
+-- supabase/schemas/app/auth/00_init.sql
 -- ============================================================================
 -- MÓDULO: AUTH - INICIALIZACIÓN
 -- DESCRIPCIÓN: Crear schema, extensiones y configuración inicial

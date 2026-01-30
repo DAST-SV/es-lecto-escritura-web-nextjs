@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/data/navigation.sql
 -- ============================================================================
 -- TRANSLATIONS DATA: NAVIGATION
 -- DESCRIPCIÓN: Traducciones de menús y navegación

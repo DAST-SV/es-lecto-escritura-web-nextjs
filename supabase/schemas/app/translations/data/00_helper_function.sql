@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/data/00_helper_function.sql
 -- ============================================================================
 -- TRANSLATIONS DATA: FUNCIÓN HELPER
 -- DESCRIPCIÓN: Función temporal para facilitar inserción de traducciones

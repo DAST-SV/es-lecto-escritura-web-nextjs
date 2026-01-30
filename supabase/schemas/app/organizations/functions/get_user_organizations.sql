@@ -1,3 +1,4 @@
+-- supabase/schemas/app/organizations/functions/get_user_organizations.sql
 -- ============================================================================
 -- FUNCIÓN: get_user_organizations
 -- DESCRIPCIÓN: Obtiene todas las organizaciones de un usuario

@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/schema/01_triggers.sql
 -- ============================================================================
 -- TRANSLATIONS SCHEMA: TRIGGERS
 -- DESCRIPCIÓN: Triggers para actualizar updated_at automáticamente

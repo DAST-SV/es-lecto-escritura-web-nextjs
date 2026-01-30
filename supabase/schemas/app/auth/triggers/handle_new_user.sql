@@ -1,3 +1,4 @@
+-- supabase/schemas/app/auth/triggers/handle_new_user.sql
 -- ============================================================================
 -- TRIGGER: handle_new_user
 -- DESCRIPCIÓN: Crear perfil automáticamente al registrar usuario

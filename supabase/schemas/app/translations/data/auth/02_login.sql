@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/data/auth/02_login.sql
 -- ============================================================================
 -- TRANSLATIONS DATA: AUTH - LOGIN
 -- DESCRIPCIÓN: Traducciones de la página de inicio de sesión

@@ -1,3 +1,4 @@
+-- supabase/schemas/app/organizations/rls/organization_members_policies.sql
 -- ============================================================================
 -- RLS: organization_members
 -- DESCRIPCIÓN: Políticas de seguridad para tabla organization_members

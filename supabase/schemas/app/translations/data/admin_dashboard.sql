@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/data/admin_dashboard.sql
 -- ============================================
 -- SCRIPT 14: SISTEMA DE TRADUCCIONES COMPLETO
 -- ============================================

@@ -1,3 +1,4 @@
+-- supabase/schemas/app/translations/data/books_user_pages.sql
 -- ============================================================================
 -- TRANSLATIONS DATA: BOOKS USER PAGES MODULE
 -- DESCRIPCION: Traducciones para las paginas de usuario de libros
