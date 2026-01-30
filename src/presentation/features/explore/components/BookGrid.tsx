@@ -2,6 +2,7 @@
  * ============================================
  * COMPONENTE: BookGrid
  * Grid responsive de libros
+ * TODAS las traducciones son dinamicas
  * ============================================
  */
 
@@ -12,6 +13,7 @@ import { BookOpen, SearchX } from 'lucide-react';
 import { BookExtended } from '@/src/core/domain/entities/BookExtended';
 import { BookCard } from './BookCard';
 import { BookCardSkeleton } from './BookCardSkeleton';
+import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 
 // ============================================
 // TIPOS
@@ -96,10 +98,16 @@ export const BookGrid: React.FC<BookGridProps> = memo(
     books,
     isLoading,
     onBookSelect,
-    emptyMessage = 'No se encontraron libros',
-    emptySubMessage = 'Intenta ajustar los filtros o realizar una búsqueda diferente',
+    emptyMessage,
+    emptySubMessage,
     skeletonCount = 8,
   }) => {
+    const { t, loading: translationsLoading } = useSupabaseTranslations('book_explore');
+
+    // Obtener mensajes traducidos (props tienen prioridad sobre traducciones)
+    const displayEmptyMessage = emptyMessage || (translationsLoading ? 'No se encontraron libros' : t('results.empty'));
+    const displayEmptySubMessage = emptySubMessage || (translationsLoading ? 'Intenta ajustar los filtros' : t('results.empty_filtered'));
+
     // Loading inicial
     if (isLoading && books.length === 0) {
       return <LoadingGrid count={skeletonCount} />;
@@ -107,7 +115,7 @@ export const BookGrid: React.FC<BookGridProps> = memo(
 
     // Sin resultados
     if (!isLoading && books.length === 0) {
-      return <EmptyState message={emptyMessage} subMessage={emptySubMessage} />;
+      return <EmptyState message={displayEmptyMessage} subMessage={displayEmptySubMessage} />;
     }
 
     return (

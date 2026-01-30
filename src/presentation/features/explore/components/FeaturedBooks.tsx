@@ -3,6 +3,7 @@
  * COMPONENTE: FeaturedBooks
  * Sección de libros destacados
  * Carrusel horizontal con cards grandes
+ * TODAS las traducciones son dinamicas
  * ============================================
  */
 
@@ -11,6 +12,7 @@
 import React, { memo, useRef, useState, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Sparkles, Star, BookOpen } from 'lucide-react';
 import { BookExtended } from '@/src/core/domain/entities/BookExtended';
+import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 
 // ============================================
 // TIPOS
@@ -30,7 +32,9 @@ const FeaturedCard: React.FC<{
   book: BookExtended;
   onSelect: (bookId: string) => void;
   priority?: boolean;
-}> = memo(({ book, onSelect, priority = false }) => {
+  featuredLabel: string;
+  viewBookLabel: string;
+}> = memo(({ book, onSelect, priority = false, featuredLabel, viewBookLabel }) => {
   const primaryCategory = book.getPrimaryCategory();
 
   return (
@@ -39,6 +43,7 @@ const FeaturedCard: React.FC<{
       className="group flex-shrink-0 w-72 md:w-80 cursor-pointer"
       role="button"
       tabIndex={0}
+      aria-label={`${viewBookLabel}: ${book.title}`}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -50,7 +55,7 @@ const FeaturedCard: React.FC<{
         {/* Badge destacado */}
         <div className="absolute top-3 left-3 z-20 bg-gradient-to-r from-orange-400 to-yellow-400 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
           <Sparkles className="w-3 h-3" />
-          Destacado
+          {featuredLabel}
         </div>
 
         {/* Portada */}
@@ -160,6 +165,7 @@ FeaturedBooksSkeleton.displayName = 'FeaturedBooksSkeleton';
 
 export const FeaturedBooks: React.FC<FeaturedBooksProps> = memo(
   ({ books, isLoading, onBookSelect }) => {
+    const { t, loading: translationsLoading } = useSupabaseTranslations('book_explore');
     const scrollRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(true);
@@ -183,8 +189,15 @@ export const FeaturedBooks: React.FC<FeaturedBooksProps> = memo(
       }
     }, [checkScrollButtons]);
 
+    // Obtener textos traducidos (con fallback mientras carga)
+    const sectionTitle = translationsLoading ? 'Libros Destacados' : t('featured.title');
+    const featuredLabel = translationsLoading ? 'Destacado' : t('featured.badge');
+    const previousLabel = translationsLoading ? 'Anterior' : t('featured.previous');
+    const nextLabel = translationsLoading ? 'Siguiente' : t('featured.next');
+    const viewBookLabel = translationsLoading ? 'Ver libro' : t('featured.view_book');
+
     // No mostrar si está cargando o no hay libros
-    if (isLoading) {
+    if (isLoading || translationsLoading) {
       return <FeaturedBooksSkeleton />;
     }
 
@@ -208,7 +221,7 @@ export const FeaturedBooks: React.FC<FeaturedBooksProps> = memo(
                   textShadow: '2px 2px 0px rgba(0,0,0,0.2)',
                 }}
               >
-                Libros Destacados
+                {sectionTitle}
               </h2>
             </div>
 
@@ -222,7 +235,7 @@ export const FeaturedBooks: React.FC<FeaturedBooksProps> = memo(
                     ? 'hover:scale-110 hover:bg-yellow-50'
                     : 'opacity-50 cursor-not-allowed'
                 }`}
-                aria-label="Anterior"
+                aria-label={previousLabel}
               >
                 <ChevronLeft className="w-5 h-5 text-blue-700" strokeWidth={3} />
               </button>
@@ -234,7 +247,7 @@ export const FeaturedBooks: React.FC<FeaturedBooksProps> = memo(
                     ? 'hover:scale-110 hover:bg-yellow-50'
                     : 'opacity-50 cursor-not-allowed'
                 }`}
-                aria-label="Siguiente"
+                aria-label={nextLabel}
               >
                 <ChevronRight className="w-5 h-5 text-blue-700" strokeWidth={3} />
               </button>
@@ -257,6 +270,8 @@ export const FeaturedBooks: React.FC<FeaturedBooksProps> = memo(
                 book={book}
                 onSelect={onBookSelect}
                 priority={index < 2}
+                featuredLabel={featuredLabel}
+                viewBookLabel={viewBookLabel}
               />
             ))}
           </div>

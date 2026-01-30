@@ -1,7 +1,8 @@
 /**
  * ============================================
  * COMPONENTE: BookFilters
- * Panel de filtros para exploración de libros
+ * Panel de filtros para exploracion de libros
+ * TODAS las traducciones son dinamicas
  * ============================================
  */
 
@@ -19,9 +20,11 @@ import {
   Tag,
   BookOpen,
   Lock,
+  Users,
 } from 'lucide-react';
 import { BookExploreFilters, CatalogItemTranslated, LevelItemTranslated, BookSortOption, AccessType } from '@/src/core/domain/types';
 import { FilterChip } from './FilterChip';
+import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 
 // ============================================
 // TIPOS
@@ -37,24 +40,6 @@ interface BookFiltersProps {
   isLoading: boolean;
   hasActiveFilters: boolean;
 }
-
-// ============================================
-// CONSTANTES
-// ============================================
-
-const SORT_OPTIONS: { value: BookSortOption; label: string }[] = [
-  { value: 'recent', label: 'Más Recientes' },
-  { value: 'popular', label: 'Más Populares' },
-  { value: 'rating', label: 'Mejor Valorados' },
-  { value: 'title_asc', label: 'Título A-Z' },
-  { value: 'title_desc', label: 'Título Z-A' },
-];
-
-const ACCESS_OPTIONS: { value: AccessType; label: string; icon: React.ElementType }[] = [
-  { value: 'public', label: 'Gratis', icon: BookOpen },
-  { value: 'freemium', label: 'Freemium', icon: Sparkles },
-  { value: 'premium', label: 'Premium', icon: Lock },
-];
 
 // ============================================
 // FILTER SECTION
@@ -147,6 +132,25 @@ export const BookFilters: React.FC<BookFiltersProps> = memo(
     isLoading,
     hasActiveFilters,
   }) => {
+    const { t, loading: translationsLoading } = useSupabaseTranslations('book_filters');
+
+    // Opciones de ordenamiento con traducciones
+    const SORT_OPTIONS: { value: BookSortOption; label: string }[] = [
+      { value: 'recent', label: t('sort.recent') },
+      { value: 'popular', label: t('sort.popular') },
+      { value: 'rating', label: t('sort.rating') },
+      { value: 'title_asc', label: t('sort.title_asc') },
+      { value: 'title_desc', label: t('sort.title_desc') },
+    ];
+
+    // Opciones de acceso con traducciones
+    const ACCESS_OPTIONS: { value: AccessType; label: string; icon: React.ElementType }[] = [
+      { value: 'public', label: t('access.public'), icon: BookOpen },
+      { value: 'freemium', label: t('access.freemium'), icon: Sparkles },
+      { value: 'premium', label: t('access.premium'), icon: Lock },
+      { value: 'community', label: t('access.community'), icon: Users },
+    ];
+
     // Helpers para toggle de filtros
     const toggleCategory = (id: number) => {
       const current = filters.categories || [];
@@ -184,7 +188,7 @@ export const BookFilters: React.FC<BookFiltersProps> = memo(
       onFilterChange({ ...filters, sortBy });
     };
 
-    if (isLoading) {
+    if (isLoading || translationsLoading) {
       return <BookFiltersSkeleton />;
     }
 
@@ -199,7 +203,7 @@ export const BookFilters: React.FC<BookFiltersProps> = memo(
                 className="font-black text-blue-800"
                 style={{ fontFamily: 'Comic Sans MS, cursive' }}
               >
-                Filtros
+                {t('title')}
               </h2>
             </div>
 
@@ -211,7 +215,7 @@ export const BookFilters: React.FC<BookFiltersProps> = memo(
                 style={{ fontFamily: 'Comic Sans MS, cursive' }}
               >
                 <X className="w-3 h-3" />
-                Limpiar
+                {t('clear')}
               </button>
             )}
           </div>
@@ -220,7 +224,7 @@ export const BookFilters: React.FC<BookFiltersProps> = memo(
         {/* Contenido */}
         <div className="p-4 space-y-1">
           {/* Ordenar por */}
-          <FilterSection title="Ordenar por" icon={SortAsc} defaultOpen={true}>
+          <FilterSection title={t('sort.title')} icon={SortAsc} defaultOpen={true}>
             <select
               value={filters.sortBy || 'recent'}
               onChange={(e) => setSortBy(e.target.value as BookSortOption)}
@@ -235,9 +239,9 @@ export const BookFilters: React.FC<BookFiltersProps> = memo(
             </select>
           </FilterSection>
 
-          {/* Categorías */}
+          {/* Categorias */}
           {categories.length > 0 && (
-            <FilterSection title="Categorías" icon={Layers} defaultOpen={true}>
+            <FilterSection title={t('categories')} icon={Layers} defaultOpen={true}>
               <div className="flex flex-wrap gap-2">
                 {categories.map((category, index) => (
                   <FilterChip
@@ -253,9 +257,9 @@ export const BookFilters: React.FC<BookFiltersProps> = memo(
             </FilterSection>
           )}
 
-          {/* Géneros */}
+          {/* Generos */}
           {genres.length > 0 && (
-            <FilterSection title="Géneros" icon={Tag} defaultOpen={false}>
+            <FilterSection title={t('genres')} icon={Tag} defaultOpen={false}>
               <div className="flex flex-wrap gap-2">
                 {genres.map((genre, index) => (
                   <FilterChip
@@ -273,12 +277,12 @@ export const BookFilters: React.FC<BookFiltersProps> = memo(
 
           {/* Niveles de lectura */}
           {levels.length > 0 && (
-            <FilterSection title="Nivel de Lectura" icon={BookOpen} defaultOpen={false}>
+            <FilterSection title={t('levels')} icon={BookOpen} defaultOpen={false}>
               <div className="flex flex-wrap gap-2">
                 {levels.map((level) => (
                   <FilterChip
                     key={level.id}
-                    label={`${level.name} (${level.minAge}-${level.maxAge} años)`}
+                    label={`${level.name} (${level.minAge}-${level.maxAge} ${t('years')})`}
                     isSelected={(filters.levels || []).includes(level.id)}
                     onToggle={() => toggleLevel(level.id)}
                     colorScheme="blue"
@@ -290,7 +294,7 @@ export const BookFilters: React.FC<BookFiltersProps> = memo(
           )}
 
           {/* Tipo de acceso */}
-          <FilterSection title="Tipo de Acceso" icon={Lock} defaultOpen={false}>
+          <FilterSection title={t('access')} icon={Lock} defaultOpen={false}>
             <div className="flex flex-wrap gap-2">
               {ACCESS_OPTIONS.map((option) => {
                 const Icon = option.icon;

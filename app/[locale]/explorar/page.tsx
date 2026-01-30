@@ -3,6 +3,7 @@
  * PÁGINA: Explorar Libros
  * /[locale]/explorar
  * Página pública para explorar y buscar libros
+ * TODAS las traducciones son dinamicas
  * ============================================
  */
 
@@ -25,12 +26,16 @@ import {
   useBookExplore,
 } from '@/src/presentation/features/explore';
 
+// Traducciones
+import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
+
 // ============================================
 // COMPONENTE PRINCIPAL
 // ============================================
 
 const ExplorePage: React.FC = () => {
   const router = useRouter();
+  const { t, loading: translationsLoading } = useSupabaseTranslations('book_explore');
 
   // Hook principal de exploración
   const {
@@ -64,6 +69,14 @@ const ExplorePage: React.FC = () => {
 
   // Determinar si mostrar destacados (solo sin filtros activos)
   const showFeatured = !hasActiveFilters && !searchTerm && featuredBooks.length > 0;
+
+  // Textos traducidos (con fallback mientras carga)
+  const loadingText = translationsLoading ? 'Cargando...' : t('loading');
+  const loadMoreText = translationsLoading ? 'Cargar más libros' : t('load_more');
+  const endResultsText = translationsLoading ? '¡Has visto todos los libros!' : t('end_results');
+  const emptyMessageText = translationsLoading ? 'No se encontraron libros' : t('results.empty');
+  const emptyFilteredText = translationsLoading ? 'Intenta ajustar los filtros' : t('results.empty_filtered');
+  const emptyDefaultText = translationsLoading ? 'Aún no hay libros publicados' : t('results.empty_default');
 
   return (
     <UnifiedLayout
