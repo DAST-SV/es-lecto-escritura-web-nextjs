@@ -83,11 +83,16 @@ export const imagesConfig = {
   // FEATURE TABS (for FeaturesSection)
   // ============================================
   featureTabs: {
-    difference: getImageUrl('tabs/diferencia/9997a10622f3b74bfe7d644e5c39baf8400c6350a66547864ce7ba3831e60da1.png'),
-    student: getImageUrl('tabs/estudiante/bbf107f2547d1e8623b9571a4f18beb078fbbd77ed6b2b00f89383d9ee3e265b.png'),
-    parent: getImageUrl('tabs/padre/3e921843ee47403fcdc7f85e7d08f9e7be1a3336db2859a4ecb19c49dc907c95.png'),
-    teacher: getImageUrl('tabs/docente/d611fd590d1beb39e8d854100dd2583ec6f7b0d4e17b8379713a9e84d159be62.png'),
-    pricing: getImageUrl('tabs/precio/00f3f50127af3e8df221b3983a925e2a47045bfbfe38a34c317d3ee5b04ef514.png'),
+    difference: getImageUrl('literacy/6ec1cacc28b2f6e869123d93a0cdb67bae367231608d5c14e782357b9d51e616.webp'),
+    // difference: getImageUrl('tabs/diferencia/9997a10622f3b74bfe7d644e5c39baf8400c6350a66547864ce7ba3831e60da1.png'),
+    student: getImageUrl('literacy/6ec1cacc28b2f6e869123d93a0cdb67bae367231608d5c14e782357b9d51e616.webp'),
+    // student: getImageUrl('tabs/estudiante/bbf107f2547d1e8623b9571a4f18beb078fbbd77ed6b2b00f89383d9ee3e265b.png'),
+    parent: getImageUrl('literacy/6ec1cacc28b2f6e869123d93a0cdb67bae367231608d5c14e782357b9d51e616.webp'),
+    // parent: getImageUrl('tabs/padre/3e921843ee47403fcdc7f85e7d08f9e7be1a3336db2859a4ecb19c49dc907c95.png'),
+    teacher: getImageUrl('literacy/6ec1cacc28b2f6e869123d93a0cdb67bae367231608d5c14e782357b9d51e616.webp'),
+    // teacher: getImageUrl('tabs/docente/d611fd590d1beb39e8d854100dd2583ec6f7b0d4e17b8379713a9e84d159be62.png'),
+    pricing: getImageUrl('literacy/6ec1cacc28b2f6e869123d93a0cdb67bae367231608d5c14e782357b9d51e616.webp'),
+    // pricing: getImageUrl('tabs/precio/00f3f50127af3e8df221b3983a925e2a47045bfbfe38a34c317d3ee5b04ef514.png'),
   },
 
   // ============================================
