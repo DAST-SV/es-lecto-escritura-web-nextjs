@@ -134,15 +134,15 @@ const ExplorePage: React.FC = () => {
               books={books}
               isLoading={isLoading}
               onBookSelect={handleBookSelect}
-              emptyMessage="No se encontraron libros"
+              emptyMessage={emptyMessageText}
               emptySubMessage={
                 hasActiveFilters
-                  ? 'Intenta ajustar los filtros o realizar una búsqueda diferente'
-                  : 'Aún no hay libros publicados'
+                  ? emptyFilteredText
+                  : emptyDefaultText
               }
             />
 
-            {/* Botón cargar más */}
+            {/* Boton cargar mas */}
             {hasMore && !isLoading && (
               <div className="text-center mt-10">
                 <button
@@ -154,11 +154,11 @@ const ExplorePage: React.FC = () => {
                   {isLoadingMore ? (
                     <span className="flex items-center gap-2">
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      Cargando...
+                      {loadingText}
                     </span>
                   ) : (
                     <span className="flex items-center gap-2">
-                      Cargar más libros
+                      {loadMoreText}
                       <span className="text-sm bg-white/50 px-2 py-0.5 rounded-full">
                         +{Math.min(12, totalResults - books.length)}
                       </span>
@@ -176,7 +176,7 @@ const ExplorePage: React.FC = () => {
                     className="text-blue-700 font-bold"
                     style={{ fontFamily: 'Comic Sans MS, cursive' }}
                   >
-                    ¡Has visto todos los libros!
+                    {endResultsText}
                   </span>
                   <span className="text-2xl">🎉</span>
                 </div>

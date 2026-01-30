@@ -1,6 +1,6 @@
 /**
- * UBICACIÓN: app/[locale]/books/[id]/read/page.tsx
- * ✅ VERSIÓN CORREGIDA: Sin errores de servidor
+ * UBICACION: app/[locale]/books/[id]/read/page.tsx
+ * Lector de libros - Con traducciones dinamicas
  */
 
 'use client';
@@ -12,13 +12,14 @@ import { Loader2, AlertCircle, BarChart3 } from 'lucide-react';
 import { createClient } from '@/src/infrastructure/config/supabase.config';
 import dynamic from 'next/dynamic';
 import { useReadingAnalytics } from '@/src/presentation/features/books/hooks/useReadingAnalytics';
+import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 import type { Page } from '@/src/core/domain/types';
 import toast from 'react-hot-toast';
 
-// ✅ CRÍTICO: Cargar PDFPreviewMode dinámicamente solo en cliente
+// Cargar PDFPreviewMode dinamicamente solo en cliente
 const PDFPreviewMode = dynamic(
   () => import('@/src/presentation/features/books/components/PDFPreview/PDFPreviewMode').then(mod => ({ default: mod.PDFPreviewMode })),
-  { 
+  {
     ssr: false,
     loading: () => (
       <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
@@ -37,6 +38,7 @@ export default function ReadBookPage() {
   const locale = useLocale();
   const supabase = createClient();
   const bookId = params?.id as string;
+  const { t, loading: translationsLoading } = useSupabaseTranslations('book_reader');
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +47,22 @@ export default function ReadBookPage() {
   const [bookTitle, setBookTitle] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+
+  // Textos con fallback mientras cargan traducciones
+  const loadingText = translationsLoading ? 'Cargando libro...' : t('loading');
+  const loadingSubtitleText = translationsLoading ? 'Preparando paginas del PDF' : t('loading_subtitle');
+  const loadingViewerText = translationsLoading ? 'Cargando visor...' : t('loading_viewer');
+  const errorTitleText = translationsLoading ? 'No se puede leer el libro' : t('error_title');
+  const errorBackText = translationsLoading ? 'Volver a biblioteca' : t('error_back');
+  const errorNoPdfText = translationsLoading ? 'Este libro no tiene un archivo PDF asociado' : t('error_no_pdf');
+  const errorNotFoundText = translationsLoading ? 'Libro no encontrado' : t('error_not_found');
+  const errorInvalidIdText = translationsLoading ? 'ID de libro no valido' : t('error_invalid_id');
+  const trackingText = translationsLoading ? 'Registrando lectura' : t('tracking');
+  const completionTitleText = translationsLoading ? 'Felicitaciones!' : t('completion.title');
+  const completionMessageText = translationsLoading ? 'Has completado' : t('completion.message');
+  const completionStatsText = translationsLoading ? 'Ver estadisticas' : t('completion.stats');
+  const completionContinueText = translationsLoading ? 'Continuar leyendo' : t('completion.continue');
+  const noTitleText = translationsLoading ? 'Libro sin titulo' : t('no_title');
 
   // Analytics hook
   const {
@@ -71,7 +89,7 @@ export default function ReadBookPage() {
 
       if (!bookId) {
         if (isMounted) {
-          setError('ID de libro no válido');
+          setError(errorInvalidIdText);
           setIsLoading(false);
         }
         return;
@@ -84,7 +102,7 @@ export default function ReadBookPage() {
           setUserId(user.id);
         }
 
-        console.log('📖 Cargando libro:', bookId);
+        console.log('Cargando libro:', bookId);
 
         const { data: libro, error: bookError } = await supabase
           .from('books')
@@ -94,9 +112,9 @@ export default function ReadBookPage() {
           .single();
 
         if (bookError || !libro) {
-          console.error('❌ Error cargando libro:', bookError);
+          console.error('Error cargando libro:', bookError);
           if (isMounted) {
-            setError('Libro no encontrado');
+            setError(errorNotFoundText);
             setIsLoading(false);
           }
           return;
@@ -104,26 +122,26 @@ export default function ReadBookPage() {
 
         if (!libro.pdf_url) {
           if (isMounted) {
-            setError('Este libro no tiene un archivo PDF asociado');
+            setError(errorNoPdfText);
             setIsLoading(false);
           }
           return;
         }
 
         if (isMounted) {
-          setBookTitle(libro.title || 'Libro sin título');
+          setBookTitle(libro.title || noTitleText);
         }
 
-        console.log('📄 Descargando PDF:', libro.pdf_url);
+        console.log('Descargando PDF:', libro.pdf_url);
 
         const response = await fetch(libro.pdf_url);
         const blob = await response.blob();
         const file = new File([blob], 'libro.pdf', { type: 'application/pdf' });
 
-        // ✅ Importar dinámicamente el servicio
+        // Importar dinamicamente el servicio
         const { PDFExtractorService } = await import('@/src/infrastructure/services/books');
-        
-        console.log('🔄 Extrayendo páginas del PDF...');
+
+        console.log('Extrayendo paginas del PDF...');
         const result = await PDFExtractorService.extractPagesFromPDF(file);
 
         if (isMounted) {
@@ -136,12 +154,12 @@ export default function ReadBookPage() {
             });
           }
 
-          console.log(`✅ ${result.pages.length} páginas extraídas correctamente`);
+          console.log(`${result.pages.length} paginas extraidas correctamente`);
           setIsLoading(false);
         }
 
       } catch (err: any) {
-        console.error('❌ Error cargando libro:', err);
+        console.error('Error cargando libro:', err);
         if (isMounted) {
           setError(err.message || 'Error al cargar el libro');
           setIsLoading(false);
@@ -154,13 +172,13 @@ export default function ReadBookPage() {
     return () => {
       isMounted = false;
       if (extractedPages.length > 0) {
-        // Cleanup dinámico
+        // Cleanup dinamico
         import('@/src/infrastructure/services/books').then(({ PDFExtractorService }) => {
           PDFExtractorService.cleanupBlobUrls(extractedPages);
         });
       }
     };
-  }, [bookId]);
+  }, [bookId, errorInvalidIdText, errorNotFoundText, errorNoPdfText, noTitleText]);
 
   const handleClose = async () => {
     await handleEndSession();
@@ -186,8 +204,8 @@ export default function ReadBookPage() {
       <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
         <div className="text-center">
           <Loader2 size={48} className="animate-spin text-indigo-400 mx-auto mb-4" />
-          <p className="text-white font-medium text-lg">Cargando libro...</p>
-          <p className="text-white/60 text-sm mt-2">Preparando páginas del PDF</p>
+          <p className="text-white font-medium text-lg">{loadingText}</p>
+          <p className="text-white/60 text-sm mt-2">{loadingSubtitleText}</p>
         </div>
       </div>
     );
@@ -202,7 +220,7 @@ export default function ReadBookPage() {
           </div>
 
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            No se puede leer el libro
+            {errorTitleText}
           </h2>
 
           <p className="text-gray-600 mb-6">{error}</p>
@@ -211,7 +229,7 @@ export default function ReadBookPage() {
             onClick={handleClose}
             className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors w-full"
           >
-            Volver a biblioteca
+            {errorBackText}
           </button>
         </div>
       </div>
@@ -224,7 +242,7 @@ export default function ReadBookPage() {
         {isTracking && (
           <div className="fixed top-4 right-4 z-[10001] bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 shadow-lg">
             <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-            Registrando lectura
+            {trackingText}
           </div>
         )}
 
@@ -244,11 +262,11 @@ export default function ReadBookPage() {
               </div>
 
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                ¡Felicitaciones! 🎉
+                {completionTitleText} 🎉
               </h2>
 
               <p className="text-gray-600 mb-6">
-                Has completado <strong>"{bookTitle}"</strong>
+                {completionMessageText} <strong>"{bookTitle}"</strong>
               </p>
 
               <div className="space-y-3">
@@ -257,14 +275,14 @@ export default function ReadBookPage() {
                   className="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <BarChart3 size={20} />
-                  Ver estadísticas
+                  {completionStatsText}
                 </button>
 
                 <button
                   onClick={() => setShowCompletionModal(false)}
                   className="w-full px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors"
                 >
-                  Continuar leyendo
+                  {completionContinueText}
                 </button>
               </div>
             </div>
