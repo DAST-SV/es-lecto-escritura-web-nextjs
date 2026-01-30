@@ -204,7 +204,10 @@ const SlideContent = memo<{
   index: number;
   isActive: boolean;
   onNavigate: (route: string) => void;
-}>(({ slide, imageSrc, route, index, isActive, onNavigate }) => {
+  badgeText: string;
+  badgeTextShort: string;
+  newBadge: string;
+}>(({ slide, imageSrc, route, index, isActive, onNavigate, badgeText, badgeTextShort, newBadge }) => {
   const isPriority = index === 0;
 
   return (
@@ -215,7 +218,7 @@ const SlideContent = memo<{
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-yellow-300">
             <BookOpen className="w-4 h-4 text-blue-600 animate-pulse" />
             <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
-              EXPLORAR CONTENIDO
+              {badgeText}
             </span>
           </div>
 
@@ -282,7 +285,7 @@ const SlideContent = memo<{
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-yellow-300">
             <BookOpen className="w-4 h-4 text-blue-600 animate-pulse" />
             <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
-              EXPLORAR CONTENIDO
+              {badgeText}
             </span>
           </div>
 
@@ -339,7 +342,7 @@ const SlideContent = memo<{
                 sizes="(min-width: 1024px) and (max-width: 1279px) 300px, 0px"
               />
               <div className="absolute -top-3 -right-3 bg-green-400 text-white font-black text-sm px-3 py-1.5 rounded-full shadow-xl border-2 border-white transform rotate-12 animate-bounce">
-                🎉 NUEVO
+                {newBadge}
               </div>
             </div>
           </div>
@@ -352,7 +355,7 @@ const SlideContent = memo<{
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-yellow-300">
             <BookOpen className="w-4 h-4 text-blue-600 animate-pulse" />
             <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
-              EXPLORAR CONTENIDO
+              {badgeText}
             </span>
           </div>
 
@@ -417,7 +420,7 @@ const SlideContent = memo<{
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-full shadow-xl border-2 border-yellow-300">
             <BookOpen className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
             <span className="text-xs font-black text-blue-700 tracking-wide" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
-              EXPLORAR CONTENIDO
+              {badgeText}
             </span>
           </div>
 
@@ -476,7 +479,7 @@ const SlideContent = memo<{
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-full shadow-lg border-2 border-yellow-300">
             <BookOpen className="w-3 h-3 text-blue-600 animate-pulse" />
             <span className="text-[10px] font-black text-blue-700 tracking-wide" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
-              EXPLORAR
+              {badgeTextShort}
             </span>
           </div>
 
@@ -505,7 +508,7 @@ const SlideContent = memo<{
               sizes="(max-width: 639px) 220px, 0px"
             />
             <div className="absolute -top-2 -right-2 bg-green-400 text-white font-black text-[10px] px-2 py-1 rounded-full shadow-lg border-2 border-white transform rotate-12 animate-bounce">
-              🎉
+              {newBadge.split(' ')[0]}
             </div>
           </div>
         </div>
@@ -537,18 +540,23 @@ SlideContent.displayName = 'SlideContent';
 
 export const HeroCarousel: React.FC = () => {
   const router = useRouter();
-  const { tArray, loading } = useSupabaseTranslations('hero');
-  
+  const { t, tArray, loading } = useSupabaseTranslations('hero');
+
   const carouselRef = useRef<HTMLDivElement>(null);
   const autoplay = useMemo(() => Autoplay(AUTOPLAY_CONFIG), []);
   const [emblaRef, emblaApi] = useEmblaCarousel(EMBLA_CONFIG, [autoplay]);
   const [selected, setSelected] = useState(0);
 
   // Obtener slides usando tArray
-  const slides = useMemo(() => 
+  const slides = useMemo(() =>
     tArray<HeroSlide>('slides', ['title', 'icon', 'description', 'button']),
     [tArray]
   );
+
+  // Textos traducibles para badges
+  const badgeText = t('badge_explore', 'EXPLORAR CONTENIDO');
+  const badgeTextShort = t('badge_explore_short', 'EXPLORAR');
+  const newBadge = t('badge_new', '🎉 NUEVO');
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
@@ -716,6 +724,9 @@ export const HeroCarousel: React.FC = () => {
                   index={i}
                   isActive={selected === i}
                   onNavigate={handleNavigate}
+                  badgeText={badgeText}
+                  badgeTextShort={badgeTextShort}
+                  newBadge={newBadge}
                 />
               </div>
             </div>
