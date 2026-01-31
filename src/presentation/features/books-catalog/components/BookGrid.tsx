@@ -1,6 +1,7 @@
 // src/presentation/features/books-catalog/components/BookGrid.tsx
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { BookCard } from './BookCard';
 import type { BookListItem } from '@/src/core/domain/entities/BookWithTranslations';
 
@@ -15,8 +16,10 @@ export function BookGrid({
   books,
   categorySlug,
   isLoading,
-  emptyMessage = 'No hay libros disponibles'
+  emptyMessage
 }: BookGridProps) {
+  const t = useTranslations('booksCatalog');
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
@@ -49,7 +52,7 @@ export function BookGrid({
             />
           </svg>
         </div>
-        <p className="text-gray-500">{emptyMessage}</p>
+        <p className="text-gray-500">{emptyMessage || t('empty.noBooks')}</p>
       </div>
     );
   }

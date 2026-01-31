@@ -223,5 +223,62 @@
     "viewBook": "Voir le livre",
     "readNow": "Lire maintenant",
     "minutes": "min"
+  },
+  "booksCatalog": {
+    "page": {
+      "title": "Bibliothèque",
+      "description": "Explorez notre collection de contes, poèmes, fables et plus de contenu éducatif pour tous les âges",
+      "categoriesTitle": "Catégories"
+    },
+    "search": {
+      "placeholder": "Rechercher des livres, contes, poèmes...",
+      "resultsCount": "{count} résultat(s) pour \"{query}\"",
+      "noResults": "Aucun livre trouvé pour \"{query}\"",
+      "moreResults": "Et {count} résultats de plus..."
+    },
+    "navigation": {
+      "backToLibrary": "Retour à la bibliothèque",
+      "backToCategory": "Retour à la catégorie"
+    },
+    "badges": {
+      "featured": "En vedette",
+      "premium": "Premium"
+    },
+    "difficulty": {
+      "beginner": "Débutant",
+      "elementary": "Élémentaire",
+      "intermediate": "Intermédiaire",
+      "advanced": "Avancé"
+    },
+    "ageRange": {
+      "beginner": "3-5 ans",
+      "elementary": "6-8 ans",
+      "intermediate": "9-11 ans",
+      "advanced": "12+ ans"
+    },
+    "meta": {
+      "minutes": "min",
+      "pages": "pages",
+      "book": "livre",
+      "books": "livres"
+    },
+    "actions": {
+      "viewBook": "Voir le livre",
+      "startReading": "Commencer à lire",
+      "readNow": "Lire maintenant"
+    },
+    "sections": {
+      "summary": "Résumé",
+      "description": "Description"
+    },
+    "empty": {
+      "noBooks": "Aucun livre disponible",
+      "noCategories": "Aucune catégorie disponible",
+      "noBooksInCategory": "Aucun livre dans cette catégorie"
+    },
+    "errors": {
+      "bookNotFound": "Livre non trouvé",
+      "categoryNotFound": "Catégorie non trouvée"
+    }
   }
 }

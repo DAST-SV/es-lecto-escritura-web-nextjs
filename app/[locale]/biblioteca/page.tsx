@@ -7,10 +7,10 @@ import { CategoryGrid } from '@/src/presentation/features/books-catalog/componen
 import { SearchBar } from '@/src/presentation/features/books-catalog/components/SearchBar';
 
 export async function generateMetadata() {
-  const t = await getTranslations('biblioteca');
+  const t = await getTranslations('booksCatalog');
   return {
-    title: t('title'),
-    description: t('description')
+    title: t('page.title'),
+    description: t('page.description')
   };
 }
 
@@ -32,7 +32,7 @@ function CategoriesSkeleton() {
 }
 
 export default async function BibliotecaPage() {
-  const t = await getTranslations('biblioteca');
+  const t = await getTranslations('booksCatalog');
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -42,25 +42,25 @@ export default async function BibliotecaPage() {
         <div className="relative max-w-7xl mx-auto">
           <div className="text-center mb-10">
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
-              {t('title')}
+              {t('page.title')}
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              {t('description')}
+              {t('page.description')}
             </p>
           </div>
 
-          {/* Barra de búsqueda */}
+          {/* Search bar */}
           <div className="max-w-xl mx-auto">
-            <SearchBar placeholder={t('searchPlaceholder')} />
+            <SearchBar />
           </div>
         </div>
       </section>
 
-      {/* Categorías */}
+      {/* Categories */}
       <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-2xl font-bold text-gray-900 mb-8">
-            {t('categories')}
+            {t('page.categoriesTitle')}
           </h2>
 
           <Suspense fallback={<CategoriesSkeleton />}>

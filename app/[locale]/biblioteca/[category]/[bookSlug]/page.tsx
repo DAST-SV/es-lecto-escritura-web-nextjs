@@ -20,20 +20,22 @@ interface PageProps {
   params: Promise<{ category: string; bookSlug: string; locale: string }>;
 }
 
-const difficultyInfo = {
-  beginner: { label: 'Principiante', color: 'green', age: '3-5 años' },
-  elementary: { label: 'Elemental', color: 'blue', age: '6-8 años' },
-  intermediate: { label: 'Intermedio', color: 'yellow', age: '9-11 años' },
-  advanced: { label: 'Avanzado', color: 'red', age: '12+ años' }
+// Colores para niveles de dificultad
+const difficultyColors = {
+  beginner: { bg: 'bg-green-100', text: 'text-green-700' },
+  elementary: { bg: 'bg-blue-100', text: 'text-blue-700' },
+  intermediate: { bg: 'bg-yellow-100', text: 'text-yellow-700' },
+  advanced: { bg: 'bg-red-100', text: 'text-red-700' }
 };
 
 export async function generateMetadata({ params }: PageProps) {
   const { bookSlug } = await params;
   const locale = await getLocale();
+  const t = await getTranslations('booksCatalog');
   const book = await getBookDetailQuery({ bookSlug, languageCode: locale });
 
   if (!book) {
-    return { title: 'Libro no encontrado' };
+    return { title: t('errors.bookNotFound') };
   }
 
   return {
@@ -47,20 +49,21 @@ async function BookDetailContent({ bookSlug, category, locale }: {
   category: string;
   locale: string;
 }) {
+  const t = await getTranslations('booksCatalog');
   const book = await getBookDetailQuery({ bookSlug, languageCode: locale });
 
   if (!book) {
     notFound();
   }
 
-  const difficulty = difficultyInfo[book.difficulty];
+  const colors = difficultyColors[book.difficulty];
 
   return (
     <div className="grid lg:grid-cols-3 gap-8 lg:gap-12">
-      {/* Columna izquierda - Portada */}
+      {/* Left column - Cover */}
       <div className="lg:col-span-1">
         <div className="sticky top-8">
-          {/* Portada */}
+          {/* Cover */}
           <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-gray-100 to-gray-200">
             {book.coverUrl ? (
               <Image
@@ -81,19 +84,19 @@ async function BookDetailContent({ bookSlug, category, locale }: {
               {book.isFeatured && (
                 <span className="flex items-center gap-1 bg-yellow-400 text-yellow-900 text-xs font-medium px-3 py-1.5 rounded-full shadow">
                   <Star className="w-3 h-3" />
-                  Destacado
+                  {t('badges.featured')}
                 </span>
               )}
               {book.isPremium && (
                 <span className="flex items-center gap-1 bg-purple-500 text-white text-xs font-medium px-3 py-1.5 rounded-full shadow">
                   <Crown className="w-3 h-3" />
-                  Premium
+                  {t('badges.premium')}
                 </span>
               )}
             </div>
           </div>
 
-          {/* Botón de lectura */}
+          {/* Read button */}
           <div className="mt-6">
             <Link href={`/${locale}/biblioteca/leer/${bookSlug}`} className="block">
               <Button
@@ -102,16 +105,16 @@ async function BookDetailContent({ bookSlug, category, locale }: {
                 className="w-full justify-center gap-2"
               >
                 <Play className="w-5 h-5" />
-                Comenzar a leer
+                {t('actions.startReading')}
               </Button>
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Columna derecha - Info */}
+      {/* Right column - Info */}
       <div className="lg:col-span-2">
-        {/* Categoría */}
+        {/* Category */}
         <Link
           href={`/${locale}/biblioteca/${category}`}
           className="inline-block text-sm font-medium text-primary hover:underline mb-3"
@@ -119,12 +122,12 @@ async function BookDetailContent({ bookSlug, category, locale }: {
           {book.categoryName}
         </Link>
 
-        {/* Título */}
+        {/* Title */}
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
           {book.title}
         </h1>
 
-        {/* Subtítulo */}
+        {/* Subtitle */}
         {book.subtitle && (
           <p className="text-xl text-gray-600 mb-6">
             {book.subtitle}
@@ -133,36 +136,36 @@ async function BookDetailContent({ bookSlug, category, locale }: {
 
         {/* Meta info */}
         <div className="flex flex-wrap items-center gap-4 mb-8 pb-8 border-b border-gray-100">
-          {/* Dificultad */}
+          {/* Difficulty */}
           <div className="flex items-center gap-2">
-            <span className={`px-3 py-1 rounded-full text-sm font-medium bg-${difficulty.color}-100 text-${difficulty.color}-700`}>
-              {difficulty.label}
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${colors.bg} ${colors.text}`}>
+              {t(`difficulty.${book.difficulty}`)}
             </span>
-            <span className="text-sm text-gray-500">({difficulty.age})</span>
+            <span className="text-sm text-gray-500">({t(`ageRange.${book.difficulty}`)})</span>
           </div>
 
-          {/* Tiempo de lectura */}
+          {/* Read time */}
           {book.estimatedReadTime > 0 && (
             <div className="flex items-center gap-2 text-gray-500">
               <Clock className="w-4 h-4" />
-              <span>{book.estimatedReadTime} min</span>
+              <span>{book.estimatedReadTime} {t('meta.minutes')}</span>
             </div>
           )}
 
-          {/* Páginas */}
+          {/* Pages */}
           {book.pageCount > 0 && (
             <div className="flex items-center gap-2 text-gray-500">
               <BookOpen className="w-4 h-4" />
-              <span>{book.pageCount} páginas</span>
+              <span>{book.pageCount} {t('meta.pages')}</span>
             </div>
           )}
         </div>
 
-        {/* Resumen */}
+        {/* Summary */}
         {book.summary && (
           <div className="mb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
-              Resumen
+              {t('sections.summary')}
             </h2>
             <p className="text-gray-600 leading-relaxed">
               {book.summary}
@@ -170,11 +173,11 @@ async function BookDetailContent({ bookSlug, category, locale }: {
           </div>
         )}
 
-        {/* Descripción */}
+        {/* Description */}
         {book.description && (
           <div className="mb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
-              Descripción
+              {t('sections.description')}
             </h2>
             <div className="prose prose-gray max-w-none">
               <p className="text-gray-600 leading-relaxed whitespace-pre-line">
@@ -216,7 +219,7 @@ function BookDetailSkeleton() {
 export default async function BookDetailPage({ params }: PageProps) {
   const { category, bookSlug, locale: paramLocale } = await params;
   const locale = await getLocale();
-  const t = await getTranslations('biblioteca');
+  const t = await getTranslations('booksCatalog');
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -227,10 +230,10 @@ export default async function BookDetailPage({ params }: PageProps) {
           className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
-          {t('backToCategory')}
+          {t('navigation.backToCategory')}
         </Link>
 
-        {/* Contenido */}
+        {/* Content */}
         <Suspense fallback={<BookDetailSkeleton />}>
           <BookDetailContent
             bookSlug={bookSlug}

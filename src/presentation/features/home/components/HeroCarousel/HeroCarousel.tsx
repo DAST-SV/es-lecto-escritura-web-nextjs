@@ -554,9 +554,9 @@ export const HeroCarousel: React.FC = () => {
   );
 
   // Textos traducibles para badges
-  const badgeText = t('badge_explore', 'EXPLORAR CONTENIDO');
-  const badgeTextShort = t('badge_explore_short', 'EXPLORAR');
-  const newBadge = t('badge_new', '🎉 NUEVO');
+  const badgeText = t('badge_explore') || 'EXPLORE CONTENT';
+  const badgeTextShort = t('badge_explore_short') || 'EXPLORE';
+  const newBadge = t('badge_new') || 'NEW';
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;

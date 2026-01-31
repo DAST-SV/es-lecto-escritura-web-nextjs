@@ -409,6 +409,63 @@
     "readNow": "Leer ahora",
     "minutes": "min"
   },
+  "booksCatalog": {
+    "page": {
+      "title": "Biblioteca",
+      "description": "Explora nuestra colección de cuentos, poemas, fábulas y más contenido educativo para todas las edades",
+      "categoriesTitle": "Categorías"
+    },
+    "search": {
+      "placeholder": "Buscar libros, cuentos, poemas...",
+      "resultsCount": "{count} resultado(s) para \"{query}\"",
+      "noResults": "No se encontraron libros para \"{query}\"",
+      "moreResults": "Y {count} resultados más..."
+    },
+    "navigation": {
+      "backToLibrary": "Volver a la biblioteca",
+      "backToCategory": "Volver a la categoría"
+    },
+    "badges": {
+      "featured": "Destacado",
+      "premium": "Premium"
+    },
+    "difficulty": {
+      "beginner": "Principiante",
+      "elementary": "Elemental",
+      "intermediate": "Intermedio",
+      "advanced": "Avanzado"
+    },
+    "ageRange": {
+      "beginner": "3-5 años",
+      "elementary": "6-8 años",
+      "intermediate": "9-11 años",
+      "advanced": "12+ años"
+    },
+    "meta": {
+      "minutes": "min",
+      "pages": "páginas",
+      "book": "libro",
+      "books": "libros"
+    },
+    "actions": {
+      "viewBook": "Ver libro",
+      "startReading": "Comenzar a leer",
+      "readNow": "Leer ahora"
+    },
+    "sections": {
+      "summary": "Resumen",
+      "description": "Descripción"
+    },
+    "empty": {
+      "noBooks": "No hay libros disponibles",
+      "noCategories": "No hay categorías disponibles",
+      "noBooksInCategory": "No hay libros en esta categoría aún"
+    },
+    "errors": {
+      "bookNotFound": "Libro no encontrado",
+      "categoryNotFound": "Categoría no encontrada"
+    }
+  },
   "hero": {
     "slides": [
       {

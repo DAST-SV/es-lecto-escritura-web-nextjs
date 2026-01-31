@@ -409,6 +409,63 @@
     "readNow": "Read now",
     "minutes": "min"
   },
+  "booksCatalog": {
+    "page": {
+      "title": "Library",
+      "description": "Explore our collection of stories, poems, fables and more educational content for all ages",
+      "categoriesTitle": "Categories"
+    },
+    "search": {
+      "placeholder": "Search books, stories, poems...",
+      "resultsCount": "{count} result(s) for \"{query}\"",
+      "noResults": "No books found for \"{query}\"",
+      "moreResults": "And {count} more results..."
+    },
+    "navigation": {
+      "backToLibrary": "Back to library",
+      "backToCategory": "Back to category"
+    },
+    "badges": {
+      "featured": "Featured",
+      "premium": "Premium"
+    },
+    "difficulty": {
+      "beginner": "Beginner",
+      "elementary": "Elementary",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "ageRange": {
+      "beginner": "3-5 years",
+      "elementary": "6-8 years",
+      "intermediate": "9-11 years",
+      "advanced": "12+ years"
+    },
+    "meta": {
+      "minutes": "min",
+      "pages": "pages",
+      "book": "book",
+      "books": "books"
+    },
+    "actions": {
+      "viewBook": "View book",
+      "startReading": "Start reading",
+      "readNow": "Read now"
+    },
+    "sections": {
+      "summary": "Summary",
+      "description": "Description"
+    },
+    "empty": {
+      "noBooks": "No books available",
+      "noCategories": "No categories available",
+      "noBooksInCategory": "No books in this category yet"
+    },
+    "errors": {
+      "bookNotFound": "Book not found",
+      "categoryNotFound": "Category not found"
+    }
+  },
   "hero": {
     "slides": [
       {
