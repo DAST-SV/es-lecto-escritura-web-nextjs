@@ -1,6 +1,7 @@
 // ============================================
 // app/[locale]/layout.tsx
 // ✅ CORREGIDO: NextIntlClientProvider con locale y messages
+// ✅ TanStack Query Provider integrado
 // ============================================
 
 import { NextIntlClientProvider } from 'next-intl';
@@ -11,6 +12,7 @@ import { ReactNode, Suspense } from 'react';
 import "../globals.css";
 import Loading from './loading';
 import { routing } from '@/src/infrastructure/config/routing.config';
+import { QueryProvider } from '@/src/presentation/providers/query-provider';
 
 interface LayoutProps {
   children: ReactNode;
@@ -93,9 +95,12 @@ export default async function RootLayout({
       <body>
         {/* ✅ CORREGIDO: Pasar locale y messages */}
         <NextIntlClientProvider locale={validLocale} messages={messages}>
-          <Suspense fallback={<Loading />}>
-            {children}
-          </Suspense>
+          {/* ✅ TanStack Query para manejo de estado del servidor */}
+          <QueryProvider>
+            <Suspense fallback={<Loading />}>
+              {children}
+            </Suspense>
+          </QueryProvider>
         </NextIntlClientProvider>
       </body>
     </html>

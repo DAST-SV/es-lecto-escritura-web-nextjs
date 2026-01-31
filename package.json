@@ -14,6 +14,8 @@
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.91.0",
+    "@tanstack/react-query": "^5.90.20",
+    "@tanstack/react-query-devtools": "^5.91.3",
     "@tiptap/core": "3.18.0",
     "@tiptap/extension-bold": "^3.16.0",
     "@tiptap/extension-character-count": "^3.16.0",

@@ -377,4 +377,71 @@ export class BookExtended {
     }
     return [];
   }
+
+  /**
+   * Serializa la entidad a un objeto JSON plano
+   * Útil para enviar a través de API routes
+   */
+  toJSON(): Record<string, unknown> {
+    return {
+      id: this.id,
+      userId: this.userId,
+      typeId: this.typeId,
+      typeName: this.typeName,
+      levelId: this.levelId,
+      title: this.title,
+      description: this.description,
+      coverUrl: this.coverUrl,
+      pdfUrl: this.pdfUrl,
+      accessType: this.accessType,
+      freePagesCount: this.freePagesCount,
+      isPublished: this.isPublished,
+      isFeatured: this.isFeatured,
+      viewCount: this.viewCount,
+      publishedAt: this.publishedAt?.toISOString() || null,
+      createdAt: this.createdAt.toISOString(),
+      updatedAt: this.updatedAt.toISOString(),
+      deletedAt: this.deletedAt?.toISOString() || null,
+      level: this.level,
+      categories: this.categories,
+      genres: this.genres,
+      values: this.values,
+      tags: this.tags,
+      languages: this.languages,
+      characters: this.characters,
+      authors: this.authors,
+      collaborators: this.collaborators.map(c => ({
+        userId: c.userId,
+        userName: c.userName,
+        userAvatarUrl: c.userAvatarUrl,
+        authorId: c.authorId,
+        authorName: c.authorName,
+        authorBio: c.authorBio,
+        authorImageUrl: c.authorImageUrl,
+        role: c.role,
+        displayOrder: c.displayOrder,
+        isPrimary: c.isPrimary,
+        addedAt: c.addedAt.toISOString(),
+      })),
+      translations: this.translations.map(t => ({
+        id: t.id,
+        languageCode: t.languageCode,
+        title: t.title,
+        description: t.description,
+        keywords: t.keywords,
+        isActive: t.isActive,
+        isPrimary: t.isPrimary,
+      })),
+      pages: this.pages.map(p => ({
+        id: p.id,
+        pageNumber: p.pageNumber,
+        imageUrl: p.imageUrl,
+        audioUrl: p.audioUrl,
+        hasInteraction: p.hasInteraction,
+        interactionType: p.interactionType,
+        interactionData: p.interactionData,
+      })),
+      ratingStats: this.ratingStats,
+    };
+  }
 }

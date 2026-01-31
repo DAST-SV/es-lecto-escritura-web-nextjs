@@ -76,6 +76,25 @@ export class UserProfile {
     };
   }
 
+  toJSON() {
+    return {
+      id: this.id,
+      userId: this.userId,
+      displayName: this.displayName,
+      bio: this.bio,
+      avatarUrl: this.avatarUrl,
+      dateOfBirth: this.dateOfBirth?.toISOString() || null,
+      phoneNumber: this.phoneNumber,
+      address: this.address,
+      city: this.city,
+      country: this.country,
+      isPublic: this.isPublic,
+      preferences: this.preferences,
+      createdAt: this.createdAt.toISOString(),
+      updatedAt: this.updatedAt.toISOString(),
+    };
+  }
+
   // ============================================
   // Helper Methods
   // ============================================
