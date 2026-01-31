@@ -1,4 +1,8 @@
-// app/[locale]/biblioteca/[category]/[bookSlug]/page.tsx
+/**
+ * Book Detail Page
+ * @file app/[locale]/library/[category]/[bookSlug]/page.tsx
+ * @description Página de detalle de un libro con información completa
+ */
 
 import { Suspense } from 'react';
 import Link from 'next/link';
@@ -20,7 +24,7 @@ interface PageProps {
   params: Promise<{ category: string; bookSlug: string; locale: string }>;
 }
 
-// Colores para niveles de dificultad
+// Colores para los diferentes niveles de dificultad
 const difficultyColors = {
   beginner: { bg: 'bg-green-100', text: 'text-green-700' },
   elementary: { bg: 'bg-blue-100', text: 'text-blue-700' },
@@ -98,7 +102,7 @@ async function BookDetailContent({ bookSlug, category, locale }: {
 
           {/* Read button */}
           <div className="mt-6">
-            <Link href={`/${locale}/biblioteca/leer/${bookSlug}`} className="block">
+            <Link href={`/${locale}/library/read/${bookSlug}`} className="block">
               <Button
                 variant="primary"
                 size="lg"
@@ -116,7 +120,7 @@ async function BookDetailContent({ bookSlug, category, locale }: {
       <div className="lg:col-span-2">
         {/* Category */}
         <Link
-          href={`/${locale}/biblioteca/${category}`}
+          href={`/${locale}/library/${category}`}
           className="inline-block text-sm font-medium text-primary hover:underline mb-3"
         >
           {book.categoryName}
@@ -226,7 +230,7 @@ export default async function BookDetailPage({ params }: PageProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <Link
-          href={`/${paramLocale}/biblioteca/${category}`}
+          href={`/${paramLocale}/library/${category}`}
           className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />

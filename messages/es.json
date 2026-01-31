@@ -59,7 +59,7 @@
     },
     "library": {
       "text": "Biblioteca",
-      "href": "/biblioteca",
+      "href": "/library",
       "title": "Biblioteca"
     },
     "myWorld": {
@@ -84,7 +84,7 @@
     },
     "explore": {
       "text": "Explorar",
-      "href": "/explorar",
+      "href": "/explore",
       "title": "Descubrir nuevo contenido"
     },
     "myReadings": {
@@ -464,6 +464,10 @@
     "errors": {
       "bookNotFound": "Libro no encontrado",
       "categoryNotFound": "Categoría no encontrada"
+    },
+    "reader": {
+      "reading": "Leyendo",
+      "noPagesAvailable": "Este libro aún no tiene páginas disponibles"
     }
   },
   "hero": {

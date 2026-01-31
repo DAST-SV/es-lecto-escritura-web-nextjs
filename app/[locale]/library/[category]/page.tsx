@@ -1,4 +1,8 @@
-// app/[locale]/biblioteca/[category]/page.tsx
+/**
+ * Category Page
+ * @file app/[locale]/library/[category]/page.tsx
+ * @description Página de categoría que muestra los libros de una categoría específica
+ */
 
 import { Suspense } from 'react';
 import Link from 'next/link';
@@ -82,7 +86,7 @@ export default async function CategoryPage({ params }: PageProps) {
         <div className="max-w-7xl mx-auto">
           {/* Breadcrumb */}
           <Link
-            href={`/${paramLocale}/biblioteca`}
+            href={`/${paramLocale}/library`}
             className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors mb-6"
           >
             <ArrowLeft className="w-4 h-4" />

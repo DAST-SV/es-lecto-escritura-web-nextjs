@@ -24,9 +24,10 @@ export function BookCard({ book, categorySlug }: BookCardProps) {
   const locale = useLocale();
   const t = useTranslations('booksCatalog');
 
+  // Construir la URL del libro según si tiene categoría o no
   const bookUrl = categorySlug
-    ? `/${locale}/biblioteca/${categorySlug}/${book.slug}`
-    : `/${locale}/biblioteca/libro/${book.slug}`;
+    ? `/${locale}/library/${categorySlug}/${book.slug}`
+    : `/${locale}/library/book/${book.slug}`;
 
   return (
     <Link

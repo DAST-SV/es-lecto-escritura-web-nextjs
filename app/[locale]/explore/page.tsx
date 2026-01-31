@@ -1,8 +1,8 @@
 /**
  * ============================================
- * PÁGINA: Explorar Libros
- * /[locale]/explorar
- * Página pública para explorar y buscar libros
+ * Explore Page
+ * @file app/[locale]/explore/page.tsx
+ * @description Página pública para explorar y buscar libros
  * TODAS las traducciones son dinamicas
  * ============================================
  */

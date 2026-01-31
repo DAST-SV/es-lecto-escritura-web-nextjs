@@ -42,7 +42,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
 
   return (
     <Link
-      href={`/${locale}/biblioteca/${category.slug}`}
+      href={`/${locale}/library/${category.slug}`}
       className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border border-gray-100"
     >
       {/* Gradient background */}

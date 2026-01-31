@@ -84,7 +84,7 @@
     },
     "explore": {
       "text": "Explore",
-      "href": "/explorar",
+      "href": "/explore",
       "title": "Discover new content"
     },
     "myReadings": {
@@ -464,6 +464,10 @@
     "errors": {
       "bookNotFound": "Book not found",
       "categoryNotFound": "Category not found"
+    },
+    "reader": {
+      "reading": "Reading",
+      "noPagesAvailable": "This book has no pages available yet"
     }
   },
   "hero": {

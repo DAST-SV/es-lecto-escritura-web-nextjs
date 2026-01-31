@@ -1,4 +1,8 @@
-// app/[locale]/biblioteca/page.tsx
+/**
+ * Library Page
+ * @file app/[locale]/library/page.tsx
+ * @description Página principal de la biblioteca con categorías y búsqueda
+ */
 
 import { Suspense } from 'react';
 import { getLocale, getTranslations } from 'next-intl/server';
@@ -31,7 +35,7 @@ function CategoriesSkeleton() {
   );
 }
 
-export default async function BibliotecaPage() {
+export default async function LibraryPage() {
   const t = await getTranslations('booksCatalog');
 
   return (

@@ -279,6 +279,10 @@
     "errors": {
       "bookNotFound": "Livre non trouvé",
       "categoryNotFound": "Catégorie non trouvée"
+    },
+    "reader": {
+      "reading": "Lecture de",
+      "noPagesAvailable": "Ce livre n'a pas encore de pages disponibles"
     }
   }
 }

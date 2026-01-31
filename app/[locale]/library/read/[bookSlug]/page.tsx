@@ -1,9 +1,12 @@
-// app/[locale]/biblioteca/leer/[bookSlug]/page.tsx
+/**
+ * Book Reader Page
+ * @file app/[locale]/library/read/[bookSlug]/page.tsx
+ * @description Página de lectura interactiva de un libro
+ */
 
 import { notFound } from 'next/navigation';
-import { getLocale } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { getBookDetailQuery, getBookPagesQuery } from '@/src/core/application/use-cases/books-catalog';
-import { booksCatalogRepository } from '@/src/infrastructure/repositories/books-catalog';
 import { BookReader } from '@/src/presentation/features/books-catalog/components/BookReader';
 
 interface PageProps {
@@ -13,21 +16,23 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps) {
   const { bookSlug } = await params;
   const locale = await getLocale();
+  const t = await getTranslations('booksCatalog');
   const book = await getBookDetailQuery({ bookSlug, languageCode: locale });
 
   if (!book) {
-    return { title: 'Libro no encontrado' };
+    return { title: t('errors.bookNotFound') };
   }
 
   return {
-    title: `Leyendo: ${book.title}`,
-    description: `Disfruta la lectura de ${book.title}`
+    title: `${t('reader.reading')}: ${book.title}`,
+    description: book.summary || book.description
   };
 }
 
 export default async function ReadBookPage({ params }: PageProps) {
   const { bookSlug } = await params;
   const locale = await getLocale();
+  const t = await getTranslations('booksCatalog');
 
   // Obtener información del libro
   const book = await getBookDetailQuery({ bookSlug, languageCode: locale });
@@ -48,13 +53,13 @@ export default async function ReadBookPage({ params }: PageProps) {
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <p className="text-white text-xl mb-4">
-            Este libro aún no tiene páginas disponibles
+            {t('reader.noPagesAvailable')}
           </p>
           <a
-            href={`/${locale}/biblioteca`}
+            href={`/${locale}/library`}
             className="text-primary hover:underline"
           >
-            Volver a la biblioteca
+            {t('navigation.backToLibrary')}
           </a>
         </div>
       </div>
