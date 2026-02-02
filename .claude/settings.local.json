@@ -6,7 +6,8 @@
       "Bash(npm install:*)",
       "Bash(pnpm add:*)",
       "Bash(npx tsc:*)",
-      "Bash(pnpm run build:*)"
+      "Bash(pnpm run build:*)",
+      "Bash(find:*)"
     ]
   }
 }
