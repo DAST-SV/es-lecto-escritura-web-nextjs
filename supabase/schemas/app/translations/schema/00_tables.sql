@@ -6,13 +6,6 @@
 
 SET search_path TO app, public;
 
--- Limpiar tablas existentes
-DROP TABLE IF EXISTS app.translations CASCADE;
-DROP TABLE IF EXISTS app.translation_keys CASCADE;
-DROP TABLE IF EXISTS app.translation_categories CASCADE;
-DROP TABLE IF EXISTS app.translation_namespaces CASCADE;
-DROP TABLE IF EXISTS app.languages CASCADE;
-
 -- ============================================================================
 -- TABLA: languages
 -- ============================================================================

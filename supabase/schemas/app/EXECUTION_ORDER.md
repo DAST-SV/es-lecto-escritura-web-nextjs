@@ -23,7 +23,7 @@ auth/types/language_code.sql
 auth/functions/set_updated_at.sql
 ```
 
-## 5. Tablas Base
+## 5. Tablas Base (sin RLS que use funciones)
 ```
 auth/tables/roles.sql
 organizations/tables/organizations.sql
@@ -31,10 +31,23 @@ translations/schema/00_tables.sql
 routes/tables/routes.sql
 ```
 
-## 6. Tablas con FK
+## 6. Tablas Auth (necesarias para funciones)
 ```
 auth/tables/user_profiles.sql
 auth/tables/user_roles.sql
+```
+
+## 7. Funciones de Permisos (necesarias para RLS de tablas siguientes)
+```
+auth/functions/has_role.sql
+auth/functions/is_super_admin.sql
+auth/functions/get_user_primary_role.sql
+organizations/functions/is_org_admin.sql
+organizations/functions/get_user_organizations.sql
+```
+
+## 8. Tablas con FK y RLS que usan funciones
+```
 organizations/tables/organization_members.sql
 organizations/tables/user_relationships.sql
 routes/tables/route_translations.sql
@@ -43,32 +56,27 @@ permissions/tables/user_route_permissions.sql
 role_language_access/tables/role_language_access.sql
 ```
 
-## 7. Funciones
+## 9. Funciones Adicionales
 ```
-auth/functions/get_user_primary_role.sql
-auth/functions/has_role.sql
-auth/functions/is_super_admin.sql
-organizations/functions/is_org_admin.sql
-organizations/functions/get_user_organizations.sql
 permissions/functions/can_access_route.sql
 permissions/functions/search_users.sql
 translations/data/00_helper_function.sql
 ```
 
-## 8. Triggers
+## 10. Triggers
 ```
 auth/triggers/set_updated_at.sql
 auth/triggers/handle_new_user.sql
 translations/schema/01_triggers.sql
 ```
 
-## 9. Views
+## 11. Views
 ```
 organizations/views/v_organization_active_members.sql
 organizations/views/v_organization_stats.sql
 ```
 
-## 10. RLS
+## 12. RLS
 ```
 auth/rls/roles_policies.sql
 auth/rls/user_profiles_policies.sql
@@ -80,13 +88,12 @@ translations/schema/02_rls.sql
 admin/rls/admin_policies.sql
 ```
 
-## 11. Datos
+## 13. Datos
 ```
 translations/schema/03_initial_data.sql
 routes/data.sql
 routes/data_explorar.sql
 permissions/data.sql
-permissions/rbac_data.sql
 role_language_access/data.sql
 translations/data/auth/01_forms.sql
 translations/data/auth/02_login.sql
@@ -105,13 +112,13 @@ translations/data/admin_dashboard.sql
 translations/data/complete_system.sql
 ```
 
-## 12. Admin (opcional)
+## 14. Admin (opcional)
 ```
 admin/setup/assign_super_admin.sql
 admin/setup/complete_admin_access.sql
 ```
 
-## 13. Storage (opcional)
+## 15. Storage (opcional)
 ```
 storage/00_init.sql
 storage/buckets/public_images.sql

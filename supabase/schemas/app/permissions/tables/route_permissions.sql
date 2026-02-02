@@ -6,7 +6,7 @@
 CREATE TABLE app.route_permissions (
   -- Identificación
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  role_name VARCHAR(50) NOT NULL REFERENCES app.roles(name) ON DELETE CASCADE,
+  role_name app.user_role NOT NULL REFERENCES app.roles(name) ON DELETE CASCADE,
   route_id UUID NOT NULL REFERENCES app.routes(id) ON DELETE CASCADE,
 
   -- Idioma específico (NULL = todos los idiomas)

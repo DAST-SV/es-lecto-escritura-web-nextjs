@@ -31,7 +31,6 @@ CREATE INDEX IF NOT EXISTS idx_user_rel_type ON app.user_relationships(relations
 COMMENT ON TABLE app.user_relationships IS 'Relaciones entre usuarios (padre-hijo, maestro-estudiante)';
 
 -- Trigger para updated_at
-DROP TRIGGER IF EXISTS set_relationships_updated_at ON app.user_relationships;
 CREATE TRIGGER set_relationships_updated_at
   BEFORE UPDATE ON app.user_relationships
   FOR EACH ROW

@@ -35,7 +35,6 @@ CREATE INDEX IF NOT EXISTS idx_org_members_composite ON app.organization_members
 COMMENT ON TABLE app.organization_members IS 'Miembros de organizaciones';
 
 -- Trigger para updated_at
-DROP TRIGGER IF EXISTS set_org_members_updated_at ON app.organization_members;
 CREATE TRIGGER set_org_members_updated_at
   BEFORE UPDATE ON app.organization_members
   FOR EACH ROW
