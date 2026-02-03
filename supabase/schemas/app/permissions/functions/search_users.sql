@@ -3,9 +3,6 @@
 -- FUNCIÓN: search_users_by_email
 -- ============================================
 
-DROP FUNCTION IF EXISTS public.search_users_by_email(text) CASCADE;
-DROP FUNCTION IF EXISTS app.search_users_by_email(text) CASCADE;
-
 CREATE OR REPLACE FUNCTION app.search_users_by_email(
   search_email text
 )
@@ -47,7 +44,6 @@ BEGIN
 END;
 $$;
 
--- Wrapper público
 CREATE OR REPLACE FUNCTION public.search_users_by_email(search_email text)
 RETURNS TABLE (
   user_id uuid,
@@ -63,10 +59,7 @@ AS $$
   SELECT * FROM app.search_users_by_email(search_email);
 $$;
 
--- Permisos
 GRANT EXECUTE ON FUNCTION public.search_users_by_email(text) TO authenticated;
 GRANT EXECUTE ON FUNCTION app.search_users_by_email(text) TO authenticated;
 
--- Comentario
-COMMENT ON FUNCTION app.search_users_by_email IS
-'Busca usuarios por email - Límite 50 resultados';
+COMMENT ON FUNCTION app.search_users_by_email IS 'Busca usuarios por email';
