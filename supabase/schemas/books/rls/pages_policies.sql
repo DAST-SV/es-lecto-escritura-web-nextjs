@@ -12,7 +12,6 @@ SET search_path TO books, app, public;
 ALTER TABLE books.pages ENABLE ROW LEVEL SECURITY;
 
 -- Lectura pública de páginas de libros publicados
-DROP POLICY IF EXISTS "pages_public_read" ON books.pages;
 CREATE POLICY "pages_public_read" ON books.pages
   FOR SELECT
   USING (
@@ -25,7 +24,6 @@ CREATE POLICY "pages_public_read" ON books.pages
   );
 
 -- Creadores pueden gestionar páginas de sus libros
-DROP POLICY IF EXISTS "pages_owner_all" ON books.pages;
 CREATE POLICY "pages_owner_all" ON books.pages
   FOR ALL
   TO authenticated
@@ -43,7 +41,6 @@ CREATE POLICY "pages_owner_all" ON books.pages
   );
 
 -- Administradores pueden gestionar todas las páginas
-DROP POLICY IF EXISTS "pages_admin_all" ON books.pages;
 CREATE POLICY "pages_admin_all" ON books.pages
   FOR ALL
   TO authenticated
@@ -72,7 +69,6 @@ CREATE POLICY "pages_admin_all" ON books.pages
 ALTER TABLE books.page_translations ENABLE ROW LEVEL SECURITY;
 
 -- Lectura pública de traducciones
-DROP POLICY IF EXISTS "page_trans_public_read" ON books.page_translations;
 CREATE POLICY "page_trans_public_read" ON books.page_translations
   FOR SELECT
   USING (
@@ -87,7 +83,6 @@ CREATE POLICY "page_trans_public_read" ON books.page_translations
   );
 
 -- Creadores pueden gestionar traducciones de páginas de sus libros
-DROP POLICY IF EXISTS "page_trans_owner_all" ON books.page_translations;
 CREATE POLICY "page_trans_owner_all" ON books.page_translations
   FOR ALL
   TO authenticated
@@ -107,7 +102,6 @@ CREATE POLICY "page_trans_owner_all" ON books.page_translations
   );
 
 -- Administradores pueden gestionar todas las traducciones
-DROP POLICY IF EXISTS "page_trans_admin_all" ON books.page_translations;
 CREATE POLICY "page_trans_admin_all" ON books.page_translations
   FOR ALL
   TO authenticated

@@ -4,27 +4,13 @@
 -- Configuración de Buckets de Storage en Supabase
 -- ============================================
 -- This script:
--- 1. Deletes existing public-images bucket (if exists)
--- 2. Creates new public-images bucket with proper configuration
--- 3. Sets up access policies
--- 4. Creates the folder structure (English names, no redundancy)
+-- 1. Creates public-images bucket with proper configuration
+-- 2. Sets up access policies
+-- 3. Creates the folder structure (English names, no redundancy)
 -- ============================================
 
 -- ============================================
--- 1. DELETE EXISTING BUCKET
--- Eliminar bucket existente
--- ============================================
-
--- Delete all objects in public-images bucket first
--- Primero eliminar todos los objetos del bucket public-images
-DELETE FROM storage.objects WHERE bucket_id = 'public-images';
-
--- Delete the bucket
--- Eliminar el bucket
-DELETE FROM storage.buckets WHERE id = 'public-images';
-
--- ============================================
--- 2. CREATE PUBLIC-IMAGES BUCKET
+-- 1. CREATE PUBLIC-IMAGES BUCKET
 -- Crear bucket para imágenes públicas
 -- ============================================
 

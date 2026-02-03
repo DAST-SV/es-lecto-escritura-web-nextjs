@@ -12,13 +12,11 @@ SET search_path TO books, app, public;
 ALTER TABLE books.authors ENABLE ROW LEVEL SECURITY;
 
 -- Lectura pública de autores activos
-DROP POLICY IF EXISTS "authors_public_read" ON books.authors;
 CREATE POLICY "authors_public_read" ON books.authors
   FOR SELECT
   USING (is_active = true AND deleted_at IS NULL);
 
 -- Administradores pueden gestionar autores
-DROP POLICY IF EXISTS "authors_admin_all" ON books.authors;
 CREATE POLICY "authors_admin_all" ON books.authors
   FOR ALL
   TO authenticated
@@ -47,13 +45,11 @@ CREATE POLICY "authors_admin_all" ON books.authors
 ALTER TABLE books.author_translations ENABLE ROW LEVEL SECURITY;
 
 -- Lectura pública de traducciones activas
-DROP POLICY IF EXISTS "author_trans_public_read" ON books.author_translations;
 CREATE POLICY "author_trans_public_read" ON books.author_translations
   FOR SELECT
   USING (is_active = true);
 
 -- Administradores pueden gestionar traducciones
-DROP POLICY IF EXISTS "author_trans_admin_all" ON books.author_translations;
 CREATE POLICY "author_trans_admin_all" ON books.author_translations
   FOR ALL
   TO authenticated
@@ -82,13 +78,11 @@ CREATE POLICY "author_trans_admin_all" ON books.author_translations
 ALTER TABLE books.book_authors ENABLE ROW LEVEL SECURITY;
 
 -- Lectura pública
-DROP POLICY IF EXISTS "book_authors_public_read" ON books.book_authors;
 CREATE POLICY "book_authors_public_read" ON books.book_authors
   FOR SELECT
   USING (true);
 
 -- Creadores pueden gestionar autores de sus libros
-DROP POLICY IF EXISTS "book_authors_owner_all" ON books.book_authors;
 CREATE POLICY "book_authors_owner_all" ON books.book_authors
   FOR ALL
   TO authenticated

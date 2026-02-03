@@ -39,14 +39,12 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger para INSERT
-DROP TRIGGER IF EXISTS update_page_count_insert ON books.pages;
 CREATE TRIGGER update_page_count_insert
   AFTER INSERT ON books.pages
   FOR EACH ROW
   EXECUTE FUNCTION books.update_book_page_count();
 
 -- Trigger para DELETE
-DROP TRIGGER IF EXISTS update_page_count_delete ON books.pages;
 CREATE TRIGGER update_page_count_delete
   AFTER DELETE ON books.pages
   FOR EACH ROW

@@ -208,9 +208,6 @@ SELECT insert_route_translation('/admin/users', '/admin/usuarios', 'Usuarios', '
 SELECT insert_route_translation('/admin/roles', '/admin/roles', 'Roles y Permisos', '/admin/roles', 'Roles & Permissions', '/admin/roles', 'Rôles et Permissions');
 SELECT insert_route_translation('/admin/routes', '/admin/rutas', 'Rutas', '/admin/routes', 'Routes', '/admin/routes', 'Routes');
 
--- Eliminar función helper
-DROP FUNCTION insert_route_translation;
-
 -- ============================================
 -- CONTINÚA EN PARTE 3...
 -- ============================================

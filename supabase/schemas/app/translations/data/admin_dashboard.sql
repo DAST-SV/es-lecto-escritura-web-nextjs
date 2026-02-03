@@ -3,17 +3,10 @@
 -- SCRIPT 14: SISTEMA DE TRADUCCIONES COMPLETO
 -- ============================================
 
--- Limpiar tablas existentes
-DROP TABLE IF EXISTS app.translations CASCADE;
-DROP TABLE IF EXISTS app.translation_keys CASCADE;
-DROP TABLE IF EXISTS app.translation_categories CASCADE;
-DROP TABLE IF EXISTS app.translation_namespaces CASCADE;
-DROP TABLE IF EXISTS app.languages CASCADE;
-
 -- ============================================
 -- TABLA: languages
 -- ============================================
-CREATE TABLE app.languages (
+CREATE TABLE IF NOT EXISTS app.languages (
   code VARCHAR(10) PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   native_name VARCHAR(100),
@@ -28,7 +21,7 @@ CREATE TABLE app.languages (
 -- ============================================
 -- TABLA: translation_namespaces
 -- ============================================
-CREATE TABLE app.translation_namespaces (
+CREATE TABLE IF NOT EXISTS app.translation_namespaces (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug VARCHAR(100) UNIQUE NOT NULL,
   name VARCHAR(200) NOT NULL,
@@ -43,7 +36,7 @@ CREATE TABLE app.translation_namespaces (
 -- ============================================
 -- TABLA: translation_categories
 -- ============================================
-CREATE TABLE app.translation_categories (
+CREATE TABLE IF NOT EXISTS app.translation_categories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(100) NOT NULL UNIQUE,
   description TEXT,
@@ -58,7 +51,7 @@ CREATE TABLE app.translation_categories (
 -- ============================================
 -- TABLA: translation_keys
 -- ============================================
-CREATE TABLE app.translation_keys (
+CREATE TABLE IF NOT EXISTS app.translation_keys (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   namespace_slug VARCHAR(100) NOT NULL REFERENCES app.translation_namespaces(slug) ON DELETE CASCADE,
   key_name VARCHAR(500) NOT NULL,
@@ -78,7 +71,7 @@ CREATE TABLE app.translation_keys (
 -- ============================================
 -- TABLA: translations
 -- ============================================
-CREATE TABLE app.translations (
+CREATE TABLE IF NOT EXISTS app.translations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   translation_key_id UUID NOT NULL REFERENCES app.translation_keys(id) ON DELETE CASCADE,
   language_code VARCHAR(10) NOT NULL REFERENCES app.languages(code) ON DELETE CASCADE,

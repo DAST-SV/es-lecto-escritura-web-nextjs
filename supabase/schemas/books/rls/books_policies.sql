@@ -12,20 +12,17 @@ SET search_path TO books, app, public;
 ALTER TABLE books.books ENABLE ROW LEVEL SECURITY;
 
 -- Lectura pública de libros publicados
-DROP POLICY IF EXISTS "books_public_read" ON books.books;
 CREATE POLICY "books_public_read" ON books.books
   FOR SELECT
   USING (status = 'published' AND deleted_at IS NULL);
 
 -- Usuarios autenticados ven sus propios borradores
-DROP POLICY IF EXISTS "books_owner_read" ON books.books;
 CREATE POLICY "books_owner_read" ON books.books
   FOR SELECT
   TO authenticated
   USING (created_by = auth.uid() AND deleted_at IS NULL);
 
 -- Creadores pueden actualizar sus libros
-DROP POLICY IF EXISTS "books_owner_update" ON books.books;
 CREATE POLICY "books_owner_update" ON books.books
   FOR UPDATE
   TO authenticated
@@ -33,14 +30,12 @@ CREATE POLICY "books_owner_update" ON books.books
   WITH CHECK (created_by = auth.uid());
 
 -- Usuarios autenticados pueden crear libros
-DROP POLICY IF EXISTS "books_auth_insert" ON books.books;
 CREATE POLICY "books_auth_insert" ON books.books
   FOR INSERT
   TO authenticated
   WITH CHECK (created_by = auth.uid());
 
 -- Administradores pueden gestionar todos los libros
-DROP POLICY IF EXISTS "books_admin_all" ON books.books;
 CREATE POLICY "books_admin_all" ON books.books
   FOR ALL
   TO authenticated
@@ -69,7 +64,6 @@ CREATE POLICY "books_admin_all" ON books.books
 ALTER TABLE books.book_translations ENABLE ROW LEVEL SECURITY;
 
 -- Lectura pública de traducciones de libros publicados
-DROP POLICY IF EXISTS "book_trans_public_read" ON books.book_translations;
 CREATE POLICY "book_trans_public_read" ON books.book_translations
   FOR SELECT
   USING (
@@ -83,7 +77,6 @@ CREATE POLICY "book_trans_public_read" ON books.book_translations
   );
 
 -- Creadores pueden gestionar traducciones de sus libros
-DROP POLICY IF EXISTS "book_trans_owner_all" ON books.book_translations;
 CREATE POLICY "book_trans_owner_all" ON books.book_translations
   FOR ALL
   TO authenticated
@@ -101,7 +94,6 @@ CREATE POLICY "book_trans_owner_all" ON books.book_translations
   );
 
 -- Administradores pueden gestionar todas las traducciones
-DROP POLICY IF EXISTS "book_trans_admin_all" ON books.book_translations;
 CREATE POLICY "book_trans_admin_all" ON books.book_translations
   FOR ALL
   TO authenticated
