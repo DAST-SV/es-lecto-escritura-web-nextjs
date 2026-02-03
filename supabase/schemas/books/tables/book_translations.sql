@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS books.book_translations (
   description TEXT,
   summary TEXT,
   keywords TEXT[],
+  pdf_url TEXT,
   is_active BOOLEAN DEFAULT true,
   is_primary BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -35,6 +36,7 @@ COMMENT ON COLUMN books.book_translations.subtitle IS 'Subtítulo opcional';
 COMMENT ON COLUMN books.book_translations.description IS 'Descripción completa del libro';
 COMMENT ON COLUMN books.book_translations.summary IS 'Resumen corto para previews';
 COMMENT ON COLUMN books.book_translations.keywords IS 'Palabras clave para búsqueda';
+COMMENT ON COLUMN books.book_translations.pdf_url IS 'URL del PDF del libro en este idioma (almacenado en bucket book-pdfs)';
 COMMENT ON COLUMN books.book_translations.is_primary IS 'Indica si es el idioma original del libro';
 
 SELECT 'BOOKS: Tabla book_translations creada' AS status;

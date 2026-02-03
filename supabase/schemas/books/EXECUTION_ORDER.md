@@ -13,53 +13,98 @@ enums/difficulty_level.sql
 enums/book_status.sql
 ```
 
-## 3. Tablas Base
+## 3. Tablas Base (sin dependencias)
 ```
 tables/categories.sql
+tables/levels.sql
+tables/genres.sql
+tables/tags.sql
 tables/authors.sql
 ```
 
-## 4. Tablas con FK
+## 4. Tablas con Traducciones
+```
+tables/category_translations.sql
+tables/level_translations.sql
+tables/genre_translations.sql
+tables/tag_translations.sql
+tables/author_translations.sql
+```
+
+## 5. Tabla Principal (depende de categories y levels)
 ```
 tables/books.sql
-tables/pages.sql
-tables/book_authors.sql
-tables/category_translations.sql
-tables/author_translations.sql
 tables/book_translations.sql
+```
+
+## 6. Tablas de Relacion
+```
+tables/book_authors.sql
+tables/book_genres.sql
+tables/book_tags.sql
+```
+
+## 7. Paginas
+```
+tables/pages.sql
 tables/page_translations.sql
 ```
 
-## 5. Funciones
+## 8. Interaccion de Usuario
 ```
-functions/get_book_by_language.sql
-functions/get_books_by_category.sql
-functions/get_categories_by_language.sql
-functions/get_book_pages.sql
-functions/search_books.sql
+tables/book_ratings.sql
+tables/book_reviews.sql
+tables/reading_progress.sql
+tables/reading_sessions.sql
+tables/favorites.sql
+tables/reading_lists.sql
 ```
 
-## 6. Triggers
+## 9. Triggers
 ```
 triggers/updated_at.sql
 triggers/update_page_count.sql
 ```
 
-## 7. Views
+## 10. Funciones
 ```
-views/v_books_with_translations.sql
-views/v_categories_with_translations.sql
+functions/get_book_by_language.sql
+functions/get_books_by_category.sql
+functions/get_book_pages.sql
+functions/get_categories_by_language.sql
+functions/search_books.sql
 ```
 
-## 8. RLS
+## 11. Vistas
+```
+views/v_categories_with_translations.sql
+views/v_books_with_translations.sql
+```
+
+## 12. RLS y Politicas
 ```
 rls/categories_policies.sql
-rls/books_policies.sql
+rls/levels_policies.sql
+rls/genres_policies.sql
+rls/tags_policies.sql
 rls/authors_policies.sql
+rls/books_policies.sql
 rls/pages_policies.sql
+rls/ratings_policies.sql
+rls/reading_policies.sql
 ```
 
-## 9. Datos
+## 13. Storage Buckets
 ```
-data/categories.sql
+storage/book_covers.sql
+storage/book_pdfs.sql
+storage/book_audio.sql
+storage/user_avatars.sql
+```
+
+## 14. Datos Iniciales (Seed)
+```
+data/seed_categories.sql
+data/seed_levels.sql
+data/seed_genres.sql
 ```
