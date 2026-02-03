@@ -12,12 +12,12 @@ INSERT INTO app.role_language_access (role_name, language_code) VALUES
   ('super_admin'::app.user_role, 'it')
 ON CONFLICT (role_name, language_code) DO NOTHING;
 
--- school (administrador escolar): TODOS los idiomas
+-- school: TODOS los idiomas
 INSERT INTO app.role_language_access (role_name, language_code) VALUES
-  ('school'::app.user_role, 'es'),
-  ('school'::app.user_role, 'en'),
-  ('school'::app.user_role, 'fr'),
-  ('school'::app.user_role, 'it')
+  ('school', 'es'),
+  ('school', 'en'),
+  ('school', 'fr'),
+  ('school', 'it')
 ON CONFLICT (role_name, language_code) DO NOTHING;
 
 -- teacher: ES, EN
@@ -32,6 +32,12 @@ INSERT INTO app.role_language_access (role_name, language_code) VALUES
   ('parent'::app.user_role, 'en')
 ON CONFLICT (role_name, language_code) DO NOTHING;
 
+-- parent: ES, EN
+INSERT INTO app.role_language_access (role_name, language_code) VALUES
+  ('parent', 'es'),
+  ('parent', 'en')
+ON CONFLICT (role_name, language_code) DO NOTHING;
+
 -- student: ES, EN
 INSERT INTO app.role_language_access (role_name, language_code) VALUES
   ('student'::app.user_role, 'es'),
@@ -40,6 +46,6 @@ ON CONFLICT (role_name, language_code) DO NOTHING;
 
 -- individual: ES, EN
 INSERT INTO app.role_language_access (role_name, language_code) VALUES
-  ('individual'::app.user_role, 'es'),
-  ('individual'::app.user_role, 'en')
+  ('individual', 'es'),
+  ('individual', 'en')
 ON CONFLICT (role_name, language_code) DO NOTHING;

@@ -11,9 +11,9 @@ FROM app.routes r
 WHERE r.deleted_at IS NULL
 ON CONFLICT (role_name, route_id, language_code) DO NOTHING;
 
--- school (administrador escolar): rutas admin y contenido
+-- school (administrador escolar)
 INSERT INTO app.route_permissions (role_name, route_id, language_code)
-SELECT 'school'::app.user_role, r.id, NULL
+SELECT 'school', r.id, NULL
 FROM app.routes r
 WHERE r.pathname IN ('/', '/library', '/my-world', '/my-progress', '/admin')
 ON CONFLICT (role_name, route_id, language_code) DO NOTHING;
@@ -39,9 +39,16 @@ FROM app.routes r
 WHERE r.pathname IN ('/', '/library', '/my-world', '/my-progress')
 ON CONFLICT (role_name, route_id, language_code) DO NOTHING;
 
--- individual (usuario autónomo)
+-- individual (usuario individual)
 INSERT INTO app.route_permissions (role_name, route_id, language_code)
-SELECT 'individual'::app.user_role, r.id, NULL
+SELECT 'individual', r.id, NULL
+FROM app.routes r
+WHERE r.pathname IN ('/', '/library', '/my-world', '/my-progress')
+ON CONFLICT (role_name, route_id, language_code) DO NOTHING;
+
+-- parent (padre/madre)
+INSERT INTO app.route_permissions (role_name, route_id, language_code)
+SELECT 'parent', r.id, NULL
 FROM app.routes r
 WHERE r.pathname IN ('/', '/library', '/my-world', '/my-progress')
 ON CONFLICT (role_name, route_id, language_code) DO NOTHING;

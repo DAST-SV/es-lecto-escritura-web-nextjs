@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS app.user_roles (
     assigned_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
     assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     expires_at TIMESTAMPTZ,
+    revoked_at TIMESTAMPTZ,
+    revoked_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT user_roles_unique UNIQUE (user_id, role_id, organization_id)
