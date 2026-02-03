@@ -15,10 +15,10 @@
 -- ============================================
 
 INSERT INTO storage.buckets (
-  id, 
-  name, 
-  public, 
-  file_size_limit, 
+  id,
+  name,
+  public,
+  file_size_limit,
   allowed_mime_types
 )
 VALUES (
@@ -42,14 +42,12 @@ VALUES (
 -- ============================================
 
 -- Policy: Anyone can view public images (SELECT)
--- Política: Cualquiera puede ver las imágenes públicas
 CREATE POLICY "public_images_select_policy"
 ON storage.objects
 FOR SELECT
 USING (bucket_id = 'public-images');
 
 -- Policy: Only authenticated users can upload images (INSERT)
--- Política: Solo usuarios autenticados pueden subir imágenes
 CREATE POLICY "public_images_insert_policy"
 ON storage.objects
 FOR INSERT
@@ -57,7 +55,6 @@ TO authenticated
 WITH CHECK (bucket_id = 'public-images');
 
 -- Policy: Only authenticated users can update images (UPDATE)
--- Política: Solo usuarios autenticados pueden actualizar imágenes
 CREATE POLICY "public_images_update_policy"
 ON storage.objects
 FOR UPDATE
@@ -66,7 +63,6 @@ USING (bucket_id = 'public-images')
 WITH CHECK (bucket_id = 'public-images');
 
 -- Policy: Only authenticated users can delete images (DELETE)
--- Política: Solo usuarios autenticados pueden eliminar imágenes
 CREATE POLICY "public_images_delete_policy"
 ON storage.objects
 FOR DELETE
