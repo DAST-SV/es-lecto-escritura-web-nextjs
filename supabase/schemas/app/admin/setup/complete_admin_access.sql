@@ -31,9 +31,9 @@ BEGIN
   END IF;
 
   -- Asignar rol
-  INSERT INTO app.user_roles (user_id, role_id, is_active, notes)
-  VALUES (v_user_id, v_super_admin_role_id, true, 'Setup completo admin')
-  ON CONFLICT (user_id, role_id)
+  INSERT INTO app.user_roles (user_id, role_id, is_active)
+  VALUES (v_user_id, v_super_admin_role_id, true)
+  ON CONFLICT (user_id, role_id, organization_id)
   DO UPDATE SET is_active = true, revoked_at = NULL, updated_at = NOW();
 
   RAISE NOTICE '✅ Rol super_admin asignado';

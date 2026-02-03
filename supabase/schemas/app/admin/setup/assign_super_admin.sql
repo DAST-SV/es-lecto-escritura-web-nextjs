@@ -15,21 +15,19 @@ LIMIT 5;
 
 -- Paso 2: Asignar super_admin
 -- ⚠️ CAMBIAR 'TU_EMAIL@example.com' por tu email real
-INSERT INTO app.user_roles (user_id, role_id, is_active, notes)
+INSERT INTO app.user_roles (user_id, role_id, is_active)
 SELECT
   au.id,
   r.id,
-  true,
-  'Rol asignado - Setup inicial'
+  true
 FROM auth.users au
 CROSS JOIN app.roles r
 WHERE au.email = 'TU_EMAIL@example.com'  -- ⚠️ CAMBIAR AQUÍ
   AND r.name = 'super_admin'
-ON CONFLICT (user_id, role_id)
+ON CONFLICT (user_id, role_id, organization_id)
 DO UPDATE SET
   is_active = true,
-  revoked_at = NULL,
-  notes = 'Rol reasignado';
+  revoked_at = NULL;
 
 -- Paso 3: Verificar
 SELECT
