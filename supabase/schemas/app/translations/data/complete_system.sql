@@ -243,9 +243,4 @@ SELECT upsert_translation('auth.errors', 'weak_password', 'La contraseña es muy
 SELECT upsert_translation('auth.errors', 'email_already_registered', 'El email ya está registrado', 'Email is already registered', 'L''e-mail est déjà enregistré');
 SELECT upsert_translation('auth.errors', 'generic_error', 'Ocurrió un error. Intenta nuevamente.', 'An error occurred. Please try again.', 'Une erreur s''est produite. Veuillez réessayer.');
 
--- ============================================
--- LIMPIAR FUNCIÓN HELPER
--- ============================================
-DROP FUNCTION IF EXISTS upsert_translation(TEXT, TEXT, TEXT, TEXT, TEXT);
-
 COMMIT;
