@@ -38,6 +38,12 @@ INSERT INTO app.role_language_access (role_name, language_code) VALUES
   ('parent', 'en')
 ON CONFLICT (role_name, language_code) DO NOTHING;
 
+-- parent: ES, EN
+INSERT INTO app.role_language_access (role_name, language_code) VALUES
+  ('parent', 'es'),
+  ('parent', 'en')
+ON CONFLICT (role_name, language_code) DO NOTHING;
+
 -- student: ES, EN
 INSERT INTO app.role_language_access (role_name, language_code) VALUES
   ('student'::app.user_role, 'es'),
