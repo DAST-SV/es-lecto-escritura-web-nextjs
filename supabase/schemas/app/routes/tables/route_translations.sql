@@ -5,7 +5,7 @@
 
 CREATE TABLE app.route_translations (
   -- Identificación
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   route_id UUID NOT NULL REFERENCES app.routes(id) ON DELETE CASCADE,
   language_code app.language_code NOT NULL,
 

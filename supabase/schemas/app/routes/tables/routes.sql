@@ -5,7 +5,7 @@
 
 CREATE TABLE app.routes (
   -- Identificación
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   pathname VARCHAR(255) NOT NULL UNIQUE,
   display_name VARCHAR(200) NOT NULL,
 

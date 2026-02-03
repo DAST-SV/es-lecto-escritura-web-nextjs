@@ -5,7 +5,7 @@
 
 CREATE TABLE app.role_language_access (
   -- Identificación
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   role_name app.user_role NOT NULL REFERENCES app.roles(name) ON DELETE CASCADE,
   language_code app.language_code NOT NULL,
 
