@@ -19,9 +19,18 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- GRANTS INICIALES
 -- ============================================================================
 
+-- Acceso al schema
+GRANT USAGE ON SCHEMA app TO anon;
 GRANT USAGE ON SCHEMA app TO authenticated;
+
+-- Permisos para authenticated
 GRANT SELECT ON ALL TABLES IN SCHEMA app TO authenticated;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA app TO authenticated;
+
+-- Permisos para anon (lectura pública)
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA app TO anon;
+
+-- Permisos para service_role
 GRANT ALL ON ALL TABLES IN SCHEMA app TO service_role;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA app TO service_role;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA app TO service_role;

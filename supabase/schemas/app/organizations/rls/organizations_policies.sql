@@ -29,4 +29,17 @@ CREATE TRIGGER set_organizations_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION app.set_updated_at();
 
-SELECT 'ORGANIZATIONS: RLS policies para organizations creadas' AS status;
+-- ============================================
+-- GRANTS
+-- ============================================
+
+-- Lectura pública (anon)
+GRANT SELECT ON app.organizations TO anon;
+
+-- Lectura para usuarios autenticados
+GRANT SELECT ON app.organizations TO authenticated;
+
+-- Gestión para usuarios autenticados
+GRANT INSERT, UPDATE, DELETE ON app.organizations TO authenticated;
+
+SELECT 'ORGANIZATIONS: RLS policies y GRANTs para organizations creados' AS status;

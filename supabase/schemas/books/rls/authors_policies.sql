@@ -99,4 +99,23 @@ CREATE POLICY "book_authors_owner_all" ON books.book_authors
     )
   );
 
-SELECT 'BOOKS: RLS policies para authors creadas' AS status;
+-- ============================================
+-- GRANTS
+-- ============================================
+
+-- Lectura pública (anon)
+GRANT SELECT ON books.authors TO anon;
+GRANT SELECT ON books.author_translations TO anon;
+GRANT SELECT ON books.book_authors TO anon;
+
+-- Lectura para usuarios autenticados
+GRANT SELECT ON books.authors TO authenticated;
+GRANT SELECT ON books.author_translations TO authenticated;
+GRANT SELECT ON books.book_authors TO authenticated;
+
+-- Gestión para usuarios autenticados
+GRANT INSERT, UPDATE, DELETE ON books.authors TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON books.author_translations TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON books.book_authors TO authenticated;
+
+SELECT 'BOOKS: RLS policies y GRANTs para authors creados' AS status;

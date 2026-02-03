@@ -41,13 +41,15 @@ CREATE TRIGGER set_route_translations_updated_at
 -- RLS
 ALTER TABLE app.route_translations ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "route_translations_select_policy" ON app.route_translations
+-- Lectura pública de traducciones activas
+CREATE POLICY "route_translations_public_select" ON app.route_translations
   FOR SELECT
-  TO authenticated
   USING (is_active = true);
 
 -- Permisos
+GRANT SELECT ON app.route_translations TO anon;
 GRANT SELECT ON app.route_translations TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON app.route_translations TO authenticated;
 
 -- Comentarios
 COMMENT ON TABLE app.route_translations IS 'Traducciones de rutas a diferentes idiomas';

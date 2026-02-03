@@ -50,13 +50,15 @@ CREATE TRIGGER set_routes_updated_at
 -- RLS
 ALTER TABLE app.routes ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "routes_select_policy" ON app.routes
+-- Lectura pública de rutas activas
+CREATE POLICY "routes_public_select" ON app.routes
   FOR SELECT
-  TO authenticated
   USING (is_active = true AND deleted_at IS NULL);
 
 -- Permisos
+GRANT SELECT ON app.routes TO anon;
 GRANT SELECT ON app.routes TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON app.routes TO authenticated;
 
 -- Comentarios
 COMMENT ON TABLE app.routes IS 'Rutas del sistema';

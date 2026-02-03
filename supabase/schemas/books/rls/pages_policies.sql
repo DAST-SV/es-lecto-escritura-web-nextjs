@@ -124,4 +124,20 @@ CREATE POLICY "page_trans_admin_all" ON books.page_translations
     )
   );
 
-SELECT 'BOOKS: RLS policies para pages creadas' AS status;
+-- ============================================
+-- GRANTS
+-- ============================================
+
+-- Lectura pública (anon)
+GRANT SELECT ON books.pages TO anon;
+GRANT SELECT ON books.page_translations TO anon;
+
+-- Lectura para usuarios autenticados
+GRANT SELECT ON books.pages TO authenticated;
+GRANT SELECT ON books.page_translations TO authenticated;
+
+-- Gestión para usuarios autenticados
+GRANT INSERT, UPDATE, DELETE ON books.pages TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON books.page_translations TO authenticated;
+
+SELECT 'BOOKS: RLS policies y GRANTs para pages creados' AS status;

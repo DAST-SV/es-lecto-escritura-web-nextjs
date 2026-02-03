@@ -31,4 +31,29 @@ CREATE POLICY "Auth manage keys" ON app.translation_keys FOR ALL TO authenticate
 CREATE POLICY "Public read translations" ON app.translations FOR SELECT USING (true);
 CREATE POLICY "Auth manage translations" ON app.translations FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
-SELECT 'TRANSLATIONS: RLS policies creadas' AS status;
+-- ============================================================================
+-- GRANTS: Permisos de acceso a tablas
+-- ============================================================================
+
+-- Lectura pública (anon) para todas las tablas de traducciones
+GRANT SELECT ON app.languages TO anon;
+GRANT SELECT ON app.translation_namespaces TO anon;
+GRANT SELECT ON app.translation_categories TO anon;
+GRANT SELECT ON app.translation_keys TO anon;
+GRANT SELECT ON app.translations TO anon;
+
+-- Lectura para usuarios autenticados
+GRANT SELECT ON app.languages TO authenticated;
+GRANT SELECT ON app.translation_namespaces TO authenticated;
+GRANT SELECT ON app.translation_categories TO authenticated;
+GRANT SELECT ON app.translation_keys TO authenticated;
+GRANT SELECT ON app.translations TO authenticated;
+
+-- Gestión completa para usuarios autenticados
+GRANT INSERT, UPDATE, DELETE ON app.languages TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON app.translation_namespaces TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON app.translation_categories TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON app.translation_keys TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON app.translations TO authenticated;
+
+SELECT 'TRANSLATIONS: RLS policies y GRANTs creados' AS status;

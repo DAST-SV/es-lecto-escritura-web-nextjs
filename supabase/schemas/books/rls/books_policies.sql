@@ -116,4 +116,20 @@ CREATE POLICY "book_trans_admin_all" ON books.book_translations
     )
   );
 
-SELECT 'BOOKS: RLS policies para books creadas' AS status;
+-- ============================================
+-- GRANTS
+-- ============================================
+
+-- Lectura pública (anon)
+GRANT SELECT ON books.books TO anon;
+GRANT SELECT ON books.book_translations TO anon;
+
+-- Lectura para usuarios autenticados
+GRANT SELECT ON books.books TO authenticated;
+GRANT SELECT ON books.book_translations TO authenticated;
+
+-- Gestión para usuarios autenticados
+GRANT INSERT, UPDATE, DELETE ON books.books TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON books.book_translations TO authenticated;
+
+SELECT 'BOOKS: RLS policies y GRANTs para books creados' AS status;

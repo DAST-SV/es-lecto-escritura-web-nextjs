@@ -155,6 +155,31 @@ CREATE POLICY "Public read translations" ON app.translations FOR SELECT USING (t
 CREATE POLICY "Auth manage translations" ON app.translations FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- ============================================
+-- GRANTS: Permisos de acceso a tablas
+-- ============================================
+
+-- Lectura pública (anon) para todas las tablas de traducciones
+GRANT SELECT ON app.languages TO anon;
+GRANT SELECT ON app.translation_namespaces TO anon;
+GRANT SELECT ON app.translation_categories TO anon;
+GRANT SELECT ON app.translation_keys TO anon;
+GRANT SELECT ON app.translations TO anon;
+
+-- Lectura para usuarios autenticados
+GRANT SELECT ON app.languages TO authenticated;
+GRANT SELECT ON app.translation_namespaces TO authenticated;
+GRANT SELECT ON app.translation_categories TO authenticated;
+GRANT SELECT ON app.translation_keys TO authenticated;
+GRANT SELECT ON app.translations TO authenticated;
+
+-- Gestión completa para usuarios autenticados
+GRANT INSERT, UPDATE, DELETE ON app.languages TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON app.translation_namespaces TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON app.translation_categories TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON app.translation_keys TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON app.translations TO authenticated;
+
+-- ============================================
 -- DATOS INICIALES
 -- ============================================
 INSERT INTO app.languages (code, name, native_name, flag_emoji, is_default, is_active, order_index) VALUES
