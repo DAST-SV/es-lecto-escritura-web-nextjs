@@ -43,20 +43,20 @@ BEGIN
     RETURNING id INTO v_key_id;
   END IF;
 
-  -- Insertar/actualizar traducciones
-  INSERT INTO app.translations (translation_key_id, namespace_slug, key_name, language_code, value, is_active)
-  VALUES (v_key_id, p_namespace, p_key, 'es', p_es, true)
+  -- Insertar/actualizar traducciones (solo columnas que existen en la tabla)
+  INSERT INTO app.translations (translation_key_id, language_code, value, is_active)
+  VALUES (v_key_id, 'es', p_es, true)
   ON CONFLICT (translation_key_id, language_code) DO UPDATE SET value = EXCLUDED.value;
 
   IF p_en IS NOT NULL THEN
-    INSERT INTO app.translations (translation_key_id, namespace_slug, key_name, language_code, value, is_active)
-    VALUES (v_key_id, p_namespace, p_key, 'en', p_en, true)
+    INSERT INTO app.translations (translation_key_id, language_code, value, is_active)
+    VALUES (v_key_id, 'en', p_en, true)
     ON CONFLICT (translation_key_id, language_code) DO UPDATE SET value = EXCLUDED.value;
   END IF;
 
   IF p_fr IS NOT NULL THEN
-    INSERT INTO app.translations (translation_key_id, namespace_slug, key_name, language_code, value, is_active)
-    VALUES (v_key_id, p_namespace, p_key, 'fr', p_fr, true)
+    INSERT INTO app.translations (translation_key_id, language_code, value, is_active)
+    VALUES (v_key_id, 'fr', p_fr, true)
     ON CONFLICT (translation_key_id, language_code) DO UPDATE SET value = EXCLUDED.value;
   END IF;
 END;
