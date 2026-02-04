@@ -43,6 +43,14 @@ export interface BookAuthor {
   role: 'author' | 'illustrator' | 'translator' | 'editor';
 }
 
+// Tipo para personajes del libro
+export interface BookCharacter {
+  id?: string;
+  name: string;
+  description?: string;
+  role: 'main' | 'secondary' | 'supporting';
+}
+
 interface UseBookFormMultilangProps {
   bookId?: string;
 }
@@ -80,6 +88,8 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
   const [selectedLevelId, setSelectedLevelId] = useState<string | null>(null);
   const [selectedGeneros, setSelectedGeneros] = useState<string[]>([]);
   const [selectedEtiquetas, setSelectedEtiquetas] = useState<string[]>([]);
+  const [selectedValores, setSelectedValores] = useState<string[]>([]);
+  const [characters, setCharacters] = useState<BookCharacter[]>([]);
 
   // Autores (usuarios del sistema)
   const [selectedAuthors, setSelectedAuthors] = useState<BookAuthor[]>([]);
@@ -380,6 +390,45 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
         setSelectedGeneros(genreRels.map(g => g.genre_id));
       }
 
+      // 6. Cargar etiquetas
+      const { data: tagRels } = await supabase
+        .schema('books')
+        .from('book_tags')
+        .select('tag_id')
+        .eq('book_id', bookId);
+
+      if (tagRels) {
+        setSelectedEtiquetas(tagRels.map(t => t.tag_id));
+      }
+
+      // 7. Cargar valores
+      const { data: valueRels } = await supabase
+        .schema('books')
+        .from('book_values')
+        .select('value_id')
+        .eq('book_id', bookId);
+
+      if (valueRels) {
+        setSelectedValores(valueRels.map(v => v.value_id));
+      }
+
+      // 8. Cargar personajes
+      const { data: bookCharacters } = await supabase
+        .schema('books')
+        .from('book_characters')
+        .select('id, name, description, role, order_index')
+        .eq('book_id', bookId)
+        .order('order_index');
+
+      if (bookCharacters) {
+        setCharacters(bookCharacters.map(c => ({
+          id: c.id,
+          name: c.name,
+          description: c.description || undefined,
+          role: c.role as 'main' | 'secondary' | 'supporting',
+        })));
+      }
+
       setIsLoadingBook(false);
       toast.success('Libro cargado');
 
@@ -637,20 +686,68 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
       }
 
       // 4. Guardar géneros
-      if (selectedGeneros.length > 0) {
-        await supabase
-          .schema('books')
-          .from('book_genres')
-          .delete()
-          .eq('book_id', finalBookId);
+      await supabase
+        .schema('books')
+        .from('book_genres')
+        .delete()
+        .eq('book_id', finalBookId);
 
+      if (selectedGeneros.length > 0) {
         await supabase
           .schema('books')
           .from('book_genres')
           .insert(selectedGeneros.map(gid => ({ book_id: finalBookId, genre_id: gid })));
       }
 
-      // 5. Cleanup
+      // 5. Guardar etiquetas
+      await supabase
+        .schema('books')
+        .from('book_tags')
+        .delete()
+        .eq('book_id', finalBookId);
+
+      if (selectedEtiquetas.length > 0) {
+        await supabase
+          .schema('books')
+          .from('book_tags')
+          .insert(selectedEtiquetas.map(tid => ({ book_id: finalBookId, tag_id: tid })));
+      }
+
+      // 6. Guardar valores
+      await supabase
+        .schema('books')
+        .from('book_values')
+        .delete()
+        .eq('book_id', finalBookId);
+
+      if (selectedValores.length > 0) {
+        await supabase
+          .schema('books')
+          .from('book_values')
+          .insert(selectedValores.map(vid => ({ book_id: finalBookId, value_id: vid })));
+      }
+
+      // 7. Guardar personajes
+      await supabase
+        .schema('books')
+        .from('book_characters')
+        .delete()
+        .eq('book_id', finalBookId);
+
+      if (characters.length > 0) {
+        await supabase
+          .schema('books')
+          .from('book_characters')
+          .insert(characters.map((char, idx) => ({
+            book_id: finalBookId,
+            name: char.name,
+            description: char.description || null,
+            role: char.role,
+            order_index: idx,
+          })));
+      }
+
+      // 8. Cleanup
       if (extractedPages.length > 0) {
         const { PDFExtractorService } = await import('@/src/infrastructure/services/books');
         PDFExtractorService.cleanupBlobUrls(extractedPages);
@@ -736,8 +833,12 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
     setSelectedGeneros,
     selectedEtiquetas,
     setSelectedEtiquetas,
+    selectedValores,
+    setSelectedValores,
+    characters,
+    setCharacters,
 
-    // Catálogos
+    // Catálogos (legacy - pueden usarse con CatalogSelector)
     categorias,
     niveles,
     generos,

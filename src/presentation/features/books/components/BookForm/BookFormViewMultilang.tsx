@@ -3,6 +3,8 @@
  * Formulario de libro con soporte MULTI-IDIOMA
  * - Todas las etiquetas usan traducciones desde Supabase
  * - Skeleton loading mientras cargan datos
+ * - CatalogSelector para categorías, niveles, géneros, etiquetas, valores
+ * - CharacterInput para personajes
  */
 
 'use client';
@@ -11,12 +13,14 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import {
-  Loader2, Save, Upload, AlertCircle, BookOpen, Tag, Camera, X, Eye, ArrowLeft, Languages, Star, Check
+  Loader2, Save, Upload, AlertCircle, BookOpen, Tag, Camera, X, Eye, ArrowLeft, Languages, Star, Check, Heart, Users
 } from 'lucide-react';
 import { UnifiedLayout } from '@/src/presentation/features/navigation';
 import { PDFPreviewMode } from '@/src/presentation/features/books/components/PDFPreview/PDFPreviewMode';
 import { AuthorSelector } from '@/src/presentation/features/books/components/Inputs/AuthorSelector';
+import { CharacterInput } from '@/src/presentation/features/books/components/Inputs/CharacterInput';
 import { BookFormSkeleton } from '@/src/presentation/features/books/components/BookForm/BookFormSkeleton';
+import { CatalogSelector } from '@/src/presentation/features/books/components/Selectors/CatalogSelector';
 import { useBookFormMultilang } from '@/src/presentation/features/books/hooks/useBookFormMultilang';
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 import { Toaster } from 'react-hot-toast';
@@ -56,6 +60,12 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
     setSelectedLevelId,
     selectedGeneros,
     setSelectedGeneros,
+    selectedEtiquetas,
+    setSelectedEtiquetas,
+    selectedValores,
+    setSelectedValores,
+    characters,
+    setCharacters,
     categorias,
     niveles,
     generos,
@@ -74,6 +84,39 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
     isFormValid,
     shouldShowPreview,
   } = useBookFormMultilang({ bookId });
+
+  // Toggle helpers para selectores multi-select
+  const handleToggleGenre = (id: string) => {
+    if (selectedGeneros.includes(id)) {
+      setSelectedGeneros(selectedGeneros.filter(g => g !== id));
+    } else {
+      setSelectedGeneros([...selectedGeneros, id]);
+    }
+  };
+
+  const handleToggleTag = (id: string) => {
+    if (selectedEtiquetas.includes(id)) {
+      setSelectedEtiquetas(selectedEtiquetas.filter(t => t !== id));
+    } else {
+      setSelectedEtiquetas([...selectedEtiquetas, id]);
+    }
+  };
+
+  const handleToggleValue = (id: string) => {
+    if (selectedValores.includes(id)) {
+      setSelectedValores(selectedValores.filter(v => v !== id));
+    } else {
+      setSelectedValores([...selectedValores, id]);
+    }
+  };
+
+  const handleToggleCategory = (id: string) => {
+    setSelectedCategoryId(selectedCategoryId === id ? null : id);
+  };
+
+  const handleToggleLevel = (id: string) => {
+    setSelectedLevelId(selectedLevelId === id ? null : id);
+  };
 
   // Preview de PDF
   if (showPreview && extractedPages.length > 0 && pdfDimensions) {
@@ -368,7 +411,7 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                 </div>
               </section>
 
-              {/* Clasificacion (compartido) */}
+              {/* Clasificacion con CatalogSelector */}
               <section className="bg-white rounded-lg border border-gray-200 shadow-sm">
                 <div className="px-3 py-2 border-b border-gray-100">
                   <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-1.5">
@@ -376,78 +419,72 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                     {t('section_classification')}
                   </h3>
                 </div>
-                <div className="p-3 space-y-3">
-                  {/* Categoria */}
-                  <div>
-                    <label className="text-[10px] font-semibold text-gray-700 block mb-1.5">
-                      {t('field_category')} <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={selectedCategoryId || ''}
-                      onChange={(e) => setSelectedCategoryId(e.target.value || null)}
-                      className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-md focus:border-orange-400 focus:ring-1 focus:ring-orange-200 focus:outline-none"
-                    >
-                      <option value="">{t('select_category')}</option>
-                      {categorias.map(cat => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                      ))}
-                    </select>
-                  </div>
+                <div className="p-3 space-y-4">
+                  {/* Categoria - Single Select */}
+                  <CatalogSelector
+                    catalogType="categories"
+                    selectedIds={selectedCategoryId ? [selectedCategoryId] : []}
+                    onToggle={handleToggleCategory}
+                    label={t('field_category')}
+                    color="indigo"
+                    required
+                    singleSelect
+                    maxSelections={1}
+                  />
 
-                  {/* Nivel */}
-                  <div>
-                    <label className="text-[10px] font-semibold text-gray-700 block mb-1.5">
-                      {t('field_level')} <span className="text-red-500">*</span>
-                    </label>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {niveles.map(nivel => (
-                        <button
-                          key={nivel.id}
-                          type="button"
-                          onClick={() => setSelectedLevelId(nivel.id)}
-                          className={`px-2.5 py-1.5 text-[11px] rounded-md border transition-all font-medium ${
-                            selectedLevelId === nivel.id
-                              ? 'border-amber-400 bg-amber-50 text-amber-900'
-                              : 'border-gray-200 hover:border-gray-300 text-gray-700 hover:bg-gray-50'
-                          }`}
-                        >
-                          {nivel.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  {/* Nivel - Single Select */}
+                  <CatalogSelector
+                    catalogType="levels"
+                    selectedIds={selectedLevelId ? [selectedLevelId] : []}
+                    onToggle={handleToggleLevel}
+                    label={t('field_level')}
+                    color="amber"
+                    required
+                    singleSelect
+                    maxSelections={1}
+                  />
 
-                  {/* Generos */}
-                  <div>
-                    <label className="text-[10px] font-semibold text-gray-700 block mb-1.5">
-                      {t('field_genres')}
-                    </label>
-                    <div className="flex flex-wrap gap-1.5">
-                      {generos.map(gen => {
-                        const isSelected = selectedGeneros.includes(gen.id);
-                        return (
-                          <button
-                            key={gen.id}
-                            type="button"
-                            onClick={() => {
-                              if (isSelected) {
-                                setSelectedGeneros(selectedGeneros.filter(id => id !== gen.id));
-                              } else {
-                                setSelectedGeneros([...selectedGeneros, gen.id]);
-                              }
-                            }}
-                            className={`px-2 py-1 text-[10px] rounded-md border transition-all ${
-                              isSelected
-                                ? 'border-rose-400 bg-rose-50 text-rose-900 font-medium'
-                                : 'border-gray-200 hover:border-rose-300 text-gray-700 hover:bg-gray-50'
-                            }`}
-                          >
-                            {gen.name}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+                  {/* Géneros - Multi Select */}
+                  <CatalogSelector
+                    catalogType="genres"
+                    selectedIds={selectedGeneros}
+                    onToggle={handleToggleGenre}
+                    label={t('field_genres')}
+                    color="rose"
+                    maxSelections={5}
+                  />
+
+                  {/* Etiquetas - Multi Select */}
+                  <CatalogSelector
+                    catalogType="tags"
+                    selectedIds={selectedEtiquetas}
+                    onToggle={handleToggleTag}
+                    label="Etiquetas"
+                    color="sky"
+                    maxSelections={10}
+                  />
+
+                  {/* Valores - Multi Select */}
+                  <CatalogSelector
+                    catalogType="values"
+                    selectedIds={selectedValores}
+                    onToggle={handleToggleValue}
+                    label="Valores educativos"
+                    color="emerald"
+                    maxSelections={5}
+                  />
+                </div>
+              </section>
+
+              {/* Personajes */}
+              <section className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div className="p-3">
+                  <CharacterInput
+                    characters={characters}
+                    onChange={setCharacters}
+                    label="Personajes"
+                    maxCharacters={20}
+                  />
                 </div>
               </section>
             </div>
@@ -566,6 +603,52 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                                 </span>
                               ) : null;
                             })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Personajes */}
+                      {characters.length > 0 && (
+                        <div>
+                          <h4 className="text-[10px] font-semibold text-gray-900 mb-1.5 uppercase tracking-wide flex items-center gap-1">
+                            <Users size={10} />
+                            Personajes
+                          </h4>
+                          <div className="flex flex-wrap gap-1">
+                            {characters.map((char, idx) => (
+                              <span
+                                key={idx}
+                                className={`px-2 py-0.5 rounded text-[10px] border ${
+                                  char.role === 'main'
+                                    ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                    : char.role === 'secondary'
+                                    ? 'bg-sky-50 text-sky-800 border-sky-200'
+                                    : 'bg-gray-50 text-gray-700 border-gray-200'
+                                }`}
+                              >
+                                {char.name}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Valores */}
+                      {selectedValores.length > 0 && (
+                        <div>
+                          <h4 className="text-[10px] font-semibold text-gray-900 mb-1.5 uppercase tracking-wide flex items-center gap-1">
+                            <Heart size={10} />
+                            Valores
+                          </h4>
+                          <div className="flex flex-wrap gap-1">
+                            {selectedValores.map(vid => (
+                              <span
+                                key={vid}
+                                className="px-2 py-0.5 bg-emerald-50 text-emerald-800 rounded text-[10px] border border-emerald-200"
+                              >
+                                {vid}
+                              </span>
+                            ))}
                           </div>
                         </div>
                       )}
