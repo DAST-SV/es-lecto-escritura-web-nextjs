@@ -41,3 +41,20 @@ export * from './CommunityMembership';
 export * from './BookReview';
 export * from './BookPage';
 export * from './BookExtended';
+
+// Catálogo de libros (schema books)
+export * from './BookCategory';
+export * from './BookLevel';
+export * from './BookGenre';
+export * from './BookTag';
+export * from './BookAuthor';
+export * from './BookAdmin';
+
+// Interacción de usuarios con libros (schema books)
+export * from './BookReviewEntity';
+export * from './BookRatingEntity';
+export * from './ReadingProgressEntity';
+export * from './ReadingSessionEntity';
+export * from './FavoriteEntity';
+export * from './ReadingListEntity';
+export * from './BookPageEntity';

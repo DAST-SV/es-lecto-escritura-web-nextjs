@@ -47,3 +47,20 @@ export { SupabaseOrganizationRepository } from './organizations/OrganizationRepo
 
 // User Types
 export { SupabaseUserTypeRepository } from './user-types/UserTypeRepository';
+
+// Book Catalog (schema books)
+export { BookCategoryRepository } from './book-categories/BookCategoryRepository';
+export { BookLevelRepository } from './book-levels/BookLevelRepository';
+export { BookGenreRepository } from './book-genres/BookGenreRepository';
+export { BookTagRepository } from './book-tags/BookTagRepository';
+export { BookAuthorRepository } from './book-authors/BookAuthorRepository';
+export { BookAdminRepository } from './books-admin/BookAdminRepository';
+
+// User Interaction (schema books)
+export { BookReviewRepository } from './book-reviews/BookReviewRepository';
+export { BookRatingRepository } from './book-ratings/BookRatingRepository';
+export { ReadingProgressRepository } from './reading-progress/ReadingProgressRepository';
+export { ReadingSessionRepository } from './reading-sessions/ReadingSessionRepository';
+export { FavoriteRepository } from './favorites/FavoriteRepository';
+export { ReadingListRepository } from './reading-lists/ReadingListRepository';
+export { BookPageRepository } from './book-pages/BookPageRepository';

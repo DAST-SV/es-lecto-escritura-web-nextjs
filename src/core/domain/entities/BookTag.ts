@@ -1,43 +1,37 @@
 // ============================================
-// src/core/domain/entities/BookCategory.ts
-// Entity: BookCategory (Categoría de libros)
+// src/core/domain/entities/BookTag.ts
+// Entity: BookTag (Etiqueta de libros)
 // ============================================
 
-export interface CategoryTranslation {
+export interface TagTranslation {
   id: string;
   languageCode: string;
   name: string;
-  description: string | null;
   isActive: boolean;
 }
 
-export class BookCategory {
+export class BookTag {
   constructor(
     public readonly id: string,
     public readonly slug: string,
-    public readonly icon: string | null,
     public readonly color: string | null,
-    public readonly orderIndex: number,
     public readonly isActive: boolean,
-    public readonly translations: CategoryTranslation[],
+    public readonly translations: TagTranslation[],
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
     public readonly deletedAt: Date | null
   ) {}
 
-  static fromDatabase(data: any): BookCategory {
-    return new BookCategory(
+  static fromDatabase(data: any): BookTag {
+    return new BookTag(
       data.id,
       data.slug,
-      data.icon,
       data.color,
-      data.order_index,
       data.is_active,
-      (data.category_translations || []).map((t: any) => ({
+      (data.tag_translations || []).map((t: any) => ({
         id: t.id,
         languageCode: t.language_code,
         name: t.name,
-        description: t.description,
         isActive: t.is_active,
       })),
       new Date(data.created_at),
@@ -50,37 +44,15 @@ export class BookCategory {
     return this.deletedAt !== null;
   }
 
-  getTranslation(languageCode: string): CategoryTranslation | undefined {
+  getTranslation(languageCode: string): TagTranslation | undefined {
     return this.translations.find(t => t.languageCode === languageCode);
   }
 
   getName(languageCode: string, fallback = 'es'): string {
     const translation = this.getTranslation(languageCode);
     if (translation) return translation.name;
-
     const fallbackTranslation = this.getTranslation(fallback);
     if (fallbackTranslation) return fallbackTranslation.name;
-
     return this.translations[0]?.name || this.slug;
   }
-
-  getDescription(languageCode: string, fallback = 'es'): string | null {
-    const translation = this.getTranslation(languageCode);
-    if (translation) return translation.description;
-
-    const fallbackTranslation = this.getTranslation(fallback);
-    return fallbackTranslation?.description || null;
-  }
-}
-
-// Para compatibilidad con código existente
-export interface CategoryByLanguage {
-  id: string;
-  slug: string;
-  name: string;
-  description: string | null;
-  icon: string | null;
-  color: string | null;
-  orderIndex: number;
-  bookCount: number;
 }

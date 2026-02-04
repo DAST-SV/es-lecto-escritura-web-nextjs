@@ -29,6 +29,18 @@ import {
   Package,
   Tag,
   FolderTree,
+  Library,
+  Layers,
+  Sparkles,
+  Tags,
+  UserPen,
+  MessageSquare,
+  Star,
+  TrendingUp,
+  Clock,
+  Heart,
+  List,
+  FileText,
 } from 'lucide-react';
 import { createClient } from '@/src/infrastructure/config/supabase.config';
 
@@ -154,6 +166,85 @@ export default function AdminLayout({
       name: 'Idiomas',
       href: `/${locale}/admin/languages`,
       icon: <Globe size={20} />,
+    },
+    {
+      name: 'Gestión de Libros',
+      href: '#',
+      icon: <Library size={20} />,
+      children: [
+        {
+          name: 'Categorías',
+          href: `/${locale}/admin/book-categories`,
+          icon: <FolderTree size={18} />,
+        },
+        {
+          name: 'Niveles',
+          href: `/${locale}/admin/book-levels`,
+          icon: <Layers size={18} />,
+        },
+        {
+          name: 'Géneros',
+          href: `/${locale}/admin/book-genres`,
+          icon: <Sparkles size={18} />,
+        },
+        {
+          name: 'Etiquetas',
+          href: `/${locale}/admin/book-tags`,
+          icon: <Tags size={18} />,
+        },
+        {
+          name: 'Autores',
+          href: `/${locale}/admin/book-authors`,
+          icon: <UserPen size={18} />,
+        },
+        {
+          name: 'Libros',
+          href: `/${locale}/admin/books-management`,
+          icon: <BookOpen size={18} />,
+        },
+        {
+          name: 'Páginas de Libros',
+          href: `/${locale}/admin/book-pages`,
+          icon: <FileText size={18} />,
+        },
+      ],
+    },
+    {
+      name: 'Interacción Usuarios',
+      href: '#',
+      icon: <TrendingUp size={20} />,
+      children: [
+        {
+          name: 'Reseñas',
+          href: `/${locale}/admin/book-reviews`,
+          icon: <MessageSquare size={18} />,
+        },
+        {
+          name: 'Calificaciones',
+          href: `/${locale}/admin/book-ratings`,
+          icon: <Star size={18} />,
+        },
+        {
+          name: 'Progreso de Lectura',
+          href: `/${locale}/admin/reading-progress`,
+          icon: <TrendingUp size={18} />,
+        },
+        {
+          name: 'Sesiones de Lectura',
+          href: `/${locale}/admin/reading-sessions`,
+          icon: <Clock size={18} />,
+        },
+        {
+          name: 'Favoritos',
+          href: `/${locale}/admin/favorites`,
+          icon: <Heart size={18} />,
+        },
+        {
+          name: 'Listas de Lectura',
+          href: `/${locale}/admin/reading-lists`,
+          icon: <List size={18} />,
+        },
+      ],
     },
     {
       name: 'Sistema de Traducciones',

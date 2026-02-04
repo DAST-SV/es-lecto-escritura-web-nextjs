@@ -1,43 +1,53 @@
 // ============================================
-// src/core/domain/entities/BookCategory.ts
-// Entity: BookCategory (Categoría de libros)
+// src/core/domain/entities/BookLevel.ts
+// Entity: BookLevel (Nivel de lectura)
 // ============================================
 
-export interface CategoryTranslation {
+export interface LevelTranslation {
   id: string;
   languageCode: string;
   name: string;
   description: string | null;
+  ageLabel: string | null;
   isActive: boolean;
 }
 
-export class BookCategory {
+export class BookLevel {
   constructor(
     public readonly id: string,
     public readonly slug: string,
-    public readonly icon: string | null,
+    public readonly minAge: number,
+    public readonly maxAge: number,
+    public readonly gradeMin: number | null,
+    public readonly gradeMax: number | null,
     public readonly color: string | null,
+    public readonly icon: string | null,
     public readonly orderIndex: number,
     public readonly isActive: boolean,
-    public readonly translations: CategoryTranslation[],
+    public readonly translations: LevelTranslation[],
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
     public readonly deletedAt: Date | null
   ) {}
 
-  static fromDatabase(data: any): BookCategory {
-    return new BookCategory(
+  static fromDatabase(data: any): BookLevel {
+    return new BookLevel(
       data.id,
       data.slug,
-      data.icon,
+      data.min_age,
+      data.max_age,
+      data.grade_min,
+      data.grade_max,
       data.color,
+      data.icon,
       data.order_index,
       data.is_active,
-      (data.category_translations || []).map((t: any) => ({
+      (data.level_translations || []).map((t: any) => ({
         id: t.id,
         languageCode: t.language_code,
         name: t.name,
         description: t.description,
+        ageLabel: t.age_label,
         isActive: t.is_active,
       })),
       new Date(data.created_at),
@@ -50,7 +60,17 @@ export class BookCategory {
     return this.deletedAt !== null;
   }
 
-  getTranslation(languageCode: string): CategoryTranslation | undefined {
+  get ageRange(): string {
+    return `${this.minAge}-${this.maxAge}`;
+  }
+
+  get gradeRange(): string | null {
+    if (this.gradeMin === null && this.gradeMax === null) return null;
+    if (this.gradeMin === this.gradeMax) return `${this.gradeMin}`;
+    return `${this.gradeMin || '?'}-${this.gradeMax || '?'}`;
+  }
+
+  getTranslation(languageCode: string): LevelTranslation | undefined {
     return this.translations.find(t => t.languageCode === languageCode);
   }
 
@@ -71,16 +91,14 @@ export class BookCategory {
     const fallbackTranslation = this.getTranslation(fallback);
     return fallbackTranslation?.description || null;
   }
-}
 
-// Para compatibilidad con código existente
-export interface CategoryByLanguage {
-  id: string;
-  slug: string;
-  name: string;
-  description: string | null;
-  icon: string | null;
-  color: string | null;
-  orderIndex: number;
-  bookCount: number;
+  getAgeLabel(languageCode: string, fallback = 'es'): string {
+    const translation = this.getTranslation(languageCode);
+    if (translation?.ageLabel) return translation.ageLabel;
+
+    const fallbackTranslation = this.getTranslation(fallback);
+    if (fallbackTranslation?.ageLabel) return fallbackTranslation.ageLabel;
+
+    return `${this.minAge}-${this.maxAge} años`;
+  }
 }
