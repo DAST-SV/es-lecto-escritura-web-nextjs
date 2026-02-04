@@ -3,9 +3,10 @@
 // Hook: Obtener idiomas disponibles
 // ============================================
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Language } from '@/src/core/domain/entities/Language';
 import { LanguageRepository } from '@/src/infrastructure/repositories/languages/LanguageRepository';
+import { logDetailedError, getUserFriendlyError } from '@/src/infrastructure/utils/error-formatter';
 
 const languageRepository = new LanguageRepository();
 
@@ -20,9 +21,9 @@ export function useLanguages(includeInactive = false) {
       setError(null);
       const data = await languageRepository.findAll(includeInactive);
       setLanguages(data);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar idiomas');
-      console.error('Error loading languages:', err);
+    } catch (err: unknown) {
+      logDetailedError('useLanguages.loadLanguages', err);
+      setError(getUserFriendlyError(err, 'Error al cargar idiomas'));
     } finally {
       setLoading(false);
     }
@@ -32,8 +33,18 @@ export function useLanguages(includeInactive = false) {
     loadLanguages();
   }, [loadLanguages]);
 
+  const defaultLanguage = useMemo(() => {
+    return languages.find(l => l.isDefault) || languages[0] || null;
+  }, [languages]);
+
+  const activeLanguages = useMemo(() => {
+    return languages.filter(l => l.isActive);
+  }, [languages]);
+
   return {
     languages,
+    activeLanguages,
+    defaultLanguage,
     loading,
     error,
     refresh: loadLanguages,

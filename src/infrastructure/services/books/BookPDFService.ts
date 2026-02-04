@@ -20,11 +20,16 @@ export class BookPDFService {
 
   /**
    * Subir PDF a Supabase Storage
+   * @param file - Archivo PDF
+   * @param userId - ID del usuario
+   * @param bookId - ID del libro
+   * @param languageCode - Código de idioma (opcional, para PDFs multi-idioma)
    */
   static async uploadPDF(
     file: File,
     userId: string,
-    bookId: string
+    bookId: string,
+    languageCode?: string
   ): Promise<UploadPDFResult> {
     try {
       const supabase = this.getSupabase();
@@ -39,8 +44,9 @@ export class BookPDFService {
         return { url: null, error: 'El PDF es muy grande. Máximo 50MB' };
       }
 
-      // Ruta: {userId}/{bookId}/document.pdf
-      const filePath = `${userId}/${bookId}/document.pdf`;
+      // Ruta: {userId}/{bookId}/document.pdf o {userId}/{bookId}/{lang}.pdf
+      const fileName = languageCode ? `${languageCode}.pdf` : 'document.pdf';
+      const filePath = `${userId}/${bookId}/${fileName}`;
 
       console.log('📤 Subiendo PDF:', filePath);
 

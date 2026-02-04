@@ -1,10 +1,10 @@
 /**
  * UBICACIÓN: app/[locale]/books/create/page.tsx
- * ✅ Usar componente compartido BookFormView
+ * ✅ Usar componente multi-idioma BookFormViewMultilang
  */
 
-import { BookFormView } from "@/src/presentation/features/books/components/BookForm/BookFormView";
+import { BookFormViewMultilang } from "@/src/presentation/features/books/components/BookForm/BookFormViewMultilang";
 
 export default function Page() {
-  return <BookFormView />;
+  return <BookFormViewMultilang />;
 }

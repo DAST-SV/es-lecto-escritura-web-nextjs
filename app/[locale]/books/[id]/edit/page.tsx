@@ -1,16 +1,16 @@
 /**
  * UBICACIÓN: app/[locale]/books/[id]/edit/page.tsx
- * ✅ Usar componente compartido BookFormView con bookId
+ * ✅ Usar componente multi-idioma BookFormViewMultilang con bookId
  */
 
 'use client';
 
 import { useParams } from 'next/navigation';
-import { BookFormView } from "@/src/presentation/features/books/components/BookForm/BookFormView";
+import { BookFormViewMultilang } from "@/src/presentation/features/books/components/BookForm/BookFormViewMultilang";
 
 export default function Page() {
   const params = useParams();
   const bookId = params?.id as string;
 
-  return <BookFormView bookId={bookId} />;
+  return <BookFormViewMultilang bookId={bookId} />;
 }

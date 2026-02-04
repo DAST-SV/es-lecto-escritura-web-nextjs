@@ -8,6 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, ChevronLeft, ChevronRight, Info, X } from 'lucide-react';
 import { createClient } from '@/src/infrastructure/config/supabase.config';
+import { formatSupabaseError, getUserFriendlyError, logDetailedError } from '@/src/infrastructure/utils/error-formatter';
 export interface CatalogItem {
   id: number;
   name: string;
@@ -76,11 +77,13 @@ export function OptimizedSelector({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedItems, setSelectedItems] = useState<CatalogItem[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   const loadItems = async (searchTerm: string, page: number) => {
     setIsLoading(true);
+    setErrorMessage(null);
     try {
       const rangeFrom = (page - 1) * itemsPerPage;
       const rangeTo = rangeFrom + itemsPerPage - 1;
@@ -99,7 +102,9 @@ export function OptimizedSelector({
       const { data, error, count } = await query;
 
       if (error) {
-        console.error('❌ Error cargando items:', error);
+        logDetailedError(`OptimizedSelector.loadItems - tabla: ${table}`, error);
+        const userError = getUserFriendlyError(error, `Error cargando opciones de "${table}"`);
+        setErrorMessage(userError);
         return;
       }
 
@@ -107,7 +112,9 @@ export function OptimizedSelector({
       setTotalCount(count || 0);
 
     } catch (err) {
-      console.error('❌ Error en loadItems:', err);
+      logDetailedError(`OptimizedSelector.loadItems - tabla: ${table}`, err);
+      const userError = getUserFriendlyError(err, 'Error inesperado al cargar opciones');
+      setErrorMessage(userError);
     } finally {
       setIsLoading(false);
     }
@@ -150,6 +157,26 @@ export function OptimizedSelector({
       setCurrentPage(newPage);
     }
   };
+
+  if (errorMessage) {
+    return (
+      <div className="border-2 border-red-200 rounded-lg p-4 bg-red-50">
+        <label className="text-xs font-semibold text-red-700 block mb-2">
+          {label} {required && <span className="text-red-500">*</span>}
+        </label>
+        <div className="text-center py-4">
+          <p className="text-xs text-red-600 font-medium mb-2">❌ Error al cargar opciones</p>
+          <p className="text-[11px] text-red-500 break-words">{errorMessage}</p>
+          <button
+            onClick={() => loadItems(search, currentPage)}
+            className="mt-3 px-3 py-1 text-xs bg-red-100 hover:bg-red-200 text-red-700 rounded transition-colors"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (totalCount === 0 && !isLoading && !search) {
     return (
