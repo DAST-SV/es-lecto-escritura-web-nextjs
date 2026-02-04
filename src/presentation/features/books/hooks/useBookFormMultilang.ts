@@ -34,6 +34,15 @@ export interface BookTranslationForm {
 
 export type TranslationsState = Record<string, BookTranslationForm>;
 
+// Tipo para autores (usuarios del sistema)
+export interface BookAuthor {
+  userId: string;
+  email: string;
+  displayName: string;
+  avatarUrl: string | null;
+  role: 'author' | 'illustrator' | 'translator' | 'editor';
+}
+
 interface UseBookFormMultilangProps {
   bookId?: string;
 }
@@ -71,12 +80,24 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
   const [selectedLevelId, setSelectedLevelId] = useState<string | null>(null);
   const [selectedGeneros, setSelectedGeneros] = useState<string[]>([]);
   const [selectedEtiquetas, setSelectedEtiquetas] = useState<string[]>([]);
+
+  // Autores (usuarios del sistema)
+  const [selectedAuthors, setSelectedAuthors] = useState<BookAuthor[]>([]);
+  // Legacy: mantener para compatibilidad temporal
   const [autores, setAutores] = useState<string[]>(['']);
 
-  // Catálogos
-  const [categorias, setCategorias] = useState<Array<{ id: string; name: string }>>([]);
-  const [niveles, setNiveles] = useState<Array<{ id: string; name: string }>>([]);
-  const [generos, setGeneros] = useState<Array<{ id: string; name: string }>>([]);
+  // Catálogos (con traducciones según idioma del usuario)
+  const [categorias, setCategorias] = useState<Array<{ id: string; slug: string; name: string }>>([]);
+  const [niveles, setNiveles] = useState<Array<{ id: string; slug: string; name: string }>>([]);
+  const [generos, setGeneros] = useState<Array<{ id: string; slug: string; name: string }>>([]);
+
+  // Información del usuario actual (para autores)
+  const [currentUser, setCurrentUser] = useState<{
+    id: string;
+    email: string;
+    displayName: string;
+    avatarUrl: string | null;
+  } | null>(null);
 
   // ============================================
   // ESTADOS MULTI-IDIOMA
@@ -130,7 +151,7 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
   }, [activeLanguages, defaultLanguage, languagesLoading, createEmptyTranslation, translationsInitialized]);
 
   // ============================================
-  // CARGA DE CATÁLOGOS
+  // CARGA DE CATÁLOGOS (con traducciones según idioma del usuario)
   // ============================================
   useEffect(() => {
     async function loadCatalogs() {
@@ -142,21 +163,118 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
         }
         setUserId(user.id);
 
-        // Cargar categorías, niveles y géneros
-        const [catsResult, levsResult, gensResult] = await Promise.all([
-          supabase.schema('books').from('categories').select('id, slug').eq('is_active', true),
-          supabase.schema('books').from('levels').select('id, slug').order('order_index'),
-          supabase.schema('books').from('genres').select('id, slug').eq('is_active', true),
+        // Obtener información del usuario actual para autores
+        const { data: userProfile } = await supabase
+          .schema('app')
+          .from('user_profiles')
+          .select('display_name, full_name, avatar_url')
+          .eq('user_id', user.id)
+          .single();
+
+        setCurrentUser({
+          id: user.id,
+          email: user.email || '',
+          displayName: userProfile?.display_name || userProfile?.full_name || user.email?.split('@')[0] || 'Usuario',
+          avatarUrl: userProfile?.avatar_url || null,
+        });
+
+        // Cargar categorías, niveles y géneros con sus traducciones
+        // Usamos LEFT JOIN (sin !inner) para obtener datos aunque no haya traducción
+        const [catsResult, levsResult, gensResult, catsTransResult, levsTransResult, gensTransResult] = await Promise.all([
+          // Datos base
+          supabase
+            .schema('books')
+            .from('categories')
+            .select('id, slug, order_index')
+            .eq('is_active', true)
+            .is('deleted_at', null)
+            .order('order_index'),
+
+          supabase
+            .schema('books')
+            .from('levels')
+            .select('id, slug, order_index')
+            .eq('is_active', true)
+            .is('deleted_at', null)
+            .order('order_index'),
+
+          supabase
+            .schema('books')
+            .from('genres')
+            .select('id, slug, order_index')
+            .eq('is_active', true)
+            .is('deleted_at', null)
+            .order('order_index'),
+
+          // Traducciones por separado
+          supabase
+            .schema('books')
+            .from('category_translations')
+            .select('category_id, name')
+            .eq('language_code', locale),
+
+          supabase
+            .schema('books')
+            .from('level_translations')
+            .select('level_id, name')
+            .eq('language_code', locale),
+
+          supabase
+            .schema('books')
+            .from('genre_translations')
+            .select('genre_id, name')
+            .eq('language_code', locale),
         ]);
 
+        // Debug: mostrar resultados de queries
+        console.log('📚 [BookForm] Catalogs loaded:', {
+          categories: catsResult.data?.length || 0,
+          levels: levsResult.data?.length || 0,
+          genres: gensResult.data?.length || 0,
+          catsTrans: catsTransResult.data?.length || 0,
+          levsTrans: levsTransResult.data?.length || 0,
+          gensTrans: gensTransResult.data?.length || 0,
+          locale,
+          errors: {
+            cats: catsResult.error,
+            levs: levsResult.error,
+            gens: gensResult.error,
+            catsTrans: catsTransResult.error,
+            levsTrans: levsTransResult.error,
+            gensTrans: gensTransResult.error,
+          }
+        });
+
+        // Crear mapas de traducciones
+        const catsTransMap = new Map((catsTransResult.data || []).map(t => [t.category_id, t.name]));
+        const levsTransMap = new Map((levsTransResult.data || []).map(t => [t.level_id, t.name]));
+        const gensTransMap = new Map((gensTransResult.data || []).map(t => [t.genre_id, t.name]));
+
+        // Mapear categorías con nombre traducido (fallback a slug si no hay traducción)
         if (catsResult.data) {
-          setCategorias(catsResult.data.map(c => ({ id: c.id, name: c.slug })));
+          setCategorias(catsResult.data.map(c => ({
+            id: c.id,
+            slug: c.slug,
+            name: catsTransMap.get(c.id) || c.slug,
+          })));
         }
+
+        // Mapear niveles con nombre traducido
         if (levsResult.data) {
-          setNiveles(levsResult.data.map(l => ({ id: l.id, name: l.slug })));
+          setNiveles(levsResult.data.map(l => ({
+            id: l.id,
+            slug: l.slug,
+            name: levsTransMap.get(l.id) || l.slug,
+          })));
         }
+
+        // Mapear géneros con nombre traducido
         if (gensResult.data) {
-          setGeneros(gensResult.data.map(g => ({ id: g.id, name: g.slug })));
+          setGeneros(gensResult.data.map(g => ({
+            id: g.id,
+            slug: g.slug,
+            name: gensTransMap.get(g.id) || g.slug,
+          })));
         }
 
         // Si es modo edición, cargar el libro
@@ -398,9 +516,9 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
       hasAnyPDF &&
       selectedCategoryId !== null &&
       selectedLevelId !== null &&
-      autores.some(a => a.trim())
+      selectedAuthors.length > 0
     );
-  }, [translations, selectedCategoryId, selectedLevelId, autores]);
+  }, [translations, selectedCategoryId, selectedLevelId, selectedAuthors]);
 
   // ============================================
   // GUARDAR
@@ -559,9 +677,9 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
       titulo.trim() !== '' ||
       descripcion.trim() !== '' ||
       portadaPreview !== null ||
-      autores.some(a => a.trim())
+      selectedAuthors.length > 0
     );
-  }, [titulo, descripcion, portadaPreview, autores]);
+  }, [titulo, descripcion, portadaPreview, selectedAuthors]);
 
   const translationProgress = useMemo(() => {
     const total = activeLanguages.length;
@@ -604,6 +722,9 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
     // Base (compartido)
     autores,
     setAutores,
+    selectedAuthors,
+    setSelectedAuthors,
+    currentUser,
     portadaFile,
     portadaPreview,
     setPortadaPreview,

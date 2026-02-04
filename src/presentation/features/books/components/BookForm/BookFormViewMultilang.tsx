@@ -1,7 +1,8 @@
 /**
- * UBICACIÓN: src/presentation/features/books/components/BookForm/BookFormViewMultilang.tsx
- * ✅ Formulario de libro con soporte MULTI-IDIOMA
- * Tabs por idioma para: título, descripción, resumen, PDF
+ * UBICACION: src/presentation/features/books/components/BookForm/BookFormViewMultilang.tsx
+ * Formulario de libro con soporte MULTI-IDIOMA
+ * - Todas las etiquetas usan traducciones desde Supabase
+ * - Skeleton loading mientras cargan datos
  */
 
 'use client';
@@ -14,8 +15,10 @@ import {
 } from 'lucide-react';
 import { UnifiedLayout } from '@/src/presentation/features/navigation';
 import { PDFPreviewMode } from '@/src/presentation/features/books/components/PDFPreview/PDFPreviewMode';
-import { AutoresInput } from '@/src/presentation/features/books/components/Inputs/AutoresInput';
+import { AuthorSelector } from '@/src/presentation/features/books/components/Inputs/AuthorSelector';
+import { BookFormSkeleton } from '@/src/presentation/features/books/components/BookForm/BookFormSkeleton';
 import { useBookFormMultilang } from '@/src/presentation/features/books/hooks/useBookFormMultilang';
+import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 import { Toaster } from 'react-hot-toast';
 
 interface BookFormViewMultilangProps {
@@ -25,6 +28,9 @@ interface BookFormViewMultilangProps {
 export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
   const router = useRouter();
   const locale = useLocale();
+
+  // Traducciones del formulario
+  const { t, loading: translationsLoading } = useSupabaseTranslations('books_form');
 
   const {
     isLoadingBook,
@@ -39,8 +45,9 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
     currentTranslation,
     updateTranslation,
     setPrimaryLanguage,
-    autores,
-    setAutores,
+    selectedAuthors,
+    setSelectedAuthors,
+    currentUser,
     portadaPreview,
     setPortadaPreview,
     selectedCategoryId,
@@ -59,7 +66,6 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
     pdfDimensions,
     isExtractingPages,
     pdfError,
-    setPdfError,
     showPreview,
     setShowPreview,
     handlePortadaChange,
@@ -81,18 +87,11 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
     );
   }
 
-  // Loading
-  if (isLoadingBook) {
+  // Loading - mostrar skeleton
+  if (isLoadingBook || translationsLoading) {
     return (
       <UnifiedLayout showNavbar={true}>
-        <div className="h-screen flex items-center justify-center bg-gradient-to-br from-amber-50/30 via-white to-rose-50/30">
-          <div className="text-center">
-            <Loader2 size={48} className="animate-spin text-indigo-600 mx-auto mb-4" />
-            <p className="text-gray-600 font-medium">
-              {activeLanguages.length === 0 ? 'Cargando idiomas...' : 'Cargando libro...'}
-            </p>
-          </div>
-        </div>
+        <BookFormSkeleton />
       </UnifiedLayout>
     );
   }
@@ -115,11 +114,11 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
               </button>
               <div>
                 <h1 className="text-lg font-bold text-gray-900">
-                  {isEditMode ? 'Editar Libro' : 'Crear Nuevo Libro'}
+                  {isEditMode ? t('page_title_edit') : t('page_title_create')}
                 </h1>
                 <p className="text-xs text-gray-500 flex items-center gap-2">
                   <Languages size={12} />
-                  {translationProgress.completed}/{translationProgress.total} idiomas completados
+                  {translationProgress.completed}/{translationProgress.total} {t('languages_completed')}
                 </p>
               </div>
             </div>
@@ -131,12 +130,12 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
               {isLoading ? (
                 <>
                   <Loader2 size={14} className="animate-spin" />
-                  Guardando...
+                  {t('btn_saving')}
                 </>
               ) : (
                 <>
                   <Save size={14} />
-                  {isEditMode ? 'Guardar Cambios' : 'Guardar'}
+                  {isEditMode ? t('btn_save_changes') : t('btn_save')}
                 </>
               )}
             </button>
@@ -159,12 +158,12 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
             {/* COLUMNA IZQUIERDA */}
             <div className="overflow-y-auto pr-2 space-y-3">
 
-              {/* ✅ TABS DE IDIOMAS */}
+              {/* TABS DE IDIOMAS */}
               <section className="bg-white rounded-lg border border-gray-200 shadow-sm">
                 <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
                   <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-1.5">
                     <Languages size={13} />
-                    Traducciones
+                    {t('section_translations')}
                   </h3>
                   <span className="text-[10px] text-gray-500">
                     {translationProgress.completed}/{translationProgress.total}
@@ -210,8 +209,8 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                     <div className="flex items-center justify-between">
                       <label className="text-[10px] text-gray-500">
                         {currentTranslation.isPrimary
-                          ? 'Este es el idioma principal'
-                          : 'Marcar como idioma principal'}
+                          ? t('primary_language')
+                          : t('set_primary_language')}
                       </label>
                       <button
                         onClick={() => setPrimaryLanguage(activeTab)}
@@ -224,51 +223,51 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                       >
                         {currentTranslation.isPrimary ? (
                           <span className="flex items-center gap-1">
-                            <Star size={10} className="fill-amber-500" /> Principal
+                            <Star size={10} className="fill-amber-500" /> {t('btn_primary')}
                           </span>
                         ) : (
-                          'Establecer como principal'
+                          t('btn_set_primary')
                         )}
                       </button>
                     </div>
 
-                    {/* Título */}
+                    {/* Titulo */}
                     <div>
                       <label className="text-[10px] font-medium text-gray-700 block mb-1">
-                        Título <span className="text-red-500">*</span>
+                        {t('field_title')} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={currentTranslation.title}
                         onChange={(e) => updateTranslation(activeTab, 'title', e.target.value)}
-                        placeholder={`Título en ${activeLanguages.find(l => l.code === activeTab)?.name || activeTab}`}
+                        placeholder={t('placeholder_title').replace('{language}', activeLanguages.find(l => l.code === activeTab)?.name || activeTab)}
                         className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-md focus:border-orange-400 focus:ring-1 focus:ring-orange-200 focus:outline-none"
                       />
                     </div>
 
-                    {/* Subtítulo */}
+                    {/* Subtitulo */}
                     <div>
                       <label className="text-[10px] font-medium text-gray-700 block mb-1">
-                        Subtítulo
+                        {t('field_subtitle')}
                       </label>
                       <input
                         type="text"
                         value={currentTranslation.subtitle}
                         onChange={(e) => updateTranslation(activeTab, 'subtitle', e.target.value)}
-                        placeholder="Subtítulo (opcional)"
+                        placeholder={t('placeholder_subtitle')}
                         className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-md focus:border-orange-400 focus:ring-1 focus:ring-orange-200 focus:outline-none"
                       />
                     </div>
 
-                    {/* Descripción */}
+                    {/* Descripcion */}
                     <div>
                       <label className="text-[10px] font-medium text-gray-700 block mb-1">
-                        Descripción <span className="text-red-500">*</span>
+                        {t('field_description')} <span className="text-red-500">*</span>
                       </label>
                       <textarea
                         value={currentTranslation.description}
                         onChange={(e) => updateTranslation(activeTab, 'description', e.target.value)}
-                        placeholder="Descripción completa del libro..."
+                        placeholder={t('placeholder_description')}
                         rows={3}
                         className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-md focus:border-orange-400 focus:ring-1 focus:ring-orange-200 focus:outline-none resize-none"
                       />
@@ -277,12 +276,12 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                     {/* Resumen */}
                     <div>
                       <label className="text-[10px] font-medium text-gray-700 block mb-1">
-                        Resumen corto
+                        {t('field_summary')}
                       </label>
                       <textarea
                         value={currentTranslation.summary}
                         onChange={(e) => updateTranslation(activeTab, 'summary', e.target.value)}
-                        placeholder="Resumen breve para previews..."
+                        placeholder={t('placeholder_summary')}
                         rows={2}
                         className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-md focus:border-orange-400 focus:ring-1 focus:ring-orange-200 focus:outline-none resize-none"
                       />
@@ -291,19 +290,19 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                     {/* PDF para este idioma */}
                     <div>
                       <label className="text-[10px] font-medium text-gray-700 block mb-1">
-                        PDF ({activeLanguages.find(l => l.code === activeTab)?.name || activeTab})
+                        {t('field_pdf')} ({activeLanguages.find(l => l.code === activeTab)?.name || activeTab})
                       </label>
 
                       {hasPDF && !pdfFile ? (
                         <div className="space-y-2">
                           <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg">
-                            <p className="text-xs font-medium text-emerald-900">PDF cargado</p>
+                            <p className="text-xs font-medium text-emerald-900">{t('pdf_loaded')}</p>
                             <p className="text-[10px] text-emerald-700 truncate">{currentPdfUrl}</p>
                           </div>
                           <label className="block cursor-pointer">
                             <div className="border-2 border-dashed border-gray-300 rounded-lg p-2 flex items-center justify-center hover:border-orange-400 hover:bg-orange-50/50 transition-all">
                               <Upload size={14} className="text-gray-400 mr-1" />
-                              <span className="text-[10px] text-gray-500">Cambiar PDF</span>
+                              <span className="text-[10px] text-gray-500">{t('pdf_change')}</span>
                             </div>
                             <input type="file" accept="application/pdf" onChange={handlePDFChange} className="hidden" />
                           </label>
@@ -328,8 +327,8 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                         <label className="block cursor-pointer">
                           <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 flex flex-col items-center hover:border-orange-400 hover:bg-orange-50/50 transition-all">
                             <Upload size={16} className="text-gray-400 mb-1" />
-                            <span className="text-xs text-gray-500">Subir PDF</span>
-                            <span className="text-[10px] text-gray-400">Máx. 50MB</span>
+                            <span className="text-xs text-gray-500">{t('pdf_upload')}</span>
+                            <span className="text-[10px] text-gray-400">{t('pdf_max_size')}</span>
                           </div>
                           <input type="file" accept="application/pdf" onChange={handlePDFChange} className="hidden" />
                         </label>
@@ -343,14 +342,14 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                           className="w-full mt-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-md flex items-center justify-center gap-1.5 transition-all"
                         >
                           <Eye size={12} />
-                          Preview ({extractedPages.length} pág.)
+                          {t('pdf_preview').replace('{pages}', String(extractedPages.length))}
                         </button>
                       )}
 
                       {isExtractingPages && (
                         <div className="mt-2 text-center py-2">
                           <Loader2 className="animate-spin mx-auto text-gray-600 mb-1" size={14} />
-                          <p className="text-[10px] text-gray-600">Procesando PDF...</p>
+                          <p className="text-[10px] text-gray-600">{t('pdf_processing')}</p>
                         </div>
                       )}
                     </div>
@@ -360,34 +359,35 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
 
               {/* Autores (compartido) */}
               <section className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                <div className="px-3 py-2 border-b border-gray-100">
-                  <h3 className="text-xs font-semibold text-gray-900">Autores</h3>
-                </div>
                 <div className="p-3">
-                  <AutoresInput autores={autores} onChange={setAutores} />
+                  <AuthorSelector
+                    selectedAuthors={selectedAuthors}
+                    onChange={setSelectedAuthors}
+                    currentUser={currentUser}
+                  />
                 </div>
               </section>
 
-              {/* Clasificación (compartido) */}
+              {/* Clasificacion (compartido) */}
               <section className="bg-white rounded-lg border border-gray-200 shadow-sm">
                 <div className="px-3 py-2 border-b border-gray-100">
                   <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-1.5">
                     <Tag size={13} />
-                    Clasificación
+                    {t('section_classification')}
                   </h3>
                 </div>
                 <div className="p-3 space-y-3">
-                  {/* Categoría */}
+                  {/* Categoria */}
                   <div>
                     <label className="text-[10px] font-semibold text-gray-700 block mb-1.5">
-                      Categoría <span className="text-red-500">*</span>
+                      {t('field_category')} <span className="text-red-500">*</span>
                     </label>
                     <select
                       value={selectedCategoryId || ''}
                       onChange={(e) => setSelectedCategoryId(e.target.value || null)}
                       className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-md focus:border-orange-400 focus:ring-1 focus:ring-orange-200 focus:outline-none"
                     >
-                      <option value="">Seleccionar categoría</option>
+                      <option value="">{t('select_category')}</option>
                       {categorias.map(cat => (
                         <option key={cat.id} value={cat.id}>{cat.name}</option>
                       ))}
@@ -397,12 +397,13 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                   {/* Nivel */}
                   <div>
                     <label className="text-[10px] font-semibold text-gray-700 block mb-1.5">
-                      Nivel <span className="text-red-500">*</span>
+                      {t('field_level')} <span className="text-red-500">*</span>
                     </label>
                     <div className="grid grid-cols-2 gap-1.5">
                       {niveles.map(nivel => (
                         <button
                           key={nivel.id}
+                          type="button"
                           onClick={() => setSelectedLevelId(nivel.id)}
                           className={`px-2.5 py-1.5 text-[11px] rounded-md border transition-all font-medium ${
                             selectedLevelId === nivel.id
@@ -416,10 +417,10 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                     </div>
                   </div>
 
-                  {/* Géneros */}
+                  {/* Generos */}
                   <div>
                     <label className="text-[10px] font-semibold text-gray-700 block mb-1.5">
-                      Géneros
+                      {t('field_genres')}
                     </label>
                     <div className="flex flex-wrap gap-1.5">
                       {generos.map(gen => {
@@ -427,6 +428,7 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                         return (
                           <button
                             key={gen.id}
+                            type="button"
                             onClick={() => {
                               if (isSelected) {
                                 setSelectedGeneros(selectedGeneros.filter(id => id !== gen.id));
@@ -454,7 +456,7 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
             <div className="overflow-hidden">
               <div className="h-full bg-white rounded-lg border border-gray-200 shadow-sm flex flex-col">
                 <div className="flex-shrink-0 px-3 py-2 border-b border-gray-100 bg-gradient-to-r from-amber-50/50 to-rose-50/50">
-                  <h3 className="text-xs font-semibold text-gray-900">Vista Previa</h3>
+                  <h3 className="text-xs font-semibold text-gray-900">{t('section_preview')}</h3>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4">
@@ -467,7 +469,7 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                             <div className="relative group">
                               <img
                                 src={portadaPreview}
-                                alt="Portada"
+                                alt={t('cover_label')}
                                 className="w-28 h-36 object-cover rounded-lg shadow-md border border-gray-200"
                               />
                               <button
@@ -481,7 +483,7 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                             <label className="block cursor-pointer">
                               <div className="w-28 h-36 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-300 hover:border-orange-400 hover:bg-orange-50/50 transition-all group">
                                 <Camera size={20} className="text-gray-400 group-hover:text-orange-500 mb-1" />
-                                <span className="text-[10px] text-gray-500 group-hover:text-orange-600">Portada</span>
+                                <span className="text-[10px] text-gray-500 group-hover:text-orange-600">{t('cover_label')}</span>
                               </div>
                               <input type="file" accept="image/*" onChange={handlePortadaChange} className="hidden" />
                             </label>
@@ -494,16 +496,16 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                               {currentTranslation.title}
                             </h2>
                           ) : (
-                            <p className="text-sm text-gray-400 italic">Sin título</p>
+                            <p className="text-sm text-gray-400 italic">{t('no_title')}</p>
                           )}
 
                           {currentTranslation.subtitle && (
                             <p className="text-xs text-gray-600 mb-2">{currentTranslation.subtitle}</p>
                           )}
 
-                          {autores.filter(a => a.trim()).length > 0 && (
+                          {selectedAuthors.length > 0 && (
                             <p className="text-xs text-gray-500 mb-2">
-                              Por: {autores.filter(a => a.trim()).join(', ')}
+                              {t('by_authors').replace('{authors}', selectedAuthors.map(a => a.displayName).join(', '))}
                             </p>
                           )}
 
@@ -522,11 +524,11 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                         </div>
                       </div>
 
-                      {/* Descripción */}
+                      {/* Descripcion */}
                       {currentTranslation.description && (
                         <div>
                           <h4 className="text-[10px] font-semibold text-gray-900 mb-1 uppercase tracking-wide">
-                            Descripción
+                            {t('field_description')}
                           </h4>
                           <p className="text-xs text-gray-700 leading-relaxed">
                             {currentTranslation.description}
@@ -538,7 +540,7 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                       {currentTranslation.summary && (
                         <div>
                           <h4 className="text-[10px] font-semibold text-gray-900 mb-1 uppercase tracking-wide">
-                            Resumen
+                            {t('field_summary')}
                           </h4>
                           <p className="text-xs text-gray-600 italic">
                             {currentTranslation.summary}
@@ -546,11 +548,11 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                         </div>
                       )}
 
-                      {/* Géneros */}
+                      {/* Generos */}
                       {selectedGeneros.length > 0 && (
                         <div>
                           <h4 className="text-[10px] font-semibold text-gray-900 mb-1.5 uppercase tracking-wide">
-                            Géneros
+                            {t('field_genres')}
                           </h4>
                           <div className="flex flex-wrap gap-1">
                             {selectedGeneros.map(gid => {
@@ -571,13 +573,13 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                       {/* Estado de traducciones */}
                       <div className="pt-4 border-t border-gray-100">
                         <h4 className="text-[10px] font-semibold text-gray-900 mb-2 uppercase tracking-wide">
-                          Traducciones
+                          {t('section_translations')}
                         </h4>
                         <div className="grid grid-cols-2 gap-2">
                           {activeLanguages.map(lang => {
                             const trans = translations[lang.code];
                             const isComplete = trans?.title && trans?.description;
-                            const hasPdf = trans?.pdfFile || trans?.pdfUrl;
+                            const hasPdfTrans = trans?.pdfFile || trans?.pdfUrl;
 
                             return (
                               <div
@@ -599,9 +601,9 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                                 </div>
                                 <div className="flex items-center gap-2 text-[9px]">
                                   <span className={isComplete ? 'text-emerald-600' : 'text-gray-400'}>
-                                    {isComplete ? 'Completo' : 'Incompleto'}
+                                    {isComplete ? t('translation_complete') : t('translation_incomplete')}
                                   </span>
-                                  {hasPdf && (
+                                  {hasPdfTrans && (
                                     <span className="text-blue-600">PDF</span>
                                   )}
                                 </div>
@@ -615,9 +617,9 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                     <div className="h-full flex items-center justify-center">
                       <div className="text-center">
                         <BookOpen size={48} className="mx-auto text-gray-300 mb-3" />
-                        <p className="text-sm text-gray-500 mb-1">Vista previa</p>
+                        <p className="text-sm text-gray-500 mb-1">{t('preview_empty_title')}</p>
                         <p className="text-xs text-gray-400 max-w-[200px] mx-auto">
-                          Completa el formulario para ver la vista previa del libro
+                          {t('preview_empty_text')}
                         </p>
                       </div>
                     </div>
