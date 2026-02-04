@@ -19,6 +19,7 @@ tables/categories.sql
 tables/levels.sql
 tables/genres.sql
 tables/tags.sql
+tables/values.sql
 tables/authors.sql
 ```
 
@@ -28,6 +29,7 @@ tables/category_translations.sql
 tables/level_translations.sql
 tables/genre_translations.sql
 tables/tag_translations.sql
+tables/value_translations.sql
 tables/author_translations.sql
 ```
 
@@ -42,6 +44,8 @@ tables/book_translations.sql
 tables/book_authors.sql
 tables/book_genres.sql
 tables/book_tags.sql
+tables/book_values.sql
+tables/book_characters.sql
 ```
 
 ## 7. Paginas
@@ -87,11 +91,13 @@ rls/categories_policies.sql
 rls/levels_policies.sql
 rls/genres_policies.sql
 rls/tags_policies.sql
+rls/values_policies.sql
 rls/authors_policies.sql
 rls/books_policies.sql
 rls/pages_policies.sql
 rls/ratings_policies.sql
 rls/reading_policies.sql
+rls/characters_policies.sql
 ```
 
 ## 13. Storage Buckets
@@ -107,4 +113,6 @@ storage/user_avatars.sql
 data/seed_categories.sql
 data/seed_levels.sql
 data/seed_genres.sql
+data/seed_tags.sql
+data/seed_values.sql
 ```

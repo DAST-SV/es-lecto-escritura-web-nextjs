@@ -108,6 +108,7 @@ translations/data/common.sql
 translations/data/errors.sql
 translations/data/home_page.sql
 translations/data/books.sql
+translations/data/books_form.sql
 translations/data/books_user_pages.sql
 translations/data/complete_system.sql
 ```

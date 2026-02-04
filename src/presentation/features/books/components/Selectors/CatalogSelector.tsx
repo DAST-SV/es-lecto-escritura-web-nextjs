@@ -80,38 +80,58 @@ const colorClasses = {
   }
 };
 
-// Mapeo de tipo de catálogo a nombres de tabla
+// Mapeo de tipo de catálogo a nombres de tabla y columnas disponibles
 const catalogConfig: Record<CatalogType, {
   baseTable: string;
   translationTable: string;
   foreignKey: string;
+  baseSelect: string;
+  baseSelectSelected: string;
+  hasOrderIndex: boolean;
   hasAgeLabel?: boolean;
+  hasDescription?: boolean;
 }> = {
   categories: {
     baseTable: 'categories',
     translationTable: 'category_translations',
-    foreignKey: 'category_id'
+    foreignKey: 'category_id',
+    baseSelect: 'id, slug, color, icon, order_index',
+    baseSelectSelected: 'id, slug, color, icon',
+    hasOrderIndex: true,
   },
   genres: {
     baseTable: 'genres',
     translationTable: 'genre_translations',
-    foreignKey: 'genre_id'
+    foreignKey: 'genre_id',
+    baseSelect: 'id, slug, color, icon, order_index',
+    baseSelectSelected: 'id, slug, color, icon',
+    hasOrderIndex: true,
   },
   levels: {
     baseTable: 'levels',
     translationTable: 'level_translations',
     foreignKey: 'level_id',
-    hasAgeLabel: true
+    baseSelect: 'id, slug, color, icon, order_index',
+    baseSelectSelected: 'id, slug, color, icon',
+    hasOrderIndex: true,
+    hasAgeLabel: true,
   },
   tags: {
     baseTable: 'tags',
     translationTable: 'tag_translations',
-    foreignKey: 'tag_id'
+    foreignKey: 'tag_id',
+    baseSelect: 'id, slug, color',
+    baseSelectSelected: 'id, slug, color',
+    hasOrderIndex: false,
+    hasDescription: false,
   },
   values: {
     baseTable: 'values',
     translationTable: 'value_translations',
-    foreignKey: 'value_id'
+    foreignKey: 'value_id',
+    baseSelect: 'id, slug, color, icon, order_index',
+    baseSelectSelected: 'id, slug, color, icon',
+    hasOrderIndex: true,
   },
 };
 
@@ -148,14 +168,22 @@ export function CatalogSelector({
 
     try {
       // 1. Cargar datos base
-      const { data: baseData, error: baseError, count } = await supabase
+      let query = supabase
         .schema('books')
         .from(config.baseTable)
-        .select('id, slug, color, icon, order_index', { count: 'exact' })
+        .select(config.baseSelect, { count: 'exact' })
         .eq('is_active', true)
-        .is('deleted_at', null)
-        .order('order_index')
-        .range((page - 1) * itemsPerPage, page * itemsPerPage - 1);
+        .is('deleted_at', null);
+
+      if (config.hasOrderIndex) {
+        query = query.order('order_index');
+      } else {
+        query = query.order('slug');
+      }
+
+      query = query.range((page - 1) * itemsPerPage, page * itemsPerPage - 1);
+
+      const { data: baseData, error: baseError, count } = await query as { data: any[] | null; error: any; count: number | null };
 
       if (baseError) {
         logDetailedError(`CatalogSelector.loadItems - ${catalogType}`, baseError);
@@ -172,14 +200,15 @@ export function CatalogSelector({
       // 2. Cargar traducciones para el idioma actual
       const ids = baseData.map(item => item.id);
 
-      const translationSelect = config.hasAgeLabel
-        ? `${config.foreignKey}, name, description, age_label`
-        : `${config.foreignKey}, name, description`;
+      // Construir select de traducciones según columnas disponibles
+      let translationFields = `${config.foreignKey}, name`;
+      if (config.hasDescription !== false) translationFields += ', description';
+      if (config.hasAgeLabel) translationFields += ', age_label';
 
       const { data: translations, error: transError } = await supabase
         .schema('books')
         .from(config.translationTable)
-        .select(translationSelect)
+        .select(translationFields)
         .in(config.foreignKey, ids)
         .eq('language_code', locale);
 
@@ -243,22 +272,22 @@ export function CatalogSelector({
       const { data: baseData } = await supabase
         .schema('books')
         .from(config.baseTable)
-        .select('id, slug, color, icon')
-        .in('id', selectedIds);
+        .select(config.baseSelectSelected)
+        .in('id', selectedIds) as { data: any[] | null; error: any };
 
       if (!baseData) {
         setSelectedItems([]);
         return;
       }
 
-      const translationSelect = config.hasAgeLabel
-        ? `${config.foreignKey}, name, description, age_label`
-        : `${config.foreignKey}, name, description`;
+      let translationFields2 = `${config.foreignKey}, name`;
+      if (config.hasDescription !== false) translationFields2 += ', description';
+      if (config.hasAgeLabel) translationFields2 += ', age_label';
 
       const { data: translations } = await supabase
         .schema('books')
         .from(config.translationTable)
-        .select(translationSelect)
+        .select(translationFields2)
         .in(config.foreignKey, selectedIds)
         .eq('language_code', locale);
 

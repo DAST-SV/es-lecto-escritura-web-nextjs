@@ -1,52 +1,121 @@
 -- supabase/schemas/books/rls/values_policies.sql
 -- ============================================================================
--- RLS POLICIES: Valores educativos
+-- RLS: values, value_translations, book_values
+-- DESCRIPCIÓN: Políticas de seguridad para valores educativos
 -- ============================================================================
 
 SET search_path TO books, app, public;
 
--- Habilitar RLS
+-- ============================================
+-- VALUES
+-- ============================================
 ALTER TABLE books.values ENABLE ROW LEVEL SECURITY;
+
+-- Lectura pública de valores activos
+CREATE POLICY "values_public_read" ON books.values
+  FOR SELECT
+  USING (is_active = true AND deleted_at IS NULL);
+
+-- Administradores pueden gestionar valores
+CREATE POLICY "values_admin_all" ON books.values
+  FOR ALL
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM app.user_roles ur
+      JOIN app.roles r ON r.id = ur.role_id
+      WHERE ur.user_id = auth.uid()
+        AND r.name = 'super_admin'
+        AND ur.is_active = true
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM app.user_roles ur
+      JOIN app.roles r ON r.id = ur.role_id
+      WHERE ur.user_id = auth.uid()
+        AND r.name = 'super_admin'
+        AND ur.is_active = true
+    )
+  );
+
+-- ============================================
+-- VALUE_TRANSLATIONS
+-- ============================================
 ALTER TABLE books.value_translations ENABLE ROW LEVEL SECURITY;
+
+-- Lectura pública de traducciones activas
+CREATE POLICY "value_trans_public_read" ON books.value_translations
+  FOR SELECT
+  USING (is_active = true);
+
+-- Administradores pueden gestionar traducciones
+CREATE POLICY "value_trans_admin_all" ON books.value_translations
+  FOR ALL
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM app.user_roles ur
+      JOIN app.roles r ON r.id = ur.role_id
+      WHERE ur.user_id = auth.uid()
+        AND r.name = 'super_admin'
+        AND ur.is_active = true
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM app.user_roles ur
+      JOIN app.roles r ON r.id = ur.role_id
+      WHERE ur.user_id = auth.uid()
+        AND r.name = 'super_admin'
+        AND ur.is_active = true
+    )
+  );
+
+-- ============================================
+-- BOOK_VALUES
+-- ============================================
 ALTER TABLE books.book_values ENABLE ROW LEVEL SECURITY;
 
--- VALUES: Lectura pública para valores activos
-CREATE POLICY "values_select_public" ON books.values
-  FOR SELECT USING (is_active = true AND deleted_at IS NULL);
+-- Lectura pública
+CREATE POLICY "book_values_public_read" ON books.book_values
+  FOR SELECT
+  USING (true);
 
--- VALUES: Solo admins pueden modificar
-CREATE POLICY "values_admin_all" ON books.values
-  FOR ALL USING (
+-- Creadores pueden gestionar valores de sus libros
+CREATE POLICY "book_values_owner_all" ON books.book_values
+  FOR ALL
+  TO authenticated
+  USING (
     EXISTS (
-      SELECT 1 FROM app.user_profiles
-      WHERE user_id = auth.uid() AND role IN ('admin', 'superadmin')
+      SELECT 1 FROM books.books b
+      WHERE b.id = book_id AND b.created_by = auth.uid()
     )
-  );
-
--- VALUE_TRANSLATIONS: Lectura pública
-CREATE POLICY "value_translations_select_public" ON books.value_translations
-  FOR SELECT USING (true);
-
--- VALUE_TRANSLATIONS: Solo admins pueden modificar
-CREATE POLICY "value_translations_admin_all" ON books.value_translations
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM app.user_profiles
-      WHERE user_id = auth.uid() AND role IN ('admin', 'superadmin')
-    )
-  );
-
--- BOOK_VALUES: Lectura pública
-CREATE POLICY "book_values_select_public" ON books.book_values
-  FOR SELECT USING (true);
-
--- BOOK_VALUES: Autores pueden modificar sus libros
-CREATE POLICY "book_values_author_modify" ON books.book_values
-  FOR ALL USING (
+  )
+  WITH CHECK (
     EXISTS (
       SELECT 1 FROM books.books b
       WHERE b.id = book_id AND b.created_by = auth.uid()
     )
   );
 
-SELECT 'BOOKS: Políticas RLS de values creadas' AS status;
+-- ============================================
+-- GRANTS
+-- ============================================
+
+-- Lectura pública (anon)
+GRANT SELECT ON books.values TO anon;
+GRANT SELECT ON books.value_translations TO anon;
+GRANT SELECT ON books.book_values TO anon;
+
+-- Lectura para usuarios autenticados
+GRANT SELECT ON books.values TO authenticated;
+GRANT SELECT ON books.value_translations TO authenticated;
+GRANT SELECT ON books.book_values TO authenticated;
+
+-- Gestión para usuarios autenticados
+GRANT INSERT, UPDATE, DELETE ON books.values TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON books.value_translations TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON books.book_values TO authenticated;
+
+SELECT 'BOOKS: RLS policies y GRANTs para values creados' AS status;
