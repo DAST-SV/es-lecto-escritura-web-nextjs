@@ -3,7 +3,7 @@
 // Implementación Supabase del repositorio de páginas de libros
 // ============================================
 
-import { createClient } from '@/src/lib/supabase/client';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 import { BookPageEntity } from '@/src/core/domain/entities/BookPageEntity';
 import {
   IBookPageRepository2,

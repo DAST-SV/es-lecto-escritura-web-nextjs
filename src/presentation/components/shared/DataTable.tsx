@@ -16,6 +16,14 @@ export interface Column<T> {
   align?: 'left' | 'center' | 'right';
 }
 
+export interface CustomAction<T> {
+  label: string | ((item: T) => string);
+  onClick: (item: T) => void;
+  icon?: string | ((item: T) => string);
+  show?: (item: T) => boolean;
+  className?: string;
+}
+
 export interface DataTableProps<T> {
   title: string;
   data: T[];
@@ -30,6 +38,12 @@ export interface DataTableProps<T> {
   getItemKey: (item: T) => string | number;
   isDeleted?: (item: T) => boolean;
   showTrash?: boolean;
+  /** Control externo del estado de la papelera (opcional) */
+  showingTrash?: boolean;
+  /** Callback cuando se cambia la vista de papelera (opcional) */
+  onToggleTrash?: () => void;
+  /** Acciones personalizadas por fila */
+  customActions?: CustomAction<T>[];
   itemsPerPageOptions?: number[];
   emptyMessage?: string;
   createButtonText?: string;
@@ -49,6 +63,9 @@ export function DataTable<T>({
   getItemKey,
   isDeleted = () => false,
   showTrash = true,
+  showingTrash: externalShowingTrash,
+  onToggleTrash,
+  customActions = [],
   itemsPerPageOptions = [10, 20, 50],
   emptyMessage = 'No se encontraron resultados',
   createButtonText = 'Nuevo',
@@ -56,8 +73,12 @@ export function DataTable<T>({
   const [searchTerm, setSearchTerm] = useState('');
   const [itemsPerPage, setItemsPerPage] = useState(itemsPerPageOptions[0]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewingTrash, setViewingTrash] = useState(false);
+  const [internalViewingTrash, setInternalViewingTrash] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string | number>>(new Set());
+
+  // Usar control externo si se proporciona, sino usar interno
+  const viewingTrash = externalShowingTrash !== undefined ? externalShowingTrash : internalViewingTrash;
+  const setViewingTrash = onToggleTrash || (() => setInternalViewingTrash(!internalViewingTrash));
 
   // Filtrar por búsqueda
   const searchedData = onSearch 
@@ -85,7 +106,11 @@ export function DataTable<T>({
   };
 
   const toggleTrashView = () => {
-    setViewingTrash(!viewingTrash);
+    if (onToggleTrash) {
+      onToggleTrash();
+    } else {
+      setInternalViewingTrash(!internalViewingTrash);
+    }
     setCurrentPage(1);
     setSelectedItems(new Set());
   };
@@ -302,6 +327,23 @@ export function DataTable<T>({
                           )
                         ) : (
                           <>
+                            {/* Custom Actions */}
+                            {customActions.map((action, idx) => {
+                              const shouldShow = action.show ? action.show(item) : true;
+                              if (!shouldShow) return null;
+                              const label = typeof action.label === 'function' ? action.label(item) : action.label;
+                              const icon = typeof action.icon === 'function' ? action.icon(item) : action.icon;
+                              return (
+                                <button
+                                  key={idx}
+                                  onClick={() => action.onClick(item)}
+                                  className={action.className || "p-1.5 bg-gradient-to-r from-blue-400 to-indigo-500 text-white rounded-md hover:shadow-md transition-all text-xs"}
+                                  title={label}
+                                >
+                                  {icon ? <span>{icon}</span> : label}
+                                </button>
+                              );
+                            })}
                             {onEdit && (
                               <button
                                 onClick={() => onEdit(item)}

@@ -3,7 +3,7 @@
 // Implementación Supabase del repositorio de listas de lectura
 // ============================================
 
-import { createClient } from '@/src/lib/supabase/client';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 import { ReadingListEntity } from '@/src/core/domain/entities/ReadingListEntity';
 import {
   IReadingListRepository,

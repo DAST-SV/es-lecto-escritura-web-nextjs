@@ -3,7 +3,7 @@
 // Implementación Supabase del repositorio de progreso de lectura
 // ============================================
 
-import { createClient } from '@/src/lib/supabase/client';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 import { ReadingProgressEntity } from '@/src/core/domain/entities/ReadingProgressEntity';
 import {
   IReadingProgressRepository,

@@ -3,7 +3,7 @@
 // Implementación Supabase del repositorio de reseñas
 // ============================================
 
-import { createClient } from '@/src/lib/supabase/client';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 import { BookReviewEntity } from '@/src/core/domain/entities/BookReviewEntity';
 import {
   IBookReviewRepository,

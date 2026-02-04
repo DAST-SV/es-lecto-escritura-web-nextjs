@@ -11,46 +11,48 @@ import { BookPage } from './BookPage';
 import { BookTranslation } from './BookTranslation';
 import { BookCollaborator } from './BookCollaborator';
 
-export interface BookCategory {
+// Interfaces locales para BookExtended (simplificadas)
+// Prefijo "Extended" para evitar conflictos con las clases completas
+export interface ExtendedBookCategory {
   id: number;
   name: string;
   slug?: string;
   isPrimary: boolean;
 }
 
-export interface BookGenre {
+export interface ExtendedBookGenre {
   id: number;
   name: string;
 }
 
-export interface BookValue {
+export interface ExtendedBookValue {
   id: number;
   name: string;
   isPrimary: boolean;
 }
 
-export interface BookTag {
+export interface ExtendedBookTag {
   id: number;
   name: string;
   slug?: string;
   isPrimary: boolean;
 }
 
-export interface BookLevel {
+export interface ExtendedBookLevel {
   id: number;
   name: string;
   minAge?: number;
   maxAge?: number;
 }
 
-export interface BookLanguage {
+export interface ExtendedBookLanguage {
   id: number;
   isoCode: string;
   name: string;
   isOriginal: boolean;
 }
 
-export interface BookCharacter {
+export interface ExtendedBookCharacter {
   id: string;
   name: string;
   description?: string;
@@ -58,7 +60,7 @@ export interface BookCharacter {
   isMain: boolean;
 }
 
-export interface BookAuthor {
+export interface ExtendedBookAuthor {
   id: string;
   name: string;
   order: number;
@@ -85,14 +87,14 @@ export class BookExtended {
     public readonly updatedAt: Date,
     public readonly deletedAt: Date | null,
     // Relaciones
-    public readonly level: BookLevel | null,
-    public readonly categories: BookCategory[],
-    public readonly genres: BookGenre[],
-    public readonly values: BookValue[],
-    public readonly tags: BookTag[],
-    public readonly languages: BookLanguage[],
-    public readonly characters: BookCharacter[],
-    public readonly authors: BookAuthor[],
+    public readonly level: ExtendedBookLevel | null,
+    public readonly categories: ExtendedBookCategory[],
+    public readonly genres: ExtendedBookGenre[],
+    public readonly values: ExtendedBookValue[],
+    public readonly tags: ExtendedBookTag[],
+    public readonly languages: ExtendedBookLanguage[],
+    public readonly characters: ExtendedBookCharacter[],
+    public readonly authors: ExtendedBookAuthor[],
     public readonly collaborators: BookCollaborator[],
     public readonly translations: BookTranslation[],
     public readonly pages: BookPage[],
@@ -119,46 +121,46 @@ export class BookExtended {
       ratingStats?: Record<string, unknown>;
     } = {}
   ): BookExtended {
-    const level: BookLevel | null = relations.level ? {
+    const level: ExtendedBookLevel | null = relations.level ? {
       id: relations.level.id as number,
       name: relations.level.name as string,
       minAge: (relations.level.min_age as number) ?? undefined,
       maxAge: (relations.level.max_age as number) ?? undefined,
     } : null;
 
-    const categories: BookCategory[] = (relations.categories || []).map(c => ({
+    const categories: ExtendedBookCategory[] = (relations.categories || []).map(c => ({
       id: c.category_id as number || c.id as number,
       name: c.name as string,
       slug: (c.slug as string) ?? undefined,
       isPrimary: (c.is_primary as boolean) ?? false,
     }));
 
-    const genres: BookGenre[] = (relations.genres || []).map(g => ({
+    const genres: ExtendedBookGenre[] = (relations.genres || []).map(g => ({
       id: g.genre_id as number || g.id as number,
       name: g.name as string,
     }));
 
-    const values: BookValue[] = (relations.values || []).map(v => ({
+    const values: ExtendedBookValue[] = (relations.values || []).map(v => ({
       id: v.value_id as number || v.id as number,
       name: v.name as string,
       isPrimary: (v.is_primary as boolean) ?? false,
     }));
 
-    const tags: BookTag[] = (relations.tags || []).map(t => ({
+    const tags: ExtendedBookTag[] = (relations.tags || []).map(t => ({
       id: t.tag_id as number || t.id as number,
       name: t.name as string,
       slug: (t.slug as string) ?? undefined,
       isPrimary: (t.is_primary as boolean) ?? false,
     }));
 
-    const languages: BookLanguage[] = (relations.languages || []).map(l => ({
+    const languages: ExtendedBookLanguage[] = (relations.languages || []).map(l => ({
       id: l.language_id as number || l.id as number,
       isoCode: l.iso_code as string,
       name: l.name as string,
       isOriginal: (l.is_original as boolean) ?? false,
     }));
 
-    const characters: BookCharacter[] = (relations.characters || []).map(ch => ({
+    const characters: ExtendedBookCharacter[] = (relations.characters || []).map(ch => ({
       id: ch.character_id as string || ch.id as string,
       name: ch.name as string,
       description: (ch.description as string) ?? undefined,
@@ -166,7 +168,7 @@ export class BookExtended {
       isMain: (ch.is_main as boolean) ?? false,
     }));
 
-    const authors: BookAuthor[] = (relations.authors || []).map(a => ({
+    const authors: ExtendedBookAuthor[] = (relations.authors || []).map(a => ({
       id: a.author_id as string || a.id as string,
       name: a.name as string,
       order: (a.author_order as number) ?? 1,
@@ -274,21 +276,21 @@ export class BookExtended {
   /**
    * Obtiene el idioma original
    */
-  getOriginalLanguage(): BookLanguage | null {
+  getOriginalLanguage(): ExtendedBookLanguage | null {
     return this.languages.find(l => l.isOriginal) || null;
   }
 
   /**
    * Obtiene la categoría principal
    */
-  getPrimaryCategory(): BookCategory | null {
+  getPrimaryCategory(): ExtendedBookCategory | null {
     return this.categories.find(c => c.isPrimary) || this.categories[0] || null;
   }
 
   /**
    * Obtiene el autor principal (primer colaborador autor primario)
    */
-  getPrimaryAuthor(): BookCollaborator | BookAuthor | null {
+  getPrimaryAuthor(): BookCollaborator | ExtendedBookAuthor | null {
     const primaryCollaborator = this.collaborators.find(c => c.isPrimary && c.role === 'author');
     if (primaryCollaborator) return primaryCollaborator;
 

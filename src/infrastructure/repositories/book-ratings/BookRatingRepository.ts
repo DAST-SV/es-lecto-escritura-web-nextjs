@@ -3,7 +3,7 @@
 // Implementación Supabase del repositorio de calificaciones
 // ============================================
 
-import { createClient } from '@/src/lib/supabase/client';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 import { BookRatingEntity } from '@/src/core/domain/entities/BookRatingEntity';
 import {
   IBookRatingRepository2,

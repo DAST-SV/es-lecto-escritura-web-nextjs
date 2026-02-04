@@ -3,7 +3,7 @@
 // Implementación Supabase del repositorio de sesiones de lectura
 // ============================================
 
-import { createClient } from '@/src/lib/supabase/client';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 import { ReadingSessionEntity } from '@/src/core/domain/entities/ReadingSessionEntity';
 import {
   IReadingSessionRepository,

@@ -3,7 +3,7 @@
 // Implementación Supabase del repositorio de favoritos
 // ============================================
 
-import { createClient } from '@/src/lib/supabase/client';
+import { createClient } from '@/src/infrastructure/config/supabase.config';
 import { FavoriteEntity } from '@/src/core/domain/entities/FavoriteEntity';
 import {
   IFavoriteRepository,
