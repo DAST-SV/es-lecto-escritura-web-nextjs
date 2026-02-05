@@ -104,9 +104,11 @@ export default function ReadBookPage() {
 
         console.log('Cargando libro:', bookId);
 
+        // Cargar libro del schema books
         const { data: libro, error: bookError } = await supabase
+          .schema('books')
           .from('books')
-          .select('id, title, pdf_url')
+          .select('id, slug')
           .eq('id', bookId)
           .is('deleted_at', null)
           .single();
@@ -120,7 +122,33 @@ export default function ReadBookPage() {
           return;
         }
 
-        if (!libro.pdf_url) {
+        // Cargar traducción para el idioma actual (título y PDF)
+        const { data: translation, error: transError } = await supabase
+          .schema('books')
+          .from('book_translations')
+          .select('title, pdf_url')
+          .eq('book_id', bookId)
+          .eq('language_code', locale)
+          .single();
+
+        // Si no hay traducción en el idioma actual, buscar la primaria
+        let pdfUrl = translation?.pdf_url;
+        let title = translation?.title;
+
+        if (!pdfUrl) {
+          const { data: primaryTrans } = await supabase
+            .schema('books')
+            .from('book_translations')
+            .select('title, pdf_url')
+            .eq('book_id', bookId)
+            .eq('is_primary', true)
+            .single();
+
+          pdfUrl = primaryTrans?.pdf_url;
+          title = title || primaryTrans?.title;
+        }
+
+        if (!pdfUrl) {
           if (isMounted) {
             setError(errorNoPdfText);
             setIsLoading(false);
@@ -129,12 +157,12 @@ export default function ReadBookPage() {
         }
 
         if (isMounted) {
-          setBookTitle(libro.title || noTitleText);
+          setBookTitle(title || libro.slug || noTitleText);
         }
 
-        console.log('Descargando PDF:', libro.pdf_url);
+        console.log('Descargando PDF:', pdfUrl);
 
-        const response = await fetch(libro.pdf_url);
+        const response = await fetch(pdfUrl);
         const blob = await response.blob();
         const file = new File([blob], 'libro.pdf', { type: 'application/pdf' });
 
