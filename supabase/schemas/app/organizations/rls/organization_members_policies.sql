@@ -17,4 +17,15 @@ CREATE POLICY "users_view_org_members" ON app.organization_members
     )
   );
 
+-- Service role tiene acceso completo
+CREATE POLICY "service_role_all_organization_members" ON app.organization_members
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- ============================================================================
+-- GRANTS
+-- ============================================================================
+GRANT SELECT ON app.organization_members TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON app.organization_members TO authenticated;
+GRANT ALL ON app.organization_members TO service_role;
+
 SELECT 'ORGANIZATIONS: RLS policies para organization_members creadas' AS status;

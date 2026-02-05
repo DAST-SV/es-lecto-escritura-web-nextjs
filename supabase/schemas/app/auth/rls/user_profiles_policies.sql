@@ -17,4 +17,14 @@ CREATE POLICY "users_update_own_profile" ON app.user_profiles
 CREATE POLICY "users_insert_own_profile" ON app.user_profiles
   FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
 
+-- Service role tiene acceso completo
+CREATE POLICY "service_role_all_user_profiles" ON app.user_profiles
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- ============================================================================
+-- GRANTS
+-- ============================================================================
+GRANT SELECT, INSERT, UPDATE ON app.user_profiles TO authenticated;
+GRANT ALL ON app.user_profiles TO service_role;
+
 SELECT 'AUTH: RLS policies para user_profiles creadas' AS status;
