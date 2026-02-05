@@ -20,6 +20,14 @@ import { logDetailedError, getUserFriendlyError } from '@/src/infrastructure/uti
 // TIPOS
 // ============================================
 
+// Tipo para personajes del libro (ahora traducibles por idioma)
+export interface BookCharacter {
+  id?: string;
+  name: string;
+  description?: string;
+  role: 'main' | 'secondary' | 'supporting';
+}
+
 export interface BookTranslationForm {
   title: string;
   subtitle: string;
@@ -28,6 +36,9 @@ export interface BookTranslationForm {
   keywords: string[];
   pdfFile: File | null;
   pdfUrl: string | null;
+  coverFile: File | null;  // Portada por idioma
+  coverUrl: string | null; // Portada por idioma
+  characters: BookCharacter[]; // Personajes por idioma
   isPrimary: boolean;
   isActive: boolean;
 }
@@ -41,14 +52,6 @@ export interface BookAuthor {
   displayName: string;
   avatarUrl: string | null;
   role: 'author' | 'illustrator' | 'translator' | 'editor';
-}
-
-// Tipo para personajes del libro
-export interface BookCharacter {
-  id?: string;
-  name: string;
-  description?: string;
-  role: 'main' | 'secondary' | 'supporting';
 }
 
 interface UseBookFormMultilangProps {
@@ -79,22 +82,15 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
   const [isLoadingBook, setIsLoadingBook] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Portada compartida
-  const [portadaFile, setPortadaFile] = useState<File | null>(null);
-  const [portadaPreview, setPortadaPreview] = useState<string | null>(null);
-
   // Clasificación (compartida)
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedLevelId, setSelectedLevelId] = useState<string | null>(null);
   const [selectedGeneros, setSelectedGeneros] = useState<string[]>([]);
   const [selectedEtiquetas, setSelectedEtiquetas] = useState<string[]>([]);
   const [selectedValores, setSelectedValores] = useState<string[]>([]);
-  const [characters, setCharacters] = useState<BookCharacter[]>([]);
 
   // Autores (usuarios del sistema)
   const [selectedAuthors, setSelectedAuthors] = useState<BookAuthor[]>([]);
-  // Legacy: mantener para compatibilidad temporal
-  const [autores, setAutores] = useState<string[]>(['']);
 
   // Catálogos (con traducciones según idioma del usuario)
   const [categorias, setCategorias] = useState<Array<{ id: string; slug: string; name: string }>>([]);
@@ -139,6 +135,9 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
     keywords: [],
     pdfFile: null,
     pdfUrl: null,
+    coverFile: null,
+    coverUrl: null,
+    characters: [],
     isPrimary,
     isActive: true,
   }), []);
@@ -287,10 +286,8 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
           })));
         }
 
-        // Si es modo edición, cargar el libro
-        if (isEditMode && bookId) {
-          await loadBook(bookId);
-        } else {
+        // Solo marcar catálogos como cargados si NO es modo edición
+        if (!isEditMode) {
           setIsLoadingBook(false);
         }
       } catch (err) {
@@ -301,50 +298,72 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
     }
 
     loadCatalogs();
-  }, [bookId, isEditMode, locale, router, supabase]);
+  }, [locale, router, supabase, isEditMode]);
 
   // ============================================
-  // CARGAR LIBRO (modo edición)
+  // CARGAR LIBRO (modo edición) - Separado para esperar traducciones inicializadas
   // ============================================
-  const loadBook = async (bookId: string) => {
-    try {
-      // 1. Cargar datos base del libro
-      const { data: book, error: bookError } = await supabase
-        .schema('books')
-        .from('books')
-        .select('*')
-        .eq('id', bookId)
-        .is('deleted_at', null)
-        .single();
+  useEffect(() => {
+    // Solo cargar si es modo edición, traducciones inicializadas y tenemos idiomas
+    if (!isEditMode || !bookId || !translationsInitialized || activeLanguages.length === 0) {
+      return;
+    }
 
-      if (bookError || !book) {
-        logDetailedError('useBookFormMultilang.loadBook', bookError);
-        toast.error('Libro no encontrado');
-        router.push(`/${locale}/books`);
-        return;
-      }
+    async function loadBook() {
+      try {
+        console.log('📚 Cargando libro para edición:', bookId);
 
-      setPortadaPreview(book.cover_url || null);
-      setSelectedCategoryId(book.category_id || null);
-      setSelectedLevelId(book.level_id || null);
+        // 1. Cargar datos base del libro
+        const { data: book, error: bookError } = await supabase
+          .schema('books')
+          .from('books')
+          .select('*')
+          .eq('id', bookId)
+          .is('deleted_at', null)
+          .single();
 
-      // 2. Cargar traducciones
-      const { data: bookTranslations, error: transError } = await supabase
-        .schema('books')
-        .from('book_translations')
-        .select('*')
-        .eq('book_id', bookId);
+        if (bookError || !book) {
+          logDetailedError('useBookFormMultilang.loadBook', bookError);
+          toast.error('Libro no encontrado');
+          router.push(`/${locale}/books`);
+          return;
+        }
 
-      if (transError) {
-        logDetailedError('useBookFormMultilang.loadBook.translations', transError);
-      }
+        console.log('📚 Libro base cargado:', book);
 
-      // 3. Mapear traducciones al estado
-      if (bookTranslations && bookTranslations.length > 0) {
+        // La portada ahora es por idioma, no global
+        setSelectedCategoryId(book.category_id || null);
+        setSelectedLevelId(book.level_id || null);
+
+        // 2. Cargar traducciones
+        const { data: bookTranslations, error: transError } = await supabase
+          .schema('books')
+          .from('book_translations')
+          .select('*')
+          .eq('book_id', bookId);
+
+        if (transError) {
+          logDetailedError('useBookFormMultilang.loadBook.translations', transError);
+        }
+
+        // 3. Cargar personajes por idioma
+        const { data: allCharacters } = await supabase
+          .schema('books')
+          .from('book_characters')
+          .select('id, name, description, role, order_index, language_code')
+          .eq('book_id', bookId)
+          .order('order_index');
+
+        console.log('📚 Traducciones cargadas:', bookTranslations);
+        console.log('📚 Personajes cargados:', allCharacters);
+
+        // 4. Mapear traducciones al estado (incluyendo personajes y portada por idioma)
         const transState: TranslationsState = {};
 
         activeLanguages.forEach(lang => {
-          const existing = bookTranslations.find(t => t.language_code === lang.code);
+          const existing = bookTranslations?.find(t => t.language_code === lang.code);
+          const langCharacters = allCharacters?.filter(c => c.language_code === lang.code) || [];
+
           if (existing) {
             transState[lang.code] = {
               title: existing.title || '',
@@ -354,90 +373,121 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
               keywords: existing.keywords || [],
               pdfFile: null,
               pdfUrl: existing.pdf_url || null,
+              coverFile: null,
+              coverUrl: existing.cover_url || null,
+              characters: langCharacters.map(c => ({
+                id: c.id,
+                name: c.name,
+                description: c.description || undefined,
+                role: c.role as 'main' | 'secondary' | 'supporting',
+              })),
               isPrimary: existing.is_primary || false,
               isActive: existing.is_active ?? true,
             };
           } else {
-            transState[lang.code] = createEmptyTranslation(false);
+            transState[lang.code] = {
+              ...createEmptyTranslation(false),
+              characters: langCharacters.map(c => ({
+                id: c.id,
+                name: c.name,
+                description: c.description || undefined,
+                role: c.role as 'main' | 'secondary' | 'supporting',
+              })),
+            };
           }
         });
 
         setTranslations(transState);
+
+        // 4. Cargar autores (usuarios del sistema)
+        const { data: bookAuthors } = await supabase
+          .schema('books')
+          .from('book_authors')
+          .select(`
+            author_id,
+            role,
+            authors (
+              id,
+              name,
+              user_id
+            )
+          `)
+          .eq('book_id', bookId);
+
+        if (bookAuthors && bookAuthors.length > 0) {
+          // Cargar info de usuarios para los autores
+          const authorsList: BookAuthor[] = [];
+          for (const ba of bookAuthors) {
+            const author = (ba as any).authors;
+            if (author?.user_id) {
+              const { data: profile } = await supabase
+                .schema('app')
+                .from('user_profiles')
+                .select('display_name, avatar_url')
+                .eq('user_id', author.user_id)
+                .single();
+
+              authorsList.push({
+                userId: author.user_id,
+                email: '',
+                displayName: profile?.display_name || author.name || 'Autor',
+                avatarUrl: profile?.avatar_url || null,
+                role: (ba.role as any) || 'author',
+              });
+            }
+          }
+          if (authorsList.length > 0) {
+            setSelectedAuthors(authorsList);
+          }
+        }
+
+        // 5. Cargar géneros
+        const { data: genreRels } = await supabase
+          .schema('books')
+          .from('book_genres')
+          .select('genre_id')
+          .eq('book_id', bookId);
+
+        if (genreRels) {
+          setSelectedGeneros(genreRels.map(g => g.genre_id));
+        }
+
+        // 6. Cargar etiquetas
+        const { data: tagRels } = await supabase
+          .schema('books')
+          .from('book_tags')
+          .select('tag_id')
+          .eq('book_id', bookId);
+
+        if (tagRels) {
+          setSelectedEtiquetas(tagRels.map(t => t.tag_id));
+        }
+
+        // 7. Cargar valores
+        const { data: valueRels } = await supabase
+          .schema('books')
+          .from('book_values')
+          .select('value_id')
+          .eq('book_id', bookId);
+
+        if (valueRels) {
+          setSelectedValores(valueRels.map(v => v.value_id));
+        }
+
+        // Nota: Personajes ya se cargaron arriba por idioma
+
+        setIsLoadingBook(false);
+        toast.success('Libro cargado');
+
+      } catch (err) {
+        logDetailedError('useBookFormMultilang.loadBook', err);
+        setError(getUserFriendlyError(err, 'Error al cargar el libro'));
+        setIsLoadingBook(false);
       }
-
-      // 4. Cargar autores
-      const { data: authorRels } = await supabase
-        .schema('books')
-        .from('book_authors')
-        .select('authors(name)')
-        .eq('book_id', bookId);
-
-      if (authorRels && authorRels.length > 0) {
-        const names = authorRels
-          .map((r: any) => r.authors?.name)
-          .filter(Boolean);
-        setAutores(names.length > 0 ? names : ['']);
-      }
-
-      // 5. Cargar géneros
-      const { data: genreRels } = await supabase
-        .schema('books')
-        .from('book_genres')
-        .select('genre_id')
-        .eq('book_id', bookId);
-
-      if (genreRels) {
-        setSelectedGeneros(genreRels.map(g => g.genre_id));
-      }
-
-      // 6. Cargar etiquetas
-      const { data: tagRels } = await supabase
-        .schema('books')
-        .from('book_tags')
-        .select('tag_id')
-        .eq('book_id', bookId);
-
-      if (tagRels) {
-        setSelectedEtiquetas(tagRels.map(t => t.tag_id));
-      }
-
-      // 7. Cargar valores
-      const { data: valueRels } = await supabase
-        .schema('books')
-        .from('book_values')
-        .select('value_id')
-        .eq('book_id', bookId);
-
-      if (valueRels) {
-        setSelectedValores(valueRels.map(v => v.value_id));
-      }
-
-      // 8. Cargar personajes
-      const { data: bookCharacters } = await supabase
-        .schema('books')
-        .from('book_characters')
-        .select('id, name, description, role, order_index')
-        .eq('book_id', bookId)
-        .order('order_index');
-
-      if (bookCharacters) {
-        setCharacters(bookCharacters.map(c => ({
-          id: c.id,
-          name: c.name,
-          description: c.description || undefined,
-          role: c.role as 'main' | 'secondary' | 'supporting',
-        })));
-      }
-
-      setIsLoadingBook(false);
-      toast.success('Libro cargado');
-
-    } catch (err) {
-      logDetailedError('useBookFormMultilang.loadBook', err);
-      setError(getUserFriendlyError(err, 'Error al cargar el libro'));
-      setIsLoadingBook(false);
     }
-  };
+
+    loadBook();
+  }, [bookId, isEditMode, translationsInitialized, activeLanguages, supabase, router, locale, createEmptyTranslation]);
 
   // ============================================
   // ACTUALIZAR TRADUCCIÓN
@@ -479,6 +529,14 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
   const currentPdfUrl = currentTranslation.pdfUrl;
   const hasPDF = !!currentPdfUrl || !!pdfFile;
 
+  // Portada del idioma activo
+  const portadaPreview = currentTranslation.coverUrl;
+  const portadaFile = currentTranslation.coverFile;
+  const hasCover = !!portadaPreview || !!portadaFile;
+
+  // Personajes del idioma activo
+  const characters = currentTranslation.characters;
+
   // Setters del tab activo
   const setTitulo = (value: string) => updateTranslation(activeTab, 'title', value);
   const setDescripcion = (value: string) => updateTranslation(activeTab, 'description', value);
@@ -486,6 +544,8 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
   const setSummary = (value: string) => updateTranslation(activeTab, 'summary', value);
   const setKeywords = (value: string[]) => updateTranslation(activeTab, 'keywords', value);
   const setPdfFile = (file: File | null) => updateTranslation(activeTab, 'pdfFile', file);
+  const setCharacters = (value: BookCharacter[]) => updateTranslation(activeTab, 'characters', value);
+  const setPortadaPreview = (value: string | null) => updateTranslation(activeTab, 'coverUrl', value);
 
   // ============================================
   // HANDLERS
@@ -494,9 +554,9 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
   const handlePortadaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setPortadaFile(file);
+      updateTranslation(activeTab, 'coverFile', file);
       const reader = new FileReader();
-      reader.onloadend = () => setPortadaPreview(reader.result as string);
+      reader.onloadend = () => updateTranslation(activeTab, 'coverUrl', reader.result as string);
       reader.readAsDataURL(file);
     }
   };
@@ -590,28 +650,14 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '') || finalBookId;
 
-      // 1. Subir portada si hay nueva
-      let coverUrl: string | null = portadaPreview;
-      if (portadaFile) {
-        console.log('📤 Subiendo portada...');
-        const result = await BookImageService.uploadImage(
-          portadaFile,
-          userId,
-          finalBookId,
-          'portada'
-        );
-        if (result.success && result.url) {
-          coverUrl = result.url;
-        }
-      }
+      // Nota: La portada ahora es por idioma (se guarda con cada traducción)
 
-      // 2. Crear/actualizar libro base
+      // 1. Crear/actualizar libro base (sin cover_url global)
       const bookData = {
         id: finalBookId,
         slug,
         category_id: selectedCategoryId,
         level_id: selectedLevelId,
-        cover_url: coverUrl,
         created_by: userId,
         updated_at: new Date().toISOString(),
       };
@@ -637,7 +683,7 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
         if (insertError) throw insertError;
       }
 
-      // 3. Guardar traducciones
+      // 3. Guardar traducciones (con portada y personajes por idioma)
       for (const [langCode, trans] of Object.entries(translations)) {
         if (!trans.title.trim()) continue; // Skip empty translations
 
@@ -658,6 +704,21 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
           }
         }
 
+        // Subir portada por idioma si hay nueva
+        let coverUrl = trans.coverUrl;
+        if (trans.coverFile) {
+          console.log(`📤 Subiendo portada para ${langCode}...`);
+          const result = await BookImageService.uploadImage(
+            trans.coverFile,
+            userId,
+            finalBookId,
+            `portada-${langCode}`
+          );
+          if (result.success && result.url) {
+            coverUrl = result.url;
+          }
+        }
+
         const translationData = {
           book_id: finalBookId,
           language_code: langCode,
@@ -667,6 +728,7 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
           summary: trans.summary || null,
           keywords: trans.keywords.length > 0 ? trans.keywords : null,
           pdf_url: pdfUrl,
+          cover_url: coverUrl,
           is_primary: trans.isPrimary,
           is_active: trans.isActive,
           updated_at: new Date().toISOString(),
@@ -682,6 +744,34 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
 
         if (transError) {
           logDetailedError(`useBookFormMultilang.handleSave.translation.${langCode}`, transError);
+        }
+
+        // Guardar personajes por idioma
+        // Primero eliminar los existentes para este idioma
+        await supabase
+          .schema('books')
+          .from('book_characters')
+          .delete()
+          .eq('book_id', finalBookId)
+          .eq('language_code', langCode);
+
+        // Insertar los nuevos
+        if (trans.characters.length > 0) {
+          const { error: charError } = await supabase
+            .schema('books')
+            .from('book_characters')
+            .insert(trans.characters.map((char, idx) => ({
+              book_id: finalBookId,
+              language_code: langCode,
+              name: char.name,
+              description: char.description || null,
+              role: char.role,
+              order_index: idx,
+            })));
+
+          if (charError) {
+            logDetailedError(`useBookFormMultilang.handleSave.characters.${langCode}`, charError);
+          }
         }
       }
 
@@ -727,27 +817,9 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
           .insert(selectedValores.map(vid => ({ book_id: finalBookId, value_id: vid })));
       }
 
-      // 7. Guardar personajes
-      await supabase
-        .schema('books')
-        .from('book_characters')
-        .delete()
-        .eq('book_id', finalBookId);
+      // Nota: Personajes ya se guardaron arriba con cada traducción
 
-      if (characters.length > 0) {
-        await supabase
-          .schema('books')
-          .from('book_characters')
-          .insert(characters.map((char, idx) => ({
-            book_id: finalBookId,
-            name: char.name,
-            description: char.description || null,
-            role: char.role,
-            order_index: idx,
-          })));
-      }
-
-      // 8. Cleanup
+      // 7. Cleanup
       if (extractedPages.length > 0) {
         const { PDFExtractorService } = await import('@/src/infrastructure/services/books');
         PDFExtractorService.cleanupBlobUrls(extractedPages);
@@ -818,14 +890,9 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
     setKeywords,
 
     // Base (compartido)
-    autores,
-    setAutores,
     selectedAuthors,
     setSelectedAuthors,
     currentUser,
-    portadaFile,
-    portadaPreview,
-    setPortadaPreview,
     selectedCategoryId,
     setSelectedCategoryId,
     selectedLevelId,
@@ -836,8 +903,14 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
     setSelectedEtiquetas,
     selectedValores,
     setSelectedValores,
+
+    // Por idioma (del tab activo)
     characters,
     setCharacters,
+    portadaFile,
+    portadaPreview,
+    setPortadaPreview,
+    hasCover,
 
     // Catálogos (legacy - pueden usarse con CatalogSelector)
     categorias,

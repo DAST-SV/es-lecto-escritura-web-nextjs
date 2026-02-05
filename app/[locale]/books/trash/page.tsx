@@ -31,9 +31,15 @@ import toast, { Toaster } from 'react-hot-toast';
 interface TrashedBook {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   cover_url: string | null;
   deleted_at: string;
+}
+
+// Tipo para la traducción
+interface BookTranslation {
+  title: string;
+  description: string | null;
 }
 
 export default function TrashPage() {
@@ -87,7 +93,7 @@ export default function TrashPage() {
 
   useEffect(() => {
     loadTrashedBooks();
-  }, []);
+  }, [locale]);
 
   async function loadTrashedBooks() {
     try {
@@ -98,16 +104,57 @@ export default function TrashPage() {
         return;
       }
 
-      const { data, error } = await supabase
+      // Cargar libros eliminados (schema books, columna created_by)
+      const { data: booksData, error: booksError } = await supabase
+        .schema('books')
         .from('books')
-        .select('id, title, description, cover_url, deleted_at')
-        .eq('user_id', user.id)
+        .select('id, cover_url, deleted_at')
+        .eq('created_by', user.id)
         .not('deleted_at', 'is', null)
         .order('deleted_at', { ascending: false });
 
-      if (error) throw error;
+      if (booksError) throw booksError;
 
-      setBooks(data || []);
+      if (!booksData || booksData.length === 0) {
+        setBooks([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Cargar traducciones para cada libro (preferir idioma actual, fallback a primaria)
+      const bookIds = booksData.map(b => b.id);
+      const { data: translations } = await supabase
+        .schema('books')
+        .from('book_translations')
+        .select('book_id, title, description, language_code, is_primary')
+        .in('book_id', bookIds);
+
+      // Mapear traducciones por book_id
+      const transMap = new Map<string, BookTranslation>();
+      translations?.forEach(t => {
+        const existing = transMap.get(t.book_id);
+        // Preferir idioma actual, luego primario
+        if (!existing || t.language_code === locale || (t.is_primary && existing && !transMap.has(t.book_id + '_locale'))) {
+          transMap.set(t.book_id, { title: t.title, description: t.description });
+          if (t.language_code === locale) {
+            transMap.set(t.book_id + '_locale', { title: t.title, description: t.description });
+          }
+        }
+      });
+
+      // Combinar datos
+      const trashedBooks: TrashedBook[] = booksData.map(book => {
+        const trans = transMap.get(book.id);
+        return {
+          id: book.id,
+          title: trans?.title || 'Sin título',
+          description: trans?.description || null,
+          cover_url: book.cover_url,
+          deleted_at: book.deleted_at!,
+        };
+      });
+
+      setBooks(trashedBooks);
       setIsLoading(false);
     } catch (error) {
       console.error('Error cargando papelera:', error);

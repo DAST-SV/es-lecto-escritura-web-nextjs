@@ -137,7 +137,7 @@ export default function BooksListPage() {
           throw booksError;
         }
 
-        // Cargar traducciones para cada libro
+        // Cargar traducciones para cada libro (incluyendo portada por idioma)
         const bookIds = booksData?.map(b => b.id) || [];
         let translationsData: any[] = [];
 
@@ -145,15 +145,32 @@ export default function BooksListPage() {
           const { data: trans } = await supabase
             .schema('books')
             .from('book_translations')
-            .select('book_id, title, description')
-            .in('book_id', bookIds)
-            .eq('language_code', locale);
+            .select('book_id, title, description, cover_url, is_primary')
+            .in('book_id', bookIds);
 
           translationsData = trans || [];
         }
 
-        // Mapear libros con sus traducciones
-        const transMap = new Map(translationsData.map(t => [t.book_id, t]));
+        // Mapear traducciones: preferir idioma actual, fallback a primaria
+        const transMap = new Map<string, { title: string; description: string; cover_url: string | null }>();
+        translationsData.forEach(t => {
+          const existing = transMap.get(t.book_id);
+          // Si es el idioma actual o no hay existente, usar esta traducción
+          if (!existing || t.language_code === locale) {
+            transMap.set(t.book_id, {
+              title: t.title,
+              description: t.description,
+              cover_url: t.cover_url,
+            });
+          } else if (t.is_primary && !existing) {
+            // Si es primaria y no hay existente, usarla como fallback
+            transMap.set(t.book_id, {
+              title: t.title,
+              description: t.description,
+              cover_url: t.cover_url,
+            });
+          }
+        });
 
         const libros: BookItem[] = (booksData || []).map((book) => {
           const trans = transMap.get(book.id);
@@ -162,7 +179,8 @@ export default function BooksListPage() {
             slug: book.slug,
             title: trans?.title || book.slug || 'Sin título',
             description: trans?.description || '',
-            cover_url: book.cover_url,
+            // Portada: primero del idioma (trans), fallback a la global del libro
+            cover_url: trans?.cover_url || book.cover_url,
             status: book.status as BookStatus,
             page_count: book.page_count || 0,
             view_count: book.view_count || 0,
@@ -614,44 +632,64 @@ export default function BooksListPage() {
                       {/* Menú de más opciones */}
                       <div className="relative">
                         <button
-                          onClick={() => setActiveMenuId(activeMenuId === book.id ? null : book.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveMenuId(activeMenuId === book.id ? null : book.id);
+                          }}
                           className="flex items-center justify-center px-3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full transition-all duration-300"
                         >
                           <MoreVertical size={16} />
                         </button>
 
                         {activeMenuId === book.id && (
-                          <div className="absolute right-0 bottom-full mb-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
-                            <button
-                              onClick={() => handlePublish(book)}
-                              disabled={isPublishing === book.id}
-                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 disabled:opacity-50"
-                            >
-                              {isPublishing === book.id ? (
-                                <Loader2 size={14} className="animate-spin" />
-                              ) : book.status === 'published' ? (
-                                <EyeOff size={14} />
-                              ) : (
-                                <Send size={14} />
-                              )}
-                              {book.status === 'published' ? 'Despublicar' : 'Publicar'}
-                            </button>
-                            <button
-                              onClick={() => handleStats(book.id)}
-                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
-                            >
-                              <BarChart2 size={14} />
-                              Estadísticas
-                            </button>
-                            <hr className="my-1" />
-                            <button
-                              onClick={() => handleDeleteClick(book)}
-                              className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
-                            >
-                              <Trash2 size={14} />
-                              Mover a papelera
-                            </button>
-                          </div>
+                          <>
+                            {/* Overlay para cerrar menú */}
+                            <div
+                              className="fixed inset-0 z-40"
+                              onClick={() => setActiveMenuId(null)}
+                            />
+                            <div className="absolute right-0 bottom-full mb-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePublish(book);
+                                }}
+                                disabled={isPublishing === book.id}
+                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 disabled:opacity-50"
+                              >
+                                {isPublishing === book.id ? (
+                                  <Loader2 size={14} className="animate-spin" />
+                                ) : book.status === 'published' ? (
+                                  <EyeOff size={14} />
+                                ) : (
+                                  <Send size={14} />
+                                )}
+                                {book.status === 'published' ? 'Despublicar' : 'Publicar'}
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveMenuId(null);
+                                  handleStats(book.id);
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                              >
+                                <BarChart2 size={14} />
+                                Estadísticas
+                              </button>
+                              <hr className="my-1" />
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteClick(book);
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
+                              >
+                                <Trash2 size={14} />
+                                Mover a papelera
+                              </button>
+                            </div>
+                          </>
                         )}
                       </div>
                     </div>
@@ -723,13 +761,6 @@ export default function BooksListPage() {
         </div>
       )}
 
-      {/* Cerrar menú al hacer clic fuera */}
-      {activeMenuId && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setActiveMenuId(null)}
-        />
-      )}
     </UnifiedLayout>
   );
 }

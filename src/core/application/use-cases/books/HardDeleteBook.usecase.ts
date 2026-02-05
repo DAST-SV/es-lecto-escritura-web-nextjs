@@ -1,6 +1,7 @@
 /**
  * UBICACIÓN: src/core/application/use-cases/books/HardDeleteBook.usecase.ts
  * ✅ HARD DELETE: Elimina el libro PERMANENTEMENTE con archivos de storage
+ * Usa el schema 'books' correctamente
  */
 
 import { createClient } from '@/src/infrastructure/config/supabase.config';
@@ -8,18 +9,19 @@ import { createClient } from '@/src/infrastructure/config/supabase.config';
 export class HardDeleteBookUseCase {
   static async execute(bookId: string): Promise<void> {
     const supabase = createClient();
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         throw new Error('Usuario no autenticado');
       }
 
-      // Verificar que el libro pertenece al usuario Y está en papelera
+      // Verificar que el libro pertenece al usuario Y está en papelera (schema books, columna created_by)
       const { data: book, error: fetchError } = await supabase
+        .schema('books')
         .from('books')
-        .select('user_id, deleted_at, cover_url, pdf_url')
+        .select('created_by, deleted_at, cover_url')
         .eq('id', bookId)
         .single();
 
@@ -27,7 +29,7 @@ export class HardDeleteBookUseCase {
         throw new Error('Libro no encontrado');
       }
 
-      if (book.user_id !== user.id) {
+      if (book.created_by !== user.id) {
         throw new Error('No tienes permiso para eliminar este libro');
       }
 
@@ -35,10 +37,11 @@ export class HardDeleteBookUseCase {
         throw new Error('El libro debe estar en la papelera para eliminarlo permanentemente');
       }
 
-      // Obtener páginas para eliminar sus imágenes
-      const { data: pages } = await supabase
-        .from('book_pages')
-        .select('image_url, background_url')
+      // Obtener traducciones para eliminar PDFs por idioma
+      const { data: translations } = await supabase
+        .schema('books')
+        .from('book_translations')
+        .select('pdf_url')
         .eq('book_id', bookId);
 
       // Recolectar archivos a eliminar
@@ -48,7 +51,7 @@ export class HardDeleteBookUseCase {
       // Extraer path del storage desde URL
       const extractPath = (url: string | null): string | null => {
         if (!url) return null;
-        
+
         try {
           // URL formato: https://xxx.supabase.co/storage/v1/object/public/bucket-name/user-id/file.ext
           if (url.includes('/storage/v1/object/public/')) {
@@ -56,20 +59,19 @@ export class HardDeleteBookUseCase {
             if (parts.length === 2) {
               const pathParts = parts[1].split('/');
               // pathParts[0] = bucket name
-              // pathParts[1] = user-id
-              // pathParts[2+] = filename
-              if (pathParts.length >= 3) {
-                return pathParts.slice(1).join('/'); // "user-id/filename.ext"
+              // pathParts[1+] = path
+              if (pathParts.length >= 2) {
+                return pathParts.slice(1).join('/');
               }
             }
           }
-          
-          // Fallback: tomar últimos 2 segmentos
+
+          // Fallback: tomar últimos segmentos después del bucket
           const urlParts = url.split('/');
-          if (urlParts.length >= 2) {
-            return urlParts.slice(-2).join('/');
+          if (urlParts.length >= 3) {
+            return urlParts.slice(-3).join('/');
           }
-          
+
           return null;
         } catch (error) {
           console.warn('Error extrayendo path:', error);
@@ -83,29 +85,19 @@ export class HardDeleteBookUseCase {
         if (path) imageFiles.push(path);
       }
 
-      // PDF
-      if (book.pdf_url) {
-        const path = extractPath(book.pdf_url);
-        if (path) pdfFiles.push(path);
-      }
-
-      // Imágenes de páginas
-      if (pages && pages.length > 0) {
-        pages.forEach(page => {
-          if (page.image_url) {
-            const path = extractPath(page.image_url);
-            if (path) imageFiles.push(path);
-          }
-          if (page.background_url && page.background_url.includes('supabase')) {
-            const path = extractPath(page.background_url);
-            if (path) imageFiles.push(path);
+      // PDFs de traducciones
+      if (translations && translations.length > 0) {
+        translations.forEach(trans => {
+          if (trans.pdf_url) {
+            const path = extractPath(trans.pdf_url);
+            if (path) pdfFiles.push(path);
           }
         });
       }
 
-      console.log('🗑️ Eliminando archivos:', { 
-        images: imageFiles.length, 
-        pdfs: pdfFiles.length 
+      console.log('🗑️ Eliminando archivos:', {
+        images: imageFiles.length,
+        pdfs: pdfFiles.length
       });
 
       // Eliminar imágenes
@@ -130,8 +122,20 @@ export class HardDeleteBookUseCase {
         }
       }
 
-      // Eliminar libro de BD (CASCADE elimina páginas y relaciones)
+      // Eliminar traducciones primero
+      const { error: transDeleteError } = await supabase
+        .schema('books')
+        .from('book_translations')
+        .delete()
+        .eq('book_id', bookId);
+
+      if (transDeleteError) {
+        console.warn('⚠️ Error eliminando traducciones:', transDeleteError);
+      }
+
+      // Eliminar libro de BD (CASCADE elimina relaciones)
       const { error: deleteError } = await supabase
+        .schema('books')
         .from('books')
         .delete()
         .eq('id', bookId);

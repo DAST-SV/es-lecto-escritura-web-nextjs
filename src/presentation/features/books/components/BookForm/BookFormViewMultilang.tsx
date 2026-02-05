@@ -330,6 +330,36 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                       />
                     </div>
 
+                    {/* Portada para este idioma */}
+                    <div>
+                      <label className="text-[10px] font-medium text-gray-700 block mb-1">
+                        {t('cover_label')} ({activeLanguages.find(l => l.code === activeTab)?.name || activeTab})
+                      </label>
+                      {portadaPreview ? (
+                        <div className="relative group inline-block">
+                          <img
+                            src={portadaPreview}
+                            alt={t('cover_label')}
+                            className="w-20 h-28 object-cover rounded-lg shadow-md border border-gray-200"
+                          />
+                          <button
+                            onClick={() => setPortadaPreview(null)}
+                            className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-all shadow-md"
+                          >
+                            <X size={10} />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="block cursor-pointer w-fit">
+                          <div className="w-20 h-28 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-300 hover:border-orange-400 hover:bg-orange-50/50 transition-all group">
+                            <Camera size={16} className="text-gray-400 group-hover:text-orange-500 mb-1" />
+                            <span className="text-[9px] text-gray-500 group-hover:text-orange-600">{t('cover_label')}</span>
+                          </div>
+                          <input type="file" accept="image/*" onChange={handlePortadaChange} className="hidden" />
+                        </label>
+                      )}
+                    </div>
+
                     {/* PDF para este idioma */}
                     <div>
                       <label className="text-[10px] font-medium text-gray-700 block mb-1">
@@ -396,6 +426,14 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                         </div>
                       )}
                     </div>
+
+                    {/* Personajes para este idioma */}
+                    <CharacterInput
+                      characters={characters}
+                      onChange={setCharacters}
+                      label={`${t('field_characters') || 'Personajes'} (${activeLanguages.find(l => l.code === activeTab)?.name || activeTab})`}
+                      maxCharacters={20}
+                    />
                   </div>
                 )}
               </section>
@@ -459,7 +497,7 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                     catalogType="tags"
                     selectedIds={selectedEtiquetas}
                     onToggle={handleToggleTag}
-                    label="Etiquetas"
+                    label={t('field_tags') || 'Etiquetas'}
                     color="sky"
                     maxSelections={10}
                   />
@@ -469,24 +507,14 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                     catalogType="values"
                     selectedIds={selectedValores}
                     onToggle={handleToggleValue}
-                    label="Valores educativos"
+                    label={t('field_values') || 'Valores educativos'}
                     color="emerald"
                     maxSelections={5}
                   />
                 </div>
               </section>
 
-              {/* Personajes */}
-              <section className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                <div className="p-3">
-                  <CharacterInput
-                    characters={characters}
-                    onChange={setCharacters}
-                    label="Personajes"
-                    maxCharacters={20}
-                  />
-                </div>
-              </section>
+              {/* Nota: Personajes ahora están dentro del tab de idioma */}
             </div>
 
             {/* COLUMNA DERECHA - Ficha Preview */}
@@ -503,27 +531,16 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                       <div className="flex gap-4 pb-4 border-b border-gray-100">
                         <div className="flex-shrink-0">
                           {portadaPreview ? (
-                            <div className="relative group">
-                              <img
-                                src={portadaPreview}
-                                alt={t('cover_label')}
-                                className="w-28 h-36 object-cover rounded-lg shadow-md border border-gray-200"
-                              />
-                              <button
-                                onClick={() => setPortadaPreview(null)}
-                                className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-all shadow-md"
-                              >
-                                <X size={10} />
-                              </button>
-                            </div>
+                            <img
+                              src={portadaPreview}
+                              alt={t('cover_label')}
+                              className="w-28 h-36 object-cover rounded-lg shadow-md border border-gray-200"
+                            />
                           ) : (
-                            <label className="block cursor-pointer">
-                              <div className="w-28 h-36 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-300 hover:border-orange-400 hover:bg-orange-50/50 transition-all group">
-                                <Camera size={20} className="text-gray-400 group-hover:text-orange-500 mb-1" />
-                                <span className="text-[10px] text-gray-500 group-hover:text-orange-600">{t('cover_label')}</span>
-                              </div>
-                              <input type="file" accept="image/*" onChange={handlePortadaChange} className="hidden" />
-                            </label>
+                            <div className="w-28 h-36 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex flex-col items-center justify-center border border-gray-200">
+                              <Camera size={20} className="text-gray-300 mb-1" />
+                              <span className="text-[9px] text-gray-400">{t('no_cover')}</span>
+                            </div>
                           )}
                         </div>
 
@@ -612,7 +629,7 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                         <div>
                           <h4 className="text-[10px] font-semibold text-gray-900 mb-1.5 uppercase tracking-wide flex items-center gap-1">
                             <Users size={10} />
-                            Personajes
+                            {t('field_characters') || 'Personajes'}
                           </h4>
                           <div className="flex flex-wrap gap-1">
                             {characters.map((char, idx) => (
@@ -638,7 +655,7 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                         <div>
                           <h4 className="text-[10px] font-semibold text-gray-900 mb-1.5 uppercase tracking-wide flex items-center gap-1">
                             <Heart size={10} />
-                            Valores
+                            {t('field_values') || 'Valores'}
                           </h4>
                           <div className="flex flex-wrap gap-1">
                             {selectedValores.map(vid => (
