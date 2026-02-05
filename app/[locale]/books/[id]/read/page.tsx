@@ -163,7 +163,25 @@ export default function ReadBookPage() {
         console.log('Descargando PDF:', pdfUrl);
 
         const response = await fetch(pdfUrl);
+
+        if (!response.ok) {
+          throw new Error(`Error descargando PDF: ${response.status}`);
+        }
+
+        const contentType = response.headers.get('content-type');
+        if (contentType && !contentType.includes('application/pdf') && !contentType.includes('octet-stream')) {
+          console.error('Content-Type incorrecto:', contentType);
+          throw new Error('El archivo no es un PDF válido');
+        }
+
         const blob = await response.blob();
+
+        if (blob.size === 0) {
+          throw new Error('El archivo PDF está vacío');
+        }
+
+        console.log('PDF descargado:', blob.size, 'bytes');
+
         const file = new File([blob], 'libro.pdf', { type: 'application/pdf' });
 
         // Importar dinamicamente el servicio
