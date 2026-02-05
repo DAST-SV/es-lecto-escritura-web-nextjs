@@ -3,223 +3,572 @@
 -- Namespace: books_form
 -- ============================================================================
 
--- Usar la funcion helper para insertar traducciones
-SELECT app.upsert_translation('books_form', 'page_title_create', 'es', 'Crear Nuevo Libro');
-SELECT app.upsert_translation('books_form', 'page_title_create', 'en', 'Create New Book');
+SET search_path TO app, public;
 
-SELECT app.upsert_translation('books_form', 'page_title_edit', 'es', 'Editar Libro');
-SELECT app.upsert_translation('books_form', 'page_title_edit', 'en', 'Edit Book');
+-- Crear namespace si no existe
+INSERT INTO app.translation_namespaces (slug, name, description, is_active)
+VALUES ('books_form', 'Books Form', 'Translations for book creation/edit form', true)
+ON CONFLICT (slug) DO UPDATE
+SET name = EXCLUDED.name, description = EXCLUDED.description, is_active = true;
 
-SELECT app.upsert_translation('books_form', 'languages_completed', 'es', 'idiomas completados');
-SELECT app.upsert_translation('books_form', 'languages_completed', 'en', 'languages completed');
+-- Usar la funcion helper insert_translation para insertar traducciones
+-- Titulos de pagina
+SELECT insert_translation('books_form', 'page_title_create',
+    'Crear Nuevo Libro',
+    'Create New Book',
+    'Creer un Nouveau Livre',
+    'ui-components',
+    'Titulo pagina crear libro'
+);
 
-SELECT app.upsert_translation('books_form', 'loading_languages', 'es', 'Cargando idiomas...');
-SELECT app.upsert_translation('books_form', 'loading_languages', 'en', 'Loading languages...');
+SELECT insert_translation('books_form', 'page_title_edit',
+    'Editar Libro',
+    'Edit Book',
+    'Modifier le Livre',
+    'ui-components',
+    'Titulo pagina editar libro'
+);
 
-SELECT app.upsert_translation('books_form', 'loading_book', 'es', 'Cargando libro...');
-SELECT app.upsert_translation('books_form', 'loading_book', 'en', 'Loading book...');
+SELECT insert_translation('books_form', 'languages_completed',
+    'idiomas completados',
+    'languages completed',
+    'langues completees',
+    'ui-components',
+    'Contador idiomas completados'
+);
+
+SELECT insert_translation('books_form', 'loading_languages',
+    'Cargando idiomas...',
+    'Loading languages...',
+    'Chargement des langues...',
+    'ui-components',
+    'Mensaje cargando idiomas'
+);
+
+SELECT insert_translation('books_form', 'loading_book',
+    'Cargando libro...',
+    'Loading book...',
+    'Chargement du livre...',
+    'ui-components',
+    'Mensaje cargando libro'
+);
 
 -- Botones
-SELECT app.upsert_translation('books_form', 'btn_save', 'es', 'Guardar');
-SELECT app.upsert_translation('books_form', 'btn_save', 'en', 'Save');
+SELECT insert_translation('books_form', 'btn_save',
+    'Guardar',
+    'Save',
+    'Enregistrer',
+    'actions',
+    'Boton guardar'
+);
 
-SELECT app.upsert_translation('books_form', 'btn_save_changes', 'es', 'Guardar Cambios');
-SELECT app.upsert_translation('books_form', 'btn_save_changes', 'en', 'Save Changes');
+SELECT insert_translation('books_form', 'btn_save_changes',
+    'Guardar Cambios',
+    'Save Changes',
+    'Enregistrer les Modifications',
+    'actions',
+    'Boton guardar cambios'
+);
 
-SELECT app.upsert_translation('books_form', 'btn_saving', 'es', 'Guardando...');
-SELECT app.upsert_translation('books_form', 'btn_saving', 'en', 'Saving...');
+SELECT insert_translation('books_form', 'btn_saving',
+    'Guardando...',
+    'Saving...',
+    'Enregistrement...',
+    'actions',
+    'Estado guardando'
+);
 
 -- Secciones
-SELECT app.upsert_translation('books_form', 'section_translations', 'es', 'Traducciones');
-SELECT app.upsert_translation('books_form', 'section_translations', 'en', 'Translations');
+SELECT insert_translation('books_form', 'section_translations',
+    'Traducciones',
+    'Translations',
+    'Traductions',
+    'ui-components',
+    'Titulo seccion traducciones'
+);
 
-SELECT app.upsert_translation('books_form', 'section_authors', 'es', 'Autores');
-SELECT app.upsert_translation('books_form', 'section_authors', 'en', 'Authors');
+SELECT insert_translation('books_form', 'section_authors',
+    'Autores',
+    'Authors',
+    'Auteurs',
+    'ui-components',
+    'Titulo seccion autores'
+);
 
-SELECT app.upsert_translation('books_form', 'section_classification', 'es', 'Clasificacion');
-SELECT app.upsert_translation('books_form', 'section_classification', 'en', 'Classification');
+SELECT insert_translation('books_form', 'section_classification',
+    'Clasificacion',
+    'Classification',
+    'Classification',
+    'ui-components',
+    'Titulo seccion clasificacion'
+);
 
-SELECT app.upsert_translation('books_form', 'section_preview', 'es', 'Vista Previa');
-SELECT app.upsert_translation('books_form', 'section_preview', 'en', 'Preview');
+SELECT insert_translation('books_form', 'section_preview',
+    'Vista Previa',
+    'Preview',
+    'Apercu',
+    'ui-components',
+    'Titulo seccion preview'
+);
 
 -- Idioma principal
-SELECT app.upsert_translation('books_form', 'primary_language', 'es', 'Este es el idioma principal');
-SELECT app.upsert_translation('books_form', 'primary_language', 'en', 'This is the primary language');
+SELECT insert_translation('books_form', 'primary_language',
+    'Este es el idioma principal',
+    'This is the primary language',
+    'Ceci est la langue principale',
+    'ui-components',
+    'Indicador idioma principal'
+);
 
-SELECT app.upsert_translation('books_form', 'set_primary_language', 'es', 'Marcar como idioma principal');
-SELECT app.upsert_translation('books_form', 'set_primary_language', 'en', 'Set as primary language');
+SELECT insert_translation('books_form', 'set_primary_language',
+    'Marcar como idioma principal',
+    'Set as primary language',
+    'Definir comme langue principale',
+    'actions',
+    'Accion marcar idioma principal'
+);
 
-SELECT app.upsert_translation('books_form', 'btn_primary', 'es', 'Principal');
-SELECT app.upsert_translation('books_form', 'btn_primary', 'en', 'Primary');
+SELECT insert_translation('books_form', 'btn_primary',
+    'Principal',
+    'Primary',
+    'Principal',
+    'actions',
+    'Boton principal'
+);
 
-SELECT app.upsert_translation('books_form', 'btn_set_primary', 'es', 'Establecer como principal');
-SELECT app.upsert_translation('books_form', 'btn_set_primary', 'en', 'Set as primary');
+SELECT insert_translation('books_form', 'btn_set_primary',
+    'Establecer como principal',
+    'Set as primary',
+    'Definir comme principal',
+    'actions',
+    'Boton establecer principal'
+);
 
 -- Campos de traduccion
-SELECT app.upsert_translation('books_form', 'field_title', 'es', 'Titulo');
-SELECT app.upsert_translation('books_form', 'field_title', 'en', 'Title');
+SELECT insert_translation('books_form', 'field_title',
+    'Titulo',
+    'Title',
+    'Titre',
+    'forms',
+    'Campo titulo'
+);
 
-SELECT app.upsert_translation('books_form', 'field_subtitle', 'es', 'Subtitulo');
-SELECT app.upsert_translation('books_form', 'field_subtitle', 'en', 'Subtitle');
+SELECT insert_translation('books_form', 'field_subtitle',
+    'Subtitulo',
+    'Subtitle',
+    'Sous-titre',
+    'forms',
+    'Campo subtitulo'
+);
 
-SELECT app.upsert_translation('books_form', 'field_description', 'es', 'Descripcion');
-SELECT app.upsert_translation('books_form', 'field_description', 'en', 'Description');
+SELECT insert_translation('books_form', 'field_description',
+    'Descripcion',
+    'Description',
+    'Description',
+    'forms',
+    'Campo descripcion'
+);
 
-SELECT app.upsert_translation('books_form', 'field_summary', 'es', 'Resumen corto');
-SELECT app.upsert_translation('books_form', 'field_summary', 'en', 'Short summary');
+SELECT insert_translation('books_form', 'field_summary',
+    'Resumen corto',
+    'Short summary',
+    'Resume court',
+    'forms',
+    'Campo resumen'
+);
 
-SELECT app.upsert_translation('books_form', 'field_pdf', 'es', 'PDF');
-SELECT app.upsert_translation('books_form', 'field_pdf', 'en', 'PDF');
+SELECT insert_translation('books_form', 'field_pdf',
+    'PDF',
+    'PDF',
+    'PDF',
+    'forms',
+    'Campo PDF'
+);
 
 -- Placeholders
-SELECT app.upsert_translation('books_form', 'placeholder_title', 'es', 'Titulo en {language}');
-SELECT app.upsert_translation('books_form', 'placeholder_title', 'en', 'Title in {language}');
+SELECT insert_translation('books_form', 'placeholder_title',
+    'Titulo en {language}',
+    'Title in {language}',
+    'Titre en {language}',
+    'forms',
+    'Placeholder titulo'
+);
 
-SELECT app.upsert_translation('books_form', 'placeholder_subtitle', 'es', 'Subtitulo (opcional)');
-SELECT app.upsert_translation('books_form', 'placeholder_subtitle', 'en', 'Subtitle (optional)');
+SELECT insert_translation('books_form', 'placeholder_subtitle',
+    'Subtitulo (opcional)',
+    'Subtitle (optional)',
+    'Sous-titre (optionnel)',
+    'forms',
+    'Placeholder subtitulo'
+);
 
-SELECT app.upsert_translation('books_form', 'placeholder_description', 'es', 'Descripcion completa del libro...');
-SELECT app.upsert_translation('books_form', 'placeholder_description', 'en', 'Full book description...');
+SELECT insert_translation('books_form', 'placeholder_description',
+    'Descripcion completa del libro...',
+    'Full book description...',
+    'Description complete du livre...',
+    'forms',
+    'Placeholder descripcion'
+);
 
-SELECT app.upsert_translation('books_form', 'placeholder_summary', 'es', 'Resumen breve para previews...');
-SELECT app.upsert_translation('books_form', 'placeholder_summary', 'en', 'Brief summary for previews...');
+SELECT insert_translation('books_form', 'placeholder_summary',
+    'Resumen breve para previews...',
+    'Brief summary for previews...',
+    'Resume bref pour les aperçus...',
+    'forms',
+    'Placeholder resumen'
+);
 
 -- PDF
-SELECT app.upsert_translation('books_form', 'pdf_loaded', 'es', 'PDF cargado');
-SELECT app.upsert_translation('books_form', 'pdf_loaded', 'en', 'PDF loaded');
+SELECT insert_translation('books_form', 'pdf_loaded',
+    'PDF cargado',
+    'PDF loaded',
+    'PDF charge',
+    'ui-components',
+    'Estado PDF cargado'
+);
 
-SELECT app.upsert_translation('books_form', 'pdf_change', 'es', 'Cambiar PDF');
-SELECT app.upsert_translation('books_form', 'pdf_change', 'en', 'Change PDF');
+SELECT insert_translation('books_form', 'pdf_change',
+    'Cambiar PDF',
+    'Change PDF',
+    'Changer le PDF',
+    'actions',
+    'Boton cambiar PDF'
+);
 
-SELECT app.upsert_translation('books_form', 'pdf_upload', 'es', 'Subir PDF');
-SELECT app.upsert_translation('books_form', 'pdf_upload', 'en', 'Upload PDF');
+SELECT insert_translation('books_form', 'pdf_upload',
+    'Subir PDF',
+    'Upload PDF',
+    'Telecharger le PDF',
+    'actions',
+    'Boton subir PDF'
+);
 
-SELECT app.upsert_translation('books_form', 'pdf_max_size', 'es', 'Max. 50MB');
-SELECT app.upsert_translation('books_form', 'pdf_max_size', 'en', 'Max. 50MB');
+SELECT insert_translation('books_form', 'pdf_max_size',
+    'Max. 50MB',
+    'Max. 50MB',
+    'Max. 50 Mo',
+    'ui-components',
+    'Limite tamano PDF'
+);
 
-SELECT app.upsert_translation('books_form', 'pdf_processing', 'es', 'Procesando PDF...');
-SELECT app.upsert_translation('books_form', 'pdf_processing', 'en', 'Processing PDF...');
+SELECT insert_translation('books_form', 'pdf_processing',
+    'Procesando PDF...',
+    'Processing PDF...',
+    'Traitement du PDF...',
+    'ui-components',
+    'Estado procesando PDF'
+);
 
-SELECT app.upsert_translation('books_form', 'pdf_preview', 'es', 'Preview ({pages} pag.)');
-SELECT app.upsert_translation('books_form', 'pdf_preview', 'en', 'Preview ({pages} pages)');
+SELECT insert_translation('books_form', 'pdf_preview',
+    'Preview ({pages} pag.)',
+    'Preview ({pages} pages)',
+    'Aperçu ({pages} pages)',
+    'ui-components',
+    'Preview PDF con paginas'
+);
 
 -- Clasificacion
-SELECT app.upsert_translation('books_form', 'field_category', 'es', 'Categoria');
-SELECT app.upsert_translation('books_form', 'field_category', 'en', 'Category');
+SELECT insert_translation('books_form', 'field_category',
+    'Categoria',
+    'Category',
+    'Categorie',
+    'forms',
+    'Campo categoria'
+);
 
-SELECT app.upsert_translation('books_form', 'field_level', 'es', 'Nivel');
-SELECT app.upsert_translation('books_form', 'field_level', 'en', 'Level');
+SELECT insert_translation('books_form', 'field_level',
+    'Nivel',
+    'Level',
+    'Niveau',
+    'forms',
+    'Campo nivel'
+);
 
-SELECT app.upsert_translation('books_form', 'field_genres', 'es', 'Generos');
-SELECT app.upsert_translation('books_form', 'field_genres', 'en', 'Genres');
+SELECT insert_translation('books_form', 'field_genres',
+    'Generos',
+    'Genres',
+    'Genres',
+    'forms',
+    'Campo generos'
+);
 
-SELECT app.upsert_translation('books_form', 'select_category', 'es', 'Seleccionar categoria');
-SELECT app.upsert_translation('books_form', 'select_category', 'en', 'Select category');
+SELECT insert_translation('books_form', 'select_category',
+    'Seleccionar categoria',
+    'Select category',
+    'Selectionner une categorie',
+    'forms',
+    'Placeholder seleccionar categoria'
+);
 
 -- Preview
-SELECT app.upsert_translation('books_form', 'no_title', 'es', 'Sin titulo');
-SELECT app.upsert_translation('books_form', 'no_title', 'en', 'No title');
+SELECT insert_translation('books_form', 'no_title',
+    'Sin titulo',
+    'No title',
+    'Sans titre',
+    'ui-components',
+    'Fallback sin titulo'
+);
 
-SELECT app.upsert_translation('books_form', 'by_authors', 'es', 'Por: {authors}');
-SELECT app.upsert_translation('books_form', 'by_authors', 'en', 'By: {authors}');
+SELECT insert_translation('books_form', 'by_authors',
+    'Por: {authors}',
+    'By: {authors}',
+    'Par: {authors}',
+    'ui-components',
+    'Prefijo autores'
+);
 
-SELECT app.upsert_translation('books_form', 'preview_empty_title', 'es', 'Vista previa');
-SELECT app.upsert_translation('books_form', 'preview_empty_title', 'en', 'Preview');
+SELECT insert_translation('books_form', 'preview_empty_title',
+    'Vista previa',
+    'Preview',
+    'Aperçu',
+    'ui-components',
+    'Titulo preview vacio'
+);
 
-SELECT app.upsert_translation('books_form', 'preview_empty_text', 'es', 'Completa el formulario para ver la vista previa del libro');
-SELECT app.upsert_translation('books_form', 'preview_empty_text', 'en', 'Complete the form to see the book preview');
+SELECT insert_translation('books_form', 'preview_empty_text',
+    'Completa el formulario para ver la vista previa del libro',
+    'Complete the form to see the book preview',
+    'Completez le formulaire pour voir l''aperçu du livre',
+    'ui-components',
+    'Texto preview vacio'
+);
 
-SELECT app.upsert_translation('books_form', 'cover_label', 'es', 'Portada');
-SELECT app.upsert_translation('books_form', 'cover_label', 'en', 'Cover');
+SELECT insert_translation('books_form', 'cover_label',
+    'Portada',
+    'Cover',
+    'Couverture',
+    'ui-components',
+    'Etiqueta portada'
+);
 
 -- Estado de traducciones
-SELECT app.upsert_translation('books_form', 'translation_complete', 'es', 'Completo');
-SELECT app.upsert_translation('books_form', 'translation_complete', 'en', 'Complete');
+SELECT insert_translation('books_form', 'translation_complete',
+    'Completo',
+    'Complete',
+    'Complet',
+    'ui-components',
+    'Estado traduccion completa'
+);
 
-SELECT app.upsert_translation('books_form', 'translation_incomplete', 'es', 'Incompleto');
-SELECT app.upsert_translation('books_form', 'translation_incomplete', 'en', 'Incomplete');
+SELECT insert_translation('books_form', 'translation_incomplete',
+    'Incompleto',
+    'Incomplete',
+    'Incomplet',
+    'ui-components',
+    'Estado traduccion incompleta'
+);
 
 -- Autores
-SELECT app.upsert_translation('books_form', 'authors_label', 'es', 'Autores');
-SELECT app.upsert_translation('books_form', 'authors_label', 'en', 'Authors');
+SELECT insert_translation('books_form', 'authors_label',
+    'Autores',
+    'Authors',
+    'Auteurs',
+    'forms',
+    'Etiqueta autores'
+);
 
-SELECT app.upsert_translation('books_form', 'authors_search', 'es', 'Buscar co-autor por email...');
-SELECT app.upsert_translation('books_form', 'authors_search', 'en', 'Search co-author by email...');
+SELECT insert_translation('books_form', 'authors_search',
+    'Buscar co-autor por email...',
+    'Search co-author by email...',
+    'Rechercher un co-auteur par email...',
+    'forms',
+    'Placeholder buscar autor'
+);
 
-SELECT app.upsert_translation('books_form', 'authors_hint', 'es', 'Busca por email para agregar co-autores del sistema');
-SELECT app.upsert_translation('books_form', 'authors_hint', 'en', 'Search by email to add system co-authors');
+SELECT insert_translation('books_form', 'authors_hint',
+    'Busca por email para agregar co-autores del sistema',
+    'Search by email to add system co-authors',
+    'Recherchez par email pour ajouter des co-auteurs du systeme',
+    'ui-components',
+    'Hint buscar autores'
+);
 
-SELECT app.upsert_translation('books_form', 'authors_you', 'es', 'Tu');
-SELECT app.upsert_translation('books_form', 'authors_you', 'en', 'You');
+SELECT insert_translation('books_form', 'authors_you',
+    'Tu',
+    'You',
+    'Vous',
+    'ui-components',
+    'Indicador usuario actual'
+);
 
-SELECT app.upsert_translation('books_form', 'authors_no_results', 'es', 'No se encontraron usuarios');
-SELECT app.upsert_translation('books_form', 'authors_no_results', 'en', 'No users found');
+SELECT insert_translation('books_form', 'authors_no_results',
+    'No se encontraron usuarios',
+    'No users found',
+    'Aucun utilisateur trouve',
+    'ui-components',
+    'Sin resultados busqueda autores'
+);
 
-SELECT app.upsert_translation('books_form', 'authors_try_other', 'es', 'Intenta con otro email');
-SELECT app.upsert_translation('books_form', 'authors_try_other', 'en', 'Try another email');
+SELECT insert_translation('books_form', 'authors_try_other',
+    'Intenta con otro email',
+    'Try another email',
+    'Essayez avec un autre email',
+    'ui-components',
+    'Sugerencia buscar otro email'
+);
 
-SELECT app.upsert_translation('books_form', 'authors_remove', 'es', 'Eliminar autor');
-SELECT app.upsert_translation('books_form', 'authors_remove', 'en', 'Remove author');
+SELECT insert_translation('books_form', 'authors_remove',
+    'Eliminar autor',
+    'Remove author',
+    'Retirer l''auteur',
+    'actions',
+    'Boton eliminar autor'
+);
 
 -- Roles de autor
-SELECT app.upsert_translation('books_form', 'role_author', 'es', 'Autor');
-SELECT app.upsert_translation('books_form', 'role_author', 'en', 'Author');
+SELECT insert_translation('books_form', 'role_author',
+    'Autor',
+    'Author',
+    'Auteur',
+    'ui-components',
+    'Rol autor'
+);
 
-SELECT app.upsert_translation('books_form', 'role_illustrator', 'es', 'Ilustrador');
-SELECT app.upsert_translation('books_form', 'role_illustrator', 'en', 'Illustrator');
+SELECT insert_translation('books_form', 'role_illustrator',
+    'Ilustrador',
+    'Illustrator',
+    'Illustrateur',
+    'ui-components',
+    'Rol ilustrador'
+);
 
-SELECT app.upsert_translation('books_form', 'role_translator', 'es', 'Traductor');
-SELECT app.upsert_translation('books_form', 'role_translator', 'en', 'Translator');
+SELECT insert_translation('books_form', 'role_translator',
+    'Traductor',
+    'Translator',
+    'Traducteur',
+    'ui-components',
+    'Rol traductor'
+);
 
-SELECT app.upsert_translation('books_form', 'role_editor', 'es', 'Editor');
-SELECT app.upsert_translation('books_form', 'role_editor', 'en', 'Editor');
+SELECT insert_translation('books_form', 'role_editor',
+    'Editor',
+    'Editor',
+    'Editeur',
+    'ui-components',
+    'Rol editor'
+);
 
 -- Errores
-SELECT app.upsert_translation('books_form', 'error_required_fields', 'es', 'Completa los campos obligatorios');
-SELECT app.upsert_translation('books_form', 'error_required_fields', 'en', 'Complete required fields');
+SELECT insert_translation('books_form', 'error_required_fields',
+    'Completa los campos obligatorios',
+    'Complete required fields',
+    'Completez les champs obligatoires',
+    'errors',
+    'Error campos requeridos'
+);
 
-SELECT app.upsert_translation('books_form', 'required', 'es', '*');
-SELECT app.upsert_translation('books_form', 'required', 'en', '*');
+SELECT insert_translation('books_form', 'required',
+    '*',
+    '*',
+    '*',
+    'ui-components',
+    'Indicador campo requerido'
+);
 
 -- Mensajes
-SELECT app.upsert_translation('books_form', 'msg_book_loaded', 'es', 'Libro cargado');
-SELECT app.upsert_translation('books_form', 'msg_book_loaded', 'en', 'Book loaded');
+SELECT insert_translation('books_form', 'msg_book_loaded',
+    'Libro cargado',
+    'Book loaded',
+    'Livre charge',
+    'notifications',
+    'Toast libro cargado'
+);
 
-SELECT app.upsert_translation('books_form', 'msg_book_created', 'es', 'Libro creado');
-SELECT app.upsert_translation('books_form', 'msg_book_created', 'en', 'Book created');
+SELECT insert_translation('books_form', 'msg_book_created',
+    'Libro creado',
+    'Book created',
+    'Livre cree',
+    'notifications',
+    'Toast libro creado'
+);
 
-SELECT app.upsert_translation('books_form', 'msg_book_updated', 'es', 'Libro actualizado');
-SELECT app.upsert_translation('books_form', 'msg_book_updated', 'en', 'Book updated');
+SELECT insert_translation('books_form', 'msg_book_updated',
+    'Libro actualizado',
+    'Book updated',
+    'Livre mis a jour',
+    'notifications',
+    'Toast libro actualizado'
+);
 
-SELECT app.upsert_translation('books_form', 'msg_pdf_processed', 'es', 'PDF procesado');
-SELECT app.upsert_translation('books_form', 'msg_pdf_processed', 'en', 'PDF processed');
+SELECT insert_translation('books_form', 'msg_pdf_processed',
+    'PDF procesado',
+    'PDF processed',
+    'PDF traite',
+    'notifications',
+    'Toast PDF procesado'
+);
 
 -- Etiquetas, Valores y Personajes
-SELECT app.upsert_translation('books_form', 'field_tags', 'es', 'Etiquetas');
-SELECT app.upsert_translation('books_form', 'field_tags', 'en', 'Tags');
+SELECT insert_translation('books_form', 'field_tags',
+    'Etiquetas',
+    'Tags',
+    'Etiquettes',
+    'forms',
+    'Campo etiquetas'
+);
 
-SELECT app.upsert_translation('books_form', 'field_values', 'es', 'Valores educativos');
-SELECT app.upsert_translation('books_form', 'field_values', 'en', 'Educational values');
+SELECT insert_translation('books_form', 'field_values',
+    'Valores educativos',
+    'Educational values',
+    'Valeurs educatives',
+    'forms',
+    'Campo valores educativos'
+);
 
-SELECT app.upsert_translation('books_form', 'field_characters', 'es', 'Personajes');
-SELECT app.upsert_translation('books_form', 'field_characters', 'en', 'Characters');
+SELECT insert_translation('books_form', 'field_characters',
+    'Personajes',
+    'Characters',
+    'Personnages',
+    'forms',
+    'Campo personajes'
+);
 
-SELECT app.upsert_translation('books_form', 'character_name', 'es', 'Nombre del personaje');
-SELECT app.upsert_translation('books_form', 'character_name', 'en', 'Character name');
+SELECT insert_translation('books_form', 'character_name',
+    'Nombre del personaje',
+    'Character name',
+    'Nom du personnage',
+    'forms',
+    'Campo nombre personaje'
+);
 
-SELECT app.upsert_translation('books_form', 'character_role_main', 'es', 'Principal');
-SELECT app.upsert_translation('books_form', 'character_role_main', 'en', 'Main');
+SELECT insert_translation('books_form', 'character_role_main',
+    'Principal',
+    'Main',
+    'Principal',
+    'ui-components',
+    'Rol personaje principal'
+);
 
-SELECT app.upsert_translation('books_form', 'character_role_secondary', 'es', 'Secundario');
-SELECT app.upsert_translation('books_form', 'character_role_secondary', 'en', 'Secondary');
+SELECT insert_translation('books_form', 'character_role_secondary',
+    'Secundario',
+    'Secondary',
+    'Secondaire',
+    'ui-components',
+    'Rol personaje secundario'
+);
 
-SELECT app.upsert_translation('books_form', 'character_role_supporting', 'es', 'De apoyo');
-SELECT app.upsert_translation('books_form', 'character_role_supporting', 'en', 'Supporting');
+SELECT insert_translation('books_form', 'character_role_supporting',
+    'De apoyo',
+    'Supporting',
+    'De soutien',
+    'ui-components',
+    'Rol personaje de apoyo'
+);
 
-SELECT app.upsert_translation('books_form', 'character_add_hint', 'es', 'Agrega los personajes principales de tu historia');
-SELECT app.upsert_translation('books_form', 'character_add_hint', 'en', 'Add the main characters of your story');
+SELECT insert_translation('books_form', 'character_add_hint',
+    'Agrega los personajes principales de tu historia',
+    'Add the main characters of your story',
+    'Ajoutez les personnages principaux de votre histoire',
+    'ui-components',
+    'Hint agregar personajes'
+);
 
-SELECT app.upsert_translation('books_form', 'character_max_reached', 'es', 'Maximo de personajes alcanzado');
-SELECT app.upsert_translation('books_form', 'character_max_reached', 'en', 'Maximum characters reached');
+SELECT insert_translation('books_form', 'character_max_reached',
+    'Maximo de personajes alcanzado',
+    'Maximum characters reached',
+    'Nombre maximum de personnages atteint',
+    'errors',
+    'Error maximo personajes'
+);
 
-SELECT 'Traducciones de books_form insertadas' AS status;
+SELECT 'BOOKS_FORM: 55 translations created' AS status;

@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS books.tag_translations (
   tag_id UUID NOT NULL REFERENCES books.tags(id) ON DELETE CASCADE,
   language_code VARCHAR(10) NOT NULL,
   name VARCHAR(100) NOT NULL,
+  description TEXT,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),

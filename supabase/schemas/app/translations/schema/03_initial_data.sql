@@ -43,9 +43,11 @@ INSERT INTO app.translation_categories (name, description, slug) VALUES
   ('Navigation', 'Navigation menus and links', 'navigation'),
   ('Messages', 'System messages and notifications', 'messages'),
   ('Errors', 'Error messages', 'errors'),
-  ('Actions', 'Action buttons and commands', 'actions')
+  ('Actions', 'Action buttons and commands', 'actions'),
+  ('Notifications', 'Toast messages and alerts', 'notifications'),
+  ('UI', 'General UI elements', 'ui')
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description;
 
-SELECT 'TRANSLATIONS: Datos iniciales insertados (3 idiomas, 5 namespaces, 6 categorías)' AS status;
+SELECT 'TRANSLATIONS: Datos iniciales insertados (3 idiomas, 5 namespaces, 8 categorias)' AS status;

@@ -1,5 +1,5 @@
 // ============================================
-// src/infrastructure/repositories/SupabaseTranslationRepository.ts
+// src/infrastructure/repositories/translations/SupabaseTranslationRepository.ts
 // ✅ CORRECCIÓN: Sin namespace_slug directo, obtenerlo via JOIN
 // ============================================
 
