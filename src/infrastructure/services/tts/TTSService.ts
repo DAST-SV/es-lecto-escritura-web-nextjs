@@ -231,7 +231,14 @@ export class TTSService {
     }
 
     if (events?.onError) {
-      utterance.onerror = (e) => events.onError!(e.error);
+      utterance.onerror = (e) => {
+        // "interrupted" no es un error real, ocurre al cancelar la lectura intencionalmente
+        if (e.error === 'interrupted' || e.error === 'canceled') {
+          console.log('🔊 TTS: Lectura interrumpida (normal al cambiar página o detener)');
+          return;
+        }
+        events.onError!(e.error);
+      };
     }
 
     if (events?.onBoundary) {

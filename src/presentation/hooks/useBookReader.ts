@@ -244,13 +244,24 @@ export function useBookReader({
       const clampedRate = Math.max(0.5, Math.min(2.0, rate));
       setCurrentRate(clampedRate);
 
-      // Si está leyendo, reiniciar con la nueva velocidad
+      // Si está leyendo, reiniciar con la nueva velocidad después de un pequeño delay
       if (isReading && !isPaused) {
+        // Guardar el estado antes de detener
+        const wasReading = isReadingRef.current;
+        const currentPage = currentPageRef.current;
+
         ttsService.stop();
-        readPage(currentReadingPage);
+
+        // Pequeño delay para evitar race conditions
+        setTimeout(() => {
+          if (wasReading) {
+            isReadingRef.current = true;
+            readPage(currentPage);
+          }
+        }, 100);
       }
     },
-    [isReading, isPaused, currentReadingPage, readPage]
+    [isReading, isPaused, readPage]
   );
 
   // Obtener voces disponibles

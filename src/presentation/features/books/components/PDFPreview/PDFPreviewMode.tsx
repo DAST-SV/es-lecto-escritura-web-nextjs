@@ -10,7 +10,6 @@ import HTMLFlipBook from 'react-pageflip';
 import type { Page } from '@/src/core/domain/types';
 import type { TTSLanguage } from '@/src/infrastructure/services/tts';
 import { PreviewHeader } from './PreviewHeader';
-import { ReaderControls } from './ReaderControls';
 import { ReadingPageIndicator } from './ReadingPageIndicator';
 import { usePreviewControls } from './usePreviewControls';
 import { useBookReader, PageWithText } from '@/src/presentation/hooks/useBookReader';
@@ -176,6 +175,22 @@ export function PDFPreviewMode({
     return null;
   }
 
+  // Preparar props de audio para el header
+  const audioProps = enableTTS && isSupported ? {
+    isReading,
+    isPaused,
+    isSupported,
+    isReady,
+    currentReadingPage,
+    currentRate,
+    onStart: startReading,
+    onPause: pause,
+    onResume: resume,
+    onStop: stop,
+    onRateChange: setReadingRate,
+    currentBookPage,
+  } : undefined;
+
   return (
     <div className="fixed inset-0 bg-slate-950 flex flex-col" style={{ zIndex: 9999 }}>
       <PreviewHeader
@@ -186,6 +201,7 @@ export function PDFPreviewMode({
           stop(); // Detener TTS al cerrar
           onClose();
         }}
+        audioProps={audioProps}
       />
 
       <div className="flex-1 flex items-center justify-center overflow-hidden relative">
@@ -231,25 +247,6 @@ export function PDFPreviewMode({
           </HTMLFlipBook>
         </div>
       </div>
-
-      {/* Controles de lectura TTS */}
-      {enableTTS && (
-        <ReaderControls
-          isReading={isReading}
-          isPaused={isPaused}
-          isSupported={isSupported}
-          isReady={isReady}
-          currentReadingPage={currentReadingPage}
-          totalPages={pages.length}
-          currentRate={currentRate}
-          onStart={startReading}
-          onPause={pause}
-          onResume={resume}
-          onStop={stop}
-          onRateChange={setReadingRate}
-          currentBookPage={currentBookPage}
-        />
-      )}
     </div>
   );
 }

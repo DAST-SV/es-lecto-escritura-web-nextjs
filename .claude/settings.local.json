@@ -13,7 +13,9 @@
       "Bash(ls -la \"C:\\\\Users\\\\hboni\\\\Downloads\\\\es-lecto-escritura-web-nextjs\\\\supabase\\\\schemas\"\" 2>/dev/null || echo \"Directory not found \")",
       "Bash(ls:*)",
       "Bash(curl:*)",
-      "Bash(ping:*)"
+      "Bash(ping:*)",
+      "Bash(dir /s /b \"C:\\\\Users\\\\hboni\\\\Downloads\\\\es-lecto-escritura-web-nextjs\\\\src\\\\app\")",
+      "Bash(findstr:*)"
     ]
   }
 }

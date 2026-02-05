@@ -754,7 +754,8 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
       }
 
       toast.success(isEditMode ? 'Libro actualizado' : 'Libro creado');
-      router.push(`/${locale}/books/${finalBookId}/read`);
+      // Redirigir a la lista de mis libros (no a leer)
+      router.push(`/${locale}/books?new=${finalBookId}`);
 
     } catch (err) {
       logDetailedError('useBookFormMultilang.handleSave', err);

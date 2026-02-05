@@ -427,8 +427,8 @@ export function useBookForm({ bookId }: UseBookFormProps = {}) {
         PDFExtractorService.cleanupBlobUrls(extractedPages);
       }
 
-      // Redireccionar a leer
-      router.push(`/${locale}/books/${finalBookId}/read`);
+      // Redireccionar a la lista de mis libros
+      router.push(`/${locale}/books?new=${finalBookId}`);
 
     } catch (err: any) {
       console.error('❌ Error guardando:', err);
