@@ -49,7 +49,7 @@ BEGIN
     COALESCE(bt.subtitle, bt_fallback.subtitle)::VARCHAR AS subtitle,
     COALESCE(bt.description, bt_fallback.description) AS description,
     COALESCE(bt.summary, bt_fallback.summary) AS summary,
-    b.cover_url,
+    COALESCE(bt.cover_url, bt_fallback.cover_url, b.cover_url) AS cover_url,
     b.difficulty,
     b.status,
     b.estimated_read_time,

@@ -38,8 +38,9 @@ CREATE INDEX IF NOT EXISTS idx_books_created_by ON books.books(created_by) WHERE
 CREATE INDEX IF NOT EXISTS idx_books_view_count ON books.books(view_count DESC) WHERE deleted_at IS NULL AND status = 'published';
 
 COMMENT ON TABLE books.books IS 'Libros - datos base sin traducciones';
-COMMENT ON COLUMN books.books.slug IS 'Identificador único para URLs (generado del título en idioma base)';
+COMMENT ON COLUMN books.books.slug IS 'Identificador unico para URLs (generado del titulo en idioma base)';
+COMMENT ON COLUMN books.books.cover_url IS 'Portada global (LEGACY/fallback). Preferir book_translations.cover_url por idioma';
 COMMENT ON COLUMN books.books.estimated_read_time IS 'Tiempo estimado de lectura en minutos';
-COMMENT ON COLUMN books.books.page_count IS 'Número total de páginas';
+COMMENT ON COLUMN books.books.page_count IS 'Numero total de paginas';
 
 SELECT 'BOOKS: Tabla books creada' AS status;

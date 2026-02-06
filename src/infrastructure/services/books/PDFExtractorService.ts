@@ -152,6 +152,87 @@ export class PDFExtractorService {
   }
 
   /**
+   * Extrae páginas de un PDF a partir de una URL (para modo edición)
+   */
+  static async extractPagesFromUrl(url: string): Promise<PDFExtractionResult> {
+    if (typeof window === 'undefined') {
+      throw new Error('PDFExtractorService solo puede ejecutarse en el cliente');
+    }
+
+    if (!pdfjs) {
+      throw new Error('react-pdf no está disponible');
+    }
+
+    try {
+      console.log('📄 Extrayendo PDF desde URL...');
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Error descargando PDF: ${response.status}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+
+      const numPages = pdf.numPages;
+      console.log(`📊 PDF tiene ${numPages} páginas`);
+
+      const pages: ExtractedPage[] = [];
+      let pageWidth: number | undefined;
+      let pageHeight: number | undefined;
+      let totalTextLength = 0;
+
+      for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 2.0 });
+
+        if (pageNum === 1) {
+          pageWidth = viewport.width;
+          pageHeight = viewport.height;
+        }
+
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        if (!context) {
+          throw new Error('No se pudo crear contexto 2D');
+        }
+
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        await page.render({
+          canvasContext: context,
+          viewport: viewport,
+        }).promise;
+
+        const imageUrl = canvas.toDataURL('image/png');
+        const extractedText = await this.extractTextFromPage(page);
+        totalTextLength += extractedText.length;
+
+        pages.push({
+          id: `page-${pageNum}`,
+          layout: 'ImageFullLayout',
+          title: '',
+          text: '',
+          image: imageUrl,
+          background: null,
+          extractedText,
+        });
+
+        console.log(`✅ Página ${pageNum}/${numPages} extraída (${extractedText.length} chars)`);
+      }
+
+      console.log(`✅ Extracción desde URL completada. Total: ${totalTextLength} caracteres`);
+
+      return { pages, pageWidth, pageHeight, totalTextLength };
+    } catch (error) {
+      console.error('❌ Error extrayendo PDF desde URL:', error);
+      throw new Error('Error al procesar el PDF desde URL');
+    }
+  }
+
+  /**
    * Extrae solo el texto de un PDF (sin imágenes)
    * Útil para procesamiento posterior
    */

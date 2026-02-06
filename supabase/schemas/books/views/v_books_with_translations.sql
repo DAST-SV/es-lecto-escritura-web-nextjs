@@ -24,7 +24,7 @@ SELECT
   c.slug AS category_slug,
   c.icon AS category_icon,
   c.color AS category_color,
-  -- Traducciones del libro en JSON
+  -- Traducciones del libro en JSON (incluye portada y PDF por idioma)
   (
     SELECT jsonb_object_agg(
       bt.language_code,
@@ -33,6 +33,8 @@ SELECT
         'subtitle', bt.subtitle,
         'description', bt.description,
         'summary', bt.summary,
+        'cover_url', bt.cover_url,
+        'pdf_url', bt.pdf_url,
         'is_primary', bt.is_primary
       )
     )

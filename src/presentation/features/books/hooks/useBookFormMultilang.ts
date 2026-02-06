@@ -112,9 +112,8 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
   const [activeTab, setActiveTab] = useState<string>('');
   const [translationsInitialized, setTranslationsInitialized] = useState(false);
 
-  // PDF Preview (para el tab activo)
-  const [extractedPages, setExtractedPages] = useState<Page[]>([]);
-  const [pdfDimensions, setPdfDimensions] = useState<{ width: number; height: number } | null>(null);
+  // PDF Preview per language: { langCode: { pages, dimensions } }
+  const [extractedPagesMap, setExtractedPagesMap] = useState<Record<string, { pages: Page[]; dimensions: { width: number; height: number } | null }>>({});
   const [isExtractingPages, setIsExtractingPages] = useState(false);
   const [pdfError, setPdfError] = useState('');
   const [showPreview, setShowPreview] = useState(false);
@@ -534,6 +533,11 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
   const portadaFile = currentTranslation.coverFile;
   const hasCover = !!portadaPreview || !!portadaFile;
 
+  // PDF preview del idioma activo (from per-language map)
+  const currentPdfData = extractedPagesMap[activeTab];
+  const extractedPages = currentPdfData?.pages || [];
+  const pdfDimensions = currentPdfData?.dimensions || null;
+
   // Personajes del idioma activo
   const characters = currentTranslation.characters;
 
@@ -576,26 +580,30 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
       return;
     }
 
-    updateTranslation(activeTab, 'pdfFile', file);
+    const currentLang = activeTab;
+    updateTranslation(currentLang, 'pdfFile', file);
     setPdfError('');
-    setExtractedPages([]);
 
     // Auto-fill title from filename if empty
     if (!currentTranslation.title.trim()) {
-      updateTranslation(activeTab, 'title', file.name.replace('.pdf', ''));
+      updateTranslation(currentLang, 'title', file.name.replace('.pdf', ''));
     }
 
-    // Extract pages for preview
+    // Extract pages for preview (stored per language)
     setIsExtractingPages(true);
     try {
       const { PDFExtractorService } = await import('@/src/infrastructure/services/books');
       const result = await PDFExtractorService.extractPagesFromPDF(file);
 
-      setExtractedPages(result.pages);
-
-      if (result.pageWidth && result.pageHeight) {
-        setPdfDimensions({ width: result.pageWidth, height: result.pageHeight });
-      }
+      setExtractedPagesMap(prev => ({
+        ...prev,
+        [currentLang]: {
+          pages: result.pages,
+          dimensions: result.pageWidth && result.pageHeight
+            ? { width: result.pageWidth, height: result.pageHeight }
+            : null,
+        }
+      }));
       toast.success('PDF procesado');
     } catch (err) {
       logDetailedError('useBookFormMultilang.handlePDFChange', err);
@@ -605,6 +613,34 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
       setIsExtractingPages(false);
     }
   };
+
+  // Extract pages from existing PDF URL (edit mode)
+  const extractPagesFromExistingPdf = useCallback(async (langCode: string, pdfUrl: string) => {
+    if (!pdfUrl || extractedPagesMap[langCode]?.pages?.length > 0) return;
+
+    setIsExtractingPages(true);
+    try {
+      const { BookPDFService, PDFExtractorService } = await import('@/src/infrastructure/services/books');
+      const signedUrl = await BookPDFService.getSignedUrl(pdfUrl);
+      const result = await PDFExtractorService.extractPagesFromUrl(signedUrl);
+
+      setExtractedPagesMap(prev => ({
+        ...prev,
+        [langCode]: {
+          pages: result.pages,
+          dimensions: result.pageWidth && result.pageHeight
+            ? { width: result.pageWidth, height: result.pageHeight }
+            : null,
+        }
+      }));
+      toast.success('PDF cargado para vista previa');
+    } catch (err) {
+      logDetailedError('useBookFormMultilang.extractPagesFromExistingPdf', err);
+      toast.error('Error cargando vista previa del PDF');
+    } finally {
+      setIsExtractingPages(false);
+    }
+  }, [extractedPagesMap]);
 
   // ============================================
   // VALIDACIÓN
@@ -819,11 +855,13 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
 
       // Nota: Personajes ya se guardaron arriba con cada traducción
 
-      // 7. Cleanup
-      if (extractedPages.length > 0) {
-        const { PDFExtractorService } = await import('@/src/infrastructure/services/books');
-        PDFExtractorService.cleanupBlobUrls(extractedPages);
-      }
+      // 7. Cleanup all extracted pages across languages
+      const { PDFExtractorService } = await import('@/src/infrastructure/services/books');
+      Object.values(extractedPagesMap).forEach(langData => {
+        if (langData.pages.length > 0) {
+          PDFExtractorService.cleanupBlobUrls(langData.pages);
+        }
+      });
 
       toast.success(isEditMode ? 'Libro actualizado' : 'Libro creado');
       // Redirigir a la lista de mis libros (no a leer)
@@ -929,6 +967,7 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
     setPdfError,
     showPreview,
     setShowPreview,
+    extractPagesFromExistingPdf,
 
     // Handlers
     handlePortadaChange,

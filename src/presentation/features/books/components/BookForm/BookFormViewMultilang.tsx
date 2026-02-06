@@ -78,6 +78,7 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
     pdfError,
     showPreview,
     setShowPreview,
+    extractPagesFromExistingPdf,
     handlePortadaChange,
     handlePDFChange,
     handleSave,
@@ -118,7 +119,7 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
     setSelectedLevelId(selectedLevelId === id ? null : id);
   };
 
-  // Preview de PDF
+  // Preview de PDF (uses active language tab for TTS)
   if (showPreview && extractedPages.length > 0 && pdfDimensions) {
     return (
       <PDFPreviewMode
@@ -126,6 +127,7 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
         title={currentTranslation.title}
         pdfDimensions={pdfDimensions}
         onClose={() => setShowPreview(false)}
+        language={activeTab as any}
       />
     );
   }
@@ -370,8 +372,38 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                         <div className="space-y-2">
                           <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg">
                             <p className="text-xs font-medium text-emerald-900">{t('pdf_loaded')}</p>
-                            <p className="text-[10px] text-emerald-700 truncate">{currentPdfUrl}</p>
+                            <p className="text-[10px] text-emerald-700 truncate">
+                              {currentPdfUrl?.startsWith('storage://') ? 'PDF almacenado' : currentPdfUrl}
+                            </p>
                           </div>
+                          {/* Preview button for existing PDF */}
+                          {extractedPages.length > 0 ? (
+                            <button
+                              onClick={() => setShowPreview(true)}
+                              className="w-full px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-md flex items-center justify-center gap-1.5 transition-all"
+                            >
+                              <Eye size={12} />
+                              {t('pdf_preview').replace('{pages}', String(extractedPages.length))}
+                            </button>
+                          ) : currentPdfUrl ? (
+                            <button
+                              onClick={() => extractPagesFromExistingPdf(activeTab, currentPdfUrl)}
+                              disabled={isExtractingPages}
+                              className="w-full px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
+                            >
+                              {isExtractingPages ? (
+                                <>
+                                  <Loader2 size={12} className="animate-spin" />
+                                  {t('pdf_processing') || 'Procesando...'}
+                                </>
+                              ) : (
+                                <>
+                                  <Eye size={12} />
+                                  {t('pdf_load_preview') || 'Cargar vista previa'}
+                                </>
+                              )}
+                            </button>
+                          ) : null}
                           <label className="block cursor-pointer">
                             <div className="border-2 border-dashed border-gray-300 rounded-lg p-2 flex items-center justify-center hover:border-orange-400 hover:bg-orange-50/50 transition-all">
                               <Upload size={14} className="text-gray-400 mr-1" />

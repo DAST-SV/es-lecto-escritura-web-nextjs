@@ -48,7 +48,7 @@ BEGIN
     b.slug,
     COALESCE(bt.title, bt_fallback.title, 'Sin título')::VARCHAR AS title,
     COALESCE(bt.summary, bt_fallback.summary) AS summary,
-    b.cover_url,
+    COALESCE(bt.cover_url, bt_fallback.cover_url, b.cover_url) AS cover_url,
     b.difficulty,
     c.slug::VARCHAR AS category_slug,
     COALESCE(ct.name, ct_fallback.name, c.slug)::VARCHAR AS category_name,

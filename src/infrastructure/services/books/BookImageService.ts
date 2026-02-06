@@ -5,7 +5,7 @@
 
 import { createClient } from '@/src/infrastructure/config/supabase.config';
 
-const BUCKET_NAME = 'book-images';
+const BUCKET_NAME = 'book-covers';
 
 export interface UploadResult {
   success: boolean;

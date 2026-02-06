@@ -72,6 +72,8 @@ export function useBookReader({
   const pagesRef = useRef(pages);
   const currentPageRef = useRef(currentReadingPage);
   const isReadingRef = useRef(isReading);
+  const currentRateRef = useRef(currentRate);
+  const languageRef = useRef(language);
 
   // Actualizar refs cuando cambian los valores
   useEffect(() => {
@@ -85,6 +87,14 @@ export function useBookReader({
   useEffect(() => {
     isReadingRef.current = isReading;
   }, [isReading]);
+
+  useEffect(() => {
+    currentRateRef.current = currentRate;
+  }, [currentRate]);
+
+  useEffect(() => {
+    languageRef.current = language;
+  }, [language]);
 
   // Inicializar TTS
   useEffect(() => {
@@ -123,7 +133,6 @@ export function useBookReader({
 
       if (!text || text.trim().length === 0) {
         console.log(`📖 Página ${pageIndex + 1} sin texto, pasando a la siguiente...`);
-        // Si no hay texto, pasar a la siguiente página después de un breve delay
         setTimeout(() => {
           if (isReadingRef.current) {
             const nextPage = pageIndex + 1;
@@ -135,13 +144,13 @@ export function useBookReader({
         return;
       }
 
-      console.log(`📖 Leyendo página ${pageIndex + 1}/${currentPages.length}`);
+      console.log(`📖 Leyendo página ${pageIndex + 1}/${currentPages.length} (lang=${languageRef.current}, rate=${currentRateRef.current})`);
 
       ttsService.speak(
         text,
         {
-          language,
-          rate: currentRate,
+          language: languageRef.current,
+          rate: currentRateRef.current,
         },
         {
           onStart: () => {
@@ -152,26 +161,22 @@ export function useBookReader({
 
             if (!isReadingRef.current) return;
 
-            // Pasar a la siguiente página
             const nextPage = pageIndex + 1;
 
             if (nextPage < currentPages.length) {
-              // Pequeño delay antes de cambiar de página para dar tiempo a la animación
               setTimeout(() => {
                 if (isReadingRef.current) {
                   setCurrentReadingPage(nextPage);
                   onPageChange?.(nextPage);
 
-                  // Esperar a que la animación de flip termine antes de leer
                   setTimeout(() => {
                     if (isReadingRef.current) {
                       readPage(nextPage);
                     }
-                  }, 1200); // Tiempo de animación del flip
+                  }, 1200);
                 }
               }, 300);
             } else {
-              // Fin del libro
               setIsReading(false);
               setIsPaused(false);
               onReadingComplete?.();
@@ -186,7 +191,7 @@ export function useBookReader({
         }
       );
     },
-    [language, currentRate, onPageChange, onReadingComplete, onError]
+    [onPageChange, onReadingComplete, onError]
   );
 
   // Iniciar lectura
@@ -243,26 +248,33 @@ export function useBookReader({
     (rate: number) => {
       const clampedRate = Math.max(0.5, Math.min(2.0, rate));
       setCurrentRate(clampedRate);
+      currentRateRef.current = clampedRate;
 
-      // Si está leyendo, reiniciar con la nueva velocidad después de un pequeño delay
-      if (isReading && !isPaused) {
-        // Guardar el estado antes de detener
-        const wasReading = isReadingRef.current;
+      // Si está leyendo, reiniciar con la nueva velocidad
+      if (isReadingRef.current && !isPaused) {
         const currentPage = currentPageRef.current;
 
         ttsService.stop();
 
-        // Pequeño delay para evitar race conditions
         setTimeout(() => {
-          if (wasReading) {
-            isReadingRef.current = true;
+          if (isReadingRef.current) {
             readPage(currentPage);
           }
         }, 100);
       }
     },
-    [isReading, isPaused, readPage]
+    [isPaused, readPage]
   );
+
+  // Stop TTS when language changes while reading
+  useEffect(() => {
+    if (isReadingRef.current) {
+      ttsService.stop();
+      setIsReading(false);
+      setIsPaused(false);
+      isReadingRef.current = false;
+    }
+  }, [language]);
 
   // Obtener voces disponibles
   const availableVoices = isReady ? ttsService.getVoicesForLanguage(language) : [];

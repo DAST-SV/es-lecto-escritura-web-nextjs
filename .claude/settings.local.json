@@ -15,7 +15,8 @@
       "Bash(curl:*)",
       "Bash(ping:*)",
       "Bash(dir /s /b \"C:\\\\Users\\\\hboni\\\\Downloads\\\\es-lecto-escritura-web-nextjs\\\\src\\\\app\")",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(npx next build:*)"
     ]
   }
 }
