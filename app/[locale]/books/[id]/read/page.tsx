@@ -160,9 +160,14 @@ export default function ReadBookPage() {
           setBookTitle(title || libro.slug || noTitleText);
         }
 
-        console.log('Descargando PDF:', pdfUrl);
+        console.log('PDF URL almacenada:', pdfUrl);
 
-        const response = await fetch(pdfUrl);
+        // Generar signed URL (el bucket book-pdfs es privado)
+        const { BookPDFService } = await import('@/src/infrastructure/services/books');
+        const signedUrl = await BookPDFService.getSignedUrl(pdfUrl);
+        console.log('Descargando PDF con signed URL');
+
+        const response = await fetch(signedUrl);
 
         if (!response.ok) {
           throw new Error(`Error descargando PDF: ${response.status}`);

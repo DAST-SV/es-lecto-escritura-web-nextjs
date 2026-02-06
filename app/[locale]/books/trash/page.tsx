@@ -108,7 +108,7 @@ export default function TrashPage() {
       const { data: booksData, error: booksError } = await supabase
         .schema('books')
         .from('books')
-        .select('id, cover_url, deleted_at')
+        .select('id, deleted_at')
         .eq('created_by', user.id)
         .not('deleted_at', 'is', null)
         .order('deleted_at', { ascending: false });
@@ -121,24 +121,25 @@ export default function TrashPage() {
         return;
       }
 
-      // Cargar traducciones para cada libro (preferir idioma actual, fallback a primaria)
+      // Cargar traducciones para cada libro (incluyendo cover_url por idioma)
       const bookIds = booksData.map(b => b.id);
-      const { data: translations } = await supabase
+      const { data: translationsData } = await supabase
         .schema('books')
         .from('book_translations')
-        .select('book_id, title, description, language_code, is_primary')
+        .select('book_id, title, description, cover_url, language_code, is_primary')
         .in('book_id', bookIds);
 
-      // Mapear traducciones por book_id
-      const transMap = new Map<string, BookTranslation>();
-      translations?.forEach(t => {
-        const existing = transMap.get(t.book_id);
-        // Preferir idioma actual, luego primario
-        if (!existing || t.language_code === locale || (t.is_primary && existing && !transMap.has(t.book_id + '_locale'))) {
-          transMap.set(t.book_id, { title: t.title, description: t.description });
-          if (t.language_code === locale) {
-            transMap.set(t.book_id + '_locale', { title: t.title, description: t.description });
-          }
+      // Mapear traducciones por book_id: preferir idioma actual, fallback a primaria
+      const transMap = new Map<string, BookTranslation & { cover_url: string | null }>();
+      const localeMatched = new Set<string>();
+      translationsData?.forEach(tr => {
+        if (tr.language_code === locale) {
+          transMap.set(tr.book_id, { title: tr.title, description: tr.description, cover_url: tr.cover_url });
+          localeMatched.add(tr.book_id);
+        } else if (tr.is_primary && !localeMatched.has(tr.book_id)) {
+          transMap.set(tr.book_id, { title: tr.title, description: tr.description, cover_url: tr.cover_url });
+        } else if (!transMap.has(tr.book_id)) {
+          transMap.set(tr.book_id, { title: tr.title, description: tr.description, cover_url: tr.cover_url });
         }
       });
 
@@ -149,7 +150,7 @@ export default function TrashPage() {
           id: book.id,
           title: trans?.title || 'Sin título',
           description: trans?.description || null,
-          cover_url: book.cover_url,
+          cover_url: trans?.cover_url || null,
           deleted_at: book.deleted_at!,
         };
       });
@@ -207,7 +208,7 @@ export default function TrashPage() {
     }
 
     if (errorCount > 0) {
-      toast.error(`${toastErrorRestoreText} ${errorCount} ${errorCount === 1 ? 'libro' : 'libros'}`);
+      toast.error(`${toastErrorRestoreText} ${errorCount} ${errorCount === 1 ? countSingleText : countPluralText}`);
     }
 
     setIsProcessing(false);
@@ -235,7 +236,7 @@ export default function TrashPage() {
     }
 
     if (errorCount > 0) {
-      toast.error(`${toastErrorRestoreText} ${errorCount} ${errorCount === 1 ? 'libro' : 'libros'}`);
+      toast.error(`${toastErrorRestoreText} ${errorCount} ${errorCount === 1 ? countSingleText : countPluralText}`);
     }
 
     setIsProcessing(false);
@@ -285,7 +286,7 @@ export default function TrashPage() {
     }
 
     if (errorCount > 0) {
-      toast.error(`${toastErrorDeleteText} ${errorCount} ${errorCount === 1 ? 'libro' : 'libros'}`);
+      toast.error(`${toastErrorDeleteText} ${errorCount} ${errorCount === 1 ? countSingleText : countPluralText}`);
     }
 
     setShowEmptyTrashModal(false);
@@ -419,7 +420,7 @@ export default function TrashPage() {
                   className="text-amber-800 font-bold"
                   style={{ fontFamily: 'Comic Sans MS, cursive' }}
                 >
-                  <strong>Nota:</strong> {noteText}
+                  {noteText}
                 </p>
               </div>
             )}

@@ -63,11 +63,11 @@ interface BookItem {
   level_name?: string;
 }
 
-const STATUS_CONFIG: Record<BookStatus, { label: string; color: string; icon: React.ReactNode; bg: string }> = {
-  draft: { label: 'Borrador', color: 'text-slate-600', icon: <FileText size={14} />, bg: 'bg-slate-100' },
-  pending: { label: 'En revisión', color: 'text-amber-600', icon: <Clock size={14} />, bg: 'bg-amber-100' },
-  published: { label: 'Publicado', color: 'text-emerald-600', icon: <Globe size={14} />, bg: 'bg-emerald-100' },
-  archived: { label: 'Archivado', color: 'text-gray-500', icon: <Archive size={14} />, bg: 'bg-gray-100' },
+const STATUS_STYLES: Record<BookStatus, { color: string; icon: React.ReactNode; bg: string }> = {
+  draft: { color: 'text-slate-600', icon: <FileText size={14} />, bg: 'bg-slate-100' },
+  pending: { color: 'text-amber-600', icon: <Clock size={14} />, bg: 'bg-amber-100' },
+  published: { color: 'text-emerald-600', icon: <Globe size={14} />, bg: 'bg-emerald-100' },
+  archived: { color: 'text-gray-500', icon: <Archive size={14} />, bg: 'bg-gray-100' },
 };
 
 export default function BooksListPage() {
@@ -97,6 +97,48 @@ export default function BooksListPage() {
   const loadingText = translationsLoading ? 'Cargando tus libros...' : t('loading');
   const titleText = translationsLoading ? 'Mis Libros' : t('title');
   const createBookText = translationsLoading ? 'Nuevo Libro' : t('create_book');
+  const trashText = translationsLoading ? 'Papelera' : t('trash');
+  const totalText = translationsLoading ? 'total' : t('stats_total');
+  const draftsText = translationsLoading ? 'borradores' : t('stats_drafts');
+  const publishedText = translationsLoading ? 'publicados' : t('stats_published');
+  const viewsText = translationsLoading ? 'vistas' : t('stats_views');
+  const searchPlaceholder = translationsLoading ? 'Buscar por título...' : t('search_placeholder');
+  const filterAllText = translationsLoading ? 'Todos' : t('filter_all');
+  const filterDraftsText = translationsLoading ? 'Borradores' : t('filter_drafts');
+  const filterPublishedText = translationsLoading ? 'Publicados' : t('filter_published');
+  const noBooksTitle = translationsLoading ? 'No tienes libros aún' : t('no_books_title');
+  const noBooksSubtitle = translationsLoading ? 'Comienza creando tu primer libro' : t('no_books_subtitle');
+  const noResultsTitle = translationsLoading ? 'No se encontraron libros' : t('no_results_title');
+  const noResultsSubtitle = translationsLoading ? 'Intenta con otros filtros' : t('no_results_subtitle');
+  const createFirstText = translationsLoading ? 'Crear mi primer libro' : t('create_first');
+  const readText = translationsLoading ? 'Leer' : t('btn_read');
+  const editText = translationsLoading ? 'Editar' : t('btn_edit');
+  const publishText = translationsLoading ? 'Publicar' : t('btn_publish');
+  const unpublishText = translationsLoading ? 'Despublicar' : t('btn_unpublish');
+  const statsText = translationsLoading ? 'Estadísticas' : t('btn_stats');
+  const moveToTrashText = translationsLoading ? 'Mover a papelera' : t('btn_move_to_trash');
+  const pagesText = translationsLoading ? 'págs' : t('pages_short');
+  const publishedBadgeText = translationsLoading ? 'Publicado' : t('published_badge');
+  const deleteModalTitle = translationsLoading ? '¿Mover a papelera?' : t('delete_modal_title');
+  const deleteModalMessage = translationsLoading ? 'se moverá a la papelera. Podrás restaurarlo durante 30 días.' : t('delete_modal_message');
+  const cancelText = translationsLoading ? 'Cancelar' : t('cancel');
+  const movingText = translationsLoading ? 'Moviendo...' : t('moving');
+  const movedToTrashToast = translationsLoading ? 'Libro movido a la papelera' : t('toast_moved_to_trash');
+  const errorLoadingToast = translationsLoading ? 'Error al cargar los libros' : t('toast_error_loading');
+  const statusDraftLabel = translationsLoading ? 'Borrador' : t('status_draft');
+  const statusPendingLabel = translationsLoading ? 'En revisión' : t('status_pending');
+  const statusPublishedLabel = translationsLoading ? 'Publicado' : t('status_published');
+  const statusArchivedLabel = translationsLoading ? 'Archivado' : t('status_archived');
+  const publishedToast = translationsLoading ? 'Libro publicado' : t('toast_published');
+  const unpublishedToast = translationsLoading ? 'Libro despublicado' : t('toast_unpublished');
+  const errorStatusToast = translationsLoading ? 'Error al cambiar estado' : t('toast_error_status');
+
+  const statusLabels: Record<BookStatus, string> = {
+    draft: statusDraftLabel,
+    pending: statusPendingLabel,
+    published: statusPublishedLabel,
+    archived: statusArchivedLabel,
+  };
 
   // Cargar libros del escritor
   useEffect(() => {
@@ -145,7 +187,7 @@ export default function BooksListPage() {
           const { data: trans } = await supabase
             .schema('books')
             .from('book_translations')
-            .select('book_id, title, description, cover_url, is_primary')
+            .select('book_id, title, description, cover_url, language_code, is_primary')
             .in('book_id', bookIds);
 
           translationsData = trans || [];
@@ -153,17 +195,22 @@ export default function BooksListPage() {
 
         // Mapear traducciones: preferir idioma actual, fallback a primaria
         const transMap = new Map<string, { title: string; description: string; cover_url: string | null }>();
+        const localeMatched = new Set<string>();
         translationsData.forEach(t => {
-          const existing = transMap.get(t.book_id);
-          // Si es el idioma actual o no hay existente, usar esta traducción
-          if (!existing || t.language_code === locale) {
+          if (t.language_code === locale) {
             transMap.set(t.book_id, {
               title: t.title,
               description: t.description,
               cover_url: t.cover_url,
             });
-          } else if (t.is_primary && !existing) {
-            // Si es primaria y no hay existente, usarla como fallback
+            localeMatched.add(t.book_id);
+          } else if (t.is_primary && !localeMatched.has(t.book_id)) {
+            transMap.set(t.book_id, {
+              title: t.title,
+              description: t.description,
+              cover_url: t.cover_url,
+            });
+          } else if (!transMap.has(t.book_id)) {
             transMap.set(t.book_id, {
               title: t.title,
               description: t.description,
@@ -206,7 +253,7 @@ export default function BooksListPage() {
         setIsLoading(false);
       } catch (error) {
         console.error('Error cargando libros:', error);
-        toast.error('Error al cargar los libros');
+        toast.error(errorLoadingToast);
         setIsLoading(false);
       }
     }
@@ -292,7 +339,7 @@ export default function BooksListPage() {
       setBooks(prev => prev.filter(b => b.id !== bookToDelete.id));
       setTrashCount(prev => prev + 1);
 
-      toast.success('Libro movido a la papelera');
+      toast.success(movedToTrashToast);
       setShowDeleteModal(false);
       setBookToDelete(null);
     } catch (error: any) {
@@ -330,10 +377,10 @@ export default function BooksListPage() {
           : b
       ));
 
-      toast.success(newStatus === 'published' ? 'Libro publicado' : 'Libro despublicado');
+      toast.success(newStatus === 'published' ? publishedToast : unpublishedToast);
     } catch (error: any) {
       console.error('Error actualizando estado:', error);
-      toast.error('Error al cambiar estado');
+      toast.error(errorStatusToast);
     } finally {
       setIsPublishing(null);
       setActiveMenuId(null);
@@ -384,19 +431,19 @@ export default function BooksListPage() {
                 <div className="flex flex-wrap gap-4 mt-3 text-sm" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
                   <span className="flex items-center gap-1 text-blue-600">
                     <FileText size={14} />
-                    {stats.total} total
+                    {stats.total} {totalText}
                   </span>
                   <span className="flex items-center gap-1 text-slate-500">
                     <Clock size={14} />
-                    {stats.draft} borradores
+                    {stats.draft} {draftsText}
                   </span>
                   <span className="flex items-center gap-1 text-emerald-600">
                     <Globe size={14} />
-                    {stats.published} publicados
+                    {stats.published} {publishedText}
                   </span>
                   <span className="flex items-center gap-1 text-purple-600">
                     <Eye size={14} />
-                    {stats.totalViews} vistas
+                    {stats.totalViews} {viewsText}
                   </span>
                 </div>
               </div>
@@ -409,7 +456,7 @@ export default function BooksListPage() {
                   style={{ fontFamily: 'Comic Sans MS, cursive' }}
                 >
                   <Archive size={20} />
-                  Papelera
+                  {trashText}
                   {trashCount > 0 && (
                     <span className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg animate-pulse">
                       {trashCount}
@@ -437,7 +484,7 @@ export default function BooksListPage() {
                 </div>
                 <input
                   type="text"
-                  placeholder="Buscar por título..."
+                  placeholder={searchPlaceholder}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-16 pr-4 py-4 bg-white border-4 border-yellow-300 rounded-full focus:outline-none focus:ring-4 focus:ring-yellow-200 text-blue-700 font-medium shadow-lg"
@@ -463,7 +510,7 @@ export default function BooksListPage() {
                       : 'text-gray-500 hover:bg-gray-100'
                   }`}
                 >
-                  Todos
+                  {filterAllText}
                 </button>
                 <button
                   onClick={() => setStatusFilter('draft')}
@@ -473,7 +520,7 @@ export default function BooksListPage() {
                       : 'text-gray-500 hover:bg-gray-100'
                   }`}
                 >
-                  Borradores
+                  {filterDraftsText}
                 </button>
                 <button
                   onClick={() => setStatusFilter('published')}
@@ -483,7 +530,7 @@ export default function BooksListPage() {
                       : 'text-gray-500 hover:bg-gray-100'
                   }`}
                 >
-                  Publicados
+                  {filterPublishedText}
                 </button>
               </div>
 
@@ -521,12 +568,12 @@ export default function BooksListPage() {
                   <Book size={48} className="text-yellow-500" />
                 </div>
                 <h3 className="text-2xl font-black text-blue-700 mb-2" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
-                  {searchQuery || statusFilter !== 'all' ? 'No se encontraron libros' : 'No tienes libros aún'}
+                  {searchQuery || statusFilter !== 'all' ? noResultsTitle : noBooksTitle}
                 </h3>
                 <p className="text-blue-600 mb-6 font-medium" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
                   {searchQuery || statusFilter !== 'all'
-                    ? 'Intenta con otros filtros'
-                    : 'Comienza creando tu primer libro'}
+                    ? noResultsSubtitle
+                    : noBooksSubtitle}
                 </p>
                 {!searchQuery && statusFilter === 'all' && (
                   <button
@@ -534,7 +581,7 @@ export default function BooksListPage() {
                     className="px-8 py-3.5 bg-yellow-300 text-blue-700 font-black rounded-full shadow-xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-105 border-2 border-white"
                     style={{ fontFamily: 'Comic Sans MS, cursive' }}
                   >
-                    Crear mi primer libro
+                    {createFirstText}
                   </button>
                 )}
               </div>
@@ -567,9 +614,9 @@ export default function BooksListPage() {
                       </div>
                     )}
                     {/* Badge de estado */}
-                    <div className={`absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${STATUS_CONFIG[book.status].bg} ${STATUS_CONFIG[book.status].color}`}>
-                      {STATUS_CONFIG[book.status].icon}
-                      {STATUS_CONFIG[book.status].label}
+                    <div className={`absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${STATUS_STYLES[book.status].bg} ${STATUS_STYLES[book.status].color}`}>
+                      {STATUS_STYLES[book.status].icon}
+                      {statusLabels[book.status]}
                     </div>
                     {book.is_premium && (
                       <div className="absolute top-2 right-2 px-2 py-1 bg-amber-500 text-white rounded-full text-xs font-bold">
@@ -595,17 +642,17 @@ export default function BooksListPage() {
                       {book.page_count > 0 && (
                         <span className="flex items-center gap-1">
                           <FileText size={12} />
-                          {book.page_count} págs
+                          {book.page_count} {pagesText}
                         </span>
                       )}
                       <span className="flex items-center gap-1">
                         <Eye size={12} />
-                        {book.view_count} vistas
+                        {book.view_count} {viewsText}
                       </span>
                       {book.published_at && (
                         <span className="flex items-center gap-1">
                           <CheckCircle size={12} className="text-emerald-500" />
-                          Publicado
+                          {publishedBadgeText}
                         </span>
                       )}
                     </div>
@@ -618,13 +665,13 @@ export default function BooksListPage() {
                         style={{ fontFamily: 'Comic Sans MS, cursive' }}
                       >
                         <Eye size={16} />
-                        Leer
+                        {readText}
                       </button>
 
                       <button
                         onClick={() => handleEdit(book.id)}
                         className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-all duration-300 hover:scale-105"
-                        title="Editar"
+                        title={editText}
                       >
                         <Edit size={16} />
                       </button>
@@ -664,7 +711,7 @@ export default function BooksListPage() {
                                 ) : (
                                   <Send size={14} />
                                 )}
-                                {book.status === 'published' ? 'Despublicar' : 'Publicar'}
+                                {book.status === 'published' ? unpublishText : publishText}
                               </button>
                               <button
                                 onClick={(e) => {
@@ -675,7 +722,7 @@ export default function BooksListPage() {
                                 className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
                               >
                                 <BarChart2 size={14} />
-                                Estadísticas
+                                {statsText}
                               </button>
                               <hr className="my-1" />
                               <button
@@ -686,7 +733,7 @@ export default function BooksListPage() {
                                 className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
                               >
                                 <Trash2 size={14} />
-                                Mover a papelera
+                                {moveToTrashText}
                               </button>
                             </div>
                           </>
@@ -712,10 +759,10 @@ export default function BooksListPage() {
 
               <div className="flex-1">
                 <h3 className="text-xl font-black text-blue-700 mb-2" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
-                  ¿Mover a papelera?
+                  {deleteModalTitle}
                 </h3>
                 <p className="text-blue-600 text-sm" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
-                  "<strong>{bookToDelete.title}</strong>" se moverá a la papelera. Podrás restaurarlo durante 30 días.
+                  "<strong>{bookToDelete.title}</strong>" {deleteModalMessage}
                 </p>
               </div>
 
@@ -735,7 +782,7 @@ export default function BooksListPage() {
                 className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full font-bold transition-colors disabled:opacity-50"
                 style={{ fontFamily: 'Comic Sans MS, cursive' }}
               >
-                Cancelar
+                {cancelText}
               </button>
 
               <button
@@ -747,12 +794,12 @@ export default function BooksListPage() {
                 {isDeleting ? (
                   <>
                     <Loader2 size={16} className="animate-spin" />
-                    Moviendo...
+                    {movingText}
                   </>
                 ) : (
                   <>
                     <Archive size={16} />
-                    Mover a papelera
+                    {moveToTrashText}
                   </>
                 )}
               </button>

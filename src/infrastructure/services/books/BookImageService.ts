@@ -56,7 +56,7 @@ export class BookImageService {
     file: Blob | File,
     userId: string,
     bookId: string,
-    imageType: 'portada' | 'pagina' | 'fondo' | 'card-background',
+    imageType: 'portada' | 'pagina' | 'fondo' | 'card-background' | string,
     pageNumber?: number
   ): Promise<UploadResult> {
     try {
@@ -65,32 +65,29 @@ export class BookImageService {
       // Generar nombre único
       const timestamp = Date.now();
       const randomStr = Math.random().toString(36).substring(2, 8);
-      const extension = file instanceof File 
+      const extension = file instanceof File
         ? file.name.split('.').pop()?.toLowerCase() || 'jpg'
         : 'jpg';
-      
+
       let fileName: string;
-      
+
       // Estructura de carpetas:
       // book-images/{userId}/{bookId}/covers/
       // book-images/{userId}/{bookId}/pages/
       // book-images/{userId}/{bookId}/backgrounds/
-      
-      switch (imageType) {
-        case 'portada':
-          fileName = `${userId}/${bookId}/covers/cover_${timestamp}_${randomStr}.${extension}`;
-          break;
-        case 'card-background':
-          fileName = `${userId}/${bookId}/covers/card_bg_${timestamp}_${randomStr}.${extension}`;
-          break;
-        case 'pagina':
-          fileName = `${userId}/${bookId}/pages/page_${pageNumber || 0}_${timestamp}_${randomStr}.${extension}`;
-          break;
-        case 'fondo':
-          fileName = `${userId}/${bookId}/backgrounds/bg_${pageNumber || 0}_${timestamp}_${randomStr}.${extension}`;
-          break;
-        default:
-          fileName = `${userId}/${bookId}/misc/misc_${timestamp}_${randomStr}.${extension}`;
+
+      // Portada por idioma: portada-es, portada-en, etc.
+      if (imageType === 'portada' || imageType.startsWith('portada-')) {
+        const langSuffix = imageType.includes('-') ? `_${imageType.split('-')[1]}` : '';
+        fileName = `${userId}/${bookId}/covers/cover${langSuffix}_${timestamp}_${randomStr}.${extension}`;
+      } else if (imageType === 'card-background') {
+        fileName = `${userId}/${bookId}/covers/card_bg_${timestamp}_${randomStr}.${extension}`;
+      } else if (imageType === 'pagina') {
+        fileName = `${userId}/${bookId}/pages/page_${pageNumber || 0}_${timestamp}_${randomStr}.${extension}`;
+      } else if (imageType === 'fondo') {
+        fileName = `${userId}/${bookId}/backgrounds/bg_${pageNumber || 0}_${timestamp}_${randomStr}.${extension}`;
+      } else {
+        fileName = `${userId}/${bookId}/misc/misc_${timestamp}_${randomStr}.${extension}`;
       }
 
       console.log(`📤 Subiendo imagen: ${fileName} (${(file.size / 1024).toFixed(1)}KB)`);

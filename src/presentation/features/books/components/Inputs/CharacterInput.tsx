@@ -20,20 +20,37 @@ interface CharacterInputProps {
   onChange: (characters: BookCharacter[]) => void;
   label?: string;
   maxCharacters?: number;
+  roleMainLabel?: string;
+  roleSecondaryLabel?: string;
+  roleSupportingLabel?: string;
+  placeholderText?: string;
+  maxReachedText?: string;
+  hintText?: string;
 }
 
-const roleLabels: Record<string, { es: string; color: string }> = {
-  main: { es: 'Principal', color: 'bg-amber-100 text-amber-800' },
-  secondary: { es: 'Secundario', color: 'bg-sky-100 text-sky-800' },
-  supporting: { es: 'De apoyo', color: 'bg-gray-100 text-gray-700' },
+const roleColors: Record<string, string> = {
+  main: 'bg-amber-100 text-amber-800',
+  secondary: 'bg-sky-100 text-sky-800',
+  supporting: 'bg-gray-100 text-gray-700',
 };
 
 export function CharacterInput({
   characters,
   onChange,
   label = 'Personajes',
-  maxCharacters = 20
+  maxCharacters = 20,
+  roleMainLabel = 'Principal',
+  roleSecondaryLabel = 'Secundario',
+  roleSupportingLabel = 'De apoyo',
+  placeholderText = 'Nombre del personaje...',
+  maxReachedText = 'Máximo de personajes alcanzado',
+  hintText = 'Agrega los personajes principales de tu historia',
 }: CharacterInputProps) {
+  const roleLabelsMap: Record<string, string> = {
+    main: roleMainLabel,
+    secondary: roleSecondaryLabel,
+    supporting: roleSupportingLabel,
+  };
   const [newName, setNewName] = useState('');
   const [newRole, setNewRole] = useState<'main' | 'secondary' | 'supporting'>('main');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -172,11 +189,11 @@ export function CharacterInput({
               <select
                 value={char.role}
                 onChange={(e) => handleChangeRole(index, e.target.value as 'main' | 'secondary' | 'supporting')}
-                className={`text-[10px] px-1.5 py-0.5 rounded border-0 cursor-pointer ${roleLabels[char.role].color}`}
+                className={`text-[10px] px-1.5 py-0.5 rounded border-0 cursor-pointer ${roleColors[char.role]}`}
               >
-                <option value="main">Principal</option>
-                <option value="secondary">Secundario</option>
-                <option value="supporting">De apoyo</option>
+                <option value="main">{roleMainLabel}</option>
+                <option value="secondary">{roleSecondaryLabel}</option>
+                <option value="supporting">{roleSupportingLabel}</option>
               </select>
 
               {/* Botón eliminar */}
@@ -202,7 +219,7 @@ export function CharacterInput({
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Nombre del personaje..."
+              placeholder={placeholderText}
               className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-300 rounded-md focus:border-violet-400 focus:ring-1 focus:ring-violet-200 focus:outline-none transition-all"
             />
           </div>
@@ -212,16 +229,16 @@ export function CharacterInput({
             onChange={(e) => setNewRole(e.target.value as 'main' | 'secondary' | 'supporting')}
             className="text-[10px] px-2 py-1.5 border border-gray-300 rounded-md focus:border-violet-400 focus:outline-none"
           >
-            <option value="main">Principal</option>
-            <option value="secondary">Secundario</option>
-            <option value="supporting">De apoyo</option>
+            <option value="main">{roleMainLabel}</option>
+            <option value="secondary">{roleSecondaryLabel}</option>
+            <option value="supporting">{roleSupportingLabel}</option>
           </select>
 
           <button
             onClick={handleAdd}
             disabled={!newName.trim()}
             className="p-1.5 bg-violet-500 hover:bg-violet-600 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Agregar personaje"
+            title="+"
           >
             <Plus size={14} />
           </button>
@@ -231,14 +248,14 @@ export function CharacterInput({
       {/* Mensaje cuando está lleno */}
       {characters.length >= maxCharacters && (
         <p className="text-[10px] text-gray-500 text-center mt-2">
-          Máximo de personajes alcanzado
+          {maxReachedText}
         </p>
       )}
 
       {/* Hint */}
       {characters.length === 0 && (
         <p className="text-[10px] text-gray-400 text-center mt-2">
-          Agrega los personajes principales de tu historia
+          {hintText}
         </p>
       )}
     </div>

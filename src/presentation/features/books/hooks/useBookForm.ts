@@ -193,7 +193,9 @@ export function useBookForm({ bookId }: UseBookFormProps = {}) {
       if (book.pdf_url) {
         setIsExtractingPages(true);
         try {
-          const response = await fetch(book.pdf_url);
+          const { BookPDFService } = await import('@/src/infrastructure/services/books');
+          const signedPdfUrl = await BookPDFService.getSignedUrl(book.pdf_url);
+          const response = await fetch(signedPdfUrl);
           const blob = await response.blob();
           const file = new File([blob], 'libro.pdf', { type: 'application/pdf' });
 

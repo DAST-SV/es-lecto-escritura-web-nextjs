@@ -433,6 +433,12 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                       onChange={setCharacters}
                       label={`${t('field_characters') || 'Personajes'} (${activeLanguages.find(l => l.code === activeTab)?.name || activeTab})`}
                       maxCharacters={20}
+                      roleMainLabel={t('role_main') || 'Principal'}
+                      roleSecondaryLabel={t('role_secondary') || 'Secundario'}
+                      roleSupportingLabel={t('role_supporting') || 'De apoyo'}
+                      placeholderText={t('character_placeholder') || 'Nombre del personaje...'}
+                      maxReachedText={t('character_max_reached') || 'Máximo de personajes alcanzado'}
+                      hintText={t('character_hint') || 'Agrega los personajes principales de tu historia'}
                     />
                   </div>
                 )}
