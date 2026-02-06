@@ -478,6 +478,12 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
         setIsLoadingBook(false);
         toast.success('Libro cargado');
 
+        // Pre-load PDF pages in background for the active tab
+        const activeTransData = transState[activeLanguages[0]?.code];
+        if (activeTransData?.pdfUrl) {
+          preloadPdfInBackground(activeLanguages[0].code, activeTransData.pdfUrl);
+        }
+
       } catch (err) {
         logDetailedError('useBookFormMultilang.loadBook', err);
         setError(getUserFriendlyError(err, 'Error al cargar el libro'));
@@ -614,7 +620,7 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
     }
   };
 
-  // Extract pages from existing PDF URL (edit mode)
+  // Extract pages from existing PDF URL (edit mode) - user-triggered with loading indicator
   const extractPagesFromExistingPdf = useCallback(async (langCode: string, pdfUrl: string) => {
     if (!pdfUrl || extractedPagesMap[langCode]?.pages?.length > 0) return;
 
@@ -639,6 +645,36 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
       toast.error('Error cargando vista previa del PDF');
     } finally {
       setIsExtractingPages(false);
+    }
+  }, [extractedPagesMap]);
+
+  // Pre-load PDF in background (no loading indicator, silent)
+  const preloadPdfInBackground = useCallback(async (langCode: string, pdfUrl: string) => {
+    if (!pdfUrl || extractedPagesMap[langCode]?.pages?.length > 0) return;
+
+    try {
+      console.log(`🔄 Pre-cargando PDF en background para ${langCode}...`);
+      const { BookPDFService, PDFExtractorService } = await import('@/src/infrastructure/services/books');
+      const signedUrl = await BookPDFService.getSignedUrl(pdfUrl);
+      const result = await PDFExtractorService.extractPagesFromUrl(signedUrl);
+
+      setExtractedPagesMap(prev => {
+        // Don't overwrite if user already loaded manually
+        if (prev[langCode]?.pages?.length > 0) return prev;
+        return {
+          ...prev,
+          [langCode]: {
+            pages: result.pages,
+            dimensions: result.pageWidth && result.pageHeight
+              ? { width: result.pageWidth, height: result.pageHeight }
+              : null,
+          }
+        };
+      });
+      console.log(`✅ PDF pre-cargado para ${langCode}`);
+    } catch (err) {
+      console.warn(`⚠️ Pre-carga de PDF falló para ${langCode}:`, err);
+      // Silent fail - user can still manually load
     }
   }, [extractedPagesMap]);
 

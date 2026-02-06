@@ -1,7 +1,7 @@
 /**
  * UBICACIÓN: src/infrastructure/services/BookReadingAnalytics.service.ts
  * 📊 SISTEMA DE ANALYTICS COMPLETO
- * ✅ CORREGIDO: user_book_progress en vez de book_reading_progress
+ * ✅ CORREGIDO: tablas reading_sessions y reading_progress
  */
 
 // ============================================
@@ -18,6 +18,25 @@ export interface ReadingSession {
   pagesVisited: number[];
   currentPage: number;
   deviceType: 'desktop' | 'mobile' | 'tablet';
+  /** Word counts per page index (0-based) */
+  wordCountsPerPage?: number[];
+  /** Total words in the book */
+  totalWords?: number;
+  /** Accumulated page durations in seconds: { [pageNumber]: seconds } */
+  pageDurations: Record<number, number>;
+}
+
+export interface ReadingSpeedStats {
+  /** Words per minute */
+  wordsPerMinute: number;
+  /** Total words read so far */
+  wordsRead: number;
+  /** Estimated time remaining in seconds */
+  estimatedTimeRemaining: number;
+  /** Average seconds per page */
+  avgSecondsPerPage: number;
+  /** Total reading time in seconds */
+  totalReadingTime: number;
 }
 
 export interface UserProgress {
@@ -69,10 +88,13 @@ export class BookReadingAnalyticsService {
   static async startSession(
     bookId: string,
     totalPages: number,
-    userId?: string
+    userId?: string,
+    wordCountsPerPage?: number[]
   ): Promise<string> {
     const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
+    const totalWords = wordCountsPerPage?.reduce((sum, w) => sum + w, 0) || 0;
+
     const session: ReadingSession = {
       sessionId,
       bookId,
@@ -82,10 +104,13 @@ export class BookReadingAnalyticsService {
       pagesVisited: [],
       currentPage: 1,
       deviceType: this.detectDeviceType(),
+      wordCountsPerPage,
+      totalWords,
+      pageDurations: {},
     };
 
     this.activeSessions.set(sessionId, session);
-    console.log('📖 Sesión iniciada:', sessionId);
+    console.log(`📖 Sesión iniciada: ${sessionId} (${totalWords} palabras en ${totalPages} páginas)`);
     return sessionId;
   }
 
@@ -110,20 +135,20 @@ export class BookReadingAnalyticsService {
       const { createClient } = await import('../../config/supabase.config');
       const supabase = createClient();
 
-      // Guardar sesión en Supabase
+      const startPage = session.pagesVisited.length > 0 ? Math.min(...session.pagesVisited) : 1;
+      const endPage = session.pagesVisited.length > 0 ? Math.max(...session.pagesVisited) : 1;
+
+      // Guardar sesión en Supabase (tabla: reading_sessions)
       const { error } = await supabase
-        .from('book_reading_sessions')
+        .from('reading_sessions')
         .insert({
           book_id: session.bookId,
           user_id: session.userId || null,
-          session_id: sessionId,
+          start_page: startPage,
+          end_page: endPage,
           started_at: session.startTime.toISOString(),
           ended_at: session.endTime.toISOString(),
           duration_seconds: durationSeconds,
-          total_pages: session.totalPages,
-          pages_read: session.pagesVisited.length,
-          unique_pages: uniquePagesVisited.size,
-          completion_percentage: completionPercentage,
           device_type: session.deviceType,
         });
 
@@ -188,32 +213,12 @@ export class BookReadingAnalyticsService {
     const session = this.activeSessions.get(sessionId);
     if (!session) return;
 
-    try {
-      const { createClient } = await import('../../config/supabase.config');
-      const supabase = createClient();
-
-      // Guardar vista de página
-      const { error } = await supabase
-        .from('book_page_views')
-        .insert({
-          book_id: session.bookId,
-          session_id: sessionId,
-          page_number: pageNumber,
-          viewed_at: startTime.toISOString(),
-          duration_seconds: durationSeconds,
-        });
-
-      if (error) {
-        console.error('❌ Error guardando duración:', error);
-      } else {
-        console.log(`⏱️ Página ${pageNumber}: ${durationSeconds}s`);
-      }
-      
-      this.pageStartTimes.delete(pageKey);
-
-    } catch (error: any) {
-      console.error('❌ Error en trackPageDuration:', error.message || error);
+    // Store page duration in session for reading speed calculation
+    if (session.pageDurations) {
+      session.pageDurations[pageNumber] = (session.pageDurations[pageNumber] || 0) + durationSeconds;
     }
+    console.log(`⏱️ Página ${pageNumber}: ${durationSeconds}s`);
+    this.pageStartTimes.delete(pageKey);
   }
 
   // ============================================
@@ -234,22 +239,23 @@ export class BookReadingAnalyticsService {
       const { createClient } = await import('../../config/supabase.config');
       const supabase = createClient();
 
-      // ✅ CORREGIDO: user_book_progress
+      // Tabla: reading_progress (schema: books)
       const { error } = await supabase
-        .from('user_book_progress')
+        .from('reading_progress')
         .upsert(
           {
             user_id: userId,
             book_id: bookId,
             current_page: currentPage,
-            total_pages: totalPages,
+            total_pages_read: currentPage,
             completion_percentage: completionPercentage,
             is_completed: isCompleted,
-            total_reading_time: readingTimeSeconds,
+            reading_time_seconds: readingTimeSeconds,
             last_read_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           },
           {
-            onConflict: 'user_id,book_id',
+            onConflict: 'book_id,user_id',
           }
         );
 
@@ -284,16 +290,17 @@ export class BookReadingAnalyticsService {
       const { createClient } = await import('../../config/supabase.config');
       const supabase = createClient();
 
-      // ✅ CORREGIDO: user_book_progress
       const { data, error } = await supabase
-        .from('user_book_progress')
+        .from('reading_progress')
         .select('*')
         .eq('user_id', userId)
         .eq('book_id', bookId)
         .single();
 
       if (error || !data) {
-        console.error('❌ Error obteniendo progreso:', error);
+        if (error?.code !== 'PGRST116') { // Not "no rows" error
+          console.error('❌ Error obteniendo progreso:', error);
+        }
         return null;
       }
 
@@ -301,9 +308,9 @@ export class BookReadingAnalyticsService {
         userId: data.user_id,
         bookId: data.book_id,
         currentPage: data.current_page,
-        totalPages: data.total_pages,
+        totalPages: data.total_pages_read,
         completionPercentage: data.completion_percentage,
-        totalReadingTime: data.total_reading_time,
+        totalReadingTime: data.reading_time_seconds,
         isCompleted: data.is_completed,
         lastReadAt: new Date(data.last_read_at),
       };
@@ -326,22 +333,20 @@ export class BookReadingAnalyticsService {
       const { createClient } = await import('../../config/supabase.config');
       const supabase = createClient();
 
-      // ✅ CORREGIDO: user_book_progress
       const { data: userProgress } = await supabase
-        .from('user_book_progress')
-        .select('total_reading_time')
+        .from('reading_progress')
+        .select('reading_time_seconds')
         .eq('user_id', userId)
         .eq('book_id', bookId)
         .single();
 
-      const userTime = userProgress?.total_reading_time || 0;
+      const userTime = userProgress?.reading_time_seconds || 0;
 
-      // ✅ CORREGIDO: user_book_progress
       const { data: allProgress } = await supabase
-        .from('user_book_progress')
-        .select('total_reading_time')
+        .from('reading_progress')
+        .select('reading_time_seconds')
         .eq('book_id', bookId)
-        .gt('total_reading_time', 0);
+        .gt('reading_time_seconds', 0);
 
       if (!allProgress || allProgress.length === 0) {
         return {
@@ -353,10 +358,10 @@ export class BookReadingAnalyticsService {
         };
       }
 
-      const totalTime = allProgress.reduce((sum, p) => sum + (p.total_reading_time || 0), 0);
+      const totalTime = allProgress.reduce((sum, p) => sum + (p.reading_time_seconds || 0), 0);
       const avgTime = Math.floor(totalTime / allProgress.length);
 
-      const slowerCount = allProgress.filter(p => (p.total_reading_time || 0) > userTime).length;
+      const slowerCount = allProgress.filter(p => (p.reading_time_seconds || 0) > userTime).length;
       const percentile = Math.round((slowerCount / allProgress.length) * 100);
 
       const isFasterThanAverage = userTime < avgTime;
@@ -397,7 +402,7 @@ export class BookReadingAnalyticsService {
       const supabase = createClient();
 
       const { data: allSessions, count: totalReaders } = await supabase
-        .from('book_reading_sessions')
+        .from('reading_sessions')
         .select('user_id', { count: 'exact', head: false })
         .eq('book_id', bookId);
 
@@ -409,21 +414,19 @@ export class BookReadingAnalyticsService {
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
       const { count: activeReaders } = await supabase
-        .from('book_reading_sessions')
+        .from('reading_sessions')
         .select('user_id', { count: 'exact', head: true })
         .eq('book_id', bookId)
         .gte('started_at', sevenDaysAgo.toISOString());
 
-      // ✅ CORREGIDO: user_book_progress
       const { count: completedReaders } = await supabase
-        .from('user_book_progress')
+        .from('reading_progress')
         .select('*', { count: 'exact', head: true })
         .eq('book_id', bookId)
         .eq('is_completed', true);
 
-      // ✅ CORREGIDO: user_book_progress
       const { data: progressData } = await supabase
-        .from('user_book_progress')
+        .from('reading_progress')
         .select('completion_percentage')
         .eq('book_id', bookId);
 
@@ -431,25 +434,11 @@ export class BookReadingAnalyticsService {
         ? progressData.reduce((sum, p) => sum + (p.completion_percentage || 0), 0) / progressData.length
         : 0;
 
-      const { data: pageViews } = await supabase
-        .from('book_page_views')
-        .select('page_number')
-        .eq('book_id', bookId);
-
-      let mostViewedPage = 1;
-      if (pageViews && pageViews.length > 0) {
-        const pageCounts = pageViews.reduce((acc: Record<number, number>, view) => {
-          acc[view.page_number] = (acc[view.page_number] || 0) + 1;
-          return acc;
-        }, {});
-
-        mostViewedPage = Number(
-          Object.entries(pageCounts).sort(([,a], [,b]) => b - a)[0]?.[0] || 1
-        );
-      }
+      // Page views tracked in-memory only, default to page 1
+      const mostViewedPage = 1;
 
       const { data: sessions } = await supabase
-        .from('book_reading_sessions')
+        .from('reading_sessions')
         .select('duration_seconds')
         .eq('book_id', bookId)
         .gt('duration_seconds', 0);
@@ -461,12 +450,12 @@ export class BookReadingAnalyticsService {
         : 0;
 
       const { count: totalSessions } = await supabase
-        .from('book_reading_sessions')
+        .from('reading_sessions')
         .select('*', { count: 'exact', head: true })
         .eq('book_id', bookId);
 
       const { count: shortSessions } = await supabase
-        .from('book_reading_sessions')
+        .from('reading_sessions')
         .select('*', { count: 'exact', head: true })
         .eq('book_id', bookId)
         .lt('duration_seconds', 30);
@@ -476,7 +465,7 @@ export class BookReadingAnalyticsService {
         : 0;
 
       const { data: deviceData } = await supabase
-        .from('book_reading_sessions')
+        .from('reading_sessions')
         .select('device_type')
         .eq('book_id', bookId);
 
@@ -523,6 +512,77 @@ export class BookReadingAnalyticsService {
         },
       };
     }
+  }
+
+  // ============================================
+  // 5. READING SPEED STATS (in-memory, real-time)
+  // ============================================
+
+  /**
+   * Get real-time reading speed statistics for an active session.
+   * Uses word counts per page + time spent per page to compute WPM.
+   */
+  static getReadingSpeedStats(sessionId: string): ReadingSpeedStats | null {
+    const session = this.activeSessions.get(sessionId);
+    if (!session) return null;
+
+    const wordCounts = session.wordCountsPerPage || [];
+    const pageDurations = session.pageDurations || {};
+
+    // Calculate total reading time from page durations
+    const totalReadingTime = Object.values(pageDurations).reduce((sum, d) => sum + d, 0);
+
+    // Calculate words read based on pages visited with known durations
+    let wordsRead = 0;
+    for (const pageNum of Object.keys(pageDurations).map(Number)) {
+      const pageIndex = pageNum - 1; // page numbers are 1-based, array is 0-based
+      if (pageIndex >= 0 && pageIndex < wordCounts.length) {
+        wordsRead += wordCounts[pageIndex];
+      }
+    }
+
+    // Words per minute
+    const totalMinutes = totalReadingTime / 60;
+    const wordsPerMinute = totalMinutes > 0 ? Math.round(wordsRead / totalMinutes) : 0;
+
+    // Average seconds per page (only pages with durations)
+    const pagesWithDuration = Object.keys(pageDurations).length;
+    const avgSecondsPerPage = pagesWithDuration > 0 ? totalReadingTime / pagesWithDuration : 0;
+
+    // Estimate remaining time
+    const totalWords = session.totalWords || 0;
+    const wordsRemaining = Math.max(0, totalWords - wordsRead);
+    const estimatedTimeRemaining = wordsPerMinute > 0
+      ? Math.round((wordsRemaining / wordsPerMinute) * 60)
+      : 0;
+
+    return {
+      wordsPerMinute,
+      wordsRead,
+      estimatedTimeRemaining,
+      avgSecondsPerPage: Math.round(avgSecondsPerPage),
+      totalReadingTime,
+    };
+  }
+
+  /**
+   * Get word count for a specific page (0-based index).
+   */
+  static getPageWordCount(sessionId: string, pageIndex: number): number {
+    const session = this.activeSessions.get(sessionId);
+    if (!session?.wordCountsPerPage) return 0;
+    return session.wordCountsPerPage[pageIndex] || 0;
+  }
+
+  /**
+   * Compute word counts from extracted text array.
+   * Utility to convert page texts into word count array.
+   */
+  static computeWordCounts(pageTexts: (string | undefined)[]): number[] {
+    return pageTexts.map(text => {
+      if (!text || !text.trim()) return 0;
+      return text.trim().split(/\s+/).length;
+    });
   }
 
   // ============================================

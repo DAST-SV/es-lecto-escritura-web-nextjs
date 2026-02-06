@@ -154,7 +154,7 @@ export class PDFExtractorService {
   /**
    * Extrae páginas de un PDF a partir de una URL (para modo edición)
    */
-  static async extractPagesFromUrl(url: string): Promise<PDFExtractionResult> {
+  static async extractPagesFromUrl(url: string, scale: number = 1.5): Promise<PDFExtractionResult> {
     if (typeof window === 'undefined') {
       throw new Error('PDFExtractorService solo puede ejecutarse en el cliente');
     }
@@ -166,13 +166,8 @@ export class PDFExtractorService {
     try {
       console.log('📄 Extrayendo PDF desde URL...');
 
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Error descargando PDF: ${response.status}`);
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-      const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
+      // Use pdfjs directly with URL for streaming support
+      const loadingTask = pdfjs.getDocument(url);
       const pdf = await loadingTask.promise;
 
       const numPages = pdf.numPages;
@@ -185,7 +180,7 @@ export class PDFExtractorService {
 
       for (let pageNum = 1; pageNum <= numPages; pageNum++) {
         const page = await pdf.getPage(pageNum);
-        const viewport = page.getViewport({ scale: 2.0 });
+        const viewport = page.getViewport({ scale });
 
         if (pageNum === 1) {
           pageWidth = viewport.width;
@@ -206,7 +201,8 @@ export class PDFExtractorService {
           viewport: viewport,
         }).promise;
 
-        const imageUrl = canvas.toDataURL('image/png');
+        // Use JPEG for smaller data URLs (faster transfer and rendering)
+        const imageUrl = canvas.toDataURL('image/jpeg', 0.85);
         const extractedText = await this.extractTextFromPage(page);
         totalTextLength += extractedText.length;
 

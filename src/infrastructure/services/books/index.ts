@@ -7,3 +7,4 @@ export { BookImageService } from './BookImageService';
 export { BookPDFService } from './BookPDFService';
 export { PDFExtractorService } from './PDFExtractorService';
 export { BookReadingAnalyticsService } from './BookReadingAnalyticsService';
+export type { ReadingSpeedStats } from './BookReadingAnalyticsService';

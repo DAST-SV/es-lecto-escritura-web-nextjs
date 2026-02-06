@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { Loader2, AlertCircle, BarChart3 } from 'lucide-react';
@@ -64,17 +64,28 @@ export default function ReadBookPage() {
   const completionContinueText = translationsLoading ? 'Continuar leyendo' : t('completion.continue');
   const noTitleText = translationsLoading ? 'Libro sin titulo' : t('no_title');
 
-  // Analytics hook
+  // Compute word counts per page from extracted text
+  const wordCountsPerPage = useMemo(() => {
+    return extractedPages.map(page => {
+      const text = (page as any).extractedText || '';
+      if (!text.trim()) return 0;
+      return text.trim().split(/\s+/).length;
+    });
+  }, [extractedPages]);
+
+  // Analytics hook with word count data
   const {
     sessionId,
     isTracking,
     trackPageChange,
     handleEndSession,
+    getReadingSpeedStats,
     goToStatistics,
   } = useReadingAnalytics({
     bookId,
     totalPages: extractedPages.length,
     userId: userId || undefined,
+    wordCountsPerPage,
     onComplete: () => {
       setShowCompletionModal(true);
     },
@@ -163,37 +174,12 @@ export default function ReadBookPage() {
         console.log('PDF URL almacenada:', pdfUrl);
 
         // Generar signed URL (el bucket book-pdfs es privado)
-        const { BookPDFService } = await import('@/src/infrastructure/services/books');
+        const { BookPDFService, PDFExtractorService } = await import('@/src/infrastructure/services/books');
         const signedUrl = await BookPDFService.getSignedUrl(pdfUrl);
-        console.log('Descargando PDF con signed URL');
+        console.log('Extrayendo paginas del PDF con streaming...');
 
-        const response = await fetch(signedUrl);
-
-        if (!response.ok) {
-          throw new Error(`Error descargando PDF: ${response.status}`);
-        }
-
-        const contentType = response.headers.get('content-type');
-        if (contentType && !contentType.includes('application/pdf') && !contentType.includes('octet-stream')) {
-          console.error('Content-Type incorrecto:', contentType);
-          throw new Error('El archivo no es un PDF válido');
-        }
-
-        const blob = await response.blob();
-
-        if (blob.size === 0) {
-          throw new Error('El archivo PDF está vacío');
-        }
-
-        console.log('PDF descargado:', blob.size, 'bytes');
-
-        const file = new File([blob], 'libro.pdf', { type: 'application/pdf' });
-
-        // Importar dinamicamente el servicio
-        const { PDFExtractorService } = await import('@/src/infrastructure/services/books');
-
-        console.log('Extrayendo paginas del PDF...');
-        const result = await PDFExtractorService.extractPagesFromPDF(file);
+        // Use extractPagesFromUrl for streaming (faster than fetch+blob+File)
+        const result = await PDFExtractorService.extractPagesFromUrl(signedUrl, 2.0);
 
         if (isMounted) {
           setExtractedPages(result.pages);
@@ -303,6 +289,7 @@ export default function ReadBookPage() {
           pdfDimensions={pdfDimensions}
           onClose={handleClose}
           onPageFlip={handlePageFlip}
+          language={locale as any}
         />
 
         {showCompletionModal && (

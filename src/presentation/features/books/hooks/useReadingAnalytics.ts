@@ -5,6 +5,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { BookReadingAnalyticsService } from '@/src/infrastructure/services/books';
+import type { ReadingSpeedStats } from '@/src/infrastructure/services/books/BookReadingAnalyticsService';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 
@@ -12,6 +13,8 @@ interface UseReadingAnalyticsProps {
   bookId: string;
   totalPages: number;
   userId?: string;
+  /** Word counts per page (0-based index) for reading speed calculation */
+  wordCountsPerPage?: number[];
   onComplete?: () => void;
 }
 
@@ -19,6 +22,7 @@ export function useReadingAnalytics({
   bookId,
   totalPages,
   userId,
+  wordCountsPerPage,
   onComplete,
 }: UseReadingAnalyticsProps) {
   const router = useRouter();
@@ -41,7 +45,8 @@ export function useReadingAnalytics({
         const newSessionId = await BookReadingAnalyticsService.startSession(
           bookId,
           totalPages,
-          userId
+          userId,
+          wordCountsPerPage
         );
         setSessionId(newSessionId);
         setIsTracking(true);
@@ -169,6 +174,14 @@ export function useReadingAnalytics({
   };
 
   // ============================================
+  // READING SPEED STATS
+  // ============================================
+  const getReadingSpeedStats = useCallback((): ReadingSpeedStats | null => {
+    if (!sessionId) return null;
+    return BookReadingAnalyticsService.getReadingSpeedStats(sessionId);
+  }, [sessionId]);
+
+  // ============================================
   // NAVEGAR A ESTADÍSTICAS
   // ============================================
   const goToStatistics = useCallback(() => {
@@ -181,6 +194,7 @@ export function useReadingAnalytics({
     currentPage,
     trackPageChange,
     handleEndSession,
+    getReadingSpeedStats,
     goToStatistics,
   };
 }
