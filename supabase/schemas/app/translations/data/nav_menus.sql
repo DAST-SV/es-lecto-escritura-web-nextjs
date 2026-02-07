@@ -39,7 +39,7 @@ SELECT insert_translation('nav', 'auth.register.title', 'Crear una cuenta nueva'
 
 -- Library (Biblioteca)
 SELECT insert_translation('nav', 'library.text', 'Biblioteca', 'Library', 'Bibliotheque');
-SELECT insert_translation('nav', 'library.href', '/library', '/library', '/library');
+SELECT insert_translation('nav', 'library.href', '/biblioteca', '/library', '/bibliotheque');
 SELECT insert_translation('nav', 'library.title', 'Explora nuestra biblioteca de libros', 'Explore our book library', 'Explorez notre bibliotheque de livres');
 
 -- My World (Mi Mundo)

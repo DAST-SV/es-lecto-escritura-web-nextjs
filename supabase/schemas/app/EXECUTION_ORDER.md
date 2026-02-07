@@ -112,6 +112,8 @@ translations/data/books_form.sql
 translations/data/books_user_pages.sql
 translations/data/complete_system.sql
 translations/data/admin_dashboard.sql
+translations/data/library_page.sql
+translations/data/nav_menus.sql
 ```
 
 ## 14. Admin (opcional)

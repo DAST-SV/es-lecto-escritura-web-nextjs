@@ -35,14 +35,16 @@ interface CategoryPillsProps {
 // SKELETON
 // ============================================
 
+const SKELETON_WIDTHS = [76, 88, 64, 92, 70, 84, 78, 68];
+
 export const CategoryPillsSkeleton: React.FC = memo(() => {
   return (
     <div className="flex gap-2 overflow-hidden py-4 px-4">
-      {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+      {SKELETON_WIDTHS.map((width, i) => (
         <div
           key={i}
           className="flex-shrink-0 h-10 rounded-full bg-white/50 animate-pulse"
-          style={{ width: `${60 + Math.random() * 40}px` }}
+          style={{ width: `${width}px` }}
         />
       ))}
     </div>

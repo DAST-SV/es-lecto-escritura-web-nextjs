@@ -3,15 +3,15 @@
  * COMPONENTE: BookCarouselCard
  * Card compacta de libro para carruseles
  * Estilo visual infantil/educativo
- * TODAS las traducciones son dinamicas
+ * Usa LibraryBook con portada por idioma
  * ============================================
  */
 
 'use client';
 
 import React, { memo } from 'react';
-import { BookOpen, Sparkles } from 'lucide-react';
-import { BookExtended } from '@/src/core/domain/entities/BookExtended';
+import { BookOpen, Sparkles, Clock } from 'lucide-react';
+import { LibraryBook } from '@/src/infrastructure/repositories/books/BookLibraryRepository';
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 
 // ============================================
@@ -19,7 +19,7 @@ import { useSupabaseTranslations } from '@/src/presentation/features/translation
 // ============================================
 
 interface BookCarouselCardProps {
-  book: BookExtended;
+  book: LibraryBook;
   onSelect: (bookId: string) => void;
   priority?: boolean;
   showRanking?: boolean;
@@ -40,6 +40,13 @@ const CATEGORY_COLORS = [
   { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-300' },
 ];
 
+function getCategoryColor(slug: string | null): typeof CATEGORY_COLORS[0] {
+  if (!slug) return CATEGORY_COLORS[0];
+  let hash = 0;
+  for (let i = 0; i < slug.length; i++) hash = slug.charCodeAt(i) + ((hash << 5) - hash);
+  return CATEGORY_COLORS[Math.abs(hash) % CATEGORY_COLORS.length];
+}
+
 // ============================================
 // COMPONENTE PRINCIPAL
 // ============================================
@@ -48,20 +55,13 @@ export const BookCarouselCard: React.FC<BookCarouselCardProps> = memo(
   ({ book, onSelect, priority = false, showRanking = false, rankNumber, isNew = false }) => {
     const { t, loading } = useSupabaseTranslations('library');
 
-    const primaryCategory = book.getPrimaryCategory();
-    const colorSet = primaryCategory
-      ? CATEGORY_COLORS[
-          (primaryCategory.id ?? 0) % CATEGORY_COLORS.length
-        ]
-      : null;
-
-    // Textos traducidos con fallback
+    const colorSet = getCategoryColor(book.categorySlug);
     const readLabel = loading ? 'Leer' : t('card.read');
     const newLabel = loading ? 'NUEVO' : t('card.new');
+    const featuredLabel = loading ? 'Destacado' : t('card.featured');
+    const minReadLabel = loading ? 'min' : t('card.min_read');
 
-    const handleClick = () => {
-      onSelect(book.id);
-    };
+    const handleClick = () => onSelect(book.id);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -90,7 +90,6 @@ export const BookCarouselCard: React.FC<BookCarouselCardProps> = memo(
                   background: 'linear-gradient(180deg, #facc15 0%, #f97316 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  textShadow: 'none',
                   filter: 'drop-shadow(2px 2px 0px rgba(0,0,0,0.2))',
                 }}
               >
@@ -107,7 +106,15 @@ export const BookCarouselCard: React.FC<BookCarouselCardProps> = memo(
             </div>
           )}
 
-          {/* Portada */}
+          {/* Badge DESTACADO */}
+          {!isNew && book.isFeatured && (
+            <div className="absolute top-2 right-2 z-20 bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-2 py-0.5 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+              <Sparkles className="w-3 h-3" />
+              {featuredLabel}
+            </div>
+          )}
+
+          {/* Portada (usa cover_url traducida por idioma) */}
           <div className="relative aspect-[2/3] overflow-hidden bg-gradient-to-br from-blue-100 to-purple-100">
             {book.coverUrl ? (
               <img
@@ -117,7 +124,7 @@ export const BookCarouselCard: React.FC<BookCarouselCardProps> = memo(
                 loading={priority ? 'eager' : 'lazy'}
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-200 via-purple-100 to-pink-200">
                 <div className="text-center p-3">
                   <BookOpen className="w-10 h-10 text-blue-300 mx-auto mb-1" />
                   <p
@@ -131,11 +138,21 @@ export const BookCarouselCard: React.FC<BookCarouselCardProps> = memo(
             )}
 
             {/* Overlay gradient en hover */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+            {/* Boton leer en hover */}
+            <div className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+              <div
+                className="w-full py-2 bg-yellow-300 text-blue-700 font-black text-xs rounded-full text-center shadow-lg border-2 border-white"
+                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              >
+                {readLabel}
+              </div>
+            </div>
           </div>
 
           {/* Contenido */}
-          <div className="p-2.5 space-y-1">
+          <div className="p-2.5 space-y-1.5">
             {/* Titulo */}
             <h3
               className="text-sm font-bold text-blue-800 line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors"
@@ -144,14 +161,32 @@ export const BookCarouselCard: React.FC<BookCarouselCardProps> = memo(
               {book.title}
             </h3>
 
-            {/* Categoria badge */}
-            {primaryCategory && colorSet && (
-              <span
-                className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${colorSet.bg} ${colorSet.text} border ${colorSet.border}`}
-              >
-                {primaryCategory.name}
-              </span>
+            {/* Autor */}
+            {book.authors.length > 0 && (
+              <p className="text-xs text-slate-500 truncate" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                {book.authors.map(a => a.name).join(', ')}
+              </p>
             )}
+
+            {/* Metadatos */}
+            <div className="flex items-center gap-2">
+              {/* Categoria badge */}
+              {book.categoryName && (
+                <span
+                  className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${colorSet.bg} ${colorSet.text} border ${colorSet.border} truncate max-w-[80px]`}
+                >
+                  {book.categoryName}
+                </span>
+              )}
+
+              {/* Tiempo lectura */}
+              {book.estimatedReadTime > 0 && (
+                <span className="flex items-center gap-0.5 text-xs text-slate-400">
+                  <Clock className="w-3 h-3" />
+                  {book.estimatedReadTime} {minReadLabel}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 

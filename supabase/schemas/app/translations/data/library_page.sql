@@ -19,12 +19,14 @@ ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.de
 SELECT insert_translation('library', 'hero.badge', 'BIBLIOTECA DIGITAL', 'DIGITAL LIBRARY', 'BIBLIOTHEQUE NUMERIQUE');
 SELECT insert_translation('library', 'hero.title', 'Descubre mundos increibles', 'Discover amazing worlds', 'Decouvrez des mondes incroyables');
 SELECT insert_translation('library', 'hero.subtitle', 'Miles de libros esperan por ti. Explora, lee y aprende algo nuevo cada dia.', 'Thousands of books await you. Explore, read and learn something new every day.', 'Des milliers de livres vous attendent. Explorez, lisez et apprenez quelque chose de nouveau chaque jour.');
+SELECT insert_translation('library', 'hero.explore_cta', 'Explorar coleccion', 'Explore collection', 'Explorer la collection');
 
 -- ============================================
 -- SEARCH
 -- ============================================
 SELECT insert_translation('library', 'search.placeholder', 'Buscar libros, cuentos, poemas...', 'Search books, stories, poems...', 'Rechercher des livres, histoires, poemes...');
 SELECT insert_translation('library', 'search.clear', 'Limpiar busqueda', 'Clear search', 'Effacer la recherche');
+SELECT insert_translation('library', 'search.results_for', 'Resultados para', 'Results for', 'Resultats pour');
 
 -- ============================================
 -- SECTION TITLES
@@ -36,6 +38,7 @@ SELECT insert_translation('library', 'sections.top_rated', 'Mejor Valorados', 'T
 SELECT insert_translation('library', 'sections.continue_reading', 'Continua Leyendo', 'Continue Reading', 'Continuer la lecture');
 SELECT insert_translation('library', 'sections.category_prefix', 'Top en', 'Top in', 'Top en');
 SELECT insert_translation('library', 'sections.all_categories', 'Todas las Categorias', 'All Categories', 'Toutes les categories');
+SELECT insert_translation('library', 'sections.explore_categories', 'Explora por Categoria', 'Explore by Category', 'Explorer par categorie');
 
 -- ============================================
 -- CAROUSEL CONTROLS
@@ -53,6 +56,8 @@ SELECT insert_translation('library', 'card.featured', 'Destacado', 'Featured', '
 SELECT insert_translation('library', 'card.readings', 'lecturas', 'readings', 'lectures');
 SELECT insert_translation('library', 'card.years', 'anos', 'years', 'ans');
 SELECT insert_translation('library', 'card.min_read', 'min lectura', 'min read', 'min de lecture');
+SELECT insert_translation('library', 'card.by', 'por', 'by', 'par');
+SELECT insert_translation('library', 'card.pages', 'paginas', 'pages', 'pages');
 
 -- ============================================
 -- EMPTY STATES
@@ -60,10 +65,20 @@ SELECT insert_translation('library', 'card.min_read', 'min lectura', 'min read',
 SELECT insert_translation('library', 'empty.no_books', 'Aun no hay libros disponibles', 'No books available yet', 'Aucun livre disponible pour le moment');
 SELECT insert_translation('library', 'empty.no_results', 'No encontramos resultados', 'We could not find any results', 'Nous n''avons trouve aucun resultat');
 SELECT insert_translation('library', 'empty.try_again', 'Intenta con otra busqueda', 'Try a different search', 'Essayez une autre recherche');
+SELECT insert_translation('library', 'empty.no_books_subtitle', 'Pronto agregaremos mas contenido para ti', 'We will add more content for you soon', 'Nous ajouterons bientot plus de contenu pour vous');
+SELECT insert_translation('library', 'empty.explore_other', 'Explora otras categorias', 'Explore other categories', 'Explorer d''autres categories');
 
 -- ============================================
 -- FILTERS
 -- ============================================
 SELECT insert_translation('library', 'filters.all', 'Todos', 'All', 'Tous');
+SELECT insert_translation('library', 'filters.books_count', 'libros', 'books', 'livres');
+
+-- ============================================
+-- STATS
+-- ============================================
+SELECT insert_translation('library', 'stats.books', 'Libros', 'Books', 'Livres');
+SELECT insert_translation('library', 'stats.categories', 'Categorias', 'Categories', 'Categories');
+SELECT insert_translation('library', 'stats.languages', 'Idiomas', 'Languages', 'Langues');
 
 SELECT 'TRANSLATIONS: Library page - traducciones insertadas' AS status;

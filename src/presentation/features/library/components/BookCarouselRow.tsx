@@ -3,7 +3,6 @@
  * COMPONENTE: BookCarouselRow
  * Fila horizontal de libros tipo Netflix
  * Scroll suave con botones de navegacion
- * TODAS las traducciones son dinamicas
  * ============================================
  */
 
@@ -11,7 +10,7 @@
 
 import React, { memo, useRef, useState, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
-import { BookExtended } from '@/src/core/domain/entities/BookExtended';
+import { LibraryBook } from '@/src/infrastructure/repositories/books/BookLibraryRepository';
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 import { BookCarouselCard } from './BookCarouselCard';
 
@@ -22,10 +21,11 @@ import { BookCarouselCard } from './BookCarouselCard';
 interface BookCarouselRowProps {
   title: string;
   icon?: React.ReactNode;
-  books: BookExtended[];
+  books: LibraryBook[];
   isLoading: boolean;
   onBookSelect: (bookId: string) => void;
   showRanking?: boolean;
+  markAsNew?: boolean;
   viewAllHref?: string;
 }
 
@@ -37,29 +37,28 @@ export const BookCarouselRowSkeleton: React.FC = memo(() => {
   return (
     <section className="py-6 px-4">
       <div className="container mx-auto max-w-7xl">
-        {/* Header skeleton */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-slate-200 rounded-full animate-pulse" />
-            <div className="h-7 bg-slate-200 rounded-xl w-40 animate-pulse" />
+            <div className="w-8 h-8 bg-white/30 rounded-full animate-pulse" />
+            <div className="h-7 bg-white/30 rounded-xl w-40 animate-pulse" />
           </div>
           <div className="flex gap-2">
-            <div className="w-9 h-9 bg-slate-200 rounded-full animate-pulse" />
-            <div className="w-9 h-9 bg-slate-200 rounded-full animate-pulse" />
+            <div className="w-9 h-9 bg-white/30 rounded-full animate-pulse" />
+            <div className="w-9 h-9 bg-white/30 rounded-full animate-pulse" />
           </div>
         </div>
 
-        {/* Cards skeleton */}
         <div className="flex gap-4 overflow-hidden">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
               key={i}
               className="flex-shrink-0 w-40 sm:w-44 md:w-48 bg-white rounded-2xl border-2 border-yellow-200 overflow-hidden animate-pulse"
             >
-              <div className="aspect-[2/3] bg-slate-200" />
+              <div className="aspect-[2/3] bg-gradient-to-br from-blue-100 to-purple-100" />
               <div className="p-2.5 space-y-2">
                 <div className="h-4 bg-slate-200 rounded w-full" />
                 <div className="h-3 bg-slate-200 rounded w-2/3" />
+                <div className="h-3 bg-slate-200 rounded-full w-1/2" />
               </div>
             </div>
           ))}
@@ -76,7 +75,7 @@ BookCarouselRowSkeleton.displayName = 'BookCarouselRowSkeleton';
 // ============================================
 
 export const BookCarouselRow: React.FC<BookCarouselRowProps> = memo(
-  ({ title, icon, books, isLoading, onBookSelect, showRanking = false, viewAllHref }) => {
+  ({ title, icon, books, isLoading, onBookSelect, showRanking = false, markAsNew = false, viewAllHref }) => {
     const { t, loading: translationsLoading } = useSupabaseTranslations('library');
     const scrollRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -104,17 +103,14 @@ export const BookCarouselRow: React.FC<BookCarouselRowProps> = memo(
       [checkScrollButtons]
     );
 
-    // Textos traducidos con fallback
     const previousLabel = translationsLoading ? 'Anterior' : t('carousel.previous');
     const nextLabel = translationsLoading ? 'Siguiente' : t('carousel.next');
     const viewAllLabel = translationsLoading ? 'Ver todo' : t('carousel.view_all');
 
-    // Mostrar skeleton mientras carga
     if (isLoading || translationsLoading) {
       return <BookCarouselRowSkeleton />;
     }
 
-    // No mostrar si no hay libros
     if (books.length === 0) {
       return null;
     }
@@ -124,7 +120,6 @@ export const BookCarouselRow: React.FC<BookCarouselRowProps> = memo(
         <div className="container mx-auto max-w-7xl">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
-            {/* Titulo e icono */}
             <div className="flex items-center gap-3">
               {icon && (
                 <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-full flex items-center justify-center shadow-lg">
@@ -142,9 +137,7 @@ export const BookCarouselRow: React.FC<BookCarouselRowProps> = memo(
               </h2>
             </div>
 
-            {/* Controles derecha */}
             <div className="flex items-center gap-2">
-              {/* Botones de scroll */}
               <button
                 onClick={() => scroll('left')}
                 disabled={!canScrollLeft}
@@ -170,7 +163,6 @@ export const BookCarouselRow: React.FC<BookCarouselRowProps> = memo(
                 <ChevronRight className="w-4 h-4 text-blue-700" strokeWidth={3} />
               </button>
 
-              {/* Ver todo */}
               {viewAllHref && (
                 <a
                   href={viewAllHref}
@@ -188,7 +180,7 @@ export const BookCarouselRow: React.FC<BookCarouselRowProps> = memo(
           <div
             ref={scrollRef}
             onScroll={checkScrollButtons}
-            className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
+            className="flex gap-4 overflow-x-auto pb-4 scroll-smooth"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
@@ -202,14 +194,14 @@ export const BookCarouselRow: React.FC<BookCarouselRowProps> = memo(
                 priority={index < 3}
                 showRanking={showRanking}
                 rankNumber={showRanking ? index + 1 : undefined}
+                isNew={markAsNew}
               />
             ))}
           </div>
         </div>
 
-        {/* Ocultar scrollbar con CSS */}
         <style jsx>{`
-          .scrollbar-hide::-webkit-scrollbar {
+          div::-webkit-scrollbar {
             display: none;
           }
         `}</style>

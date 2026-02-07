@@ -3,53 +3,36 @@
  * HOOK: useLibraryCarousels
  * Carga datos para cada fila de carrusel
  * Estilo Netflix: destacados, populares, nuevos, etc.
+ * Locale-aware para traducciones por idioma
  * ============================================
  */
 
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BookLibraryRepository } from '@/src/infrastructure/repositories/books/BookLibraryRepository';
-import { CategoryWithBooks } from '@/src/infrastructure/repositories/books/BookLibraryRepository';
-import { BookExtended } from '@/src/core/domain/entities/BookExtended';
-
-// ============================================
-// CONSTANTES
-// ============================================
+import { BookLibraryRepository, CategoryWithBooks, LibraryBook } from '@/src/infrastructure/repositories/books/BookLibraryRepository';
 
 const MAX_CATEGORY_CAROUSELS = 5;
 
-// ============================================
-// HOOK
-// ============================================
-
-export function useLibraryCarousels(categories: CategoryWithBooks[]) {
-  // Estado de filas principales
-  const [featuredBooks, setFeaturedBooks] = useState<BookExtended[]>([]);
-  const [topBooks, setTopBooks] = useState<BookExtended[]>([]);
-  const [newBooks, setNewBooks] = useState<BookExtended[]>([]);
-  const [topRatedBooks, setTopRatedBooks] = useState<BookExtended[]>([]);
-
-  // Estado de filas por categoria
-  const [categoryBooks, setCategoryBooks] = useState<Map<string, BookExtended[]>>(new Map());
-
-  // Estado de carga
+export function useLibraryCarousels(categories: CategoryWithBooks[], locale: string) {
+  const [featuredBooks, setFeaturedBooks] = useState<LibraryBook[]>([]);
+  const [topBooks, setTopBooks] = useState<LibraryBook[]>([]);
+  const [newBooks, setNewBooks] = useState<LibraryBook[]>([]);
+  const [topRatedBooks, setTopRatedBooks] = useState<LibraryBook[]>([]);
+  const [categoryBooks, setCategoryBooks] = useState<Map<string, LibraryBook[]>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [isCategoryLoading, setIsCategoryLoading] = useState(false);
 
-  // ============================================
-  // CARGAR FILAS PRINCIPALES (en paralelo)
-  // ============================================
-
+  // Cargar filas principales en paralelo
   useEffect(() => {
     const loadMainCarousels = async () => {
       setIsLoading(true);
       try {
         const [featured, top, recent, rated] = await Promise.all([
-          BookLibraryRepository.getFeaturedBooks(10),
-          BookLibraryRepository.getTopBooks(10),
-          BookLibraryRepository.getNewBooks(15),
-          BookLibraryRepository.getTopRated(15),
+          BookLibraryRepository.getFeaturedBooks(locale, 10),
+          BookLibraryRepository.getTopBooks(locale, 10),
+          BookLibraryRepository.getNewBooks(locale, 15),
+          BookLibraryRepository.getTopRated(locale, 15),
         ]);
 
         setFeaturedBooks(featured);
@@ -64,12 +47,9 @@ export function useLibraryCarousels(categories: CategoryWithBooks[]) {
     };
 
     loadMainCarousels();
-  }, []);
+  }, [locale]);
 
-  // ============================================
-  // CARGAR LIBROS POR CATEGORIA (despues de datos iniciales)
-  // ============================================
-
+  // Cargar libros por categoria despues de datos iniciales
   useEffect(() => {
     if (isLoading || categories.length === 0) return;
 
@@ -77,14 +57,13 @@ export function useLibraryCarousels(categories: CategoryWithBooks[]) {
       setIsCategoryLoading(true);
       try {
         const categoriesToLoad = categories.slice(0, MAX_CATEGORY_CAROUSELS);
-
         const results = await Promise.all(
           categoriesToLoad.map((cat) =>
-            BookLibraryRepository.getBooksByCategory(cat.id, 15)
+            BookLibraryRepository.getBooksByCategory(cat.id, locale, 15)
           )
         );
 
-        const newCategoryBooks = new Map<string, BookExtended[]>();
+        const newCategoryBooks = new Map<string, LibraryBook[]>();
         categoriesToLoad.forEach((cat, index) => {
           if (results[index] && results[index].length > 0) {
             newCategoryBooks.set(cat.id, results[index]);
@@ -100,11 +79,7 @@ export function useLibraryCarousels(categories: CategoryWithBooks[]) {
     };
 
     loadCategoryBooks();
-  }, [categories, isLoading]);
-
-  // ============================================
-  // RETURN
-  // ============================================
+  }, [categories, isLoading, locale]);
 
   return {
     featuredBooks,

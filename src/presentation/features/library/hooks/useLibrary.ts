@@ -3,52 +3,36 @@
  * HOOK: useLibrary
  * Hook principal orquestador para la Biblioteca
  * Maneja categorias, busqueda y estado general
+ * Locale-aware para traducciones por idioma
  * ============================================
  */
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocale } from 'next-intl';
-import { BookLibraryRepository, CategoryWithBooks } from '@/src/infrastructure/repositories/books/BookLibraryRepository';
-import { BookExtended } from '@/src/core/domain/entities/BookExtended';
+import { BookLibraryRepository, CategoryWithBooks, LibraryBook } from '@/src/infrastructure/repositories/books/BookLibraryRepository';
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 
-// ============================================
-// CONSTANTES
-// ============================================
-
 const SEARCH_DEBOUNCE_MS = 300;
-
-// ============================================
-// HOOK
-// ============================================
 
 export function useLibrary() {
   const locale = useLocale();
   const { t, loading } = useSupabaseTranslations('library');
 
-  // Estado de categorias
   const [categories, setCategories] = useState<CategoryWithBooks[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
-
-  // Estado de seleccion
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
-  // Estado de busqueda
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<BookExtended[]>([]);
+  const [searchResults, setSearchResults] = useState<LibraryBook[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  // ============================================
-  // CARGAR CATEGORIAS
-  // ============================================
-
+  // Cargar categorias con traducciones del locale actual
   useEffect(() => {
     const loadCategories = async () => {
       setIsLoadingCategories(true);
       try {
-        const data = await BookLibraryRepository.getCategoriesWithBooks();
+        const data = await BookLibraryRepository.getCategoriesWithBooks(locale);
         setCategories(data);
       } catch (err) {
         console.error('Error cargando categorias de biblioteca:', err);
@@ -58,12 +42,9 @@ export function useLibrary() {
     };
 
     loadCategories();
-  }, []);
+  }, [locale]);
 
-  // ============================================
-  // BUSQUEDA CON DEBOUNCE
-  // ============================================
-
+  // Busqueda con debounce
   useEffect(() => {
     if (!searchTerm.trim()) {
       setSearchResults([]);
@@ -75,7 +56,7 @@ export function useLibrary() {
 
     const timer = setTimeout(async () => {
       try {
-        const results = await BookLibraryRepository.searchBooks(searchTerm.trim());
+        const results = await BookLibraryRepository.searchBooks(searchTerm.trim(), locale);
         setSearchResults(results);
       } catch (err) {
         console.error('Error buscando libros:', err);
@@ -86,28 +67,18 @@ export function useLibrary() {
     }, SEARCH_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  // ============================================
-  // RETURN
-  // ============================================
+  }, [searchTerm, locale]);
 
   return {
-    // Categorias
+    locale,
     categories,
     isLoadingCategories,
-
-    // Seleccion
     selectedCategory,
     setSelectedCategory,
-
-    // Busqueda
     searchTerm,
     setSearchTerm,
     searchResults,
     isSearching,
-
-    // Traducciones
     t,
     loading,
   };
