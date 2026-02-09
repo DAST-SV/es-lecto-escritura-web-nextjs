@@ -8,8 +8,8 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useParams, useRouter } from 'next/navigation';
+import { routing } from '@/src/infrastructure/config/routing.config';
 import {
   CheckCircle,
   Pause,
@@ -52,7 +52,8 @@ function MyProgressPageSkeleton() {
 
 export default function MyProgressPage() {
   const router = useRouter();
-  const locale = useLocale();
+  const params = useParams<{ locale?: string }>();
+  const locale = typeof params?.locale === 'string' ? params.locale : routing.defaultLocale;
 
   const {
     isLoading,
@@ -63,7 +64,7 @@ export default function MyProgressPage() {
     recentSessions,
     stats,
     goToBook,
-  } = useMyProgress();
+  } = useMyProgress(locale);
 
   const txt = useCallback((key: string, fallback: string) =>
     translationsLoading ? fallback : t(key), [translationsLoading, t]);
