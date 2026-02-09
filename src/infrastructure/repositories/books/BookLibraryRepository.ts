@@ -51,7 +51,7 @@ export interface CategoryWithBooks {
 // HELPER: mapear libro desde v_books_with_translations
 // ============================================
 
-function mapBookFromView(book: Record<string, any>, locale: string): LibraryBook {
+export function mapBookFromView(book: Record<string, any>, locale: string): LibraryBook {
   const translations = book.translations as Record<string, any> || {};
   const trans = translations[locale] || translations['es'] || Object.values(translations)[0] || {};
 

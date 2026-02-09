@@ -114,6 +114,7 @@ translations/data/complete_system.sql
 translations/data/admin_dashboard.sql
 translations/data/library_page.sql
 translations/data/nav_menus.sql
+translations/data/my_world_page.sql
 ```
 
 ## 14. Admin (opcional)

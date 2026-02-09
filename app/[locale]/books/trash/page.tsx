@@ -335,7 +335,7 @@ export default function TrashPage() {
           {/* Header */}
           <div className="mb-8">
             <button
-              onClick={() => router.push(`/${locale}/books`)}
+              onClick={() => router.push(`/${locale}/my-world`)}
               className="flex items-center gap-2 text-white hover:text-yellow-300 mb-4 transition-colors font-bold"
               style={{ fontFamily: 'Comic Sans MS, cursive' }}
             >
@@ -446,7 +446,7 @@ export default function TrashPage() {
                   {emptySubtitleText}
                 </p>
                 <button
-                  onClick={() => router.push(`/${locale}/books`)}
+                  onClick={() => router.push(`/${locale}/my-world`)}
                   className="px-8 py-3.5 bg-yellow-300 text-blue-700 font-black rounded-full shadow-xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-105 border-2 border-white"
                   style={{ fontFamily: 'Comic Sans MS, cursive' }}
                 >
