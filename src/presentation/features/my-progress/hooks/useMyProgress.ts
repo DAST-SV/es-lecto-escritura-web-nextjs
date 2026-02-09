@@ -10,7 +10,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/src/infrastructure/config/supabase.config';
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
@@ -35,8 +34,7 @@ const DEFAULT_STATS: ProgressStats = {
   favoriteCategory: null,
 };
 
-export function useMyProgress() {
-  const locale = useLocale();
+export function useMyProgress(locale: string) {
   const router = useRouter();
   const { t, loading: translationsLoading } = useSupabaseTranslations('my_progress');
   const supabase = createClient();
