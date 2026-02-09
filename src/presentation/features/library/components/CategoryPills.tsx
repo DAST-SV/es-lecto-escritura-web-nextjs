@@ -1,3 +1,4 @@
+// src/presentation/features/library/components/CategoryPills.tsx
 /**
  * ============================================
  * COMPONENTE: CategoryPills

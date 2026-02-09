@@ -1,3 +1,4 @@
+// src/presentation/features/library/components/BookCarouselCard.tsx
 /**
  * ============================================
  * COMPONENTE: BookCarouselCard

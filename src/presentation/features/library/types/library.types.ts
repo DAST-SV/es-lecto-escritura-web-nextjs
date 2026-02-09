@@ -1,3 +1,4 @@
+// src/presentation/features/library/types/library.types.ts
 /**
  * ============================================
  * TIPOS: Library Feature

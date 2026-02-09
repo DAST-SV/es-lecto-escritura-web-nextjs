@@ -1,3 +1,4 @@
+// src/presentation/features/library/hooks/useLibraryCarousels.ts
 /**
  * ============================================
  * HOOK: useLibraryCarousels

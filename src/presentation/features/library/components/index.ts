@@ -1,3 +1,4 @@
+// src/presentation/features/library/components/index.ts
 /**
  * Barrel export para componentes de library
  */

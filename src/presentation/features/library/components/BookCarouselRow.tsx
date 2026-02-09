@@ -1,3 +1,4 @@
+// src/presentation/features/library/components/BookCarouselRow.tsx
 /**
  * ============================================
  * COMPONENTE: BookCarouselRow

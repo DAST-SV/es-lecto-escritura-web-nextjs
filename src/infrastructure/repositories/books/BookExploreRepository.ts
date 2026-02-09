@@ -1,3 +1,4 @@
+// src/infrastructure/repositories/books/BookExploreRepository.ts
 /**
  * ============================================
  * REPOSITORIO: BookExploreRepository

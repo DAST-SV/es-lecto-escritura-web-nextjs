@@ -1,3 +1,4 @@
+// src/infrastructure/repositories/books/BookLibraryRepository.ts
 /**
  * ============================================
  * REPOSITORIO: BookLibraryRepository
@@ -119,7 +120,7 @@ export class BookLibraryRepository {
       .order('view_count', { ascending: false })
       .limit(limit);
 
-    if (error) { console.error('Error en getTopBooks:', error); return []; }
+    if (error) { console.error('Error en getTopBooks:', error.message, error.code, error.details, error.hint); return []; }
     return (data || []).map((b: any) => mapBookFromView(b, locale));
   }
 
@@ -134,7 +135,7 @@ export class BookLibraryRepository {
       .order('published_at', { ascending: false })
       .limit(limit);
 
-    if (error) { console.error('Error en getNewBooks:', error); return []; }
+    if (error) { console.error('Error en getNewBooks:', error.message, error.code, error.details, error.hint); return []; }
     return (data || []).map((b: any) => mapBookFromView(b, locale));
   }
 
@@ -149,7 +150,7 @@ export class BookLibraryRepository {
       .order('published_at', { ascending: false })
       .limit(limit);
 
-    if (error) { console.error('Error en getFeaturedBooks:', error); return []; }
+    if (error) { console.error('Error en getFeaturedBooks:', error.message, error.code, error.details, error.hint); return []; }
     return (data || []).map((b: any) => mapBookFromView(b, locale));
   }
 
@@ -163,7 +164,7 @@ export class BookLibraryRepository {
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (error) { console.error('Error en getTopRated:', error); return []; }
+    if (error) { console.error('Error en getTopRated:', error.message, error.code, error.details, error.hint); return []; }
     return (data || []).map((b: any) => mapBookFromView(b, locale));
   }
 
@@ -178,7 +179,7 @@ export class BookLibraryRepository {
       .order('view_count', { ascending: false })
       .limit(limit);
 
-    if (error) { console.error('Error en getBooksByCategory:', error); return []; }
+    if (error) { console.error('Error en getBooksByCategory:', error.message, error.code, error.details, error.hint); return []; }
     return (data || []).map((b: any) => mapBookFromView(b, locale));
   }
 
@@ -192,7 +193,7 @@ export class BookLibraryRepository {
       .gt('published_book_count', 0)
       .order('order_index');
 
-    if (error) { console.error('Error en getCategoriesWithBooks:', error); return []; }
+    if (error) { console.error('Error en getCategoriesWithBooks:', error.message, error.code, error.details, error.hint); return []; }
     return (data || []).map((c: any) => mapCategoryFromView(c, locale));
   }
 
@@ -206,7 +207,7 @@ export class BookLibraryRepository {
       .order('view_count', { ascending: false })
       .limit(limit * 2);
 
-    if (error) { console.error('Error en searchBooks:', error); return []; }
+    if (error) { console.error('Error en searchBooks:', error.message, error.code, error.details, error.hint); return []; }
 
     const searchLower = term.toLowerCase();
     const filtered = (data || []).filter((book: any) => {
