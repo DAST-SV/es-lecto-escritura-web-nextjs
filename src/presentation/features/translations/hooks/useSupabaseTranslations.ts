@@ -4,7 +4,8 @@
 
 'use client';
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useLocale } from 'next-intl';
+import { useParams } from 'next/navigation';
+import { routing } from '@/src/infrastructure/config/routing.config';
 import { SupabaseTranslationRepository } from '@/src/infrastructure/repositories';
 import { GetTranslationsUseCase } from '@/src/core/application/use-cases';
 
@@ -16,7 +17,8 @@ const cache: Record<string, Record<string, string>> = {};
  * Soporta traducciones simples y arrays dinámicos desde Supabase
  */
 export function useSupabaseTranslations(namespace: string) {
-  const locale = useLocale();
+  const params = useParams<{ locale?: string }>();
+  const locale = typeof params?.locale === 'string' ? params.locale : routing.defaultLocale;
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 

@@ -8,8 +8,8 @@
 'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useParams, useRouter } from 'next/navigation';
+import { routing } from '@/src/infrastructure/config/routing.config';
 import {
   BookOpen,
   PenTool,
@@ -66,7 +66,8 @@ function MyWorldPageSkeleton() {
 
 export default function MyWorldPage() {
   const router = useRouter();
-  const locale = useLocale();
+  const params = useParams<{ locale?: string }>();
+  const locale = typeof params?.locale === 'string' ? params.locale : routing.defaultLocale;
   const supabase = createClient();
 
   const {
@@ -86,7 +87,7 @@ export default function MyWorldPage() {
     refreshAuthoredBooks,
     // Stats
     stats,
-  } = useMyWorld();
+  } = useMyWorld(locale);
 
   // Writer state
   const [isPublishing, setIsPublishing] = useState<string | null>(null);
