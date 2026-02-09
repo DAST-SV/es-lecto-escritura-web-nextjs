@@ -15,6 +15,7 @@ SELECT
   b.status,
   b.estimated_read_time,
   b.page_count,
+  b.view_count,
   b.is_featured,
   b.is_premium,
   b.published_at,
