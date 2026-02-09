@@ -23,10 +23,10 @@ SELECT insert_translation('my_world', 'hero.subtitle', 'Tu espacio personal de l
 -- ============================================
 -- STATS
 -- ============================================
-SELECT insert_translation('my_world', 'stats.in_progress', 'En progreso', 'In progress', 'En cours');
-SELECT insert_translation('my_world', 'stats.completed', 'Completados', 'Completed', 'Termines');
-SELECT insert_translation('my_world', 'stats.favorites', 'Favoritos', 'Favorites', 'Favoris');
-SELECT insert_translation('my_world', 'stats.authored', 'Escritos', 'Authored', 'Ecrits');
+SELECT insert_translation('my_world', 'stats.in_progress', 'Leer mas adelante', 'Read later', 'A lire plus tard');
+SELECT insert_translation('my_world', 'stats.completed', 'Leidos', 'Read', 'Lus');
+SELECT insert_translation('my_world', 'stats.favorites', 'Mis favoritos', 'My favorites', 'Mes favoris');
+SELECT insert_translation('my_world', 'stats.authored', 'Mis libros', 'My books', 'Mes livres');
 SELECT insert_translation('my_world', 'stats.reading_time', 'Tiempo de lectura', 'Reading time', 'Temps de lecture');
 SELECT insert_translation('my_world', 'stats.total_views', 'Vistas totales', 'Total views', 'Vues totales');
 
@@ -39,8 +39,8 @@ SELECT insert_translation('my_world', 'tabs.writer', 'Escritor', 'Writer', 'Ecri
 -- ============================================
 -- SECTIONS - READER
 -- ============================================
-SELECT insert_translation('my_world', 'sections.continue_reading', 'Continua Leyendo', 'Continue Reading', 'Continuer la lecture');
-SELECT insert_translation('my_world', 'sections.completed', 'Libros Completados', 'Completed Books', 'Livres termines');
+SELECT insert_translation('my_world', 'sections.continue_reading', 'Leer mas adelante', 'Read later', 'Lire plus tard');
+SELECT insert_translation('my_world', 'sections.completed', 'Libros leidos', 'Read books', 'Livres lus');
 SELECT insert_translation('my_world', 'sections.favorites', 'Mis Favoritos', 'My Favorites', 'Mes Favoris');
 SELECT insert_translation('my_world', 'sections.reading_lists', 'Mis Listas', 'My Lists', 'Mes Listes');
 
@@ -83,8 +83,8 @@ SELECT insert_translation('my_world', 'status.archived', 'Archivado', 'Archived'
 SELECT insert_translation('my_world', 'empty.reader_title', 'Tu mundo esta vacio', 'Your world is empty', 'Votre monde est vide');
 SELECT insert_translation('my_world', 'empty.reader_subtitle', 'Explora la biblioteca y comienza a leer', 'Explore the library and start reading', 'Explorez la bibliotheque et commencez a lire');
 SELECT insert_translation('my_world', 'empty.explore_library', 'Explorar biblioteca', 'Explore library', 'Explorer la bibliotheque');
-SELECT insert_translation('my_world', 'empty.no_progress', 'No tienes libros en progreso', 'No books in progress', 'Aucun livre en cours');
-SELECT insert_translation('my_world', 'empty.no_completed', 'Aun no has completado ningun libro', 'No completed books yet', 'Aucun livre termine');
+SELECT insert_translation('my_world', 'empty.no_progress', 'No tienes libros para leer mas adelante', 'No books to read later', 'Aucun livre a lire plus tard');
+SELECT insert_translation('my_world', 'empty.no_completed', 'Aun no has terminado ningun libro', 'No read books yet', 'Aucun livre lu');
 SELECT insert_translation('my_world', 'empty.no_favorites', 'Aun no tienes favoritos', 'No favorites yet', 'Aucun favori');
 
 -- ============================================

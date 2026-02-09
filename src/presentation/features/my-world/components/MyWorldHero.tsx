@@ -95,10 +95,10 @@ export const MyWorldHero: React.FC<MyWorldHeroProps> = memo(({ stats, t, transla
   const badgeText = translationsLoading ? 'MI MUNDO PERSONAL' : t('hero.badge');
   const titleText = translationsLoading ? 'Bienvenido a tu Mundo' : t('hero.title');
   const subtitleText = translationsLoading ? 'Tu espacio personal de lectura y escritura' : t('hero.subtitle');
-  const inProgressLabel = translationsLoading ? 'En progreso' : t('stats.in_progress');
-  const completedLabel = translationsLoading ? 'Completados' : t('stats.completed');
-  const favoritesLabel = translationsLoading ? 'Favoritos' : t('stats.favorites');
-  const authoredLabel = translationsLoading ? 'Escritos' : t('stats.authored');
+  const inProgressLabel = translationsLoading ? 'Leer mas adelante' : t('stats.in_progress');
+  const completedLabel = translationsLoading ? 'Leidos' : t('stats.completed');
+  const favoritesLabel = translationsLoading ? 'Mis favoritos' : t('stats.favorites');
+  const authoredLabel = translationsLoading ? 'Mis libros' : t('stats.authored');
 
   return (
     <section className="relative py-10 md:py-14 lg:py-18 px-4">
