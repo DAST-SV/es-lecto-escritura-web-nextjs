@@ -202,7 +202,7 @@ SELECT insert_route_translation('/library', '/biblioteca', 'Biblioteca', '/libra
 SELECT insert_route_translation('/pages-my-books', '/mis-libros', 'Mis Libros', '/my-books', 'My Books', '/mes-livres', 'Mes Livres');
 SELECT insert_route_translation('/books/create', '/libros/crear', 'Crear Libro', '/books/create', 'Create Book', '/livres/creer', 'Créer Livre');
 SELECT insert_route_translation('/my-world', '/mi-mundo', 'Mi Mundo', '/my-world', 'My World', '/mon-monde', 'Mon Monde');
-SELECT insert_route_translation('/my-progress', '/mi-progreso', 'Mi Progreso', '/my-progress', 'My Progress', '/mes-progres', 'Mes Progrès');
+SELECT insert_route_translation('/my-progress', '/mi-proceso', 'Mi Proceso', '/my-progress', 'My Progress', '/mes-progres', 'Mes Progrès');
 SELECT insert_route_translation('/admin/organizations', '/admin/organizaciones', 'Organizaciones', '/admin/organizations', 'Organizations', '/admin/organisations', 'Organisations');
 SELECT insert_route_translation('/admin/users', '/admin/usuarios', 'Usuarios', '/admin/users', 'Users', '/admin/utilisateurs', 'Utilisateurs');
 SELECT insert_route_translation('/admin/roles', '/admin/roles', 'Roles y Permisos', '/admin/roles', 'Roles & Permissions', '/admin/roles', 'Rôles et Permissions');

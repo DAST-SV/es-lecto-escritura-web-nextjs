@@ -52,7 +52,7 @@ ON CONFLICT (route_id, language_code) DO NOTHING;
 
 -- Traducciones: /my-progress
 INSERT INTO app.route_translations (route_id, language_code, translated_path, translated_name)
-SELECT r.id, 'es'::app.language_code, '/mi-progreso', 'Mi Progreso'
+SELECT r.id, 'es'::app.language_code, '/mi-proceso', 'Mi Proceso'
 FROM app.routes r WHERE r.pathname = '/my-progress'
 ON CONFLICT (route_id, language_code) DO NOTHING;
 
