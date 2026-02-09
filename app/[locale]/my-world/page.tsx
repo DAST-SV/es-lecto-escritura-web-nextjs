@@ -1,7 +1,7 @@
 /**
  * UBICACION: app/[locale]/my-world/page.tsx
  * Mi Mundo - Hub personal del usuario
- * Lectura (progreso, completados, favoritos) + Escritura (mis libros, crear, papelera)
+ * Lectura (progreso, favoritos) + Escritura (mis libros, crear, papelera)
  * Estilo consistente con HomePage: mismos colores, skeleton, traducciones dinamicas
  */
 
@@ -14,7 +14,6 @@ import {
   BookOpen,
   PenTool,
   Heart,
-  CheckCircle,
   Play,
   Plus,
   Archive,
@@ -78,7 +77,6 @@ export default function MyWorldPage() {
     t,
     // Reader
     booksInProgress,
-    completedBooks,
     favoriteBooks,
     // Writer
     authoredBooks,
@@ -231,7 +229,7 @@ export default function MyWorldPage() {
   // ============================================
 
   const ReaderContent = () => {
-    const hasAnyReaderContent = booksInProgress.length > 0 || completedBooks.length > 0 || favoriteBooks.length > 0;
+    const hasAnyReaderContent = booksInProgress.length > 0 || favoriteBooks.length > 0;
 
     if (!hasAnyReaderContent) {
       return (
@@ -277,29 +275,6 @@ export default function MyWorldPage() {
               onSelect={handleBookSelect}
               continueLabel={txt('card.continue', 'Continuar')}
               progressLabel={txt('card.progress_label', 'progreso')}
-              priority={i < 3}
-            />
-          ))}
-        </MyWorldCarouselRow>
-
-        {/* Libros completados */}
-        <MyWorldCarouselRow
-          title={txt('sections.completed', 'Libros Completados')}
-          icon={<CheckCircle className="w-4 h-4 text-white" />}
-          isEmpty={completedBooks.length === 0}
-          emptyMessage={txt('empty.no_completed', 'Aun no has completado ningun libro')}
-          emptyIcon={<CheckCircle className="w-10 h-10 text-white/50" />}
-          previousLabel={txt('carousel.previous', 'Anterior')}
-          nextLabel={txt('carousel.next', 'Siguiente')}
-        >
-          {completedBooks.map((book, i) => (
-            <FavoriteBookCard
-              key={book.id}
-              book={book}
-              onSelect={handleBookSelect}
-              readLabel={txt('card.read', 'Leer')}
-              variant="completed"
-              completedLabel={txt('card.completed_label', 'Completado')}
               priority={i < 3}
             />
           ))}
