@@ -10,7 +10,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/src/infrastructure/config/supabase.config';
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
@@ -33,8 +32,7 @@ const DEFAULT_STATS: MyWorldStats = {
   totalViews: 0,
 };
 
-export function useMyWorld() {
-  const locale = useLocale();
+export function useMyWorld(locale: string) {
   const router = useRouter();
   const { t, loading: translationsLoading } = useSupabaseTranslations('my_world');
   const supabase = createClient();
