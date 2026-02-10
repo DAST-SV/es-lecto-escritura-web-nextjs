@@ -96,6 +96,8 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
   const [categorias, setCategorias] = useState<Array<{ id: string; slug: string; name: string }>>([]);
   const [niveles, setNiveles] = useState<Array<{ id: string; slug: string; name: string }>>([]);
   const [generos, setGeneros] = useState<Array<{ id: string; slug: string; name: string }>>([]);
+  const [etiquetasList, setEtiquetasList] = useState<Array<{ id: string; slug: string; name: string }>>([]);
+  const [valoresList, setValoresList] = useState<Array<{ id: string; slug: string; name: string }>>([]);;
 
   // Información del usuario actual (para autores)
   const [currentUser, setCurrentUser] = useState<{
@@ -188,101 +190,43 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
 
         // Cargar categorías, niveles y géneros con sus traducciones
         // Usamos LEFT JOIN (sin !inner) para obtener datos aunque no haya traducción
-        const [catsResult, levsResult, gensResult, catsTransResult, levsTransResult, gensTransResult] = await Promise.all([
+        const [catsResult, levsResult, gensResult, tagsResult, valsResult,
+               catsTransResult, levsTransResult, gensTransResult, tagsTransResult, valsTransResult] = await Promise.all([
           // Datos base
-          supabase
-            .schema('books')
-            .from('categories')
-            .select('id, slug, order_index')
-            .eq('is_active', true)
-            .is('deleted_at', null)
-            .order('order_index'),
-
-          supabase
-            .schema('books')
-            .from('levels')
-            .select('id, slug, order_index')
-            .eq('is_active', true)
-            .is('deleted_at', null)
-            .order('order_index'),
-
-          supabase
-            .schema('books')
-            .from('genres')
-            .select('id, slug, order_index')
-            .eq('is_active', true)
-            .is('deleted_at', null)
-            .order('order_index'),
-
-          // Traducciones por separado
-          supabase
-            .schema('books')
-            .from('category_translations')
-            .select('category_id, name')
-            .eq('language_code', locale),
-
-          supabase
-            .schema('books')
-            .from('level_translations')
-            .select('level_id, name')
-            .eq('language_code', locale),
-
-          supabase
-            .schema('books')
-            .from('genre_translations')
-            .select('genre_id, name')
-            .eq('language_code', locale),
+          supabase.schema('books').from('categories').select('id, slug, order_index').eq('is_active', true).is('deleted_at', null).order('order_index'),
+          supabase.schema('books').from('levels').select('id, slug, order_index').eq('is_active', true).is('deleted_at', null).order('order_index'),
+          supabase.schema('books').from('genres').select('id, slug, order_index').eq('is_active', true).is('deleted_at', null).order('order_index'),
+          supabase.schema('books').from('tags').select('id, slug').eq('is_active', true).is('deleted_at', null).order('slug'),
+          supabase.schema('books').from('values').select('id, slug, order_index').eq('is_active', true).is('deleted_at', null).order('order_index'),
+          // Traducciones
+          supabase.schema('books').from('category_translations').select('category_id, name').eq('language_code', locale),
+          supabase.schema('books').from('level_translations').select('level_id, name').eq('language_code', locale),
+          supabase.schema('books').from('genre_translations').select('genre_id, name').eq('language_code', locale),
+          supabase.schema('books').from('tag_translations').select('tag_id, name').eq('language_code', locale),
+          supabase.schema('books').from('value_translations').select('value_id, name').eq('language_code', locale),
         ]);
 
-        // Debug: mostrar resultados de queries
-        console.log('📚 [BookForm] Catalogs loaded:', {
-          categories: catsResult.data?.length || 0,
-          levels: levsResult.data?.length || 0,
-          genres: gensResult.data?.length || 0,
-          catsTrans: catsTransResult.data?.length || 0,
-          levsTrans: levsTransResult.data?.length || 0,
-          gensTrans: gensTransResult.data?.length || 0,
-          locale,
-          errors: {
-            cats: catsResult.error,
-            levs: levsResult.error,
-            gens: gensResult.error,
-            catsTrans: catsTransResult.error,
-            levsTrans: levsTransResult.error,
-            gensTrans: gensTransResult.error,
-          }
-        });
-
         // Crear mapas de traducciones
-        const catsTransMap = new Map((catsTransResult.data || []).map(t => [t.category_id, t.name]));
-        const levsTransMap = new Map((levsTransResult.data || []).map(t => [t.level_id, t.name]));
-        const gensTransMap = new Map((gensTransResult.data || []).map(t => [t.genre_id, t.name]));
+        const catsTransMap = new Map((catsTransResult.data || []).map((t: any) => [t.category_id, t.name]));
+        const levsTransMap = new Map((levsTransResult.data || []).map((t: any) => [t.level_id, t.name]));
+        const gensTransMap = new Map((gensTransResult.data || []).map((t: any) => [t.genre_id, t.name]));
+        const tagsTransMap = new Map((tagsTransResult.data || []).map((t: any) => [t.tag_id, t.name]));
+        const valsTransMap = new Map((valsTransResult.data || []).map((t: any) => [t.value_id, t.name]));
 
-        // Mapear categorías con nombre traducido (fallback a slug si no hay traducción)
         if (catsResult.data) {
-          setCategorias(catsResult.data.map(c => ({
-            id: c.id,
-            slug: c.slug,
-            name: catsTransMap.get(c.id) || c.slug,
-          })));
+          setCategorias(catsResult.data.map((c: any) => ({ id: c.id, slug: c.slug, name: catsTransMap.get(c.id) || c.slug })));
         }
-
-        // Mapear niveles con nombre traducido
         if (levsResult.data) {
-          setNiveles(levsResult.data.map(l => ({
-            id: l.id,
-            slug: l.slug,
-            name: levsTransMap.get(l.id) || l.slug,
-          })));
+          setNiveles(levsResult.data.map((l: any) => ({ id: l.id, slug: l.slug, name: levsTransMap.get(l.id) || l.slug })));
         }
-
-        // Mapear géneros con nombre traducido
         if (gensResult.data) {
-          setGeneros(gensResult.data.map(g => ({
-            id: g.id,
-            slug: g.slug,
-            name: gensTransMap.get(g.id) || g.slug,
-          })));
+          setGeneros(gensResult.data.map((g: any) => ({ id: g.id, slug: g.slug, name: gensTransMap.get(g.id) || g.slug })));
+        }
+        if (tagsResult.data) {
+          setEtiquetasList(tagsResult.data.map((t: any) => ({ id: t.id, slug: t.slug, name: tagsTransMap.get(t.id) || t.slug })));
+        }
+        if (valsResult.data) {
+          setValoresList(valsResult.data.map((v: any) => ({ id: v.id, slug: v.slug, name: valsTransMap.get(v.id) || v.slug })));
         }
 
         // Solo marcar catálogos como cargados si NO es modo edición
@@ -421,18 +365,54 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
             const author = (ba as any).authors;
             if (author?.slug) {
               const authorUserId = author.slug; // slug = user_id
-              const { data: profile } = await supabase
-                .schema('app')
-                .from('user_profiles')
-                .select('display_name, full_name, avatar_url')
-                .eq('user_id', authorUserId)
-                .single();
+
+              // Usar la API server-side que accede a auth.users via admin client
+              // Esto resuelve nombres de usuarios OAuth (Google) cuyo nombre
+              // viene de raw_user_meta_data y no de user_profiles
+              let resolvedName = '';
+              let resolvedEmail = '';
+              let resolvedAvatar = author.avatar_url || null;
+
+              try {
+                const resp = await fetch(`/api/v1/users/by-id?id=${encodeURIComponent(authorUserId)}`);
+                if (resp.ok) {
+                  const userData = await resp.json();
+                  resolvedName = userData.displayName || '';
+                  resolvedEmail = userData.email || '';
+                  resolvedAvatar = userData.avatarUrl || resolvedAvatar;
+                }
+              } catch (_err) {
+                // ignore fetch error, fall through to profile query
+              }
+
+              // Fallback: intentar desde user_profiles si la API falló
+              if (!resolvedName) {
+                const { data: profile } = await supabase
+                  .schema('app')
+                  .from('user_profiles')
+                  .select('display_name, full_name, first_name, last_name, avatar_url')
+                  .eq('user_id', authorUserId)
+                  .single();
+
+                if (profile) {
+                  const firstName = profile.first_name || '';
+                  const lastName = profile.last_name || '';
+                  const combined = [firstName, lastName].filter(Boolean).join(' ');
+                  resolvedName = profile.display_name || profile.full_name || combined || '';
+                  resolvedAvatar = profile.avatar_url || resolvedAvatar;
+                }
+              }
+
+              // Último recurso: mostrar fragmento de ID
+              if (!resolvedName) {
+                resolvedName = authorUserId.slice(0, 8);
+              }
 
               authorsList.push({
                 userId: authorUserId,
-                email: '',
-                displayName: profile?.display_name || profile?.full_name || 'Autor',
-                avatarUrl: profile?.avatar_url || author.avatar_url || null,
+                email: resolvedEmail,
+                displayName: resolvedName,
+                avatarUrl: resolvedAvatar,
                 role: (ba.role as BookAuthor['role']) || 'author',
               });
             }
@@ -1039,10 +1019,12 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
     setPortadaPreview,
     hasCover,
 
-    // Catálogos (legacy - pueden usarse con CatalogSelector)
+    // Catálogos para la ficha literaria
     categorias,
     niveles,
     generos,
+    etiquetasList,
+    valoresList,
 
     // PDF del tab activo
     pdfFile,

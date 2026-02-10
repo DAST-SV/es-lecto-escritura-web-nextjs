@@ -170,7 +170,8 @@ export function AuthorSelector({
   };
 
   const removeAuthor = (userId: string) => {
-    // No permitir eliminar si solo queda un autor
+    // No permitir eliminar el usuario actual ni si solo queda un autor
+    if (currentUser && userId === currentUser.id) return;
     if (selectedAuthors.length <= 1) return;
     onChange(selectedAuthors.filter(a => a.userId !== userId));
   };
@@ -233,7 +234,7 @@ export function AuthorSelector({
                 <option key={rk} value={rk}>{t(`role_${rk}`)}</option>
               ))}
             </select>
-            {selectedAuthors.length > 1 && (
+            {selectedAuthors.length > 1 && !isCurrentUser(author.userId) && (
               <button onClick={() => removeAuthor(author.userId)}
                 className="p-0.5 hover:bg-red-100 rounded transition-colors flex-shrink-0">
                 <X size={12} className="text-red-400" />

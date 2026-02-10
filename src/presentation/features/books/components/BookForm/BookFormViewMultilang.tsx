@@ -4,13 +4,12 @@
  */
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Loader2, Save, Upload, AlertCircle, Camera, X, Eye,
   ArrowLeft, Star, Check, Users, Tag,
-  PenTool, Sparkles, FileText, BookMarked, BookOpen,
-  Languages
+  PenTool, Sparkles, FileText, BookMarked, BookOpen
 } from 'lucide-react';
 import { UnifiedLayout } from '@/src/presentation/features/navigation';
 import { HomeBackground } from '@/src/presentation/features/home';
@@ -27,14 +26,35 @@ const F = { fontFamily: 'Comic Sans MS, cursive' };
 type FormTab = 'ficha' | 'contenido';
 type ClasifTab = 'category' | 'level' | 'genres' | 'tags' | 'values';
 
+// ⚠️ Field DEBE estar FUERA del componente para evitar que React lo desmonte
+// en cada render (lo que cancela el foco después de cada carácter)
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="block text-[11px] font-bold text-gray-500 mb-1" style={F}>
+        {label}{required && <span className="text-red-400 ml-0.5">*</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
 interface Props { bookId?: string; }
 
 export function BookFormViewMultilang({ bookId }: Props) {
   const router = useRouter();
-  const { t, loading: tLoading } = useSupabaseTranslations('books_form');
+  const { t: tRaw, loading: tLoading } = useSupabaseTranslations('books_form');
+  // t() devuelve [key] cuando la traducción no existe — useCallback evita re-renders en inputs
+  const t = useCallback((key: string, fallback?: string): string => {
+    const val = tRaw(key);
+    return val.startsWith('[') && val.endsWith(']') ? (fallback ?? val) : val;
+  }, [tRaw]);
   const [formTab, setFormTab] = useState<FormTab>('contenido');
   const [clasifTab, setClasifTab] = useState<ClasifTab>('category');
   const [coverZoom, setCoverZoom] = useState(false);
+  const [readMoreModal, setReadMoreModal] = useState<{ type: 'description' | 'summary'; text: string } | null>(null);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const TRUNCATE_CHARS = 160;
 
   const {
     locale, isLoadingBook, isLoading, error, isEditMode,
@@ -49,7 +69,7 @@ export function BookFormViewMultilang({ bookId }: Props) {
     selectedEtiquetas, setSelectedEtiquetas,
     selectedValores, setSelectedValores,
     characters, setCharacters,
-    categorias, niveles, generos,
+    categorias, niveles, generos, etiquetasList, valoresList,
     pdfFile, currentPdfUrl, hasPDF,
     extractedPages, pdfDimensions, isExtractingPages, pdfError,
     showPreview, setShowPreview, extractPagesFromExistingPdf,
@@ -81,15 +101,6 @@ export function BookFormViewMultilang({ bookId }: Props) {
   };
 
   const inputCls = "w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:border-yellow-400 focus:ring-1 focus:ring-yellow-100 focus:outline-none bg-white text-gray-700 placeholder:text-gray-300";
-
-  const Field = ({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) => (
-    <div>
-      <label className="block text-[11px] font-bold text-gray-500 mb-1" style={F}>
-        {label}{required && <span className="text-red-400 ml-0.5">*</span>}
-      </label>
-      {children}
-    </div>
-  );
 
   return (
     <UnifiedLayout className="bg-gradient-to-b from-blue-400 via-blue-300 to-green-300" mainClassName="pt-0" backgroundComponent={<HomeBackground />}>
@@ -126,15 +137,18 @@ export function BookFormViewMultilang({ bookId }: Props) {
             }`} style={F}>
             <BookMarked size={12} strokeWidth={1.5} />
             Ficha Literaria
+            <span className={`text-[9px] px-1 rounded-full font-black uppercase tracking-wide ${formTab === 'ficha' ? 'bg-yellow-100 text-yellow-700' : 'bg-white/25 text-white'}`}>
+              {activeTab}
+            </span>
           </button>
         </div>
 
         {/* Guardar */}
         <div className="flex-shrink-0 flex items-center gap-1.5">
-          <button onClick={handleSave} disabled={!isFormValid || isLoading}
+          <button onClick={() => !isLoading && isFormValid && setShowSaveConfirm(true)} disabled={!isFormValid || isLoading}
             className="px-3 py-1.5 bg-white text-gray-700 font-bold rounded-lg shadow-sm border border-yellow-300 hover:shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 text-xs"
             style={F}>
-            {isLoading ? <><Loader2 size={12} strokeWidth={1.5} className="animate-spin" />{t('btn_saving')}</> : <><Save size={12} strokeWidth={1.5} />{isEditMode ? t('btn_save_changes') : t('btn_save')}</>}
+            {isLoading ? <><Loader2 size={12} strokeWidth={1.5} className="animate-spin" />{t('btn_saving', 'Guardando...')}</> : <><Save size={12} strokeWidth={1.5} />{isEditMode ? t('btn_save_changes', 'Guardar cambios') : t('btn_save', 'Guardar')}</>}
           </button>
         </div>
       </div>
@@ -157,7 +171,7 @@ export function BookFormViewMultilang({ bookId }: Props) {
           {/* ── ROW 1 ── */}
           <div className="flex gap-2 items-start">
 
-            {/* Panel principal: idioma tabs + campos en 2 sub-columnas */}
+            {/* Panel principal: idioma tabs + campos + portada/PDF (todo por idioma) */}
             <div className="flex-1 min-w-0 bg-white rounded-2xl shadow-sm border border-yellow-200/50 overflow-hidden">
               {/* Language tabs */}
               <div className="flex border-b border-gray-100 bg-gray-50/50">
@@ -197,8 +211,8 @@ export function BookFormViewMultilang({ bookId }: Props) {
 
                   {/* ── FILA 1: Título+Subtítulo izq | Personajes der ── */}
                   <div className="grid grid-cols-2 gap-3 mb-3">
-                    {/* Izquierda: Título + Subtítulo */}
-                    <div className="space-y-2.5">
+                    {/* Izquierda: Título + Subtítulo — con margen interno */}
+                    <div className="bg-gray-50/60 rounded-xl border border-gray-100 p-2.5 space-y-2.5">
                       <Field label={t('field_title') || 'Título'} required>
                         <input type="text" value={currentTranslation.title}
                           onChange={e => updateTranslation(activeTab, 'title', e.target.value)}
@@ -216,19 +230,19 @@ export function BookFormViewMultilang({ bookId }: Props) {
                     {/* Derecha: Personajes */}
                     <div>
                       <CharacterInput characters={characters} onChange={setCharacters}
-                        label={t('field_characters') || 'Personajes'}
+                        label={t('field_characters', 'Personajes')}
                         maxCharacters={20}
-                        roleMainLabel={t('role_main') || 'Principal'}
-                        roleSecondaryLabel={t('role_secondary') || 'Secundario'}
-                        roleSupportingLabel={t('role_supporting') || 'De apoyo'}
-                        placeholderText={t('character_placeholder') || 'Nombre del personaje...'}
-                        maxReachedText={t('character_max_reached') || 'Máximo alcanzado'}
-                        hintText={t('character_hint') || 'Agrega los personajes principales'} />
+                        roleMainLabel={t('role_main', 'Principal')}
+                        roleSecondaryLabel={t('role_secondary', 'Secundario')}
+                        roleSupportingLabel={t('role_supporting', 'De apoyo')}
+                        placeholderText={t('character_placeholder', 'Nombre del personaje...')}
+                        maxReachedText={t('character_max_reached', 'Máximo alcanzado')}
+                        hintText={t('character_hint', 'Agrega los personajes principales')} />
                     </div>
                   </div>
 
                   {/* ── FILA 2: Descripción izq | Resumen der — ambos con resize vertical ── */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-gray-50/60 rounded-xl border border-gray-100 p-2.5 grid grid-cols-2 gap-3">
                     <Field label={t('field_description') || 'Descripción'} required>
                       <textarea value={currentTranslation.description}
                         onChange={e => updateTranslation(activeTab, 'description', e.target.value)}
@@ -242,18 +256,20 @@ export function BookFormViewMultilang({ bookId }: Props) {
                         rows={4} className={`${inputCls} resize-y min-h-[80px]`} style={F} />
                     </Field>
                   </div>
+
                 </div>
               )}
             </div>
 
-            {/* Columna derecha sticky: Portada + PDF */}
+            {/* Columna derecha sticky: Portada + PDF — con badge de idioma activo */}
             <div className="w-40 flex-shrink-0 sticky top-[68px] self-start space-y-2">
 
               {/* Portada */}
               <div className="bg-white rounded-2xl shadow-sm border border-yellow-200/50 overflow-hidden">
                 <div className="px-2.5 py-1.5 border-b border-gray-100 flex items-center gap-1">
                   <Camera size={11} strokeWidth={1.5} className="text-gray-800" />
-                  <span className="text-[11px] font-bold text-gray-600" style={F}>{t('cover_label') || 'Portada'}</span>
+                  <span className="text-[11px] font-bold text-gray-600" style={F}>{t('cover_label', 'Portada')}</span>
+                  <span className="ml-auto text-[9px] font-black uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full">{activeTab}</span>
                 </div>
                 <div className="p-2 flex flex-col items-center">
                   {portadaPreview ? (
@@ -291,14 +307,14 @@ export function BookFormViewMultilang({ bookId }: Props) {
                 <div className="px-2.5 py-1.5 border-b border-gray-100 flex items-center gap-1">
                   <FileText size={11} strokeWidth={1.5} className="text-gray-800" />
                   <span className="text-[11px] font-bold text-gray-600" style={F}>PDF<span className="text-red-400 ml-0.5">*</span></span>
+                  <span className="ml-auto text-[9px] font-black uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full">{activeTab}</span>
                 </div>
                 <div className="p-2">
                   {hasPDF && !pdfFile ? (
                     <div className="space-y-1.5">
                       <div className="px-2 py-1.5 bg-green-50 border border-green-200/60 rounded-lg">
-                        <p className="text-[10px] font-bold text-green-700" style={F}>{t('pdf_loaded') || '✓ PDF cargado'}</p>
+                        <p className="text-[10px] font-bold text-green-700" style={F}>{t('pdf_loaded', '✓ PDF cargado')}</p>
                       </div>
-                      {/* Botón leer — extrae si hace falta, abre si ya tiene páginas */}
                       {extractedPages.length > 0 ? (
                         <button onClick={() => setShowPreview(true)}
                           className="w-full px-2 py-1.5 bg-black hover:bg-gray-900 text-yellow-300 text-[10px] font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all border border-black" style={F}>
@@ -336,7 +352,6 @@ export function BookFormViewMultilang({ bookId }: Props) {
                           <X size={11} strokeWidth={1.5} className="text-red-400" />
                         </button>
                       </div>
-                      {/* Botón leer — siempre visible cuando hay PDF subido */}
                       {extractedPages.length > 0 ? (
                         <button onClick={() => setShowPreview(true)}
                           className="w-full px-2 py-1.5 bg-black hover:bg-gray-900 text-yellow-300 text-[10px] font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all border border-black" style={F}>
@@ -431,180 +446,190 @@ export function BookFormViewMultilang({ bookId }: Props) {
           Preview espectacular centrada — idioma = activeTab de Contenido
       ═══════════════════════════════════════════ */}
       {formTab === 'ficha' && (
-        <div className="px-3 pb-10 flex justify-center">
+        <div className="px-3 pb-4 flex justify-center" style={{ minHeight: 'calc(100vh - 120px)' }}>
           {shouldShowPreview ? (
-            <div className="w-full max-w-2xl">
-              {/* ══ FICHA LITERARIA — sin pestañas, sin prefijos de idioma ══ */}
-              <div className="bg-white rounded-3xl shadow-2xl overflow-hidden"
-                style={{ border: '2px solid #fde047' }}>
+            <div className="w-full max-w-2xl flex flex-col" style={{ minHeight: 'calc(100vh - 132px)' }}>
+              {/* ══ FICHA LITERARIA COMPACTA ══ */}
+              <div className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col flex-1" style={{ border: '2px solid #fde047' }}>
 
-                {/* Banda superior decorativa + idioma sutil a la derecha */}
-                <div className="h-2 bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-400 relative">
-                  {activeLanguages.length > 1 && (
-                    <div className="absolute right-3 -bottom-3.5 flex gap-0.5">
-                      {activeLanguages.map(lang => (
-                        <button key={lang.code} onClick={() => setActiveTab(lang.code)}
-                          title={lang.name || lang.code.toUpperCase()}
-                          className={`text-xs leading-none px-1.5 py-0.5 rounded-b-md transition-all ${
-                            activeTab === lang.code
-                              ? 'bg-yellow-400 opacity-100'
-                              : 'bg-gray-200 opacity-40 hover:opacity-70'
-                          }`}>
-                          {lang.flagEmoji || lang.code.toUpperCase()}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                {/* Banda superior + badge idioma */}
+                <div className="h-1.5 bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-400 relative">
+                  <div className="absolute right-2 -bottom-3">
+                    <span className="text-[8px] font-black leading-none px-1 py-0.5 rounded-b bg-yellow-400/90 text-yellow-900 uppercase tracking-wide">
+                      {activeTab.toUpperCase()}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Hero: portada + info */}
-                <div className="flex">
-                  {/* Portada — click abre zoom */}
-                  <div className="flex-shrink-0 w-44 relative">
+                {/* ══ ROW 1: portada (col-2) | clasificaciones (col-10) ══ */}
+                <div className="flex gap-0 px-3 pt-3 pb-2">
+
+                  {/* col-2: Portada — más pequeña */}
+                  <div className="w-[18%] flex-shrink-0 pr-3">
                     {portadaPreview ? (
-                      <button onClick={() => setCoverZoom(true)} className="block w-44 h-64 group focus:outline-none">
-                        <img src={portadaPreview} alt="portada" className="w-44 h-64 object-cover group-hover:brightness-90 transition-all" />
-                        <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
-                          <span className="bg-black/40 rounded-full p-2"><Eye size={18} strokeWidth={1.5} className="text-white" /></span>
-                        </span>
+                      <button onClick={() => setCoverZoom(true)} className="block w-full group focus:outline-none relative">
+                        <div className="absolute -inset-0.5 rounded-lg bg-gradient-to-br from-yellow-400 via-orange-300 to-pink-400 opacity-60 blur-[3px]" />
+                        <div className="relative rounded-lg overflow-hidden shadow-lg border-2 border-white">
+                          <img src={portadaPreview} alt="portada" className="w-full aspect-[2/3] object-cover group-hover:brightness-90 transition-all" />
+                          <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                            <span className="bg-black/40 rounded-full p-1.5"><Eye size={14} strokeWidth={1.5} className="text-white" /></span>
+                          </span>
+                        </div>
                       </button>
                     ) : (
-                      <div className="w-44 h-64 bg-gradient-to-b from-yellow-50 via-orange-50 to-pink-50 flex flex-col items-center justify-center gap-2">
-                        <BookOpen size={36} strokeWidth={1} className="text-yellow-300" />
-                        <span className="text-[10px] text-yellow-400 font-bold px-3 text-center" style={F}>Sin portada aún</span>
+                      <div className="w-full aspect-[2/3] rounded-lg border-2 border-dashed border-yellow-200 bg-gradient-to-b from-yellow-50 via-orange-50 to-pink-50 flex flex-col items-center justify-center gap-1">
+                        <BookOpen size={20} strokeWidth={1} className="text-yellow-300" />
+                        <span className="text-[8px] text-yellow-400 font-bold px-2 text-center" style={F}>Sin portada</span>
                       </div>
                     )}
                   </div>
 
-                  {/* Info principal */}
-                  <div className="flex-1 px-5 py-5 flex flex-col justify-between min-w-0">
+                  {/* col-9: Título, autores y clasificaciones */}
+                  <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+
+                    {/* Título + subtítulo */}
                     <div>
-                      {currentTranslation.title ? (
-                        <h2 className="text-xl font-black text-gray-900 leading-tight mb-1" style={F}>
-                          {currentTranslation.title}
-                        </h2>
-                      ) : (
-                        <p className="text-sm text-gray-300 italic mb-1" style={F}>Sin título</p>
-                      )}
+                      {currentTranslation.title
+                        ? <h2 className="text-sm font-black text-gray-900 leading-tight" style={F}>{currentTranslation.title}</h2>
+                        : <p className="text-xs text-gray-300 italic" style={F}>Sin título</p>}
                       {currentTranslation.subtitle && (
-                        <p className="text-sm text-gray-500 mb-3 font-medium leading-snug" style={F}>{currentTranslation.subtitle}</p>
-                      )}
-                      {/* Autores */}
-                      {selectedAuthors.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mb-3">
-                          {selectedAuthors.map(a => (
-                            <div key={a.userId} className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5">
-                              {a.avatarUrl ? (
-                                <img src={a.avatarUrl} alt={a.displayName} className="w-4 h-4 rounded-full object-cover" />
-                              ) : (
-                                <div className="w-4 h-4 rounded-full bg-gradient-to-br from-yellow-400 to-orange-400 flex items-center justify-center text-white text-[8px] font-bold">
-                                  {a.displayName.charAt(0).toUpperCase()}
-                                </div>
-                              )}
-                              <span className="text-[10px] text-gray-700 font-bold" style={F}>{a.displayName}</span>
-                              <span className="text-[8px] text-gray-400 capitalize" style={F}>{a.role}</span>
-                            </div>
-                          ))}
-                        </div>
+                        <p className="text-[10px] text-gray-500 leading-snug mt-0.5" style={F}>{currentTranslation.subtitle}</p>
                       )}
                     </div>
-                    {/* Nivel + Categoría */}
-                    <div className="flex flex-wrap gap-1.5">
+
+                    {/* Autores */}
+                    {selectedAuthors.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {selectedAuthors.map(a => (
+                          <div key={a.userId} className="flex items-center gap-0.5 bg-gray-50 border border-gray-200 rounded-full px-1.5 py-0.5">
+                            {a.avatarUrl
+                              ? <img src={a.avatarUrl} alt={a.displayName} className="w-3 h-3 rounded-full object-cover" />
+                              : <div className="w-3 h-3 rounded-full bg-gradient-to-br from-yellow-400 to-orange-400 flex items-center justify-center text-white text-[7px] font-bold">{a.displayName.charAt(0).toUpperCase()}</div>}
+                            <span className="text-[9px] text-gray-700 font-bold" style={F}>{a.displayName}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Nivel + Categoría + Géneros */}
+                    <div className="flex flex-wrap gap-1">
                       {selectedLevelId && niveles.find(n => n.id === selectedLevelId) && (
-                        <span className="px-2.5 py-1 bg-amber-50 text-amber-800 rounded-full text-[10px] font-black border border-amber-200" style={F}>
+                        <span className="px-1.5 py-0.5 bg-amber-50 text-amber-800 rounded-full text-[9px] font-bold border border-amber-200" style={F}>
                           📚 {niveles.find(n => n.id === selectedLevelId)?.name}
                         </span>
                       )}
                       {selectedCategoryId && categorias.find(c => c.id === selectedCategoryId) && (
-                        <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-black border border-indigo-200" style={F}>
+                        <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-[9px] font-bold border border-indigo-200" style={F}>
                           {categorias.find(c => c.id === selectedCategoryId)?.name}
                         </span>
                       )}
+                      {selectedGeneros.map(gid => {
+                        const gen = generos.find(g => g.id === gid);
+                        return gen ? <span key={gid} className="px-1.5 py-0.5 bg-rose-50 text-rose-700 rounded-full text-[9px] font-bold border border-rose-200" style={F}>🎭 {gen.name}</span> : null;
+                      })}
                     </div>
+
+                    {/* Etiquetas */}
+                    {selectedEtiquetas.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {selectedEtiquetas.map(tid => {
+                          const tag = etiquetasList.find(tg => tg.id === tid);
+                          return tag ? <span key={tid} className="px-1.5 py-0.5 bg-sky-50 text-sky-700 rounded-full text-[9px] font-bold border border-sky-200" style={F}># {tag.name}</span> : null;
+                        })}
+                      </div>
+                    )}
+
+                    {/* Valores educativos */}
+                    {selectedValores.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {selectedValores.map(vid => {
+                          const vl = valoresList.find(v => v.id === vid);
+                          return vl ? <span key={vid} className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-full text-[9px] font-bold border border-emerald-200" style={F}>✦ {vl.name}</span> : null;
+                        })}
+                      </div>
+                    )}
+
+                    {/* Personajes */}
+                    {characters.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {characters.map((ch, i) => (
+                          <span key={i} className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold border ${
+                            ch.role === 'main' ? 'bg-amber-50 text-amber-800 border-amber-200'
+                            : ch.role === 'secondary' ? 'bg-sky-50 text-sky-700 border-sky-200'
+                            : 'bg-gray-50 text-gray-600 border-gray-200'
+                          }`} style={F}>
+                            {ch.role === 'main' ? '⭐' : ch.role === 'secondary' ? '◆' : '○'} {ch.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
                   </div>
                 </div>
 
-                {/* Separador punteado */}
-                <div className="mx-5 border-t border-dashed border-yellow-200" />
-
-                {/* Descripción */}
+                {/* ══ ROW 2: Descripción (col-12) — burbuja gris ══ */}
                 {currentTranslation.description && (
-                  <div className="px-6 pt-4 pb-3">
-                    <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1.5" style={F}>Descripción</p>
-                    <p className="text-sm text-gray-700 leading-relaxed" style={F}>
-                      {currentTranslation.description}
-                    </p>
+                  <div className="px-3 pb-2 border-t border-gray-100 pt-2">
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5">
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1" style={F}>Descripción</p>
+                      <p className="text-[10px] text-gray-700 leading-relaxed" style={F}>
+                        {currentTranslation.description.length > 500
+                          ? <>{currentTranslation.description.slice(0, 500)}…<button onClick={() => setReadMoreModal({ type: 'description', text: currentTranslation.description })} className="text-yellow-600 font-bold hover:underline ml-0.5" style={F}>leer más</button></>
+                          : currentTranslation.description}
+                      </p>
+                    </div>
                   </div>
                 )}
 
-                {/* Resumen — caja destacada */}
+                {/* ══ ROW 3: Resumen (col-12) — burbuja amarilla ══ */}
                 {currentTranslation.summary && (
-                  <div className="px-6 pb-4">
-                    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-2xl px-4 py-3">
-                      <p className="text-[10px] text-yellow-700 font-black uppercase tracking-widest mb-1.5" style={F}>✨ Resumen</p>
-                      <p className="text-xs text-gray-700 italic leading-relaxed" style={F}>{currentTranslation.summary}</p>
+                  <div className="px-3 pb-3 border-t border-yellow-100 pt-2">
+                    <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl px-3 py-2.5">
+                      <p className="text-[9px] text-yellow-700 font-black uppercase tracking-widest mb-1" style={F}>✨ Resumen</p>
+                      <p className="text-[10px] text-gray-700 italic leading-relaxed" style={F}>
+                        {currentTranslation.summary.length > 500
+                          ? <>{currentTranslation.summary.slice(0, 500)}…<button onClick={() => setReadMoreModal({ type: 'summary', text: currentTranslation.summary })} className="text-yellow-600 font-bold hover:underline ml-0.5 not-italic" style={F}>leer más</button></>
+                          : currentTranslation.summary}
+                      </p>
                     </div>
                   </div>
                 )}
 
-                {/* Géneros */}
-                {selectedGeneros.length > 0 && (
-                  <div className="px-6 pb-4">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2" style={F}>Géneros</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {selectedGeneros.map(gid => {
-                        const gen = generos.find(g => g.id === gid);
-                        return gen ? (
-                          <span key={gid} className="px-2.5 py-1 bg-rose-50 text-rose-700 rounded-full text-[10px] font-bold border border-rose-200" style={F}>🎭 {gen.name}</span>
-                        ) : null;
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Personajes */}
-                {characters.length > 0 && (
-                  <div className="px-6 pb-5">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2" style={F}>Personajes</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {characters.map((ch, i) => (
-                        <span key={i} className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
-                          ch.role === 'main'
-                            ? 'bg-amber-50 text-amber-800 border-amber-200'
-                            : ch.role === 'secondary'
-                              ? 'bg-sky-50 text-sky-700 border-sky-200'
-                              : 'bg-gray-50 text-gray-600 border-gray-200'
-                        }`} style={F}>
-                          {ch.role === 'main' ? '⭐' : ch.role === 'secondary' ? '◆' : '○'} {ch.name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Banda inferior decorativa */}
-                <div className="h-2 bg-gradient-to-r from-pink-400 via-orange-400 to-yellow-400" />
+                {/* Banda inferior — siempre al fondo de la tarjeta */}
+                <div className="mt-auto h-1.5 bg-gradient-to-r from-pink-400 via-orange-400 to-yellow-400" />
               </div>
-
-              {/* Pie: nota de idioma discreta */}
-              <p className="text-center text-white/40 text-[10px] mt-3 font-medium" style={F}>
-                <Languages size={10} strokeWidth={1.5} className="inline mr-1" />
-                {activeLanguages.find(l => l.code === activeTab)?.name || activeTab}
-                {activeLanguages.length > 1 && ' · cambia idioma con las banderas en la tarjeta'}
-              </p>
 
               {/* Modal zoom portada */}
               {coverZoom && portadaPreview && (
-                <div
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-                  onClick={() => setCoverZoom(false)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={() => setCoverZoom(false)}>
                   <div className="relative max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
-                    <img src={portadaPreview} alt="portada"
-                      className="w-full rounded-2xl shadow-2xl border-2 border-yellow-300 object-contain max-h-[80vh]" />
-                    <button onClick={() => setCoverZoom(false)}
-                      className="absolute -top-3 -right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg border border-gray-200 hover:bg-gray-50 transition-all">
+                    <img src={portadaPreview} alt="portada" className="w-full rounded-2xl shadow-2xl border-2 border-yellow-300 object-contain max-h-[80vh]" />
+                    <button onClick={() => setCoverZoom(false)} className="absolute -top-3 -right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg border border-gray-200 hover:bg-gray-50 transition-all">
                       <X size={14} strokeWidth={1.5} className="text-gray-700" />
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Modal leer más */}
+              {readMoreModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setReadMoreModal(null)}>
+                  <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-yellow-200 overflow-hidden" onClick={e => e.stopPropagation()}>
+                    <div className="h-1 bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-400" />
+                    <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+                      <p className="text-xs font-black text-gray-700 uppercase tracking-widest" style={F}>
+                        {readMoreModal.type === 'description' ? 'Descripción' : '✨ Resumen'}
+                      </p>
+                      <button onClick={() => setReadMoreModal(null)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
+                        <X size={14} strokeWidth={1.5} className="text-gray-500" />
+                      </button>
+                    </div>
+                    <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
+                      <p className={`text-sm text-gray-700 leading-relaxed ${readMoreModal.type === 'summary' ? 'italic' : ''}`} style={F}>
+                        {readMoreModal.text}
+                      </p>
+                    </div>
+                    <div className="h-1 bg-gradient-to-r from-pink-400 via-orange-400 to-yellow-400" />
                   </div>
                 </div>
               )}
@@ -622,6 +647,59 @@ export function BookFormViewMultilang({ bookId }: Props) {
               </button>
             </div>
           )}
+        </div>
+      )}
+      {/* ═══════════════════════════════════════════
+          MODAL CONFIRMACIÓN GUARDAR
+      ═══════════════════════════════════════════ */}
+      {/* ═══════════════════════════════════════════
+          OVERLAY DE GUARDADO — bloquea UI durante el proceso
+      ═══════════════════════════════════════════ */}
+      {isLoading && (
+        <div className="fixed inset-0 z-[9998] flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl px-8 py-6 flex flex-col items-center gap-3 border border-yellow-200 mx-4">
+            <div className="relative">
+              <div className="w-12 h-12 rounded-full border-4 border-yellow-200" />
+              <div className="absolute inset-0 w-12 h-12 rounded-full border-4 border-yellow-400 border-t-transparent animate-spin" />
+            </div>
+            <p className="text-sm font-black text-gray-800" style={F}>
+              {isEditMode ? 'Guardando cambios...' : 'Creando libro...'}
+            </p>
+            <p className="text-[11px] text-gray-400 text-center" style={F}>
+              Por favor espera, no cierres esta ventana
+            </p>
+          </div>
+        </div>
+      )}
+
+      {showSaveConfirm && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowSaveConfirm(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xs border border-yellow-200 overflow-hidden"
+            onClick={e => e.stopPropagation()}>
+            <div className="h-1 bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-400" />
+            <div className="px-5 py-5 text-center">
+              <div className="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center mx-auto mb-3">
+                <Save size={18} strokeWidth={1.5} className="text-yellow-600" />
+              </div>
+              <h3 className="text-sm font-black text-gray-800 mb-1" style={F}>
+                {isEditMode ? '¿Guardar cambios?' : '¿Guardar libro?'}
+              </h3>
+              <p className="text-[11px] text-gray-400" style={F}>Esta acción no se puede deshacer.</p>
+            </div>
+            <div className="px-5 pb-5 flex gap-2">
+              <button onClick={() => setShowSaveConfirm(false)}
+                className="flex-1 px-3 py-2 text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all" style={F}>
+                Cancelar
+              </button>
+              <button onClick={() => { setShowSaveConfirm(false); handleSave(); }}
+                className="flex-1 px-3 py-2 text-xs font-bold text-gray-800 bg-yellow-300 hover:bg-yellow-400 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm" style={F}>
+                <Save size={13} strokeWidth={1.5} />
+                {isEditMode ? 'Guardar cambios' : 'Guardar libro'}
+              </button>
+            </div>
+            <div className="h-1 bg-gradient-to-r from-pink-400 via-orange-400 to-yellow-400" />
+          </div>
         </div>
       )}
     </UnifiedLayout>

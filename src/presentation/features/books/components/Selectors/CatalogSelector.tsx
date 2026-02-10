@@ -149,7 +149,7 @@ export function CatalogSelector({
   const supabase = createClient();
   const colors = colorClasses[color];
   const config = catalogConfig[catalogType];
-  const itemsPerPage = 12;
+  const itemsPerPage = 9;
 
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -431,24 +431,24 @@ export function CatalogSelector({
         )}
       </div>
 
-      {/* ── Paginación ── */}
-      {totalPages > 1 && !isLoading && (
+      {/* ── Paginación — siempre visible ── */}
+      {!isLoading && totalCount > 0 && (
         <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-gray-100">
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className="p-1.5 text-gray-500 hover:text-gray-800 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-gray-100 transition-all"
+            className="p-1.5 text-gray-500 hover:text-gray-800 disabled:opacity-20 disabled:cursor-default rounded-lg hover:bg-gray-100 disabled:hover:bg-transparent transition-all"
           >
             <ChevronLeft size={13} />
           </button>
           <span className="text-xs text-gray-500 font-medium">
-            {currentPage} / {totalPages}
+            {currentPage} / {Math.max(totalPages, 1)}
             <span className="text-gray-400 ml-1">({totalCount})</span>
           </span>
           <button
             onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="p-1.5 text-gray-500 hover:text-gray-800 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-gray-100 transition-all"
+            disabled={currentPage >= Math.max(totalPages, 1)}
+            className="p-1.5 text-gray-500 hover:text-gray-800 disabled:opacity-20 disabled:cursor-default rounded-lg hover:bg-gray-100 disabled:hover:bg-transparent transition-all"
           >
             <ChevronRight size={13} />
           </button>
