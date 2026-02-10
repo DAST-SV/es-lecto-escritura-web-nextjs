@@ -6,12 +6,11 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useRouter, useParams } from 'next/navigation';
 
 export default function BooksRedirectPage() {
   const router = useRouter();
-  const locale = useLocale();
+  const { locale } = useParams<{ locale: string }>();
 
   useEffect(() => {
     router.replace(`/${locale}/my-world`);

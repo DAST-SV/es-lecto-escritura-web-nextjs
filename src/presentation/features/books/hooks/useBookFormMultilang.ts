@@ -901,7 +901,7 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
 
       toast.success(isEditMode ? 'Libro actualizado' : 'Libro creado');
       // Redirigir a la lista de mis libros (no a leer)
-      router.push(`/${locale}/books?new=${finalBookId}`);
+      router.push(`/${locale}/my-world`);
 
     } catch (err) {
       logDetailedError('useBookFormMultilang.handleSave', err);
@@ -937,6 +937,9 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
   // RETURN
   // ============================================
   return {
+    // Locale
+    locale,
+
     // Estado de carga
     isLoadingBook: isLoadingBook || languagesLoading,
     isLoading,

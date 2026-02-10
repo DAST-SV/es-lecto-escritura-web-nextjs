@@ -47,9 +47,9 @@ SELECT insert_translation('nav', 'myWorld.text', 'Mi Mundo', 'My World', 'Mon Mo
 SELECT insert_translation('nav', 'myWorld.href', '/mi-mundo', '/my-world', '/mon-monde');
 SELECT insert_translation('nav', 'myWorld.title', 'Tu espacio personal de lectura', 'Your personal reading space', 'Votre espace de lecture personnel');
 
--- My Progress (Mi Proceso)
-SELECT insert_translation('nav', 'myProgress.text', 'Mi Proceso', 'My Progress', 'Mon Progres');
-SELECT insert_translation('nav', 'myProgress.href', '/mi-proceso', '/my-progress', '/mon-progres');
+-- My Progress (Mi Progreso)
+SELECT insert_translation('nav', 'myProgress.text', 'Mi Progreso', 'My Progress', 'Mon Progres');
+SELECT insert_translation('nav', 'myProgress.href', '/mi-progreso', '/my-progress', '/mon-progres');
 SELECT insert_translation('nav', 'myProgress.title', 'Sigue tu progreso de lectura', 'Track your reading progress', 'Suivez votre progres de lecture');
 
 SELECT 'TRANSLATIONS: Nav menus - traducciones insertadas' AS status;

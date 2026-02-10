@@ -1,21 +1,19 @@
 /**
  * UBICACION: src/presentation/features/books/components/BookForm/BookFormViewMultilang.tsx
  * Formulario de libro con soporte MULTI-IDIOMA
- * - Todas las etiquetas usan traducciones desde Supabase
- * - Skeleton loading mientras cargan datos
- * - CatalogSelector para categorías, niveles, géneros, etiquetas, valores
- * - CharacterInput para personajes
+ * Diseño suave y limpio — paleta clara, mucho espacio, agradable para el escritor
  */
 
 'use client';
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
 import {
-  Loader2, Save, Upload, AlertCircle, BookOpen, Tag, Camera, X, Eye, ArrowLeft, Languages, Star, Check, Heart, Users
+  Loader2, Save, Upload, AlertCircle, BookOpen, Tag, Camera, X, Eye, ArrowLeft,
+  Languages, Star, Check, Heart, Users, PenTool, Sparkles
 } from 'lucide-react';
 import { UnifiedLayout } from '@/src/presentation/features/navigation';
+import { HomeBackground } from '@/src/presentation/features/home';
 import { PDFPreviewMode } from '@/src/presentation/features/books/components/PDFPreview/PDFPreviewMode';
 import { AuthorSelector } from '@/src/presentation/features/books/components/Inputs/AuthorSelector';
 import { CharacterInput } from '@/src/presentation/features/books/components/Inputs/CharacterInput';
@@ -25,18 +23,18 @@ import { useBookFormMultilang } from '@/src/presentation/features/books/hooks/us
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 import { Toaster } from 'react-hot-toast';
 
+const FONT = { fontFamily: 'Comic Sans MS, cursive' };
+
 interface BookFormViewMultilangProps {
   bookId?: string;
 }
 
 export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
   const router = useRouter();
-  const locale = useLocale();
-
-  // Traducciones del formulario
   const { t, loading: translationsLoading } = useSupabaseTranslations('books_form');
 
   const {
+    locale,
     isLoadingBook,
     isLoading,
     error,
@@ -86,40 +84,30 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
     shouldShowPreview,
   } = useBookFormMultilang({ bookId });
 
-  // Toggle helpers para selectores multi-select
+  // Toggle helpers
   const handleToggleGenre = (id: string) => {
-    if (selectedGeneros.includes(id)) {
-      setSelectedGeneros(selectedGeneros.filter(g => g !== id));
-    } else {
-      setSelectedGeneros([...selectedGeneros, id]);
-    }
+    setSelectedGeneros(selectedGeneros.includes(id)
+      ? selectedGeneros.filter(g => g !== id)
+      : [...selectedGeneros, id]);
   };
-
   const handleToggleTag = (id: string) => {
-    if (selectedEtiquetas.includes(id)) {
-      setSelectedEtiquetas(selectedEtiquetas.filter(t => t !== id));
-    } else {
-      setSelectedEtiquetas([...selectedEtiquetas, id]);
-    }
+    setSelectedEtiquetas(selectedEtiquetas.includes(id)
+      ? selectedEtiquetas.filter(t => t !== id)
+      : [...selectedEtiquetas, id]);
   };
-
   const handleToggleValue = (id: string) => {
-    if (selectedValores.includes(id)) {
-      setSelectedValores(selectedValores.filter(v => v !== id));
-    } else {
-      setSelectedValores([...selectedValores, id]);
-    }
+    setSelectedValores(selectedValores.includes(id)
+      ? selectedValores.filter(v => v !== id)
+      : [...selectedValores, id]);
   };
-
   const handleToggleCategory = (id: string) => {
     setSelectedCategoryId(selectedCategoryId === id ? null : id);
   };
-
   const handleToggleLevel = (id: string) => {
     setSelectedLevelId(selectedLevelId === id ? null : id);
   };
 
-  // Preview de PDF (uses active language tab for TTS)
+  // PDF fullscreen preview
   if (showPreview && extractedPages.length > 0 && pdfDimensions) {
     return (
       <PDFPreviewMode
@@ -132,91 +120,111 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
     );
   }
 
-  // Loading - mostrar skeleton
+  // Loading skeleton
   if (isLoadingBook || translationsLoading) {
     return (
-      <UnifiedLayout showNavbar={true}>
+      <UnifiedLayout
+        className="bg-gradient-to-b from-blue-400 via-blue-300 to-cyan-200"
+        mainClassName="pt-0"
+        backgroundComponent={<HomeBackground />}
+      >
         <BookFormSkeleton />
       </UnifiedLayout>
     );
   }
 
   return (
-    <UnifiedLayout showNavbar={true}>
+    <UnifiedLayout
+      className="bg-gradient-to-b from-blue-400 via-blue-300 to-cyan-200"
+      mainClassName="pt-0"
+      backgroundComponent={<HomeBackground />}
+    >
       <Toaster position="top-right" />
 
-      <div className="h-[calc(100vh-60px)] flex flex-col bg-gradient-to-br from-amber-50/30 via-white to-rose-50/30">
-
-        {/* Header */}
-        <div className="flex-shrink-0 bg-white/80 backdrop-blur-sm border-b border-gray-200">
-          <div className="px-6 py-3 flex items-center justify-between">
+      {/* ============================================ */}
+      {/* HEADER — limpio, sutil */}
+      {/* ============================================ */}
+      <div className="px-4 pt-5 pb-3">
+        <div className="container mx-auto max-w-6xl">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
-                onClick={() => router.push(`/${locale}/books`)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                onClick={() => router.push(`/${locale}/my-world`)}
+                className="p-2 bg-white/80 hover:bg-white rounded-xl shadow-sm border border-slate-200/60 transition-all"
               >
-                <ArrowLeft size={20} className="text-gray-600" />
+                <ArrowLeft size={18} className="text-slate-500" />
               </button>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">
+                <h1 className="text-xl font-black text-white drop-shadow-md flex items-center gap-2" style={FONT}>
+                  {isEditMode
+                    ? <PenTool size={18} className="text-yellow-200" />
+                    : <Sparkles size={18} className="text-yellow-200" />
+                  }
                   {isEditMode ? t('page_title_edit') : t('page_title_create')}
                 </h1>
-                <p className="text-xs text-gray-500 flex items-center gap-2">
+                <p className="text-blue-100/80 text-xs font-medium flex items-center gap-1.5 mt-0.5" style={FONT}>
                   <Languages size={12} />
                   {translationProgress.completed}/{translationProgress.total} {t('languages_completed')}
                 </p>
               </div>
             </div>
+
             <button
               onClick={handleSave}
               disabled={!isFormValid || isLoading}
-              className="px-5 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+              className="px-5 py-2.5 bg-white text-slate-700 font-bold rounded-xl shadow-sm border border-slate-200/60 hover:shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
+              style={FONT}
             >
               {isLoading ? (
-                <>
-                  <Loader2 size={14} className="animate-spin" />
-                  {t('btn_saving')}
-                </>
+                <><Loader2 size={15} className="animate-spin" />{t('btn_saving')}</>
               ) : (
-                <>
-                  <Save size={14} />
-                  {isEditMode ? t('btn_save_changes') : t('btn_save')}
-                </>
+                <><Save size={15} />{isEditMode ? t('btn_save_changes') : t('btn_save')}</>
               )}
             </button>
           </div>
         </div>
+      </div>
 
-        {error && (
-          <div className="flex-shrink-0 px-6 pt-3">
-            <div className="p-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
-              <AlertCircle size={14} className="text-red-600" />
-              <p className="text-xs text-red-600">{error}</p>
+      {/* Error */}
+      {error && (
+        <div className="px-4 pb-3">
+          <div className="container mx-auto max-w-6xl">
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2">
+              <AlertCircle size={15} className="text-red-400 flex-shrink-0" />
+              <p className="text-xs text-red-600 font-medium" style={FONT}>{error}</p>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Contenido */}
-        <div className="flex-1 overflow-hidden px-6 py-4">
-          <div className="h-full grid grid-cols-2 gap-4">
+      {/* ============================================ */}
+      {/* CONTENT */}
+      {/* ============================================ */}
+      <div className="px-4 pb-12">
+        <div className="container mx-auto max-w-6xl">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
 
-            {/* COLUMNA IZQUIERDA */}
-            <div className="overflow-y-auto pr-2 space-y-3">
+            {/* ============================== */}
+            {/* COLUMNA IZQUIERDA — 3/5 */}
+            {/* ============================== */}
+            <div className="lg:col-span-3 space-y-5">
 
-              {/* TABS DE IDIOMAS */}
-              <section className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
-                  <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-1.5">
-                    <Languages size={13} />
+              {/* TRADUCCIONES */}
+              <section className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-200/50 overflow-hidden">
+                <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2" style={FONT}>
+                    <div className="w-6 h-6 bg-blue-50 rounded-lg flex items-center justify-center">
+                      <Languages size={13} className="text-blue-400" />
+                    </div>
                     {t('section_translations')}
                   </h3>
-                  <span className="text-[10px] text-gray-500">
+                  <span className="text-[10px] text-slate-400 font-medium bg-slate-50 px-2 py-0.5 rounded-full">
                     {translationProgress.completed}/{translationProgress.total}
                   </span>
                 </div>
 
-                {/* Tabs */}
-                <div className="flex border-b border-gray-100">
+                {/* Language tabs */}
+                <div className="flex border-b border-slate-100">
                   {activeLanguages.map(lang => {
                     const trans = translations[lang.code];
                     const isComplete = trans?.title && trans?.description;
@@ -226,73 +234,68 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                       <button
                         key={lang.code}
                         onClick={() => setActiveTab(lang.code)}
-                        className={`flex-1 px-3 py-2 text-xs font-medium transition-all relative ${
+                        className={`flex-1 px-3 py-2.5 text-xs font-bold transition-all ${
                           activeTab === lang.code
-                            ? 'text-amber-700 border-b-2 border-amber-500 bg-amber-50/50'
-                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                            ? 'text-slate-700 bg-white border-b-2 border-blue-400'
+                            : 'text-slate-400 hover:text-slate-500 hover:bg-slate-50/50'
                         }`}
+                        style={FONT}
                       >
                         <span className="flex items-center justify-center gap-1.5">
                           {lang.flagEmoji && <span>{lang.flagEmoji}</span>}
                           <span>{lang.code.toUpperCase()}</span>
-                          {isPrimary && (
-                            <Star size={10} className="text-amber-500 fill-amber-500" />
-                          )}
-                          {isComplete && (
-                            <Check size={10} className="text-emerald-500" />
-                          )}
+                          {isPrimary && <Star size={10} className="text-amber-400 fill-amber-400" />}
+                          {isComplete && <Check size={10} className="text-emerald-400" />}
                         </span>
                       </button>
                     );
                   })}
                 </div>
 
-                {/* Contenido del tab activo */}
+                {/* Tab content */}
                 {currentTranslation && (
-                  <div className="p-3 space-y-3">
-                    {/* Marcar como idioma principal */}
+                  <div className="p-5 space-y-5">
+                    {/* Primary language */}
                     <div className="flex items-center justify-between">
-                      <label className="text-[10px] text-gray-500">
-                        {currentTranslation.isPrimary
-                          ? t('primary_language')
-                          : t('set_primary_language')}
+                      <label className="text-[11px] text-slate-400 font-medium" style={FONT}>
+                        {currentTranslation.isPrimary ? t('primary_language') : t('set_primary_language')}
                       </label>
                       <button
                         onClick={() => setPrimaryLanguage(activeTab)}
                         disabled={currentTranslation.isPrimary}
-                        className={`px-2 py-1 text-[10px] rounded transition-all ${
+                        className={`px-2.5 py-1 text-[10px] rounded-lg font-bold transition-all ${
                           currentTranslation.isPrimary
-                            ? 'bg-amber-100 text-amber-700 cursor-default'
-                            : 'bg-gray-100 hover:bg-amber-100 text-gray-600 hover:text-amber-700'
+                            ? 'bg-amber-50 text-amber-600 cursor-default'
+                            : 'bg-slate-50 hover:bg-amber-50 text-slate-400 hover:text-amber-600'
                         }`}
+                        style={FONT}
                       >
                         {currentTranslation.isPrimary ? (
                           <span className="flex items-center gap-1">
-                            <Star size={10} className="fill-amber-500" /> {t('btn_primary')}
+                            <Star size={10} className="fill-amber-400 text-amber-400" /> {t('btn_primary')}
                           </span>
-                        ) : (
-                          t('btn_set_primary')
-                        )}
+                        ) : t('btn_set_primary')}
                       </button>
                     </div>
 
                     {/* Titulo */}
                     <div>
-                      <label className="text-[10px] font-medium text-gray-700 block mb-1">
-                        {t('field_title')} <span className="text-red-500">*</span>
+                      <label className="text-xs font-bold text-slate-600 block mb-1.5" style={FONT}>
+                        {t('field_title')} <span className="text-red-400">*</span>
                       </label>
                       <input
                         type="text"
                         value={currentTranslation.title}
                         onChange={(e) => updateTranslation(activeTab, 'title', e.target.value)}
                         placeholder={t('placeholder_title').replace('{language}', activeLanguages.find(l => l.code === activeTab)?.name || activeTab)}
-                        className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-md focus:border-orange-400 focus:ring-1 focus:ring-orange-200 focus:outline-none"
+                        className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:border-blue-300 focus:ring-2 focus:ring-blue-50 focus:outline-none bg-white text-slate-700 placeholder:text-slate-300"
+                        style={FONT}
                       />
                     </div>
 
                     {/* Subtitulo */}
                     <div>
-                      <label className="text-[10px] font-medium text-gray-700 block mb-1">
+                      <label className="text-xs font-bold text-slate-600 block mb-1.5" style={FONT}>
                         {t('field_subtitle')}
                       </label>
                       <input
@@ -300,27 +303,29 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                         value={currentTranslation.subtitle}
                         onChange={(e) => updateTranslation(activeTab, 'subtitle', e.target.value)}
                         placeholder={t('placeholder_subtitle')}
-                        className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-md focus:border-orange-400 focus:ring-1 focus:ring-orange-200 focus:outline-none"
+                        className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:border-blue-300 focus:ring-2 focus:ring-blue-50 focus:outline-none bg-white text-slate-700 placeholder:text-slate-300"
+                        style={FONT}
                       />
                     </div>
 
                     {/* Descripcion */}
                     <div>
-                      <label className="text-[10px] font-medium text-gray-700 block mb-1">
-                        {t('field_description')} <span className="text-red-500">*</span>
+                      <label className="text-xs font-bold text-slate-600 block mb-1.5" style={FONT}>
+                        {t('field_description')} <span className="text-red-400">*</span>
                       </label>
                       <textarea
                         value={currentTranslation.description}
                         onChange={(e) => updateTranslation(activeTab, 'description', e.target.value)}
                         placeholder={t('placeholder_description')}
                         rows={3}
-                        className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-md focus:border-orange-400 focus:ring-1 focus:ring-orange-200 focus:outline-none resize-none"
+                        className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:border-blue-300 focus:ring-2 focus:ring-blue-50 focus:outline-none bg-white text-slate-700 placeholder:text-slate-300 resize-none"
+                        style={FONT}
                       />
                     </div>
 
                     {/* Resumen */}
                     <div>
-                      <label className="text-[10px] font-medium text-gray-700 block mb-1">
+                      <label className="text-xs font-bold text-slate-600 block mb-1.5" style={FONT}>
                         {t('field_summary')}
                       </label>
                       <textarea
@@ -328,138 +333,139 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                         onChange={(e) => updateTranslation(activeTab, 'summary', e.target.value)}
                         placeholder={t('placeholder_summary')}
                         rows={2}
-                        className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-md focus:border-orange-400 focus:ring-1 focus:ring-orange-200 focus:outline-none resize-none"
+                        className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:border-blue-300 focus:ring-2 focus:ring-blue-50 focus:outline-none bg-white text-slate-700 placeholder:text-slate-300 resize-none"
+                        style={FONT}
                       />
                     </div>
 
-                    {/* Portada para este idioma */}
-                    <div>
-                      <label className="text-[10px] font-medium text-gray-700 block mb-1">
-                        {t('cover_label')} ({activeLanguages.find(l => l.code === activeTab)?.name || activeTab})
-                      </label>
-                      {portadaPreview ? (
-                        <div className="relative group inline-block">
-                          <img
-                            src={portadaPreview}
-                            alt={t('cover_label')}
-                            className="w-20 h-28 object-cover rounded-lg shadow-md border border-gray-200"
-                          />
-                          <button
-                            onClick={() => setPortadaPreview(null)}
-                            className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-all shadow-md"
-                          >
-                            <X size={10} />
-                          </button>
-                        </div>
-                      ) : (
-                        <label className="block cursor-pointer w-fit">
-                          <div className="w-20 h-28 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-300 hover:border-orange-400 hover:bg-orange-50/50 transition-all group">
-                            <Camera size={16} className="text-gray-400 group-hover:text-orange-500 mb-1" />
-                            <span className="text-[9px] text-gray-500 group-hover:text-orange-600">{t('cover_label')}</span>
-                          </div>
-                          <input type="file" accept="image/*" onChange={handlePortadaChange} className="hidden" />
+                    {/* Portada + PDF side by side on desktop */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Portada */}
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 block mb-1.5" style={FONT}>
+                          {t('cover_label')}
                         </label>
-                      )}
-                    </div>
-
-                    {/* PDF para este idioma */}
-                    <div>
-                      <label className="text-[10px] font-medium text-gray-700 block mb-1">
-                        {t('field_pdf')} ({activeLanguages.find(l => l.code === activeTab)?.name || activeTab})
-                      </label>
-
-                      {hasPDF && !pdfFile ? (
-                        <div className="space-y-2">
-                          <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg">
-                            <p className="text-xs font-medium text-emerald-900">{t('pdf_loaded')}</p>
-                            <p className="text-[10px] text-emerald-700 truncate">
-                              {currentPdfUrl?.startsWith('storage://') ? 'PDF almacenado' : currentPdfUrl}
-                            </p>
+                        {portadaPreview ? (
+                          <div className="relative group inline-block">
+                            <img
+                              src={portadaPreview}
+                              alt={t('cover_label')}
+                              className="w-24 h-32 object-cover rounded-xl shadow-sm border border-slate-200"
+                            />
+                            <button
+                              onClick={() => setPortadaPreview(null)}
+                              className="absolute -top-1.5 -right-1.5 p-1 bg-slate-600 text-white rounded-full hover:bg-slate-700 opacity-0 group-hover:opacity-100 transition-all shadow-sm"
+                            >
+                              <X size={10} />
+                            </button>
                           </div>
-                          {/* Preview button for existing PDF */}
-                          {extractedPages.length > 0 ? (
+                        ) : (
+                          <label className="block cursor-pointer w-fit">
+                            <div className="w-24 h-32 bg-slate-50 rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 transition-all group">
+                              <Camera size={18} className="text-slate-300 group-hover:text-blue-400 mb-1" />
+                              <span className="text-[9px] text-slate-400 group-hover:text-blue-400 font-medium" style={FONT}>{t('cover_label')}</span>
+                            </div>
+                            <input type="file" accept="image/*" onChange={handlePortadaChange} className="hidden" />
+                          </label>
+                        )}
+                      </div>
+
+                      {/* PDF */}
+                      <div>
+                        <label className="text-xs font-bold text-slate-600 block mb-1.5" style={FONT}>
+                          {t('field_pdf')}
+                        </label>
+
+                        {hasPDF && !pdfFile ? (
+                          <div className="space-y-2">
+                            <div className="p-2.5 bg-emerald-50/60 border border-emerald-200/60 rounded-xl">
+                              <p className="text-xs font-bold text-emerald-700" style={FONT}>{t('pdf_loaded')}</p>
+                              <p className="text-[10px] text-emerald-500 truncate">
+                                {currentPdfUrl?.startsWith('storage://') ? 'PDF almacenado' : currentPdfUrl}
+                              </p>
+                            </div>
+                            {extractedPages.length > 0 ? (
+                              <button
+                                onClick={() => setShowPreview(true)}
+                                className="w-full px-3 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all"
+                                style={FONT}
+                              >
+                                <Eye size={13} />
+                                {t('pdf_preview').replace('{pages}', String(extractedPages.length))}
+                              </button>
+                            ) : currentPdfUrl ? (
+                              <button
+                                onClick={() => extractPagesFromExistingPdf(activeTab, currentPdfUrl)}
+                                disabled={isExtractingPages}
+                                className="w-full px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
+                                style={FONT}
+                              >
+                                {isExtractingPages
+                                  ? <><Loader2 size={13} className="animate-spin" />{t('pdf_processing') || 'Procesando...'}</>
+                                  : <><Eye size={13} />{t('pdf_load_preview') || 'Cargar vista previa'}</>
+                                }
+                              </button>
+                            ) : null}
+                            <label className="block cursor-pointer">
+                              <div className="border border-dashed border-slate-200 rounded-xl p-2 flex items-center justify-center hover:border-blue-300 hover:bg-blue-50/30 transition-all">
+                                <Upload size={13} className="text-slate-400 mr-1.5" />
+                                <span className="text-[10px] text-slate-400 font-medium" style={FONT}>{t('pdf_change')}</span>
+                              </div>
+                              <input type="file" accept="application/pdf" onChange={handlePDFChange} className="hidden" />
+                            </label>
+                          </div>
+                        ) : pdfFile ? (
+                          <div className="flex items-center justify-between p-2.5 bg-emerald-50/60 border border-emerald-200/60 rounded-xl">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <Upload size={13} className="text-emerald-600" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[10px] font-bold text-slate-700 truncate" style={FONT}>{pdfFile.name}</p>
+                                <p className="text-[9px] text-slate-400">{(pdfFile.size / (1024 * 1024)).toFixed(1)} MB</p>
+                              </div>
+                            </div>
                             <button
-                              onClick={() => setShowPreview(true)}
-                              className="w-full px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-md flex items-center justify-center gap-1.5 transition-all"
+                              onClick={() => updateTranslation(activeTab, 'pdfFile', null)}
+                              className="p-1.5 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
                             >
-                              <Eye size={12} />
-                              {t('pdf_preview').replace('{pages}', String(extractedPages.length))}
+                              <X size={12} className="text-red-400" />
                             </button>
-                          ) : currentPdfUrl ? (
-                            <button
-                              onClick={() => extractPagesFromExistingPdf(activeTab, currentPdfUrl)}
-                              disabled={isExtractingPages}
-                              className="w-full px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
-                            >
-                              {isExtractingPages ? (
-                                <>
-                                  <Loader2 size={12} className="animate-spin" />
-                                  {t('pdf_processing') || 'Procesando...'}
-                                </>
-                              ) : (
-                                <>
-                                  <Eye size={12} />
-                                  {t('pdf_load_preview') || 'Cargar vista previa'}
-                                </>
-                              )}
-                            </button>
-                          ) : null}
+                          </div>
+                        ) : (
                           <label className="block cursor-pointer">
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-2 flex items-center justify-center hover:border-orange-400 hover:bg-orange-50/50 transition-all">
-                              <Upload size={14} className="text-gray-400 mr-1" />
-                              <span className="text-[10px] text-gray-500">{t('pdf_change')}</span>
+                            <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 flex flex-col items-center hover:border-blue-300 hover:bg-blue-50/30 transition-all">
+                              <Upload size={18} className="text-slate-300 mb-1" />
+                              <span className="text-xs text-slate-400 font-medium" style={FONT}>{t('pdf_upload')}</span>
+                              <span className="text-[10px] text-slate-300" style={FONT}>{t('pdf_max_size')}</span>
                             </div>
                             <input type="file" accept="application/pdf" onChange={handlePDFChange} className="hidden" />
                           </label>
-                        </div>
-                      ) : pdfFile ? (
-                        <div className="flex items-center justify-between p-2 bg-emerald-50 border border-emerald-200 rounded-lg">
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <Upload size={12} className="text-emerald-600 flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[10px] font-medium text-gray-900 truncate">{pdfFile.name}</p>
-                              <p className="text-[9px] text-gray-600">{(pdfFile.size / (1024 * 1024)).toFixed(1)} MB</p>
-                            </div>
-                          </div>
+                        )}
+
+                        {pdfError && <p className="text-[10px] text-red-500 mt-1" style={FONT}>{pdfError}</p>}
+
+                        {extractedPages.length > 0 && !hasPDF && (
                           <button
-                            onClick={() => updateTranslation(activeTab, 'pdfFile', null)}
-                            className="p-1 hover:bg-red-100 rounded transition-colors flex-shrink-0"
+                            onClick={() => setShowPreview(true)}
+                            className="w-full mt-2 px-3 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all"
+                            style={FONT}
                           >
-                            <X size={12} className="text-red-600" />
+                            <Eye size={13} />
+                            {t('pdf_preview').replace('{pages}', String(extractedPages.length))}
                           </button>
-                        </div>
-                      ) : (
-                        <label className="block cursor-pointer">
-                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 flex flex-col items-center hover:border-orange-400 hover:bg-orange-50/50 transition-all">
-                            <Upload size={16} className="text-gray-400 mb-1" />
-                            <span className="text-xs text-gray-500">{t('pdf_upload')}</span>
-                            <span className="text-[10px] text-gray-400">{t('pdf_max_size')}</span>
+                        )}
+
+                        {isExtractingPages && (
+                          <div className="mt-2 text-center py-2">
+                            <Loader2 className="animate-spin mx-auto text-slate-400 mb-1" size={16} />
+                            <p className="text-[10px] text-slate-400" style={FONT}>{t('pdf_processing')}</p>
                           </div>
-                          <input type="file" accept="application/pdf" onChange={handlePDFChange} className="hidden" />
-                        </label>
-                      )}
-
-                      {pdfError && <p className="text-[10px] text-red-600 mt-1">{pdfError}</p>}
-
-                      {extractedPages.length > 0 && (
-                        <button
-                          onClick={() => setShowPreview(true)}
-                          className="w-full mt-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-md flex items-center justify-center gap-1.5 transition-all"
-                        >
-                          <Eye size={12} />
-                          {t('pdf_preview').replace('{pages}', String(extractedPages.length))}
-                        </button>
-                      )}
-
-                      {isExtractingPages && (
-                        <div className="mt-2 text-center py-2">
-                          <Loader2 className="animate-spin mx-auto text-gray-600 mb-1" size={14} />
-                          <p className="text-[10px] text-gray-600">{t('pdf_processing')}</p>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
 
-                    {/* Personajes para este idioma */}
+                    {/* Personajes */}
                     <CharacterInput
                       characters={characters}
                       onChange={setCharacters}
@@ -476,9 +482,17 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                 )}
               </section>
 
-              {/* Autores (compartido) */}
-              <section className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                <div className="p-3">
+              {/* AUTORES */}
+              <section className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-200/50 overflow-hidden">
+                <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-2">
+                  <div className="w-6 h-6 bg-violet-50 rounded-lg flex items-center justify-center">
+                    <Users size={13} className="text-violet-400" />
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-700" style={FONT}>
+                    {t('section_authors') || 'Autores'}
+                  </h3>
+                </div>
+                <div className="p-5">
                   <AuthorSelector
                     selectedAuthors={selectedAuthors}
                     onChange={setSelectedAuthors}
@@ -487,128 +501,83 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                 </div>
               </section>
 
-              {/* Clasificacion con CatalogSelector */}
-              <section className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                <div className="px-3 py-2 border-b border-gray-100">
-                  <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-1.5">
-                    <Tag size={13} />
+              {/* CLASIFICACION */}
+              <section className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-200/50 overflow-hidden">
+                <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-2">
+                  <div className="w-6 h-6 bg-indigo-50 rounded-lg flex items-center justify-center">
+                    <Tag size={13} className="text-indigo-400" />
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-700" style={FONT}>
                     {t('section_classification')}
                   </h3>
                 </div>
-                <div className="p-3 space-y-4">
-                  {/* Categoria - Single Select */}
-                  <CatalogSelector
-                    catalogType="categories"
-                    selectedIds={selectedCategoryId ? [selectedCategoryId] : []}
-                    onToggle={handleToggleCategory}
-                    label={t('field_category')}
-                    color="indigo"
-                    required
-                    singleSelect
-                    maxSelections={1}
-                  />
-
-                  {/* Nivel - Single Select */}
-                  <CatalogSelector
-                    catalogType="levels"
-                    selectedIds={selectedLevelId ? [selectedLevelId] : []}
-                    onToggle={handleToggleLevel}
-                    label={t('field_level')}
-                    color="amber"
-                    required
-                    singleSelect
-                    maxSelections={1}
-                  />
-
-                  {/* Géneros - Multi Select */}
-                  <CatalogSelector
-                    catalogType="genres"
-                    selectedIds={selectedGeneros}
-                    onToggle={handleToggleGenre}
-                    label={t('field_genres')}
-                    color="rose"
-                    maxSelections={5}
-                  />
-
-                  {/* Etiquetas - Multi Select */}
-                  <CatalogSelector
-                    catalogType="tags"
-                    selectedIds={selectedEtiquetas}
-                    onToggle={handleToggleTag}
-                    label={t('field_tags') || 'Etiquetas'}
-                    color="sky"
-                    maxSelections={10}
-                  />
-
-                  {/* Valores - Multi Select */}
-                  <CatalogSelector
-                    catalogType="values"
-                    selectedIds={selectedValores}
-                    onToggle={handleToggleValue}
-                    label={t('field_values') || 'Valores educativos'}
-                    color="emerald"
-                    maxSelections={5}
-                  />
+                <div className="p-5 space-y-5">
+                  <CatalogSelector catalogType="categories" selectedIds={selectedCategoryId ? [selectedCategoryId] : []} onToggle={handleToggleCategory} label={t('field_category')} color="indigo" required singleSelect maxSelections={1} />
+                  <CatalogSelector catalogType="levels" selectedIds={selectedLevelId ? [selectedLevelId] : []} onToggle={handleToggleLevel} label={t('field_level')} color="amber" required singleSelect maxSelections={1} />
+                  <CatalogSelector catalogType="genres" selectedIds={selectedGeneros} onToggle={handleToggleGenre} label={t('field_genres')} color="rose" maxSelections={5} />
+                  <CatalogSelector catalogType="tags" selectedIds={selectedEtiquetas} onToggle={handleToggleTag} label={t('field_tags') || 'Etiquetas'} color="sky" maxSelections={10} />
+                  <CatalogSelector catalogType="values" selectedIds={selectedValores} onToggle={handleToggleValue} label={t('field_values') || 'Valores educativos'} color="emerald" maxSelections={5} />
                 </div>
               </section>
-
-              {/* Nota: Personajes ahora están dentro del tab de idioma */}
             </div>
 
-            {/* COLUMNA DERECHA - Ficha Preview */}
-            <div className="overflow-hidden">
-              <div className="h-full bg-white rounded-lg border border-gray-200 shadow-sm flex flex-col">
-                <div className="flex-shrink-0 px-3 py-2 border-b border-gray-100 bg-gradient-to-r from-amber-50/50 to-rose-50/50">
-                  <h3 className="text-xs font-semibold text-gray-900">{t('section_preview')}</h3>
+            {/* ============================== */}
+            {/* COLUMNA DERECHA — 2/5 Preview */}
+            {/* ============================== */}
+            <div className="lg:col-span-2 lg:sticky lg:top-4 lg:self-start">
+              <section className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-200/50 overflow-hidden">
+                <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-2">
+                  <div className="w-6 h-6 bg-amber-50 rounded-lg flex items-center justify-center">
+                    <Eye size={13} className="text-amber-400" />
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-700" style={FONT}>
+                    {t('section_preview')}
+                  </h3>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4">
+                <div className="p-5">
                   {shouldShowPreview ? (
                     <div className="space-y-4">
-                      {/* Portada + Info principal */}
-                      <div className="flex gap-4 pb-4 border-b border-gray-100">
+                      {/* Cover + title */}
+                      <div className="flex gap-3.5 pb-4 border-b border-slate-100">
                         <div className="flex-shrink-0">
                           {portadaPreview ? (
-                            <img
-                              src={portadaPreview}
-                              alt={t('cover_label')}
-                              className="w-28 h-36 object-cover rounded-lg shadow-md border border-gray-200"
-                            />
+                            <img src={portadaPreview} alt={t('cover_label')} className="w-28 h-38 object-cover rounded-xl shadow-sm border border-slate-200" />
                           ) : (
-                            <div className="w-28 h-36 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex flex-col items-center justify-center border border-gray-200">
-                              <Camera size={20} className="text-gray-300 mb-1" />
-                              <span className="text-[9px] text-gray-400">{t('no_cover')}</span>
+                            <div className="w-28 h-38 bg-slate-50 rounded-xl flex flex-col items-center justify-center border border-slate-200">
+                              <Camera size={20} className="text-slate-300 mb-1" />
+                              <span className="text-[9px] text-slate-400" style={FONT}>{t('no_cover')}</span>
                             </div>
                           )}
                         </div>
 
                         <div className="flex-1 min-w-0">
                           {currentTranslation.title ? (
-                            <h2 className="text-lg font-bold text-gray-900 mb-1 leading-tight line-clamp-2">
+                            <h2 className="text-base font-black text-slate-800 mb-1 leading-tight line-clamp-2" style={FONT}>
                               {currentTranslation.title}
                             </h2>
                           ) : (
-                            <p className="text-sm text-gray-400 italic">{t('no_title')}</p>
+                            <p className="text-sm text-slate-300 italic" style={FONT}>{t('no_title')}</p>
                           )}
 
                           {currentTranslation.subtitle && (
-                            <p className="text-xs text-gray-600 mb-2">{currentTranslation.subtitle}</p>
+                            <p className="text-xs text-slate-500 mb-2" style={FONT}>{currentTranslation.subtitle}</p>
                           )}
 
                           {selectedAuthors.length > 0 && (
-                            <p className="text-xs text-gray-500 mb-2">
+                            <p className="text-[11px] text-slate-400 mb-2" style={FONT}>
                               {t('by_authors').replace('{authors}', selectedAuthors.map(a => a.displayName).join(', '))}
                             </p>
                           )}
 
-                          <div className="flex flex-wrap gap-1.5">
+                          <div className="flex flex-wrap gap-1">
                             {selectedLevelId && niveles.find(n => n.id === selectedLevelId) && (
-                              <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-[10px] font-medium">
+                              <span className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded-md text-[10px] font-medium border border-amber-100" style={FONT}>
                                 {niveles.find(n => n.id === selectedLevelId)?.name}
                               </span>
                             )}
                             {selectedCategoryId && categorias.find(c => c.id === selectedCategoryId) && (
-                              <span className="px-2 py-0.5 bg-indigo-100 text-indigo-800 rounded text-[10px] font-medium">
+                              <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-md text-[10px] font-medium border border-indigo-100" style={FONT}>
                                 {categorias.find(c => c.id === selectedCategoryId)?.name}
                               </span>
                             )}
@@ -616,44 +585,30 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                         </div>
                       </div>
 
-                      {/* Descripcion */}
+                      {/* Description */}
                       {currentTranslation.description && (
                         <div>
-                          <h4 className="text-[10px] font-semibold text-gray-900 mb-1 uppercase tracking-wide">
-                            {t('field_description')}
-                          </h4>
-                          <p className="text-xs text-gray-700 leading-relaxed">
-                            {currentTranslation.description}
-                          </p>
+                          <h4 className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider" style={FONT}>{t('field_description')}</h4>
+                          <p className="text-xs text-slate-600 leading-relaxed" style={FONT}>{currentTranslation.description}</p>
                         </div>
                       )}
 
-                      {/* Resumen */}
                       {currentTranslation.summary && (
                         <div>
-                          <h4 className="text-[10px] font-semibold text-gray-900 mb-1 uppercase tracking-wide">
-                            {t('field_summary')}
-                          </h4>
-                          <p className="text-xs text-gray-600 italic">
-                            {currentTranslation.summary}
-                          </p>
+                          <h4 className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider" style={FONT}>{t('field_summary')}</h4>
+                          <p className="text-xs text-slate-500 italic" style={FONT}>{currentTranslation.summary}</p>
                         </div>
                       )}
 
-                      {/* Generos */}
+                      {/* Tags */}
                       {selectedGeneros.length > 0 && (
                         <div>
-                          <h4 className="text-[10px] font-semibold text-gray-900 mb-1.5 uppercase tracking-wide">
-                            {t('field_genres')}
-                          </h4>
+                          <h4 className="text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider" style={FONT}>{t('field_genres')}</h4>
                           <div className="flex flex-wrap gap-1">
                             {selectedGeneros.map(gid => {
                               const gen = generos.find(g => g.id === gid);
                               return gen ? (
-                                <span
-                                  key={gid}
-                                  className="px-2 py-0.5 bg-rose-50 text-rose-800 rounded text-[10px] border border-rose-200"
-                                >
+                                <span key={gid} className="px-2 py-0.5 bg-rose-50 text-rose-600 rounded-md text-[10px] font-medium border border-rose-100" style={FONT}>
                                   {gen.name}
                                 </span>
                               ) : null;
@@ -662,88 +617,54 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                         </div>
                       )}
 
-                      {/* Personajes */}
                       {characters.length > 0 && (
                         <div>
-                          <h4 className="text-[10px] font-semibold text-gray-900 mb-1.5 uppercase tracking-wide flex items-center gap-1">
-                            <Users size={10} />
-                            {t('field_characters') || 'Personajes'}
+                          <h4 className="text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider flex items-center gap-1" style={FONT}>
+                            <Users size={10} /> {t('field_characters') || 'Personajes'}
                           </h4>
                           <div className="flex flex-wrap gap-1">
                             {characters.map((char, idx) => (
-                              <span
-                                key={idx}
-                                className={`px-2 py-0.5 rounded text-[10px] border ${
-                                  char.role === 'main'
-                                    ? 'bg-amber-50 text-amber-800 border-amber-200'
-                                    : char.role === 'secondary'
-                                    ? 'bg-sky-50 text-sky-800 border-sky-200'
-                                    : 'bg-gray-50 text-gray-700 border-gray-200'
-                                }`}
-                              >
-                                {char.name}
-                              </span>
+                              <span key={idx} className={`px-2 py-0.5 rounded-md text-[10px] font-medium border ${
+                                char.role === 'main' ? 'bg-amber-50 text-amber-700 border-amber-100'
+                                : char.role === 'secondary' ? 'bg-sky-50 text-sky-600 border-sky-100'
+                                : 'bg-slate-50 text-slate-500 border-slate-100'
+                              }`} style={FONT}>{char.name}</span>
                             ))}
                           </div>
                         </div>
                       )}
 
-                      {/* Valores */}
                       {selectedValores.length > 0 && (
                         <div>
-                          <h4 className="text-[10px] font-semibold text-gray-900 mb-1.5 uppercase tracking-wide flex items-center gap-1">
-                            <Heart size={10} />
-                            {t('field_values') || 'Valores'}
+                          <h4 className="text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider flex items-center gap-1" style={FONT}>
+                            <Heart size={10} /> {t('field_values') || 'Valores'}
                           </h4>
                           <div className="flex flex-wrap gap-1">
                             {selectedValores.map(vid => (
-                              <span
-                                key={vid}
-                                className="px-2 py-0.5 bg-emerald-50 text-emerald-800 rounded text-[10px] border border-emerald-200"
-                              >
-                                {vid}
-                              </span>
+                              <span key={vid} className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-md text-[10px] font-medium border border-emerald-100" style={FONT}>{vid}</span>
                             ))}
                           </div>
                         </div>
                       )}
 
-                      {/* Estado de traducciones */}
-                      <div className="pt-4 border-t border-gray-100">
-                        <h4 className="text-[10px] font-semibold text-gray-900 mb-2 uppercase tracking-wide">
-                          {t('section_translations')}
-                        </h4>
-                        <div className="grid grid-cols-2 gap-2">
+                      {/* Translation status */}
+                      <div className="pt-4 border-t border-slate-100">
+                        <h4 className="text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-wider" style={FONT}>{t('section_translations')}</h4>
+                        <div className="grid grid-cols-2 gap-1.5">
                           {activeLanguages.map(lang => {
                             const trans = translations[lang.code];
                             const isComplete = trans?.title && trans?.description;
                             const hasPdfTrans = trans?.pdfFile || trans?.pdfUrl;
-
                             return (
-                              <div
-                                key={lang.code}
-                                className={`p-2 rounded-lg border ${
-                                  isComplete
-                                    ? 'bg-emerald-50 border-emerald-200'
-                                    : 'bg-gray-50 border-gray-200'
-                                }`}
-                              >
-                                <div className="flex items-center gap-1.5 mb-1">
-                                  {lang.flagEmoji && <span className="text-sm">{lang.flagEmoji}</span>}
-                                  <span className="text-[10px] font-medium text-gray-900">
-                                    {lang.name}
-                                  </span>
-                                  {trans?.isPrimary && (
-                                    <Star size={10} className="text-amber-500 fill-amber-500" />
-                                  )}
+                              <div key={lang.code} className={`p-2 rounded-lg border ${isComplete ? 'bg-emerald-50/50 border-emerald-100' : 'bg-slate-50/50 border-slate-100'}`}>
+                                <div className="flex items-center gap-1 mb-0.5">
+                                  {lang.flagEmoji && <span className="text-xs">{lang.flagEmoji}</span>}
+                                  <span className="text-[10px] font-bold text-slate-600" style={FONT}>{lang.name}</span>
+                                  {trans?.isPrimary && <Star size={9} className="text-amber-400 fill-amber-400" />}
                                 </div>
-                                <div className="flex items-center gap-2 text-[9px]">
-                                  <span className={isComplete ? 'text-emerald-600' : 'text-gray-400'}>
-                                    {isComplete ? t('translation_complete') : t('translation_incomplete')}
-                                  </span>
-                                  {hasPdfTrans && (
-                                    <span className="text-blue-600">PDF</span>
-                                  )}
+                                <div className="flex items-center gap-1.5 text-[9px]" style={FONT}>
+                                  <span className={isComplete ? 'text-emerald-500' : 'text-slate-400'}>{isComplete ? t('translation_complete') : t('translation_incomplete')}</span>
+                                  {hasPdfTrans && <span className="px-1 py-0.5 bg-slate-200 text-slate-500 rounded text-[8px] font-bold">PDF</span>}
                                 </div>
                               </div>
                             );
@@ -752,18 +673,18 @@ export function BookFormViewMultilang({ bookId }: BookFormViewMultilangProps) {
                       </div>
                     </div>
                   ) : (
-                    <div className="h-full flex items-center justify-center">
+                    <div className="py-14 flex items-center justify-center">
                       <div className="text-center">
-                        <BookOpen size={48} className="mx-auto text-gray-300 mb-3" />
-                        <p className="text-sm text-gray-500 mb-1">{t('preview_empty_title')}</p>
-                        <p className="text-xs text-gray-400 max-w-[200px] mx-auto">
-                          {t('preview_empty_text')}
-                        </p>
+                        <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                          <BookOpen size={28} className="text-slate-300" />
+                        </div>
+                        <p className="text-sm font-bold text-slate-500 mb-0.5" style={FONT}>{t('preview_empty_title')}</p>
+                        <p className="text-xs text-slate-400 max-w-[200px] mx-auto" style={FONT}>{t('preview_empty_text')}</p>
                       </div>
                     </div>
                   )}
                 </div>
-              </div>
+              </section>
             </div>
           </div>
         </div>

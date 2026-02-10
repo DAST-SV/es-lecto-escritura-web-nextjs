@@ -9,7 +9,6 @@
 
 import React, { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
 import {
   CheckCircle,
   Pause,
@@ -52,9 +51,9 @@ function MyProgressPageSkeleton() {
 
 export default function MyProgressPage() {
   const router = useRouter();
-  const locale = useLocale();
 
   const {
+    locale,
     isLoading,
     translationsLoading,
     t,

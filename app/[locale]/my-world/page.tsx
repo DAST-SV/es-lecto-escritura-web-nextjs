@@ -9,7 +9,6 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
 import {
   BookOpen,
   PenTool,
@@ -66,10 +65,10 @@ function MyWorldPageSkeleton() {
 
 export default function MyWorldPage() {
   const router = useRouter();
-  const locale = useLocale();
   const supabase = createClient();
 
   const {
+    locale,
     activeTab,
     setActiveTab,
     isLoading,
