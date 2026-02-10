@@ -571,4 +571,45 @@ SELECT insert_translation('books_form', 'character_max_reached',
     'Error maximo personajes'
 );
 
-SELECT 'BOOKS_FORM: 55 translations created' AS status;
+-- Alias usados en CharacterInput (BookFormViewMultilang)
+SELECT insert_translation('books_form', 'role_main',
+    'Principal',
+    'Main',
+    'Principal',
+    'ui-components',
+    'Alias rol personaje principal (usado en CharacterInput)'
+);
+
+SELECT insert_translation('books_form', 'role_secondary',
+    'Secundario',
+    'Secondary',
+    'Secondaire',
+    'ui-components',
+    'Alias rol personaje secundario (usado en CharacterInput)'
+);
+
+SELECT insert_translation('books_form', 'role_supporting',
+    'De apoyo',
+    'Supporting',
+    'De soutien',
+    'ui-components',
+    'Alias rol personaje de apoyo (usado en CharacterInput)'
+);
+
+SELECT insert_translation('books_form', 'character_placeholder',
+    'Nombre del personaje...',
+    'Character name...',
+    'Nom du personnage...',
+    'forms',
+    'Placeholder campo nombre personaje (usado en CharacterInput)'
+);
+
+SELECT insert_translation('books_form', 'character_hint',
+    'Agrega los personajes principales',
+    'Add the main characters',
+    'Ajoutez les personnages principaux',
+    'ui-components',
+    'Hint corto personajes (usado en CharacterInput)'
+);
+
+SELECT 'BOOKS_FORM: 60 translations created' AS status;

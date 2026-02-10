@@ -17,7 +17,8 @@
       "Bash(dir /s /b \"C:\\\\Users\\\\hboni\\\\Downloads\\\\es-lecto-escritura-web-nextjs\\\\src\\\\app\")",
       "Bash(findstr:*)",
       "Bash(npx next build:*)",
-      "Bash(dir /b \"C:\\\\Users\\\\hboni\\\\Downloads\\\\es-lecto-escritura-web-nextjs\\\\src\\\\app\")"
+      "Bash(dir /b \"C:\\\\Users\\\\hboni\\\\Downloads\\\\es-lecto-escritura-web-nextjs\\\\src\\\\app\")",
+      "Bash(npx supabase:*)"
     ]
   }
 }
