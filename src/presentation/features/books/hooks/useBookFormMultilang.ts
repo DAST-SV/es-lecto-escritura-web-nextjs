@@ -399,39 +399,41 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
         setTranslations(transState);
 
         // 4. Cargar autores (usuarios del sistema)
+        // El slug en books.authors = user_id del usuario en auth.users
         const { data: bookAuthors } = await supabase
           .schema('books')
           .from('book_authors')
           .select(`
-            author_id,
             role,
+            order_index,
             authors (
               id,
-              name,
-              user_id
+              slug,
+              avatar_url
             )
           `)
-          .eq('book_id', bookId);
+          .eq('book_id', bookId)
+          .order('order_index');
 
         if (bookAuthors && bookAuthors.length > 0) {
-          // Cargar info de usuarios para los autores
           const authorsList: BookAuthor[] = [];
           for (const ba of bookAuthors) {
             const author = (ba as any).authors;
-            if (author?.user_id) {
+            if (author?.slug) {
+              const authorUserId = author.slug; // slug = user_id
               const { data: profile } = await supabase
                 .schema('app')
                 .from('user_profiles')
-                .select('display_name, avatar_url')
-                .eq('user_id', author.user_id)
+                .select('display_name, full_name, avatar_url')
+                .eq('user_id', authorUserId)
                 .single();
 
               authorsList.push({
-                userId: author.user_id,
+                userId: authorUserId,
                 email: '',
-                displayName: profile?.display_name || author.name || 'Autor',
-                avatarUrl: profile?.avatar_url || null,
-                role: (ba.role as any) || 'author',
+                displayName: profile?.display_name || profile?.full_name || 'Autor',
+                avatarUrl: profile?.avatar_url || author.avatar_url || null,
+                role: (ba.role as BookAuthor['role']) || 'author',
               });
             }
           }
@@ -847,7 +849,55 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
         }
       }
 
-      // 4. Guardar géneros
+      // 4. Guardar autores (upsert en books.authors + book_authors)
+      await supabase
+        .schema('books')
+        .from('book_authors')
+        .delete()
+        .eq('book_id', finalBookId);
+
+      if (selectedAuthors.length > 0) {
+        for (const [idx, author] of selectedAuthors.entries()) {
+          // Upsert en books.authors (crear si no existe para este user_id via slug)
+          const authorSlug = author.userId; // usamos user_id como slug único
+          const { data: upsertedAuthor, error: authorUpsertError } = await supabase
+            .schema('books')
+            .from('authors')
+            .upsert(
+              {
+                slug: authorSlug,
+                avatar_url: author.avatarUrl || null,
+                is_active: true,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: 'slug' }
+            )
+            .select('id')
+            .single();
+
+          if (authorUpsertError || !upsertedAuthor) {
+            logDetailedError(`useBookFormMultilang.handleSave.author.upsert.${author.userId}`, authorUpsertError);
+            continue;
+          }
+
+          // Insertar en book_authors
+          const { error: baError } = await supabase
+            .schema('books')
+            .from('book_authors')
+            .insert({
+              book_id: finalBookId,
+              author_id: upsertedAuthor.id,
+              role: author.role,
+              order_index: idx,
+            });
+
+          if (baError) {
+            logDetailedError(`useBookFormMultilang.handleSave.book_authors.${author.userId}`, baError);
+          }
+        }
+      }
+
+      // 5. Guardar géneros
       await supabase
         .schema('books')
         .from('book_genres')
@@ -858,10 +908,10 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
         await supabase
           .schema('books')
           .from('book_genres')
-          .insert(selectedGeneros.map(gid => ({ book_id: finalBookId, genre_id: gid })));
+          .insert(selectedGeneros.map((gid, idx) => ({ book_id: finalBookId, genre_id: gid, is_primary: idx === 0 })));
       }
 
-      // 5. Guardar etiquetas
+      // 6. Guardar etiquetas
       await supabase
         .schema('books')
         .from('book_tags')
@@ -875,7 +925,7 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
           .insert(selectedEtiquetas.map(tid => ({ book_id: finalBookId, tag_id: tid })));
       }
 
-      // 6. Guardar valores
+      // 7. Guardar valores
       await supabase
         .schema('books')
         .from('book_values')
@@ -891,7 +941,7 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
 
       // Nota: Personajes ya se guardaron arriba con cada traducción
 
-      // 7. Cleanup all extracted pages across languages
+      // 8. Cleanup all extracted pages across languages
       const { PDFExtractorService } = await import('@/src/infrastructure/services/books');
       Object.values(extractedPagesMap).forEach(langData => {
         if (langData.pages.length > 0) {

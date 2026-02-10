@@ -185,149 +185,104 @@ export function AuthorSelector({
 
   const isCurrentUser = (userId: string) => currentUser?.id === userId;
 
-  return (
-    <div className="space-y-3">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <label className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
-          <User size={13} />
-          {t('authors_label')} <span className="text-red-500">{t('required')}</span>
-          <span className="text-gray-400 font-normal">
-            ({selectedAuthors.length}/{maxAuthors})
-          </span>
-        </label>
+  const Avatar = ({ url, name, size = 8 }: { url: string | null; name: string; size?: number }) => {
+    const [imgError, setImgError] = React.useState(false);
+    const sizeClass = size === 7 ? 'w-7 h-7' : 'w-8 h-8';
+    const textSize = size === 7 ? 'text-[10px]' : 'text-xs';
+    if (url && !imgError) {
+      return (
+        <img src={url} alt={name} onError={() => setImgError(true)}
+          className={`${sizeClass} rounded-full object-cover border border-gray-200 flex-shrink-0`} />
+      );
+    }
+    return (
+      <div className={`${sizeClass} rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white ${textSize} font-bold flex-shrink-0`}>
+        {name.charAt(0).toUpperCase()}
       </div>
+    );
+  };
 
+  return (
+    <div className="space-y-2">
       {/* Lista de autores seleccionados */}
-      <div className="space-y-2">
-        {selectedAuthors.map((author, idx) => (
-          <div
-            key={author.userId}
-            className={`flex items-center gap-2 p-2 rounded-lg border ${
-              isCurrentUser(author.userId)
-                ? 'bg-amber-50 border-amber-200'
-                : 'bg-gray-50 border-gray-200'
-            }`}
-          >
-            {/* Avatar */}
-            <div className="flex-shrink-0 relative">
-              {author.avatarUrl ? (
-                <img
-                  src={author.avatarUrl}
-                  alt={author.displayName}
-                  className="w-8 h-8 rounded-full object-cover border border-gray-200"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-xs font-medium">
-                  {author.displayName.charAt(0).toUpperCase()}
-                </div>
-              )}
+      <div className="space-y-1.5">
+        {selectedAuthors.map((author) => (
+          <div key={author.userId}
+            className={`flex items-center gap-2 px-2 py-1.5 rounded-lg border ${
+              isCurrentUser(author.userId) ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200'
+            }`}>
+            <div className="relative flex-shrink-0">
+              <Avatar url={author.avatarUrl} name={author.displayName} />
               {isCurrentUser(author.userId) && (
-                <Crown
-                  size={10}
-                  className="absolute -top-1 -right-1 text-amber-500 fill-amber-500"
-                />
+                <Crown size={9} className="absolute -top-0.5 -right-0.5 text-amber-500 fill-amber-500" />
               )}
             </div>
-
-            {/* Info */}
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-gray-900 truncate flex items-center gap-1">
+              <p className="text-xs font-bold text-gray-800 truncate leading-tight">
                 {author.displayName}
                 {isCurrentUser(author.userId) && (
-                  <span className="text-[9px] text-amber-600 bg-amber-100 px-1 rounded">
-                    {t('authors_you')}
-                  </span>
+                  <span className="ml-1 text-[8px] text-amber-600 bg-amber-100 px-1 py-0.5 rounded font-bold">{t('authors_you')}</span>
                 )}
               </p>
-              <p className="text-[10px] text-gray-500 truncate">{author.email}</p>
+              <p className="text-[9px] text-gray-400 truncate">{author.email}</p>
             </div>
-
-            {/* Selector de rol */}
-            <select
-              value={author.role}
+            <select value={author.role}
               onChange={(e) => updateAuthorRole(author.userId, e.target.value as BookAuthor['role'])}
-              className="text-[10px] px-1.5 py-1 border border-gray-300 rounded bg-white focus:border-amber-400 focus:outline-none"
-            >
-              {AUTHOR_ROLE_KEYS.map(roleKey => (
-                <option key={roleKey} value={roleKey}>
-                  {t(`role_${roleKey}`)}
-                </option>
+              className="text-[10px] px-1 py-0.5 border border-gray-200 rounded bg-white focus:border-amber-400 focus:outline-none text-gray-600 flex-shrink-0">
+              {AUTHOR_ROLE_KEYS.map(rk => (
+                <option key={rk} value={rk}>{t(`role_${rk}`)}</option>
               ))}
             </select>
-
-            {/* Boton eliminar */}
             {selectedAuthors.length > 1 && (
-              <button
-                onClick={() => removeAuthor(author.userId)}
-                className="p-1 hover:bg-red-100 rounded transition-colors"
-                title={t('authors_remove')}
-              >
-                <X size={14} className="text-red-500" />
+              <button onClick={() => removeAuthor(author.userId)}
+                className="p-0.5 hover:bg-red-100 rounded transition-colors flex-shrink-0">
+                <X size={12} className="text-red-400" />
               </button>
             )}
           </div>
         ))}
       </div>
 
-      {/* Buscador de co-autores */}
+      {/* Buscador */}
       {selectedAuthors.length < maxAuthors && (
-        <div className="relative" ref={dropdownRef}>
+        <div ref={dropdownRef} style={{ position: 'relative' }}>
           <div className="relative">
-            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              ref={inputRef}
-              type="text"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setShowDropdown(true);
-              }}
+            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input ref={inputRef} type="text" value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setShowDropdown(true); }}
               onFocus={() => setShowDropdown(true)}
               placeholder={t('authors_search')}
-              className="w-full pl-8 pr-8 py-2 text-xs border border-gray-300 rounded-lg focus:border-amber-400 focus:ring-1 focus:ring-amber-200 focus:outline-none"
-            />
-            {isSearching && (
-              <Loader2 size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 animate-spin" />
-            )}
+              className="w-full pl-7 pr-7 py-1.5 text-xs border border-gray-200 rounded-lg focus:border-amber-400 focus:ring-1 focus:ring-amber-100 focus:outline-none" />
+            {isSearching && <Loader2 size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 animate-spin" />}
           </div>
 
-          {/* Dropdown de resultados */}
+          {/* Dropdown — fixed position para evitar overflow-hidden del padre */}
           {showDropdown && (searchResults.length > 0 || (searchTerm.length >= 2 && !isSearching)) && (
-            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+            <div
+              className="fixed z-[9998] bg-white border border-gray-200 rounded-xl shadow-xl overflow-y-auto"
+              style={{
+                width: inputRef.current ? inputRef.current.getBoundingClientRect().width : 240,
+                left: inputRef.current ? inputRef.current.getBoundingClientRect().left : 0,
+                top: inputRef.current ? inputRef.current.getBoundingClientRect().bottom + 4 : 0,
+                maxHeight: 220,
+              }}
+            >
               {searchResults.length > 0 ? (
-                searchResults.map((user) => (
-                  <button
-                    key={user.user_id}
-                    onClick={() => addAuthor(user)}
-                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-amber-50 transition-colors text-left"
-                  >
-                    {user.avatar_url ? (
-                      <img
-                        src={user.avatar_url}
-                        alt={user.full_name}
-                        className="w-7 h-7 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-white text-xs">
-                        {(user.full_name || user.email).charAt(0).toUpperCase()}
-                      </div>
-                    )}
+                searchResults.map(user => (
+                  <button key={user.user_id} onClick={() => addAuthor(user)}
+                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-amber-50 transition-colors text-left border-b border-gray-50 last:border-0">
+                    <Avatar url={user.avatar_url} name={user.full_name || user.email} size={7} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-gray-900 truncate">
-                        {user.full_name || user.email.split('@')[0]}
-                      </p>
-                      <p className="text-[10px] text-gray-500 truncate">{user.email}</p>
+                      <p className="text-xs font-bold text-gray-800 truncate">{user.full_name || user.email.split('@')[0]}</p>
+                      <p className="text-[9px] text-gray-400 truncate">{user.email}</p>
                     </div>
-                    <UserPlus size={14} className="text-amber-500 flex-shrink-0" />
+                    <UserPlus size={13} className="text-amber-500 flex-shrink-0" />
                   </button>
                 ))
               ) : (
                 <div className="px-3 py-4 text-center">
                   <p className="text-xs text-gray-500">{t('authors_no_results')}</p>
-                  <p className="text-[10px] text-gray-400 mt-1">
-                    {t('authors_try_other')}
-                  </p>
+                  <p className="text-[9px] text-gray-400 mt-0.5">{t('authors_try_other')}</p>
                 </div>
               )}
             </div>
@@ -335,10 +290,7 @@ export function AuthorSelector({
         </div>
       )}
 
-      {/* Hint */}
-      <p className="text-[10px] text-gray-400">
-        {t('authors_hint')}
-      </p>
+      <p className="text-[9px] text-gray-400">{t('authors_hint')}</p>
     </div>
   );
 }

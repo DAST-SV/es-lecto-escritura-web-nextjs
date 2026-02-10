@@ -24,7 +24,7 @@ export const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
   return (
     <div className={`relative min-h-screen flex flex-col ${className}`}>
       {backgroundComponent && (
-        <div className="absolute inset-0 z-0">{backgroundComponent}</div>
+        <div className="fixed inset-0 z-0 pointer-events-none">{backgroundComponent}</div>
       )}
 
       {showNavbar && <NavBar brandName={brandName} />}

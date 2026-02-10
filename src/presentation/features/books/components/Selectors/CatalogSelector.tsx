@@ -348,199 +348,165 @@ export function CatalogSelector({
 
   if (errorMessage) {
     return (
-      <div className="border-2 border-red-200 rounded-lg p-4 bg-red-50">
-        <label className="text-xs font-semibold text-red-700 block mb-2">
-          {label} {required && <span className="text-red-500">*</span>}
-        </label>
-        <div className="text-center py-4">
-          <p className="text-xs text-red-600 font-medium mb-2">Error al cargar</p>
-          <p className="text-[11px] text-red-500 break-words">{errorMessage}</p>
-          <button
-            onClick={() => loadItems(search, currentPage)}
-            className="mt-3 px-3 py-1 text-xs bg-red-100 hover:bg-red-200 text-red-700 rounded transition-colors"
-          >
-            Reintentar
-          </button>
-        </div>
+      <div className="text-center py-4">
+        <p className="text-[11px] text-red-600 font-medium mb-1">Error al cargar</p>
+        <p className="text-[10px] text-red-400 break-words mb-2">{errorMessage}</p>
+        <button onClick={() => loadItems(search, currentPage)}
+          className="px-3 py-1 text-[10px] bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors">
+          Reintentar
+        </button>
       </div>
     );
   }
 
   if (totalCount === 0 && !isLoading && !search) {
     return (
-      <div className={`border-2 ${colors.border} rounded-lg p-4 bg-white`}>
-        <label className="text-xs font-semibold text-gray-700 block mb-2">
-          {label} {required && <span className="text-red-500">*</span>}
-        </label>
-        <div className="text-center py-4">
-          <p className="text-sm text-gray-500">No hay opciones disponibles</p>
-        </div>
+      <div className="text-center py-6">
+        <p className="text-[11px] text-gray-400">No hay opciones disponibles</p>
       </div>
     );
   }
 
   return (
     <>
-      <div className={`border-2 ${colors.border} rounded-lg p-4 bg-white`}>
-        {/* Header */}
-        <div className="flex items-center justify-between mb-3">
-          <label className="text-xs font-semibold text-gray-700">
-            {label} {required && <span className="text-red-500">*</span>}
-          </label>
-
-          {selectedIds.length > 0 && (
-            <button
-              onClick={() => setShowModal(true)}
-              className={`flex items-center gap-1.5 px-2 py-1 ${colors.badge} rounded-full text-[10px] font-medium hover:opacity-90 transition-opacity`}
-            >
-              <Info size={10} />
-              {selectedIds.length}
-            </button>
-          )}
-        </div>
-
-        {/* Buscador */}
-        <div className="relative mb-3">
+      {/* ── Header: buscador + badge ── */}
+      <div className="flex items-center justify-between mb-2.5 gap-2">
+        <div className="relative flex-1">
           <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar..."
-            className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-300 rounded-md focus:border-gray-400 focus:ring-1 focus:ring-gray-200 focus:outline-none transition-all"
+            className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:border-gray-400 focus:ring-1 focus:ring-gray-100 focus:outline-none transition-all"
           />
         </div>
-
-        {/* Grid de items */}
-        <div className="grid grid-cols-3 gap-2 mb-3">
-          {isLoading ? (
-            <div className="col-span-3 text-center py-8">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400 mx-auto mb-2"></div>
-              <p className="text-[10px] text-gray-500">Cargando...</p>
-            </div>
-          ) : items.length === 0 ? (
-            <div className="col-span-3 text-center py-6 text-xs text-gray-400">
-              {search ? 'Sin resultados' : 'Sin opciones'}
-            </div>
-          ) : (
-            items.map(item => {
-              const isSelected = selectedIds.includes(item.id);
-              const canClick = isSelected || selectedIds.length < maxSelections;
-
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => canClick && handleToggle(item.id)}
-                  disabled={!canClick}
-                  title={item.description || item.name}
-                  className={`px-2.5 py-1.5 text-[11px] rounded-md border transition-all text-left ${
-                    isSelected
-                      ? colors.selected
-                      : canClick
-                        ? colors.unselected
-                        : 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
-                  }`}
-                >
-                  <span className="block truncate">{item.name}</span>
-                  {item.ageLabel && (
-                    <span className="block text-[9px] opacity-70 mt-0.5">{item.ageLabel}</span>
-                  )}
-                </button>
-              );
-            })
-          )}
-        </div>
-
-        {/* Paginación */}
-        {totalPages > 1 && !isLoading && (
-          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="p-1 text-gray-600 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed rounded hover:bg-gray-100 transition-all"
-            >
-              <ChevronLeft size={12} />
-            </button>
-
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-medium text-gray-700">
-                {currentPage} / {totalPages}
-              </span>
-              <span className="text-[10px] text-gray-400">
-                ({totalCount})
-              </span>
-            </div>
-
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="p-1 text-gray-600 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed rounded hover:bg-gray-100 transition-all"
-            >
-              <ChevronRight size={12} />
-            </button>
-          </div>
+        {selectedIds.length > 0 && (
+          <button
+            onClick={() => setShowModal(true)}
+            className={`flex items-center gap-1 px-2.5 py-1.5 ${colors.badge} rounded-lg text-[11px] font-bold hover:opacity-90 transition-opacity whitespace-nowrap`}
+          >
+            <Info size={11} />
+            {selectedIds.length}{maxSelections !== 999 ? `/${maxSelections}` : ''}
+          </button>
         )}
       </div>
 
-      {/* Modal de seleccionados */}
+      {/* ── Grid de items ── */}
+      <div className="grid grid-cols-3 gap-1.5">
+        {isLoading ? (
+          <div className="col-span-3 text-center py-6">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400 mx-auto mb-1.5"></div>
+            <p className="text-[10px] text-gray-400">Cargando...</p>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="col-span-3 text-center py-5 text-xs text-gray-400">
+            {search ? 'Sin resultados' : 'Sin opciones'}
+          </div>
+        ) : (
+          items.map(item => {
+            const isSelected = selectedIds.includes(item.id);
+            const canClick = isSelected || selectedIds.length < maxSelections;
+            return (
+              <button
+                key={item.id}
+                onClick={() => canClick && handleToggle(item.id)}
+                disabled={!canClick}
+                title={item.description || item.name}
+                className={`px-2.5 py-1.5 text-xs rounded-lg border transition-all text-left leading-tight ${
+                  isSelected
+                    ? colors.selected
+                    : canClick
+                      ? colors.unselected
+                      : 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
+                }`}
+              >
+                <span className="block truncate font-medium">{item.name}</span>
+                {item.ageLabel && (
+                  <span className="block text-[9px] opacity-60 truncate">{item.ageLabel}</span>
+                )}
+              </button>
+            );
+          })
+        )}
+      </div>
+
+      {/* ── Paginación ── */}
+      {totalPages > 1 && !isLoading && (
+        <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-gray-100">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="p-1.5 text-gray-500 hover:text-gray-800 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-gray-100 transition-all"
+          >
+            <ChevronLeft size={13} />
+          </button>
+          <span className="text-xs text-gray-500 font-medium">
+            {currentPage} / {totalPages}
+            <span className="text-gray-400 ml-1">({totalCount})</span>
+          </span>
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="p-1.5 text-gray-500 hover:text-gray-800 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-gray-100 transition-all"
+          >
+            <ChevronRight size={13} />
+          </button>
+        </div>
+      )}
+
+      {/* ── Modal de seleccionados — overlay centrado ── */}
       {showModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)' }}
           onClick={() => setShowModal(false)}
         >
           <div
-            className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 border border-gray-200"
-            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 overflow-hidden"
+            onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-900">
-                {label} ({selectedItems.length})
-              </h3>
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/80">
+              <div>
+                <h3 className="text-sm font-bold text-gray-800">{label}</h3>
+                <p className="text-[10px] text-gray-500 mt-0.5">
+                  {selectedItems.length} seleccionado{selectedItems.length !== 1 ? 's' : ''}{maxSelections !== 999 ? ` de ${maxSelections} máx.` : ''}
+                </p>
+              </div>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-1 hover:bg-gray-100 rounded transition-colors"
+                className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors"
               >
-                <X size={14} className="text-gray-500" />
+                <X size={15} className="text-gray-500" />
               </button>
             </div>
 
-            <div className="p-4 max-h-96 overflow-y-auto">
+            {/* Lista */}
+            <div className="p-3 max-h-[60vh] overflow-y-auto">
               {selectedItems.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-6">
-                  Sin selección
-                </p>
+                <p className="text-sm text-gray-400 text-center py-8">Sin selección</p>
               ) : (
-                <div className="space-y-2">
-                  {selectedItems.map((item, idx) => (
+                <div className="grid grid-cols-2 gap-1.5">
+                  {selectedItems.map(item => (
                     <div
                       key={item.id}
-                      className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
+                      className={`flex items-center justify-between px-2.5 py-2 rounded-xl border ${colors.selected}`}
                     >
-                      <div className="flex-1 min-w-0">
-                        <span className="text-xs text-gray-900 font-medium block truncate">
-                          {idx + 1}. {item.name}
-                        </span>
-                        {item.ageLabel && (
-                          <span className="text-[10px] text-gray-500">{item.ageLabel}</span>
-                        )}
+                      <div className="flex-1 min-w-0 mr-1.5">
+                        <span className="text-xs font-medium block truncate">{item.name}</span>
+                        {item.ageLabel && <span className="text-[9px] opacity-70">{item.ageLabel}</span>}
                       </div>
                       <button
                         onClick={() => handleToggle(item.id)}
-                        className="p-0.5 hover:bg-red-100 rounded transition-colors ml-2"
-                        title="Quitar"
+                        className="p-0.5 hover:bg-red-100 rounded-md transition-colors flex-shrink-0"
                       >
-                        <X size={12} className="text-red-600" />
+                        <X size={12} className="text-red-500" />
                       </button>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
-
-            <div className="px-4 py-2.5 bg-gray-50 border-t border-gray-200 rounded-b-xl">
-              <p className="text-[10px] text-gray-600 text-center">
-                {selectedItems.length} / {maxSelections === 999 ? '∞' : maxSelections}
-              </p>
             </div>
           </div>
         </div>
