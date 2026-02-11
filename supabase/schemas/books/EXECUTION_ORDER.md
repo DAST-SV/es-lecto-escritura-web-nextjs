@@ -13,7 +13,7 @@ enums/difficulty_level.sql
 enums/book_status.sql
 ```
 
-## 3. Tablas Base (sin dependencias)
+## 3. Tablas Base
 ```
 tables/categories.sql
 tables/levels.sql
@@ -33,7 +33,7 @@ tables/value_translations.sql
 tables/author_translations.sql
 ```
 
-## 5. Tabla Principal (depende de categories y levels)
+## 5. Tabla Principal
 ```
 tables/books.sql
 tables/book_translations.sql
@@ -110,6 +110,7 @@ storage/user_avatars.sql
 
 ## 14. Datos Iniciales (Seed)
 ```
+data/categories.sql
 data/seed_categories.sql
 data/seed_levels.sql
 data/seed_genres.sql

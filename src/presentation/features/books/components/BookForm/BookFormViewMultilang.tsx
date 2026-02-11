@@ -356,7 +356,10 @@ export function BookFormViewMultilang({ bookId }: Props) {
                       {extractedPages.length > 0 ? (
                         <button onClick={() => setShowPreview(true)}
                           className="w-full px-2 py-1.5 bg-black hover:bg-gray-900 text-yellow-300 text-[10px] font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all border border-black" style={F}>
-                          <Eye size={11} strokeWidth={1.5} />Leer ({extractedPages.length} págs)
+                          {isExtractingPages
+                            ? <Loader2 size={11} className="animate-spin flex-shrink-0" />
+                            : <Eye size={11} strokeWidth={1.5} />}
+                          Leer ({extractedPages.length} págs{isExtractingPages ? '...' : ''})
                         </button>
                       ) : isExtractingPages ? (
                         <div className="flex items-center justify-center gap-1 py-1.5">
@@ -385,15 +388,24 @@ export function BookFormViewMultilang({ bookId }: Props) {
                           <p className="text-[9px] font-bold text-gray-700 truncate" style={F}>{pdfFile.name}</p>
                           <p className="text-[8px] text-gray-400">{(pdfFile.size / (1024 * 1024)).toFixed(1)} MB</p>
                         </div>
-                        <button onClick={() => updateTranslation(activeTab, 'pdfFile', null)}
-                          className="p-0.5 hover:bg-red-50 rounded transition-colors flex-shrink-0">
-                          <X size={11} strokeWidth={1.5} className="text-red-400" />
+                        <button
+                          onClick={() => !isExtractingPages && updateTranslation(activeTab, 'pdfFile', null)}
+                          disabled={isExtractingPages}
+                          className={`p-0.5 rounded transition-colors flex-shrink-0 ${
+                            isExtractingPages
+                              ? 'cursor-not-allowed opacity-40 bg-gray-100'
+                              : 'hover:bg-red-50 cursor-pointer'
+                          }`}>
+                          <X size={11} strokeWidth={1.5} className={isExtractingPages ? 'text-gray-400' : 'text-red-500'} />
                         </button>
                       </div>
                       {extractedPages.length > 0 ? (
                         <button onClick={() => setShowPreview(true)}
                           className="w-full px-2 py-1.5 bg-black hover:bg-gray-900 text-yellow-300 text-[10px] font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all border border-black" style={F}>
-                          <Eye size={11} strokeWidth={1.5} />Leer ({extractedPages.length} págs)
+                          {isExtractingPages
+                            ? <Loader2 size={11} className="animate-spin flex-shrink-0" />
+                            : <Eye size={11} strokeWidth={1.5} />}
+                          Leer ({extractedPages.length} págs{isExtractingPages ? '...' : ''})
                         </button>
                       ) : isExtractingPages ? (
                         <div className="flex items-center justify-center gap-1 py-1.5">

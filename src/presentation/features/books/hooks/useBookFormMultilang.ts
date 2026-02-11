@@ -578,19 +578,41 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
     }
 
     // Extract pages for preview (stored per language)
+    // Limpiar páginas anteriores ANTES de empezar para evitar acumulación
+    setExtractedPagesMap(prev => ({
+      ...prev,
+      [currentLang]: { pages: [], dimensions: null },
+    }));
+    // onPageExtracted: streaming progresivo — cada página se muestra al instante
     setIsExtractingPages(true);
     try {
       const { PDFExtractorService } = await import('@/src/infrastructure/services/books');
-      const result = await PDFExtractorService.extractPagesFromPDF(file);
+      // Buffer local para evitar acumulación desde state previo
+      const streamedPages: import('@/src/infrastructure/services/books/PDFExtractorService').ExtractedPage[] = [];
+      const result = await PDFExtractorService.extractPagesFromPDF(
+        file,
+        (page) => {
+          // Usar buffer local en lugar de leer state previo → sin acumulación
+          streamedPages.push(page);
+          setExtractedPagesMap(prev => ({
+            ...prev,
+            [currentLang]: {
+              pages: [...streamedPages],
+              dimensions: prev[currentLang]?.dimensions ?? null,
+            },
+          }));
+        },
+      );
 
+      // Al terminar: confirmar con el resultado final completo (incluye dimensiones)
       setExtractedPagesMap(prev => ({
         ...prev,
         [currentLang]: {
           pages: result.pages,
           dimensions: result.pageWidth && result.pageHeight
             ? { width: result.pageWidth, height: result.pageHeight }
-            : null,
-        }
+            : prev[currentLang]?.dimensions ?? null,
+        },
       }));
       toast.success('PDF procesado');
     } catch (err) {
@@ -606,20 +628,41 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
   const extractPagesFromExistingPdf = useCallback(async (langCode: string, pdfUrl: string) => {
     if (!pdfUrl || extractedPagesMap[langCode]?.pages?.length > 0) return;
 
+    // Limpiar páginas anteriores ANTES de empezar para evitar acumulación
+    setExtractedPagesMap(prev => ({
+      ...prev,
+      [langCode]: { pages: [], dimensions: null },
+    }));
     setIsExtractingPages(true);
     try {
       const { BookPDFService, PDFExtractorService } = await import('@/src/infrastructure/services/books');
       const signedUrl = await BookPDFService.getSignedUrl(pdfUrl);
-      const result = await PDFExtractorService.extractPagesFromUrl(signedUrl);
+      // Buffer local para evitar acumulación desde state previo
+      const streamedPages: import('@/src/infrastructure/services/books/PDFExtractorService').ExtractedPage[] = [];
+      const result = await PDFExtractorService.extractPagesFromUrl(
+        signedUrl,
+        1.2,
+        (page) => {
+          streamedPages.push(page);
+          setExtractedPagesMap(prev => ({
+            ...prev,
+            [langCode]: {
+              pages: [...streamedPages],
+              dimensions: prev[langCode]?.dimensions ?? null,
+            },
+          }));
+        },
+      );
 
+      // Confirmar con resultado final (incluye dimensiones correctas)
       setExtractedPagesMap(prev => ({
         ...prev,
         [langCode]: {
           pages: result.pages,
           dimensions: result.pageWidth && result.pageHeight
             ? { width: result.pageWidth, height: result.pageHeight }
-            : null,
-        }
+            : prev[langCode]?.dimensions ?? null,
+        },
       }));
       toast.success('PDF cargado para vista previa');
     } catch (err) {
