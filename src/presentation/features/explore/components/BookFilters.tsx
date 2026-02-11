@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ============================================
  * COMPONENTE: BookFilters
  * Panel de filtros para exploracion de libros
@@ -67,7 +67,7 @@ const FilterSection: React.FC<FilterSectionProps> = memo(
             <Icon className="w-4 h-4 text-blue-600" />
             <span
               className="font-bold text-blue-800 text-sm"
-              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
             >
               {title}
             </span>
@@ -201,7 +201,7 @@ export const BookFilters: React.FC<BookFiltersProps> = memo(
               <Filter className="w-5 h-5 text-blue-600" />
               <h2
                 className="font-black text-blue-800"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
               >
                 {t('title')}
               </h2>
@@ -212,7 +212,7 @@ export const BookFilters: React.FC<BookFiltersProps> = memo(
                 type="button"
                 onClick={onClearFilters}
                 className="flex items-center gap-1 px-3 py-1.5 bg-white text-red-500 text-xs font-bold rounded-full border-2 border-red-200 hover:bg-red-50 hover:border-red-300 transition-all shadow-sm"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
               >
                 <X className="w-3 h-3" />
                 {t('clear')}
@@ -229,7 +229,7 @@ export const BookFilters: React.FC<BookFiltersProps> = memo(
               value={filters.sortBy || 'recent'}
               onChange={(e) => setSortBy(e.target.value as BookSortOption)}
               className="w-full p-2 rounded-xl border-2 border-yellow-200 text-sm font-bold text-blue-800 bg-white focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-200"
-              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
             >
               {SORT_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -312,7 +312,7 @@ export const BookFilters: React.FC<BookFiltersProps> = memo(
                           : 'bg-white border-blue-200 text-blue-700 hover:bg-blue-50'
                       }
                     `}
-                    style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                    style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
                   >
                     <Icon className="w-3.5 h-3.5" />
                     {option.label}

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ============================================
  * COMPONENTE: FilterChip
  * Chip individual para filtros seleccionables
@@ -87,7 +87,7 @@ export const FilterChip: React.FC<FilterChipProps> = memo(
           ${colors.base}
           ${isSelected ? colors.selected : colors.unselected}
         `}
-        style={{ fontFamily: 'Comic Sans MS, cursive' }}
+        style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
         aria-pressed={isSelected}
       >
         {isSelected && <Check className="w-3.5 h-3.5" strokeWidth={3} />}

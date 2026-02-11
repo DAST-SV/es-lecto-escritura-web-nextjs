@@ -1,4 +1,4 @@
-// src/presentation/features/my-world/components/MyWorldCarouselRow.tsx
+﻿// src/presentation/features/my-world/components/MyWorldCarouselRow.tsx
 /**
  * ============================================
  * COMPONENTE: MyWorldCarouselRow
@@ -87,14 +87,14 @@ export const MyWorldCarouselRow: React.FC<MyWorldCarouselRowProps> = memo(
               )}
               <h2
                 className="text-xl md:text-2xl font-black text-white drop-shadow-lg"
-                style={{ fontFamily: 'Comic Sans MS, cursive', textShadow: '2px 2px 0px rgba(0,0,0,0.2)' }}
+                style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif", textShadow: '2px 2px 0px rgba(0,0,0,0.2)' }}
               >
                 {title}
               </h2>
             </div>
             <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-8 text-center border-2 border-white/30">
               {emptyIcon && <div className="flex justify-center mb-3">{emptyIcon}</div>}
-              <p className="text-white/80 font-bold text-sm" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <p className="text-white/80 font-bold text-sm" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
                 {emptyMessage}
               </p>
             </div>
@@ -115,7 +115,7 @@ export const MyWorldCarouselRow: React.FC<MyWorldCarouselRowProps> = memo(
               )}
               <h2
                 className="text-xl md:text-2xl font-black text-white drop-shadow-lg"
-                style={{ fontFamily: 'Comic Sans MS, cursive', textShadow: '2px 2px 0px rgba(0,0,0,0.2)' }}
+                style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif", textShadow: '2px 2px 0px rgba(0,0,0,0.2)' }}
               >
                 {title}
               </h2>

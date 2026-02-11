@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ============================================
  * COMPONENTE: BookGrid
  * Grid responsive de libros
@@ -46,7 +46,7 @@ const EmptyState: React.FC<{ message: string; subMessage?: string }> = memo(
 
         <h3
           className="text-2xl font-black text-blue-700 text-center mb-2"
-          style={{ fontFamily: 'Comic Sans MS, cursive' }}
+          style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
         >
           {message}
         </h3>
@@ -54,7 +54,7 @@ const EmptyState: React.FC<{ message: string; subMessage?: string }> = memo(
         {subMessage && (
           <p
             className="text-gray-500 text-center max-w-md"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
           >
             {subMessage}
           </p>

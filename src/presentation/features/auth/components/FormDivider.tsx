@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // src/presentation/features/auth/components/FormDivider.tsx
 // ============================================
 "use client";
@@ -24,7 +24,7 @@ export function FormDivider({ text }: FormDividerProps) {
       <div className="relative flex justify-center text-base">
         <span
           className="px-4 bg-white text-orange-500 font-bold"
-          style={{ fontFamily: "Comic Sans MS, cursive" }}
+          style={{ fontFamily: "'Nunito', 'Varela Round', 'Comfortaa', sans-serif" }}
         >
           {text}
         </span>

@@ -1,4 +1,4 @@
-// src/presentation/features/my-progress/components/MyProgressHero.tsx
+﻿// src/presentation/features/my-progress/components/MyProgressHero.tsx
 /**
  * ============================================
  * COMPONENTE: MyProgressHero
@@ -62,7 +62,7 @@ export const MyProgressHero: React.FC<MyProgressHeroProps> = memo(({ t, translat
             <TrendingUp className="w-5 h-5 text-emerald-600" />
             <span
               className="text-sm font-black text-blue-700 tracking-wide"
-              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
             >
               {badgeText}
             </span>
@@ -74,7 +74,7 @@ export const MyProgressHero: React.FC<MyProgressHeroProps> = memo(({ t, translat
         <h1
           className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-3"
           style={{
-            fontFamily: 'Comic Sans MS, cursive',
+            fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif",
             textShadow: '3px 3px 0px rgba(0,0,0,0.3), 6px 6px 0px rgba(0,0,0,0.1)',
           }}
         >
@@ -85,7 +85,7 @@ export const MyProgressHero: React.FC<MyProgressHeroProps> = memo(({ t, translat
         <p
           className="text-lg md:text-xl text-white/90 font-bold mb-6"
           style={{
-            fontFamily: 'Comic Sans MS, cursive',
+            fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif",
             textShadow: '1px 1px 0px rgba(0,0,0,0.2)',
           }}
         >

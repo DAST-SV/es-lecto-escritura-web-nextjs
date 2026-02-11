@@ -1,4 +1,4 @@
-// src/presentation/features/my-progress/components/ReadingActivityTimeline.tsx
+﻿// src/presentation/features/my-progress/components/ReadingActivityTimeline.tsx
 /**
  * ============================================
  * COMPONENTE: ReadingActivityTimeline
@@ -123,7 +123,7 @@ export const ReadingActivityTimeline: React.FC<ReadingActivityTimelineProps> = m
             </div>
             <h2
               className="text-xl md:text-2xl font-black text-white drop-shadow-lg"
-              style={{ fontFamily: 'Comic Sans MS, cursive', textShadow: '2px 2px 0px rgba(0,0,0,0.2)' }}
+              style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif", textShadow: '2px 2px 0px rgba(0,0,0,0.2)' }}
             >
               {sectionTitle}
             </h2>
@@ -138,7 +138,7 @@ export const ReadingActivityTimeline: React.FC<ReadingActivityTimelineProps> = m
                   <div className="h-px flex-1 bg-white/20" />
                   <span
                     className="text-xs font-black text-white/70 px-3 py-1 bg-white/10 rounded-full"
-                    style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                    style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
                   >
                     {getRelativeDay(dayKey, todayLabel, yesterdayLabel, daysAgoTemplate)}
                   </span>
@@ -173,11 +173,11 @@ export const ReadingActivityTimeline: React.FC<ReadingActivityTimelineProps> = m
                       <div className="flex-1 min-w-0">
                         <p
                           className="text-sm font-bold text-blue-800 truncate"
-                          style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                          style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
                         >
                           {session.bookTitle}
                         </p>
-                        <p className="text-xs text-slate-500" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                        <p className="text-xs text-slate-500" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
                           {readLabel}{' '}
                           <span className="font-bold text-blue-600">{session.pagesRead}</span>{' '}
                           {pagesLabel}

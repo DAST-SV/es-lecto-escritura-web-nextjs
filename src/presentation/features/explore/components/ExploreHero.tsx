@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ============================================
  * COMPONENTE: ExploreHero
  * Hero section con titulo y barra de busqueda
@@ -108,7 +108,7 @@ export const ExploreHero: React.FC<ExploreHeroProps> = memo(
             <BookOpen className="w-5 h-5 text-blue-600 animate-pulse" />
             <span
               className="text-sm font-black text-blue-700 tracking-wide"
-              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
             >
               {t('hero.badge')}
             </span>
@@ -119,7 +119,7 @@ export const ExploreHero: React.FC<ExploreHeroProps> = memo(
           <h1
             className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-4 drop-shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
             style={{
-              fontFamily: 'Comic Sans MS, cursive',
+              fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif",
               textShadow:
                 '3px 3px 0px rgba(0,0,0,0.3), 6px 6px 0px rgba(0,0,0,0.1)',
             }}
@@ -137,7 +137,7 @@ export const ExploreHero: React.FC<ExploreHeroProps> = memo(
           {/* Subtitulo */}
           <p
             className="text-lg md:text-xl text-white font-bold mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
           >
             {t('hero.subtitle')}
           </p>
@@ -151,7 +151,7 @@ export const ExploreHero: React.FC<ExploreHeroProps> = memo(
                 onChange={handleChange}
                 placeholder={t('search.placeholder')}
                 className="w-full h-14 md:h-16 pl-14 pr-14 text-base md:text-lg font-bold text-blue-800 bg-white rounded-full shadow-2xl border-4 border-yellow-300 focus:border-yellow-400 focus:outline-none focus:ring-4 focus:ring-yellow-200 transition-all placeholder:text-blue-300"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
               />
 
               {/* Icono de busqueda */}
@@ -179,7 +179,7 @@ export const ExploreHero: React.FC<ExploreHeroProps> = memo(
           {!isLoading && (
             <p
               className="mt-4 text-white/80 text-sm font-bold"
-              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
             >
               {totalResults > 0 ? (
                 <>

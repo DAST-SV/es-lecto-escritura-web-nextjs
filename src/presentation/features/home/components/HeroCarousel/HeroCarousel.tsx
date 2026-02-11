@@ -1,4 +1,4 @@
-/**
+﻿/**
  * HeroCarousel Component
  * @file src/presentation/features/home/components/HeroCarousel/HeroCarousel.tsx
  * @description Hero carousel with vibrant design, optimized performance, and professional skeleton loading
@@ -217,7 +217,7 @@ const SlideContent = memo<{
         <div className="w-[50%] space-y-4 slide-content">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-yellow-300">
             <BookOpen className="w-4 h-4 text-blue-600 animate-pulse" />
-            <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+            <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
               {badgeText}
             </span>
           </div>
@@ -226,7 +226,7 @@ const SlideContent = memo<{
             <h1
               className="text-4xl font-black text-white leading-none drop-shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
               style={{
-                fontFamily: 'Comic Sans MS, cursive',
+                fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif",
                 textShadow: '3px 3px 0px rgba(0,0,0,0.3), 6px 6px 0px rgba(0,0,0,0.1)'
               }}
             >
@@ -240,14 +240,14 @@ const SlideContent = memo<{
             </div>
           </div>
 
-          <p className="text-lg text-white font-bold leading-relaxed drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)] max-w-xl" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <p className="text-lg text-white font-bold leading-relaxed drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)] max-w-xl" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
             {slide.description}
           </p>
 
           <button
             onClick={() => onNavigate(route)}
             className="group relative px-8 py-3.5 bg-yellow-300 text-blue-700 font-black text-base rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-110 border-2 border-white overflow-hidden"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
             type="button"
             tabIndex={isActive ? 0 : -1}
           >
@@ -284,7 +284,7 @@ const SlideContent = memo<{
         <div className="w-[50%] space-y-3 slide-content">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-yellow-300">
             <BookOpen className="w-4 h-4 text-blue-600 animate-pulse" />
-            <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+            <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
               {badgeText}
             </span>
           </div>
@@ -293,7 +293,7 @@ const SlideContent = memo<{
             <h1
               className="text-3xl font-black text-white leading-tight drop-shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
               style={{
-                fontFamily: 'Comic Sans MS, cursive',
+                fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif",
                 textShadow: '3px 3px 0px rgba(0,0,0,0.3), 6px 6px 0px rgba(0,0,0,0.1)'
               }}
             >
@@ -307,14 +307,14 @@ const SlideContent = memo<{
             </div>
           </div>
 
-          <p className="text-base text-white font-bold leading-relaxed drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)] max-w-md" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <p className="text-base text-white font-bold leading-relaxed drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)] max-w-md" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
             {slide.description}
           </p>
 
           <button
             onClick={() => onNavigate(route)}
             className="group relative px-7 py-3 bg-yellow-300 text-blue-700 font-black text-base rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-110 border-2 border-white overflow-hidden"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
             type="button"
             tabIndex={isActive ? 0 : -1}
           >
@@ -354,7 +354,7 @@ const SlideContent = memo<{
         <div className="space-y-3 slide-content">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-yellow-300">
             <BookOpen className="w-4 h-4 text-blue-600 animate-pulse" />
-            <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+            <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
               {badgeText}
             </span>
           </div>
@@ -362,7 +362,7 @@ const SlideContent = memo<{
           <h1
             className="text-3xl font-black text-white leading-tight drop-shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
             style={{
-              fontFamily: 'Comic Sans MS, cursive',
+              fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif",
               textShadow: '3px 3px 0px rgba(0,0,0,0.3), 6px 6px 0px rgba(0,0,0,0.1)'
             }}
           >
@@ -395,14 +395,14 @@ const SlideContent = memo<{
           </div>
         </div>
 
-        <p className="text-base text-white font-bold leading-relaxed drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)] max-w-xl" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <p className="text-base text-white font-bold leading-relaxed drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)] max-w-xl" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
           {slide.description}
         </p>
 
         <button
           onClick={() => onNavigate(route)}
           className="group relative px-7 py-3 bg-yellow-300 text-blue-700 font-black text-base rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-105 border-2 border-white overflow-hidden"
-          style={{ fontFamily: 'Comic Sans MS, cursive' }}
+          style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
           type="button"
           tabIndex={isActive ? 0 : -1}
         >
@@ -419,7 +419,7 @@ const SlideContent = memo<{
         <div className="space-y-2 slide-content">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-full shadow-xl border-2 border-yellow-300">
             <BookOpen className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
-            <span className="text-xs font-black text-blue-700 tracking-wide" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+            <span className="text-xs font-black text-blue-700 tracking-wide" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
               {badgeText}
             </span>
           </div>
@@ -427,7 +427,7 @@ const SlideContent = memo<{
           <h1
             className="text-2xl font-black text-white leading-tight drop-shadow-[0_6px_24px_rgba(0,0,0,0.5)]"
             style={{
-              fontFamily: 'Comic Sans MS, cursive',
+              fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif",
               textShadow: '2px 2px 0px rgba(0,0,0,0.3), 4px 4px 0px rgba(0,0,0,0.1)'
             }}
           >
@@ -454,14 +454,14 @@ const SlideContent = memo<{
           </div>
         </div>
 
-        <p className="text-sm text-white font-bold leading-relaxed drop-shadow-[0_3px_10px_rgba(0,0,0,0.4)]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <p className="text-sm text-white font-bold leading-relaxed drop-shadow-[0_3px_10px_rgba(0,0,0,0.4)]" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
           {slide.description}
         </p>
 
         <button
           onClick={() => onNavigate(route)}
           className="group relative w-full px-6 py-3 bg-yellow-300 text-blue-700 font-black text-sm rounded-full shadow-xl hover:shadow-yellow-400/50 transition-all duration-300 border-2 border-white overflow-hidden"
-          style={{ fontFamily: 'Comic Sans MS, cursive' }}
+          style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
           type="button"
           tabIndex={isActive ? 0 : -1}
         >
@@ -478,7 +478,7 @@ const SlideContent = memo<{
         <div className="space-y-2 slide-content">
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-full shadow-lg border-2 border-yellow-300">
             <BookOpen className="w-3 h-3 text-blue-600 animate-pulse" />
-            <span className="text-[10px] font-black text-blue-700 tracking-wide" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+            <span className="text-[10px] font-black text-blue-700 tracking-wide" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
               {badgeTextShort}
             </span>
           </div>
@@ -486,7 +486,7 @@ const SlideContent = memo<{
           <h1
             className="text-xl font-black text-white leading-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.5)]"
             style={{
-              fontFamily: 'Comic Sans MS, cursive',
+              fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif",
               textShadow: '2px 2px 0px rgba(0,0,0,0.3)'
             }}
           >
@@ -513,14 +513,14 @@ const SlideContent = memo<{
           </div>
         </div>
 
-        <p className="text-xs text-white font-bold leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <p className="text-xs text-white font-bold leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
           {slide.description}
         </p>
 
         <button
           onClick={() => onNavigate(route)}
           className="w-full px-5 py-2.5 bg-yellow-300 text-blue-700 font-black text-sm rounded-xl shadow-lg border-2 border-white flex items-center gap-1.5 justify-center"
-          style={{ fontFamily: 'Comic Sans MS, cursive' }}
+          style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
           type="button"
           tabIndex={isActive ? 0 : -1}
         >

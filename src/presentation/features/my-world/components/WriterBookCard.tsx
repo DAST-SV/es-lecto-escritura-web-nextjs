@@ -1,4 +1,4 @@
-// src/presentation/features/my-world/components/WriterBookCard.tsx
+﻿// src/presentation/features/my-world/components/WriterBookCard.tsx
 /**
  * ============================================
  * COMPONENTE: WriterBookCard
@@ -101,7 +101,7 @@ export const WriterBookCard: React.FC<WriterBookCardProps> = memo(
               <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-200 via-purple-100 to-pink-200">
                 <div className="text-center p-3">
                   <BookOpen className="w-10 h-10 text-blue-300 mx-auto mb-1" />
-                  <p className="text-blue-400 font-bold text-xs line-clamp-2" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <p className="text-blue-400 font-bold text-xs line-clamp-2" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
                     {book.title}
                   </p>
                 </div>
@@ -117,7 +117,7 @@ export const WriterBookCard: React.FC<WriterBookCardProps> = memo(
                 <button
                   onClick={(e) => { e.stopPropagation(); onRead(book.id); }}
                   className="flex-1 py-2 bg-yellow-300 text-blue-700 font-black text-xs rounded-xl text-center shadow-lg border border-white/50 flex items-center justify-center gap-1 hover:bg-yellow-400 transition-colors"
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
                 >
                   <Eye className="w-3.5 h-3.5" />
                   {labels.read}
@@ -125,7 +125,7 @@ export const WriterBookCard: React.FC<WriterBookCardProps> = memo(
                 <button
                   onClick={(e) => { e.stopPropagation(); onEdit(book.id); }}
                   className="flex-1 py-2 bg-blue-500 text-white font-black text-xs rounded-xl text-center shadow-lg border border-white/50 flex items-center justify-center gap-1 hover:bg-blue-600 transition-colors"
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
                 >
                   <Edit className="w-3.5 h-3.5" />
                   {labels.edit}
@@ -170,7 +170,7 @@ export const WriterBookCard: React.FC<WriterBookCardProps> = memo(
           <div className="p-2.5 space-y-1">
             <h3
               className="text-sm font-bold text-blue-800 line-clamp-2 leading-tight"
-              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
             >
               {book.title}
             </h3>

@@ -1,4 +1,4 @@
-// src/presentation/features/my-progress/components/AbandonedBookCard.tsx
+﻿// src/presentation/features/my-progress/components/AbandonedBookCard.tsx
 /**
  * ============================================
  * COMPONENTE: AbandonedBookCard
@@ -78,7 +78,7 @@ export const AbandonedBookCard: React.FC<AbandonedBookCardProps> = memo(
               <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-amber-200 via-orange-100 to-yellow-200">
                 <div className="text-center p-3">
                   <BookOpen className="w-10 h-10 text-amber-300 mx-auto mb-1" />
-                  <p className="text-amber-400 font-bold text-xs line-clamp-2" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <p className="text-amber-400 font-bold text-xs line-clamp-2" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
                     {book.title}
                   </p>
                 </div>
@@ -90,7 +90,7 @@ export const AbandonedBookCard: React.FC<AbandonedBookCardProps> = memo(
             <div className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
               <div
                 className="w-full py-2 bg-amber-400 text-amber-900 font-black text-xs rounded-full text-center shadow-lg border-2 border-white flex items-center justify-center gap-1.5"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
               >
                 <Play className="w-3 h-3" />
                 {labels.resume}
@@ -110,13 +110,13 @@ export const AbandonedBookCard: React.FC<AbandonedBookCardProps> = memo(
           <div className="p-2.5 space-y-1.5">
             <h3
               className="text-sm font-bold text-blue-800 line-clamp-2 leading-tight"
-              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
             >
               {book.title}
             </h3>
 
             {book.authors.length > 0 && (
-              <p className="text-xs text-slate-500 truncate" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <p className="text-xs text-slate-500 truncate" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
                 {book.authors.map(a => a.name).join(', ')}
               </p>
             )}

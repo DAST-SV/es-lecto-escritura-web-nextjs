@@ -1,4 +1,4 @@
-// src/presentation/features/my-world/components/MyWorldTabs.tsx
+﻿// src/presentation/features/my-world/components/MyWorldTabs.tsx
 /**
  * ============================================
  * COMPONENTE: MyWorldTabs
@@ -42,7 +42,7 @@ export const MyWorldTabs: React.FC<MyWorldTabsProps> = memo(({ activeTab, onTabC
               ? 'bg-yellow-300 text-blue-700 scale-105 shadow-lg'
               : 'text-blue-400 hover:bg-yellow-50 hover:text-blue-600'
           }`}
-          style={{ fontFamily: 'Comic Sans MS, cursive' }}
+          style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
         >
           <BookOpen className="w-5 h-5" />
           {readerLabel}
@@ -54,7 +54,7 @@ export const MyWorldTabs: React.FC<MyWorldTabsProps> = memo(({ activeTab, onTabC
               ? 'bg-yellow-300 text-blue-700 scale-105 shadow-lg'
               : 'text-blue-400 hover:bg-yellow-50 hover:text-blue-600'
           }`}
-          style={{ fontFamily: 'Comic Sans MS, cursive' }}
+          style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
         >
           <PenTool className="w-5 h-5" />
           {writerLabel}

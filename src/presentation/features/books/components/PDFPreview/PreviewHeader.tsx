@@ -1,6 +1,7 @@
 /**
  * UBICACIÓN: src/presentation/features/books/components/PDFPreview/PreviewHeader.tsx
- * Header: Título izquierda + Controles de audio discretos + Botón Cerrar
+ * Header minimalista: [×] [Título  •  pág] [Audio]
+ * Badge de idioma y controles de zoom viven en la barra inferior.
  */
 
 import React from 'react';
@@ -42,52 +43,50 @@ export function PreviewHeader({
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
       style={{
-        background: 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)',
-        padding: '8px 12px'
+        background: 'linear-gradient(to bottom, rgba(0,0,0,0.72), transparent)',
+        paddingBottom: 18,
       }}
     >
-      <div className="flex items-center justify-between">
-        {/* Izquierda: Cerrar + Título + Audio */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onClose}
-            className="p-1.5 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-md transition-all pointer-events-auto"
-            title="Salir (ESC)"
-          >
-            <X size={14} />
-          </button>
-          <span className="text-white text-xs sm:text-sm font-medium pointer-events-auto select-text cursor-text">
-            {title || 'Sin título'}
-          </span>
-          <span className="text-white/50 text-xs pointer-events-auto select-text cursor-text">
-            • {totalPages} pág.
-          </span>
+      <div className="flex items-center gap-2 px-3 pt-2 pb-1">
+        {/* Cerrar */}
+        <button
+          onClick={onClose}
+          className="flex-shrink-0 p-1.5 bg-black/40 hover:bg-black/60 backdrop-blur-sm
+            text-white rounded-md transition-all pointer-events-auto"
+          title="Salir (ESC)"
+        >
+          <X size={14} />
+        </button>
 
-          {/* Separador + Controles de audio discretos */}
-          {audioProps && (
-            <>
-              <div className="w-px h-4 bg-white/20 mx-1" />
-              <AudioControls
-                isReading={audioProps.isReading}
-                isPaused={audioProps.isPaused}
-                isSupported={audioProps.isSupported}
-                isReady={audioProps.isReady}
-                currentReadingPage={audioProps.currentReadingPage}
-                totalPages={totalPages}
-                currentRate={audioProps.currentRate}
-                onStart={audioProps.onStart}
-                onPause={audioProps.onPause}
-                onResume={audioProps.onResume}
-                onStop={audioProps.onStop}
-                onRateChange={audioProps.onRateChange}
-                currentBookPage={audioProps.currentBookPage}
-              />
-            </>
-          )}
-        </div>
+        {/* Título truncado */}
+        <span
+          className="text-white text-xs sm:text-sm font-medium pointer-events-auto
+            select-text cursor-text truncate max-w-[140px] sm:max-w-sm"
+        >
+          {title || 'Sin título'}
+        </span>
 
-        {/* Derecha: Vacío */}
-        <div />
+        {/* Controles de audio */}
+        {audioProps && (
+          <>
+            <div className="w-px h-4 bg-white/20 mx-0.5 flex-shrink-0" />
+            <AudioControls
+              isReading={audioProps.isReading}
+              isPaused={audioProps.isPaused}
+              isSupported={audioProps.isSupported}
+              isReady={audioProps.isReady}
+              currentReadingPage={audioProps.currentReadingPage}
+              totalPages={totalPages}
+              currentRate={audioProps.currentRate}
+              onStart={audioProps.onStart}
+              onPause={audioProps.onPause}
+              onResume={audioProps.onResume}
+              onStop={audioProps.onStop}
+              onRateChange={audioProps.onRateChange}
+              currentBookPage={audioProps.currentBookPage}
+            />
+          </>
+        )}
       </div>
     </div>
   );

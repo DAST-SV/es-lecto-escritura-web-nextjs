@@ -1,4 +1,4 @@
-// src/presentation/features/my-world/components/MyWorldHero.tsx
+﻿// src/presentation/features/my-world/components/MyWorldHero.tsx
 /**
  * ============================================
  * COMPONENTE: MyWorldHero
@@ -70,10 +70,10 @@ interface StatPillProps {
 const StatPill: React.FC<StatPillProps> = memo(({ icon, value, label, colorBg, colorText, colorBorder }) => (
   <div className={`flex items-center gap-2 px-4 py-2 ${colorBg} backdrop-blur-sm rounded-full shadow-lg border-2 ${colorBorder}`}>
     <div className={`${colorText}`}>{icon}</div>
-    <span className={`text-sm font-black ${colorText}`} style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+    <span className={`text-sm font-black ${colorText}`} style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
       {value}
     </span>
-    <span className={`text-xs font-bold ${colorText} opacity-80`} style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+    <span className={`text-xs font-bold ${colorText} opacity-80`} style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
       {label}
     </span>
   </div>
@@ -109,7 +109,7 @@ export const MyWorldHero: React.FC<MyWorldHeroProps> = memo(({ stats, t, transla
             <Globe className="w-5 h-5 text-blue-600" />
             <span
               className="text-sm font-black text-blue-700 tracking-wide"
-              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
             >
               {badgeText}
             </span>
@@ -120,7 +120,7 @@ export const MyWorldHero: React.FC<MyWorldHeroProps> = memo(({ stats, t, transla
         <h1
           className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-3"
           style={{
-            fontFamily: 'Comic Sans MS, cursive',
+            fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif",
             textShadow: '3px 3px 0px rgba(0,0,0,0.3), 6px 6px 0px rgba(0,0,0,0.1)',
           }}
         >
@@ -131,7 +131,7 @@ export const MyWorldHero: React.FC<MyWorldHeroProps> = memo(({ stats, t, transla
         <p
           className="text-lg md:text-xl text-white/90 font-bold mb-8"
           style={{
-            fontFamily: 'Comic Sans MS, cursive',
+            fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif",
             textShadow: '1px 1px 0px rgba(0,0,0,0.2)',
           }}
         >

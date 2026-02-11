@@ -1,4 +1,4 @@
-// src/presentation/features/library/components/CategoryPills.tsx
+﻿// src/presentation/features/library/components/CategoryPills.tsx
 /**
  * ============================================
  * COMPONENTE: CategoryPills
@@ -78,7 +78,7 @@ const CategoryPill: React.FC<{
           ? 'bg-yellow-300 border-yellow-400 text-blue-800 shadow-lg scale-105'
           : 'bg-white/80 border-yellow-200 text-blue-700 hover:bg-yellow-50 hover:border-yellow-300 hover:scale-105'
       }`}
-      style={{ fontFamily: 'Comic Sans MS, cursive' }}
+      style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
     >
       {icon}
       <span>{name}</span>

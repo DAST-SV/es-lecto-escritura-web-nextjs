@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ============================================
  * COMPONENTE: FeaturedBooks
  * Sección de libros destacados
@@ -80,7 +80,7 @@ const FeaturedCard: React.FC<{
           <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
             <h3
               className="text-xl font-black leading-tight mb-1 line-clamp-2 drop-shadow-lg"
-              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
             >
               {book.title}
             </h3>
@@ -217,7 +217,7 @@ export const FeaturedBooks: React.FC<FeaturedBooksProps> = memo(
               <h2
                 className="text-2xl md:text-3xl font-black text-white drop-shadow-lg"
                 style={{
-                  fontFamily: 'Comic Sans MS, cursive',
+                  fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif",
                   textShadow: '2px 2px 0px rgba(0,0,0,0.2)',
                 }}
               >

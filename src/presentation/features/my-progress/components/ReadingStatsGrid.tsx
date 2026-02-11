@@ -1,4 +1,4 @@
-// src/presentation/features/my-progress/components/ReadingStatsGrid.tsx
+﻿// src/presentation/features/my-progress/components/ReadingStatsGrid.tsx
 /**
  * ============================================
  * COMPONENTE: ReadingStatsGrid
@@ -73,13 +73,13 @@ const StatCard: React.FC<StatCardProps> = memo(
       <div className={`${colorIcon} mb-1.5`}>{icon}</div>
       <p
         className={`text-xl md:text-2xl font-black ${colorText} leading-none`}
-        style={{ fontFamily: 'Comic Sans MS, cursive' }}
+        style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
       >
         {value}
       </p>
       <p
         className={`text-xs font-bold ${colorText} opacity-70 mt-0.5 leading-tight`}
-        style={{ fontFamily: 'Comic Sans MS, cursive' }}
+        style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
       >
         {label}
       </p>

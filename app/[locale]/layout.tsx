@@ -7,7 +7,7 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { notFound } from 'next/navigation';
 import { getMessages, setRequestLocale } from 'next-intl/server';
-import { Metadata } from 'next';
+import { Metadata, Viewport } from 'next';
 import { ReactNode, Suspense } from 'react';
 import "../globals.css";
 import Loading from './loading';
@@ -18,6 +18,19 @@ interface LayoutProps {
   children: ReactNode;
   params: Promise<{ locale: string }>;
 }
+
+// ============================================
+// VIEWPORT — crítico para mobile rendering correcto
+// Sin esto el browser móvil trata la página como desktop y escala mal
+// ============================================
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover', // para notch de iPhone
+  themeColor: '#60b8f5', // color de la barra de estado móvil (azul de la app)
+};
 
 // ============================================
 // GENERAR PARÁMETROS ESTÁTICOS
@@ -87,10 +100,19 @@ export default async function RootLayout({
   return (
     <html lang={validLocale} className="bg-gray-100">
       <head>
+        {/* Google Fonts */}
         <link
           href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Itim&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Nunito:wght@400;700&family=Oswald:wght@400;700&family=Ubuntu:wght@400;700&family=Merriweather:wght@400;700&family=Playfair+Display:wght@400;700&family=Source+Sans+Pro:wght@400;700&family=PT+Sans:wght@400;700&family=Indie+Flower&family=Cabin:wght@400;700&family=Fira+Sans:wght@400;700&family=Comfortaa:wght@400;700&family=Varela+Round&family=Work+Sans:wght@400;700&display=swap"
           rel="stylesheet"
         />
+        {/* PWA: Web App Manifest para pantalla completa en móvil */}
+        <link rel="manifest" href="/manifest.json" />
+        {/* iOS Safari: pantalla completa al agregar a pantalla de inicio */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Eslecto" />
+        {/* Android: pantalla completa */}
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body>
         {/* ✅ CORREGIDO: Pasar locale y messages */}

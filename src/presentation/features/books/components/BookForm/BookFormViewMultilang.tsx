@@ -1,15 +1,17 @@
-/**
+﻿/**
  * UBICACION: src/presentation/features/books/components/BookForm/BookFormViewMultilang.tsx
  * Formulario de libro — Contenido (edición) + Ficha Literaria (preview espectacular)
+ * Responsive: mobile-first, stack vertical → horizontal en md+
  */
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Loader2, Save, Upload, AlertCircle, Camera, X, Eye,
   ArrowLeft, Star, Check, Users, Tag,
-  PenTool, Sparkles, FileText, BookMarked, BookOpen
+  PenTool, Sparkles, FileText, BookMarked, BookOpen,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { UnifiedLayout } from '@/src/presentation/features/navigation';
 import { HomeBackground } from '@/src/presentation/features/home';
@@ -22,7 +24,9 @@ import { useBookFormMultilang } from '@/src/presentation/features/books/hooks/us
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 import { Toaster } from 'react-hot-toast';
 
-const F = { fontFamily: 'Comic Sans MS, cursive' };
+// Fuente divertida/redondeada — Nunito está cargada via Google Fonts, disponible en todos los dispositivos
+// ('Nunito'/'Varela Round'/'Comfortaa' no existe en iOS/Android → caía a serif genérico feo)
+const F = { fontFamily: "'Nunito', 'Varela Round', 'Comfortaa', sans-serif" };
 type FormTab = 'ficha' | 'contenido';
 type ClasifTab = 'category' | 'level' | 'genres' | 'tags' | 'values';
 
@@ -54,7 +58,7 @@ export function BookFormViewMultilang({ bookId }: Props) {
   const [coverZoom, setCoverZoom] = useState(false);
   const [readMoreModal, setReadMoreModal] = useState<{ type: 'description' | 'summary'; text: string } | null>(null);
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
-  const TRUNCATE_CHARS = 160;
+  const langTabsRef = useRef<HTMLDivElement>(null);
 
   const {
     locale, isLoadingBook, isLoading, error, isEditMode,
@@ -83,9 +87,15 @@ export function BookFormViewMultilang({ bookId }: Props) {
   const togCategory = (id: string) => setSelectedCategoryId(selectedCategoryId === id ? null : id);
   const togLevel    = (id: string) => setSelectedLevelId(selectedLevelId === id ? null : id);
 
+  // Título para el lector: idioma activo → fallback al primer idioma con título
+  const readerTitle = currentTranslation.title.trim()
+    || Object.values(translations).find(t => t?.title?.trim())?.title
+    || '';
+
   // Leer PDF al subir — siempre disponible si hay páginas extraídas
+  // key={activeTab} fuerza remount completo al cambiar idioma → limpia estado interno de TTS y FlipBook
   if (showPreview && extractedPages.length > 0 && pdfDimensions)
-    return <PDFPreviewMode pages={extractedPages} title={currentTranslation.title}
+    return <PDFPreviewMode key={activeTab} pages={extractedPages} title={readerTitle}
       pdfDimensions={pdfDimensions} onClose={() => setShowPreview(false)} language={activeTab as any} />;
 
   if (isLoadingBook || tLoading)
@@ -109,7 +119,7 @@ export function BookFormViewMultilang({ bookId }: Props) {
       {/* ═══════════════════════════════════════════
           HEADER: [← Volver] [Tabs centrados] [Guardar]
       ═══════════════════════════════════════════ */}
-      <div className="px-3 pt-3 pb-2 flex items-center gap-2">
+      <div className="px-2 pt-2 pb-2 flex items-center gap-1.5 md:px-3 md:pt-3 md:gap-2">
         {/* Volver */}
         <button onClick={() => router.push(`/${locale}/my-world`)}
           className="flex-shrink-0 p-1.5 bg-white/80 hover:bg-white rounded-lg shadow-sm border border-yellow-200/60 transition-all">
@@ -120,23 +130,24 @@ export function BookFormViewMultilang({ bookId }: Props) {
         <div className="flex-1 flex bg-white/25 rounded-xl p-0.5 gap-0.5">
           {/* Tab Contenido */}
           <button onClick={() => setFormTab('contenido')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-[11px] font-bold transition-all md:text-xs md:gap-1.5 ${
               formTab === 'contenido' ? 'bg-white text-gray-700 shadow-sm' : 'text-white/80 hover:text-white hover:bg-white/15'
             }`} style={F}>
-            <FileText size={12} strokeWidth={1.5} />Contenido
+            <FileText size={11} strokeWidth={1.5} />
+            <span>Contenido</span>
             {translationProgress.completed > 0 && (
-              <span className={`text-[9px] px-1 rounded-full font-bold ${formTab === 'contenido' ? 'bg-yellow-100 text-yellow-700' : 'bg-white/25 text-white'}`}>
+              <span className={`hidden sm:inline text-[9px] px-1 rounded-full font-bold ${formTab === 'contenido' ? 'bg-yellow-100 text-yellow-700' : 'bg-white/25 text-white'}`}>
                 {translationProgress.completed}/{translationProgress.total}
               </span>
             )}
           </button>
           {/* Tab Ficha Literaria */}
           <button onClick={() => setFormTab('ficha')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-[11px] font-bold transition-all md:text-xs md:gap-1.5 ${
               formTab === 'ficha' ? 'bg-white text-gray-700 shadow-sm' : 'text-white/80 hover:text-white hover:bg-white/15'
             }`} style={F}>
-            <BookMarked size={12} strokeWidth={1.5} />
-            Ficha Literaria
+            <BookMarked size={11} strokeWidth={1.5} />
+            <span>Ficha</span>
             <span className={`text-[9px] px-1 rounded-full font-black uppercase tracking-wide ${formTab === 'ficha' ? 'bg-yellow-100 text-yellow-700' : 'bg-white/25 text-white'}`}>
               {activeTab}
             </span>
@@ -144,58 +155,83 @@ export function BookFormViewMultilang({ bookId }: Props) {
         </div>
 
         {/* Guardar */}
-        <div className="flex-shrink-0 flex items-center gap-1.5">
+        <div className="flex-shrink-0">
           <button onClick={() => !isLoading && isFormValid && setShowSaveConfirm(true)} disabled={!isFormValid || isLoading}
-            className="px-3 py-1.5 bg-white text-gray-700 font-bold rounded-lg shadow-sm border border-yellow-300 hover:shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 text-xs"
+            className="px-2.5 py-1.5 bg-white text-gray-700 font-bold rounded-lg shadow-sm border border-yellow-300 hover:shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 text-[11px] md:px-3 md:gap-1.5 md:text-xs"
             style={F}>
-            {isLoading ? <><Loader2 size={12} strokeWidth={1.5} className="animate-spin" />{t('btn_saving', 'Guardando...')}</> : <><Save size={12} strokeWidth={1.5} />{isEditMode ? t('btn_save_changes', 'Guardar cambios') : t('btn_save', 'Guardar')}</>}
+            {isLoading
+              ? <><Loader2 size={12} strokeWidth={1.5} className="animate-spin" /><span className="hidden sm:inline">{t('btn_saving', 'Guardando...')}</span></>
+              : <><Save size={12} strokeWidth={1.5} /><span>{isEditMode ? t('btn_save_changes', 'Guardar') : t('btn_save', 'Guardar')}</span></>
+            }
           </button>
         </div>
       </div>
 
       {error && (
-        <div className="mx-3 mb-2 px-2.5 py-1.5 bg-red-50 border border-red-200 rounded-lg flex items-center gap-1.5">
+        <div className="mx-2 mb-2 px-2.5 py-1.5 bg-red-50 border border-red-200 rounded-lg flex items-center gap-1.5 md:mx-3">
           <AlertCircle size={12} strokeWidth={1.5} className="text-red-400 flex-shrink-0" />
           <p className="text-[10px] text-red-600" style={F}>{error}</p>
         </div>
       )}
 
       {/* ═══════════════════════════════════════════
-          TAB CONTENIDO
-          Row 1: [título+subtítulo izq | descripción+resumen der] + [portada+PDF derecha]
-          Row 2: [Autores] [Clasificación sub-tabs]
+          TAB CONTENIDO — mobile: stack vertical / md: layout horizontal
       ═══════════════════════════════════════════ */}
       {formTab === 'contenido' && (
-        <div className="px-3 pb-6 space-y-2">
+        <div className="px-2 pb-6 space-y-2 md:px-3">
 
-          {/* ── ROW 1 ── */}
-          <div className="flex gap-2 items-start">
+          {/* ── ROW 1: en móvil stack, en desktop flex ── */}
+          <div className="flex flex-col gap-2 md:flex-row md:items-start">
 
-            {/* Panel principal: idioma tabs + campos + portada/PDF (todo por idioma) */}
+            {/* Panel principal: idioma tabs + campos */}
             <div className="flex-1 min-w-0 bg-white rounded-2xl shadow-sm border border-yellow-200/50 overflow-hidden">
-              {/* Language tabs */}
-              <div className="flex border-b border-gray-100 bg-gray-50/50">
-                {activeLanguages.map(lang => {
-                  const tr = translations[lang.code];
-                  const ok = tr?.title && tr?.description;
-                  return (
-                    <button key={lang.code} onClick={() => setActiveTab(lang.code)}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-bold transition-all ${
-                        activeTab === lang.code
-                          ? 'text-gray-800 border-b-2 border-yellow-400 bg-white'
-                          : 'text-gray-400 hover:text-gray-600 hover:bg-white/60'
-                      }`} style={F}>
-                      {lang.flagEmoji && <span>{lang.flagEmoji}</span>}
-                      <span>{lang.name || lang.code.toUpperCase()}</span>
-                      {tr?.isPrimary && <Star size={9} strokeWidth={1.5} className="text-amber-400 fill-amber-400" />}
-                      {ok && <Check size={9} strokeWidth={1.5} className="text-emerald-400" />}
-                    </button>
-                  );
-                })}
+              {/* Language tabs — scroll horizontal con flechas cuando hay 3+ idiomas */}
+              <div className="relative flex items-stretch border-b border-gray-100 bg-gray-50/50">
+                {/* Flecha izquierda — solo si hay overflow */}
+                {activeLanguages.length > 2 && (
+                  <button
+                    onClick={() => langTabsRef.current?.scrollBy({ left: -100, behavior: 'smooth' })}
+                    className="flex-shrink-0 px-1.5 bg-gray-50/80 hover:bg-white border-r border-gray-100 text-gray-400 hover:text-gray-700 transition-all"
+                    aria-label="Idiomas anteriores">
+                    <ChevronLeft size={13} strokeWidth={2} />
+                  </button>
+                )}
+                {/* Tabs con scroll */}
+                <div
+                  ref={langTabsRef}
+                  className="flex flex-1 overflow-x-auto"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                  {activeLanguages.map(lang => {
+                    const tr = translations[lang.code];
+                    const ok = tr?.title && tr?.description;
+                    return (
+                      <button key={lang.code} onClick={() => setActiveTab(lang.code)}
+                        className={`flex-shrink-0 flex-1 min-w-[80px] flex items-center justify-center gap-1 py-2 text-xs font-bold transition-all whitespace-nowrap ${
+                          activeTab === lang.code
+                            ? 'text-gray-800 border-b-2 border-yellow-400 bg-white'
+                            : 'text-gray-400 hover:text-gray-600 hover:bg-white/60'
+                        }`} style={F}>
+                        {lang.flagEmoji && <span className="text-sm leading-none">{lang.flagEmoji}</span>}
+                        <span>{lang.nativeName || lang.name || lang.code.toUpperCase()}</span>
+                        {tr?.isPrimary && <Star size={9} strokeWidth={1.5} className="text-amber-400 fill-amber-400" />}
+                        {ok && <Check size={9} strokeWidth={1.5} className="text-emerald-400" />}
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* Flecha derecha */}
+                {activeLanguages.length > 2 && (
+                  <button
+                    onClick={() => langTabsRef.current?.scrollBy({ left: 100, behavior: 'smooth' })}
+                    className="flex-shrink-0 px-1.5 bg-gray-50/80 hover:bg-white border-l border-gray-100 text-gray-400 hover:text-gray-700 transition-all"
+                    aria-label="Más idiomas">
+                    <ChevronRight size={13} strokeWidth={2} />
+                  </button>
+                )}
               </div>
 
               {currentTranslation && (
-                <div className="p-3">
+                <div className="p-2.5 md:p-3">
                   {/* Primary toggle */}
                   <div className="flex items-center justify-between px-2 py-1 bg-amber-50/60 rounded-lg border border-amber-100 mb-3">
                     <span className="text-[10px] text-amber-700" style={F}>
@@ -209,9 +245,9 @@ export function BookFormViewMultilang({ bookId }: Props) {
                     )}
                   </div>
 
-                  {/* ── FILA 1: Título+Subtítulo izq | Personajes der ── */}
-                  <div className="grid grid-cols-2 gap-3 mb-3">
-                    {/* Izquierda: Título + Subtítulo — con margen interno */}
+                  {/* ── FILA 1: en móvil stack, en sm+ grid 2 cols ── */}
+                  <div className="flex flex-col gap-2.5 mb-3 sm:grid sm:grid-cols-2 sm:gap-3">
+                    {/* Título + Subtítulo */}
                     <div className="bg-gray-50/60 rounded-xl border border-gray-100 p-2.5 space-y-2.5">
                       <Field label={t('field_title') || 'Título'} required>
                         <input type="text" value={currentTranslation.title}
@@ -227,7 +263,7 @@ export function BookFormViewMultilang({ bookId }: Props) {
                       </Field>
                     </div>
 
-                    {/* Derecha: Personajes */}
+                    {/* Personajes */}
                     <div>
                       <CharacterInput characters={characters} onChange={setCharacters}
                         label={t('field_characters', 'Personajes')}
@@ -241,8 +277,8 @@ export function BookFormViewMultilang({ bookId }: Props) {
                     </div>
                   </div>
 
-                  {/* ── FILA 2: Descripción izq | Resumen der — ambos con resize vertical ── */}
-                  <div className="bg-gray-50/60 rounded-xl border border-gray-100 p-2.5 grid grid-cols-2 gap-3">
+                  {/* ── FILA 2: Descripción + Resumen — en móvil stack, en sm+ grid 2 cols ── */}
+                  <div className="bg-gray-50/60 rounded-xl border border-gray-100 p-2.5 flex flex-col gap-2.5 sm:grid sm:grid-cols-2 sm:gap-3">
                     <Field label={t('field_description') || 'Descripción'} required>
                       <textarea value={currentTranslation.description}
                         onChange={e => updateTranslation(activeTab, 'description', e.target.value)}
@@ -261,11 +297,13 @@ export function BookFormViewMultilang({ bookId }: Props) {
               )}
             </div>
 
-            {/* Columna derecha sticky: Portada + PDF — con badge de idioma activo */}
-            <div className="w-40 flex-shrink-0 sticky top-[68px] self-start space-y-2">
+            {/* Columna derecha: Portada + PDF
+                móvil: fila horizontal lado a lado
+                md: columna vertical sticky */}
+            <div className="flex gap-2 md:flex-col md:w-40 md:flex-shrink-0 md:sticky md:top-[68px] md:self-start md:space-y-2 md:gap-0">
 
               {/* Portada */}
-              <div className="bg-white rounded-2xl shadow-sm border border-yellow-200/50 overflow-hidden">
+              <div className="flex-1 md:flex-none bg-white rounded-2xl shadow-sm border border-yellow-200/50 overflow-hidden">
                 <div className="px-2.5 py-1.5 border-b border-gray-100 flex items-center gap-1">
                   <Camera size={11} strokeWidth={1.5} className="text-gray-800" />
                   <span className="text-[11px] font-bold text-gray-600" style={F}>{t('cover_label', 'Portada')}</span>
@@ -275,15 +313,15 @@ export function BookFormViewMultilang({ bookId }: Props) {
                   {portadaPreview ? (
                     <div className="relative group">
                       <img src={portadaPreview} alt="portada"
-                        className="w-[120px] h-[168px] object-cover rounded-lg shadow-sm border border-gray-200" />
+                        className="w-full max-w-[120px] aspect-[2/3] object-cover rounded-lg shadow-sm border border-gray-200 md:w-[120px]" />
                       <button onClick={() => setPortadaPreview(null)}
                         className="absolute -top-1.5 -right-1.5 p-1 bg-gray-700 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all shadow">
                         <X size={9} strokeWidth={1.5} />
                       </button>
                     </div>
                   ) : (
-                    <label className="cursor-pointer">
-                      <div className="w-[120px] h-[168px] bg-gray-50 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-200 hover:border-yellow-400 hover:bg-yellow-50/20 transition-all group gap-1.5">
+                    <label className="cursor-pointer w-full">
+                      <div className="w-full aspect-[2/3] bg-gray-50 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-200 hover:border-yellow-400 hover:bg-yellow-50/20 transition-all group gap-1.5 max-w-[120px] mx-auto md:max-w-none">
                         <Camera size={20} strokeWidth={1.5} className="text-gray-300 group-hover:text-yellow-500" />
                         <span className="text-[9px] text-gray-400 group-hover:text-yellow-600 text-center px-2 font-bold" style={F}>Subir portada</span>
                       </div>
@@ -303,7 +341,7 @@ export function BookFormViewMultilang({ bookId }: Props) {
               </div>
 
               {/* PDF */}
-              <div className="bg-white rounded-2xl shadow-sm border border-yellow-200/50 overflow-hidden">
+              <div className="flex-1 md:flex-none bg-white rounded-2xl shadow-sm border border-yellow-200/50 overflow-hidden">
                 <div className="px-2.5 py-1.5 border-b border-gray-100 flex items-center gap-1">
                   <FileText size={11} strokeWidth={1.5} className="text-gray-800" />
                   <span className="text-[11px] font-bold text-gray-600" style={F}>PDF<span className="text-red-400 ml-0.5">*</span></span>
@@ -384,11 +422,11 @@ export function BookFormViewMultilang({ bookId }: Props) {
             </div>
           </div>
 
-          {/* ── ROW 2: Autores + Clasificación ── */}
-          <div className="flex gap-2 items-start">
+          {/* ── ROW 2: Autores + Clasificación — en móvil stack, en md flex ── */}
+          <div className="flex flex-col gap-2 md:flex-row md:items-start">
 
-            {/* Autores */}
-            <div className="w-72 flex-shrink-0 bg-white rounded-2xl shadow-sm border border-yellow-200/50 overflow-visible">
+            {/* Autores — ancho completo en móvil, fijo en md */}
+            <div className="w-full bg-white rounded-2xl shadow-sm border border-yellow-200/50 overflow-visible md:w-72 md:flex-shrink-0">
               <div className="px-3 py-2 border-b border-gray-100 flex items-center gap-1.5">
                 <Users size={12} strokeWidth={1.5} className="text-gray-800" />
                 <span className="text-xs font-bold text-gray-700" style={F}>{t('section_authors') || 'Autores'}</span>
@@ -399,23 +437,23 @@ export function BookFormViewMultilang({ bookId }: Props) {
               </div>
             </div>
 
-            {/* Clasificación con sub-tabs */}
+            {/* Clasificación con sub-tabs — ancho completo */}
             <div className="flex-1 min-w-0 bg-white rounded-2xl shadow-sm border border-yellow-200/50 overflow-hidden">
               <div className="px-3 py-2 border-b border-gray-100 flex items-center gap-1.5">
                 <Tag size={12} strokeWidth={1.5} className="text-gray-800" />
                 <span className="text-xs font-bold text-gray-700" style={F}>{t('section_classification') || 'Clasificación'}</span>
               </div>
-              {/* Sub-tab bar */}
+              {/* Sub-tab bar — scroll horizontal en móvil */}
               <div className="flex border-b border-gray-100 overflow-x-auto bg-gray-50/40" style={{ scrollbarWidth: 'none' }}>
                 {([
-                  { key: 'category' as ClasifTab, label: t('field_category') || 'Categoría',  max: 1,  badgeCls: 'bg-indigo-500 text-white' },
-                  { key: 'level'    as ClasifTab, label: t('field_level')    || 'Nivel',       max: 1,  badgeCls: 'bg-amber-500 text-white'  },
-                  { key: 'genres'   as ClasifTab, label: t('field_genres')   || 'Géneros',     max: 5,  badgeCls: 'bg-rose-500 text-white'   },
-                  { key: 'tags'     as ClasifTab, label: t('field_tags')     || 'Etiquetas',   max: 10, badgeCls: 'bg-sky-500 text-white'    },
-                  { key: 'values'   as ClasifTab, label: t('field_values')   || 'Valores',     max: 5,  badgeCls: 'bg-emerald-500 text-white'},
+                  { key: 'category' as ClasifTab, label: t('field_category') || 'Cat.',      max: 1,  badgeCls: 'bg-indigo-500 text-white' },
+                  { key: 'level'    as ClasifTab, label: t('field_level')    || 'Nivel',      max: 1,  badgeCls: 'bg-amber-500 text-white'  },
+                  { key: 'genres'   as ClasifTab, label: t('field_genres')   || 'Géneros',    max: 5,  badgeCls: 'bg-rose-500 text-white'   },
+                  { key: 'tags'     as ClasifTab, label: t('field_tags')     || 'Etiquetas',  max: 10, badgeCls: 'bg-sky-500 text-white'    },
+                  { key: 'values'   as ClasifTab, label: t('field_values')   || 'Valores',    max: 5,  badgeCls: 'bg-emerald-500 text-white'},
                 ]).map(ct => (
                   <button key={ct.key} onClick={() => setClasifTab(ct.key)}
-                    className={`flex-shrink-0 flex items-center gap-1 px-3 py-2 text-[11px] font-bold transition-all whitespace-nowrap ${
+                    className={`flex-shrink-0 flex items-center gap-1 px-2.5 py-2 text-[10px] font-bold transition-all whitespace-nowrap md:px-3 md:text-[11px] ${
                       clasifTab === ct.key
                         ? 'text-gray-800 border-b-2 border-yellow-400 bg-white'
                         : 'text-gray-400 hover:text-gray-700 hover:bg-white/60'
@@ -443,13 +481,13 @@ export function BookFormViewMultilang({ bookId }: Props) {
 
       {/* ═══════════════════════════════════════════
           TAB FICHA LITERARIA
-          Preview espectacular centrada — idioma = activeTab de Contenido
+          Preview — full width en móvil, max-w-2xl en desktop
       ═══════════════════════════════════════════ */}
       {formTab === 'ficha' && (
-        <div className="px-3 pb-4 flex justify-center" style={{ minHeight: 'calc(100vh - 120px)' }}>
+        <div className="px-2 pb-4 flex justify-center md:px-3" style={{ minHeight: 'calc(100vh - 120px)' }}>
           {shouldShowPreview ? (
             <div className="w-full max-w-2xl flex flex-col" style={{ minHeight: 'calc(100vh - 132px)' }}>
-              {/* ══ FICHA LITERARIA COMPACTA ══ */}
+              {/* ══ FICHA LITERARIA ══ */}
               <div className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col flex-1" style={{ border: '2px solid #fde047' }}>
 
                 {/* Banda superior + badge idioma */}
@@ -461,11 +499,13 @@ export function BookFormViewMultilang({ bookId }: Props) {
                   </div>
                 </div>
 
-                {/* ══ ROW 1: portada (col-2) | clasificaciones (col-10) ══ */}
-                <div className="flex gap-0 px-3 pt-3 pb-2">
+                {/* ══ ROW 1: portada | clasificaciones ══
+                    móvil: portada w-1/4, clasif resto
+                    md: portada w-[18%] */}
+                <div className="flex gap-0 px-3 pt-4 pb-2">
 
-                  {/* col-2: Portada — más pequeña */}
-                  <div className="w-[18%] flex-shrink-0 pr-3">
+                  {/* Portada */}
+                  <div className="w-1/4 flex-shrink-0 pr-3 md:w-[18%]">
                     {portadaPreview ? (
                       <button onClick={() => setCoverZoom(true)} className="block w-full group focus:outline-none relative">
                         <div className="absolute -inset-0.5 rounded-lg bg-gradient-to-br from-yellow-400 via-orange-300 to-pink-400 opacity-60 blur-[3px]" />
@@ -478,13 +518,13 @@ export function BookFormViewMultilang({ bookId }: Props) {
                       </button>
                     ) : (
                       <div className="w-full aspect-[2/3] rounded-lg border-2 border-dashed border-yellow-200 bg-gradient-to-b from-yellow-50 via-orange-50 to-pink-50 flex flex-col items-center justify-center gap-1">
-                        <BookOpen size={20} strokeWidth={1} className="text-yellow-300" />
-                        <span className="text-[8px] text-yellow-400 font-bold px-2 text-center" style={F}>Sin portada</span>
+                        <BookOpen size={16} strokeWidth={1} className="text-yellow-300" />
+                        <span className="text-[7px] text-yellow-400 font-bold px-1 text-center" style={F}>Sin portada</span>
                       </div>
                     )}
                   </div>
 
-                  {/* col-9: Título, autores y clasificaciones */}
+                  {/* Título, autores y clasificaciones */}
                   <div className="flex-1 min-w-0 flex flex-col gap-1.5">
 
                     {/* Título + subtítulo */}
@@ -567,12 +607,12 @@ export function BookFormViewMultilang({ bookId }: Props) {
                   </div>
                 </div>
 
-                {/* ══ ROW 2: Descripción (col-12) — burbuja gris ══ */}
+                {/* ══ ROW 2: Descripción — burbuja gris ══ */}
                 {currentTranslation.description && (
                   <div className="px-3 pb-2 border-t border-gray-100 pt-2">
                     <div className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5">
                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1" style={F}>Descripción</p>
-                      <p className="text-[10px] text-gray-700 leading-relaxed" style={F}>
+                      <p className="text-[11px] text-gray-700 leading-relaxed md:text-[10px]" style={F}>
                         {currentTranslation.description.length > 500
                           ? <>{currentTranslation.description.slice(0, 500)}…<button onClick={() => setReadMoreModal({ type: 'description', text: currentTranslation.description })} className="text-yellow-600 font-bold hover:underline ml-0.5" style={F}>leer más</button></>
                           : currentTranslation.description}
@@ -581,12 +621,12 @@ export function BookFormViewMultilang({ bookId }: Props) {
                   </div>
                 )}
 
-                {/* ══ ROW 3: Resumen (col-12) — burbuja amarilla ══ */}
+                {/* ══ ROW 3: Resumen — burbuja amarilla ══ */}
                 {currentTranslation.summary && (
                   <div className="px-3 pb-3 border-t border-yellow-100 pt-2">
                     <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl px-3 py-2.5">
                       <p className="text-[9px] text-yellow-700 font-black uppercase tracking-widest mb-1" style={F}>✨ Resumen</p>
-                      <p className="text-[10px] text-gray-700 italic leading-relaxed" style={F}>
+                      <p className="text-[11px] text-gray-700 italic leading-relaxed md:text-[10px]" style={F}>
                         {currentTranslation.summary.length > 500
                           ? <>{currentTranslation.summary.slice(0, 500)}…<button onClick={() => setReadMoreModal({ type: 'summary', text: currentTranslation.summary })} className="text-yellow-600 font-bold hover:underline ml-0.5 not-italic" style={F}>leer más</button></>
                           : currentTranslation.summary}
@@ -595,7 +635,7 @@ export function BookFormViewMultilang({ bookId }: Props) {
                   </div>
                 )}
 
-                {/* Banda inferior — siempre al fondo de la tarjeta */}
+                {/* Banda inferior */}
                 <div className="mt-auto h-1.5 bg-gradient-to-r from-pink-400 via-orange-400 to-yellow-400" />
               </div>
 
@@ -649,9 +689,7 @@ export function BookFormViewMultilang({ bookId }: Props) {
           )}
         </div>
       )}
-      {/* ═══════════════════════════════════════════
-          MODAL CONFIRMACIÓN GUARDAR
-      ═══════════════════════════════════════════ */}
+
       {/* ═══════════════════════════════════════════
           OVERLAY DE GUARDADO — bloquea UI durante el proceso
       ═══════════════════════════════════════════ */}
@@ -672,6 +710,9 @@ export function BookFormViewMultilang({ bookId }: Props) {
         </div>
       )}
 
+      {/* ═══════════════════════════════════════════
+          MODAL CONFIRMACIÓN GUARDAR
+      ═══════════════════════════════════════════ */}
       {showSaveConfirm && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           onClick={() => setShowSaveConfirm(false)}>

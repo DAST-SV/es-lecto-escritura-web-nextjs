@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ============================================
  * COMPONENTE: BookCard
  * Card individual de libro para exploracion
@@ -147,7 +147,7 @@ export const BookCard: React.FC<BookCardProps> = memo(({ book, onSelect, priorit
               <BookOpen className="w-16 h-16 text-blue-300 mx-auto mb-2" />
               <p
                 className="text-blue-400 font-bold text-sm line-clamp-2"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
               >
                 {book.title}
               </p>
@@ -164,7 +164,7 @@ export const BookCard: React.FC<BookCardProps> = memo(({ book, onSelect, priorit
         {/* Titulo */}
         <h3
           className="text-lg font-black text-blue-800 line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors"
-          style={{ fontFamily: 'Comic Sans MS, cursive' }}
+          style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
         >
           {book.title}
         </h3>

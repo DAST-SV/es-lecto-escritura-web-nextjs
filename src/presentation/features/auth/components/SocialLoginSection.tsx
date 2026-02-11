@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // src/presentation/features/auth/components/SocialLoginSection.tsx
 // ============================================
 "use client";
@@ -84,7 +84,7 @@ export function SocialLoginSection({
     >
       <h3
         className="text-center text-blue-600 mb-3 font-bold text-lg"
-        style={{ fontFamily: "Comic Sans MS, cursive" }}
+        style={{ fontFamily: "'Nunito', 'Varela Round', 'Comfortaa', sans-serif" }}
       >
         {form.connectWith}
       </h3>

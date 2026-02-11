@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // src/presentation/features/auth/components/LoginFormFields.tsx
 // Component: Login Form Fields con traducciones de Supabase
 // ============================================
@@ -72,7 +72,7 @@ export function LoginFormFields({
           />
           <span
             className="ml-3 text-green-600 font-bold"
-            style={{ fontFamily: "Comic Sans MS, cursive" }}
+            style={{ fontFamily: "'Nunito', 'Varela Round', 'Comfortaa', sans-serif" }}
           >
             {t('remember_me')}
           </span>

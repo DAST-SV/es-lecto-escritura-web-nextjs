@@ -1,4 +1,4 @@
-// src/presentation/features/library/components/BookCarouselRow.tsx
+﻿// src/presentation/features/library/components/BookCarouselRow.tsx
 /**
  * ============================================
  * COMPONENTE: BookCarouselRow
@@ -130,7 +130,7 @@ export const BookCarouselRow: React.FC<BookCarouselRowProps> = memo(
               <h2
                 className="text-xl md:text-2xl font-black text-white drop-shadow-lg"
                 style={{
-                  fontFamily: 'Comic Sans MS, cursive',
+                  fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif",
                   textShadow: '2px 2px 0px rgba(0,0,0,0.2)',
                 }}
               >
@@ -168,7 +168,7 @@ export const BookCarouselRow: React.FC<BookCarouselRowProps> = memo(
                 <a
                   href={viewAllHref}
                   className="hidden sm:flex items-center gap-1 ml-2 px-3 py-1.5 bg-white/90 hover:bg-white rounded-full border-2 border-yellow-300 text-blue-700 text-sm font-bold transition-all hover:scale-105"
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
                 >
                   {viewAllLabel}
                   <ArrowRight className="w-3.5 h-3.5" />

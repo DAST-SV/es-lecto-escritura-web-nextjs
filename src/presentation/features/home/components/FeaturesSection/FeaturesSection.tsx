@@ -1,4 +1,4 @@
-/**
+﻿/**
  * FeaturesSection Component
  * @file src/presentation/features/home/components/FeaturesSection/FeaturesSection.tsx
  * @description Features section matching HeroCarousel's visual style EXACTLY
@@ -182,7 +182,7 @@ export const FeaturesSection: React.FC = () => {
           <h2 
             className="text-3xl md:text-4xl lg:text-5xl font-black text-white leading-tight mb-3 drop-shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
             style={{
-              fontFamily: 'Comic Sans MS, cursive',
+              fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif",
               textShadow: '3px 3px 0px rgba(0,0,0,0.3), 6px 6px 0px rgba(0,0,0,0.1)'
             }}
           >
@@ -210,7 +210,7 @@ export const FeaturesSection: React.FC = () => {
                     ? 'bg-yellow-300 text-blue-700 border-white scale-110'
                     : 'bg-white/95 text-blue-600 border-yellow-300 hover:bg-yellow-50 hover:scale-105'
                 }`}
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
               >
                 <IconComponent className="w-4 h-4" />
                 <span>{tab.label}</span>
@@ -231,7 +231,7 @@ export const FeaturesSection: React.FC = () => {
           </button>
           
           <div className="flex-1 text-center space-y-2">
-            <span className="text-xs text-white font-black drop-shadow-lg" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+            <span className="text-xs text-white font-black drop-shadow-lg" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
               {tabs.findIndex(tab => tab.id === activeTab) + 1} {t('navigation.of')} {tabs.length}
             </span>
             <div className="flex justify-center gap-1.5">
@@ -269,7 +269,7 @@ export const FeaturesSection: React.FC = () => {
                     const IconComponent = iconMap[activeTab] || BookOpen;
                     return <IconComponent className="w-4 h-4 text-blue-600 animate-pulse" />;
                   })()}
-                  <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
                     {activeTabData?.label}
                   </span>
                 </div>
@@ -277,7 +277,7 @@ export const FeaturesSection: React.FC = () => {
                 <div className="space-y-2">
                   <h3 
                     className="text-2xl sm:text-3xl lg:text-4xl font-black text-blue-700 leading-tight"
-                    style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                    style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
                   >
                     {activeTabData?.title}
                   </h3>
@@ -290,12 +290,12 @@ export const FeaturesSection: React.FC = () => {
                 
                 <p 
                   className="text-base lg:text-lg text-slate-700 leading-relaxed font-bold"
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
                 >
                   {activeTabData?.content}
                 </p>
                 
-                <button className="group relative px-7 py-3.5 bg-yellow-300 text-blue-700 font-black text-base rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-110 border-2 border-white overflow-hidden" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                <button className="group relative px-7 py-3.5 bg-yellow-300 text-blue-700 font-black text-base rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-110 border-2 border-white overflow-hidden" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
                   <span className="relative z-10 flex items-center gap-2">
                     {t('button')}
                     <Sparkles className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
@@ -350,10 +350,10 @@ export const FeaturesSection: React.FC = () => {
                 <div className={`w-14 h-14 bg-${colorClass}-100 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-300 border-2 border-${colorClass}-300`}>
                   <IconComponent className={`w-7 h-7 text-${colorClass}-500`} strokeWidth={2.5} />
                 </div>
-                <h4 className="text-2xl lg:text-3xl font-black text-blue-700 mb-1" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                <h4 className="text-2xl lg:text-3xl font-black text-blue-700 mb-1" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
                   {stat.number}
                 </h4>
-                <p className="text-xs lg:text-sm text-slate-600 font-bold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                <p className="text-xs lg:text-sm text-slate-600 font-bold" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
                   {stat.label}
                 </p>
               </div>

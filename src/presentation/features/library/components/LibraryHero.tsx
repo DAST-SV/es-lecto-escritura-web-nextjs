@@ -1,4 +1,4 @@
-// src/presentation/features/library/components/LibraryHero.tsx
+﻿// src/presentation/features/library/components/LibraryHero.tsx
 /**
  * ============================================
  * COMPONENTE: LibraryHero
@@ -101,7 +101,7 @@ export const LibraryHero: React.FC<LibraryHeroProps> = memo(
             <Library className="w-5 h-5 text-blue-600" />
             <span
               className="text-sm font-black text-blue-700 tracking-wide"
-              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
             >
               {t('hero.badge')}
             </span>
@@ -112,7 +112,7 @@ export const LibraryHero: React.FC<LibraryHeroProps> = memo(
           <h1
             className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-4 drop-shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
             style={{
-              fontFamily: 'Comic Sans MS, cursive',
+              fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif",
               textShadow: '3px 3px 0px rgba(0,0,0,0.3), 6px 6px 0px rgba(0,0,0,0.1)',
             }}
           >
@@ -129,7 +129,7 @@ export const LibraryHero: React.FC<LibraryHeroProps> = memo(
           {/* Subtitulo */}
           <p
             className="text-lg md:text-xl text-white font-bold mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
           >
             {t('hero.subtitle')}
           </p>
@@ -143,7 +143,7 @@ export const LibraryHero: React.FC<LibraryHeroProps> = memo(
                 onChange={handleChange}
                 placeholder={t('search.placeholder')}
                 className="w-full h-14 md:h-16 pl-14 pr-14 text-base md:text-lg font-bold text-blue-800 bg-white rounded-full shadow-2xl border-4 border-yellow-300 focus:border-yellow-400 focus:outline-none focus:ring-4 focus:ring-yellow-200 transition-all placeholder:text-blue-300"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
               />
 
               <div className="absolute left-4 top-1/2 -translate-y-1/2">
@@ -173,7 +173,7 @@ export const LibraryHero: React.FC<LibraryHeroProps> = memo(
                   <BookOpen className="w-4 h-4 text-yellow-300" />
                   <span
                     className="text-white font-black text-sm"
-                    style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                    style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
                   >
                     <span className="text-yellow-300">{totalBooks}</span> {t('stats.books')}
                   </span>
@@ -184,7 +184,7 @@ export const LibraryHero: React.FC<LibraryHeroProps> = memo(
                   <Sparkles className="w-4 h-4 text-green-300" />
                   <span
                     className="text-white font-black text-sm"
-                    style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                    style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
                   >
                     <span className="text-green-300">{totalCategories}</span> {t('stats.categories')}
                   </span>

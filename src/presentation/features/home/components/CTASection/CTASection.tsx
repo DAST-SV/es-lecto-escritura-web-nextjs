@@ -1,4 +1,4 @@
-/**
+﻿/**
  * CTASection Component
  * @file src/presentation/features/home/components/CTASection/CTASection.tsx
  * @description CTA section matching HeroCarousel's visual style EXACTLY
@@ -81,7 +81,7 @@ export const CTASection: React.FC = () => {
         {/* Badge superior - estilo HeroCarousel */}
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-yellow-300 mb-6 animate-bounce">
           <Sparkles className="w-4 h-4 text-blue-600 animate-pulse" />
-          <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
             {t('badge')}
           </span>
         </div>
@@ -90,7 +90,7 @@ export const CTASection: React.FC = () => {
         <h2 
           className="text-2xl sm:text-3xl lg:text-4xl font-black text-white leading-tight mb-4 drop-shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
           style={{
-            fontFamily: 'Comic Sans MS, cursive',
+            fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif",
             textShadow: '3px 3px 0px rgba(0,0,0,0.3), 6px 6px 0px rgba(0,0,0,0.1)'
           }}
         >
@@ -107,14 +107,14 @@ export const CTASection: React.FC = () => {
         {/* Descripción */}
         <p 
           className="text-base sm:text-lg lg:text-xl text-white font-bold mb-8 leading-relaxed max-w-2xl drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
-          style={{ fontFamily: 'Comic Sans MS, cursive' }}
+          style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
         >
           {t('description')}
         </p>
 
         {/* CTA Button - estilo HeroCarousel */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-          <button className="group relative px-8 lg:px-10 py-4 lg:py-5 bg-yellow-300 text-blue-700 font-black text-base lg:text-lg rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-110 border-2 border-white overflow-hidden" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <button className="group relative px-8 lg:px-10 py-4 lg:py-5 bg-yellow-300 text-blue-700 font-black text-base lg:text-lg rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-110 border-2 border-white overflow-hidden" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
             <span className="relative z-10 flex items-center gap-2">
               {t('button')}
               <Sparkles className="w-5 h-5 lg:w-6 lg:h-6 group-hover:rotate-180 transition-transform duration-500" />
@@ -123,7 +123,7 @@ export const CTASection: React.FC = () => {
           </button>
 
           {/* Badge de confianza */}
-          <div className="flex items-center gap-2 text-white text-sm font-black bg-white/10 backdrop-blur-sm px-4 py-2.5 rounded-full border-2 border-white/30 shadow-xl" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <div className="flex items-center gap-2 text-white text-sm font-black bg-white/10 backdrop-blur-sm px-4 py-2.5 rounded-full border-2 border-white/30 shadow-xl" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
             <div className="flex -space-x-2">
               <div className="w-8 h-8 rounded-full bg-white/20 border-2 border-white flex items-center justify-center text-base shadow-lg backdrop-blur-sm">👦</div>
               <div className="w-8 h-8 rounded-full bg-white/20 border-2 border-white flex items-center justify-center text-base shadow-lg backdrop-blur-sm">👧</div>
@@ -149,7 +149,7 @@ export const CTASection: React.FC = () => {
                 className={`group flex items-center justify-center gap-2 px-4 py-3 bg-white/90 backdrop-blur-md rounded-xl border-2 border-${colorClass}-300 shadow-xl hover:shadow-2xl hover:scale-105 hover:-translate-y-1 transition-all duration-300`}
               >
                 <span className="text-xl font-bold text-green-500 group-hover:scale-125 transition-transform duration-300">{feature.icon}</span>
-                <span className="text-sm lg:text-base font-black text-blue-700" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                <span className="text-sm lg:text-base font-black text-blue-700" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
                   {t(feature.key)}
                 </span>
               </div>

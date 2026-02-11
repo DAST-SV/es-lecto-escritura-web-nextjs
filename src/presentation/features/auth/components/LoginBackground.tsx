@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Cloud } from '@/src/presentation/components/ui/Cloud';
 import React from 'react';
@@ -13,25 +13,25 @@ export function LoginBackground() {
 
       <div 
         className="absolute top-16 left-24 text-4xl font-black text-red-500 opacity-15 transform rotate-12" 
-        style={{ fontFamily: 'Comic Sans MS, cursive' }}
+        style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
       >
         A
       </div>
       <div 
         className="absolute top-24 right-32 text-3xl font-black text-yellow-500 opacity-15 transform -rotate-12" 
-        style={{ fontFamily: 'Comic Sans MS, cursive' }}
+        style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
       >
         B
       </div>
       <div 
         className="absolute bottom-32 left-16 text-3xl font-black text-green-500 opacity-15 transform rotate-45" 
-        style={{ fontFamily: 'Comic Sans MS, cursive' }}
+        style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
       >
         C
       </div>
       <div 
         className="absolute bottom-16 right-24 text-3xl font-black text-purple-500 opacity-15 transform -rotate-45" 
-        style={{ fontFamily: 'Comic Sans MS, cursive' }}
+        style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
       >
         1
       </div>
