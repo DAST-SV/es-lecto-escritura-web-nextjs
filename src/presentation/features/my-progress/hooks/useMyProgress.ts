@@ -53,10 +53,20 @@ export function useMyProgress() {
   // 1. Auth check
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserId(user.id);
-      } else {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) {
+          console.error('❌ Error auth:', error);
+          router.push(`/${locale}/auth/login`);
+          return;
+        }
+        if (user) {
+          setUserId(user.id);
+        } else {
+          router.push(`/${locale}/auth/login`);
+        }
+      } catch (err) {
+        console.error('❌ Error obteniendo usuario:', err);
         router.push(`/${locale}/auth/login`);
       }
     };

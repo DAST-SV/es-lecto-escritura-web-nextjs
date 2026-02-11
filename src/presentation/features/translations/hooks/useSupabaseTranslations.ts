@@ -16,7 +16,15 @@ const cache: Record<string, Record<string, string>> = {};
  * Soporta traducciones simples y arrays dinámicos desde Supabase
  */
 export function useSupabaseTranslations(namespace: string) {
-  const locale = useLocale();
+  // Usar try-catch para manejar casos donde useLocale no está disponible
+  let locale = 'es'; // fallback por defecto
+  try {
+    locale = useLocale();
+  } catch (error) {
+    // Si no hay contexto de next-intl, usar español por defecto
+    console.warn('useSupabaseTranslations: No intl context, usando "es" por defecto');
+  }
+
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 

@@ -17,7 +17,7 @@ export class ReadingProgressRepository implements IReadingProgressRepository {
   async findAll(): Promise<ReadingProgressEntity[]> {
     const { data, error } = await this.supabase.schema('books').from('reading_progress').select('*').order('last_read_at', { ascending: false });
     if (error) throw new Error(`Error fetching progress: ${error.message}`);
-    return (data || []).map(row => ReadingProgressEntity.fromDatabase(row));
+    return (data || []).map((row: any) => ReadingProgressEntity.fromDatabase(row));
   }
 
   async findById(id: string): Promise<ReadingProgressEntity | null> {
@@ -29,13 +29,13 @@ export class ReadingProgressRepository implements IReadingProgressRepository {
   async findByBookId(bookId: string): Promise<ReadingProgressEntity[]> {
     const { data, error } = await this.supabase.schema('books').from('reading_progress').select('*').eq('book_id', bookId).order('last_read_at', { ascending: false });
     if (error) throw new Error(`Error fetching progress: ${error.message}`);
-    return (data || []).map(row => ReadingProgressEntity.fromDatabase(row));
+    return (data || []).map((row: any) => ReadingProgressEntity.fromDatabase(row));
   }
 
   async findByUserId(userId: string): Promise<ReadingProgressEntity[]> {
     const { data, error } = await this.supabase.schema('books').from('reading_progress').select('*').eq('user_id', userId).order('last_read_at', { ascending: false });
     if (error) throw new Error(`Error fetching progress: ${error.message}`);
-    return (data || []).map(row => ReadingProgressEntity.fromDatabase(row));
+    return (data || []).map((row: any) => ReadingProgressEntity.fromDatabase(row));
   }
 
   async findByBookAndUser(bookId: string, userId: string): Promise<ReadingProgressEntity | null> {

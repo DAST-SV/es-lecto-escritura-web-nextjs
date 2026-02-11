@@ -64,7 +64,7 @@ export class BookExploreRepository {
         .in('category_id', filters.categories);
 
       if (bookIds && bookIds.length > 0) {
-        query = query.in('id', bookIds.map(b => b.book_id));
+        query = query.in('id', bookIds.map((b: any) => b.book_id));
       } else {
         return { books: [], total: 0, hasMore: false, filters };
       }
@@ -78,7 +78,7 @@ export class BookExploreRepository {
         .in('genre_id', filters.genres);
 
       if (bookIds && bookIds.length > 0) {
-        query = query.in('id', bookIds.map(b => b.book_id));
+        query = query.in('id', bookIds.map((b: any) => b.book_id));
       } else {
         return { books: [], total: 0, hasMore: false, filters };
       }
@@ -132,7 +132,7 @@ export class BookExploreRepository {
     }
 
     // Mapear a entidades
-    const books = (data || []).map(book => {
+    const books = (data || []).map((book: any) => {
       const categories = (book.books_categories || [])
         .filter((bc: any) => bc.book_categories)
         .map((bc: any) => ({
@@ -159,7 +159,7 @@ export class BookExploreRepository {
 
     // Ordenar por rating si es necesario (post-query)
     if (filters.sortBy === 'rating') {
-      books.sort((a, b) => {
+      books.sort((a: any, b: any) => {
         const ratingA = a.ratingStats?.averageRating || 0;
         const ratingB = b.ratingStats?.averageRating || 0;
         return ratingB - ratingA;
@@ -203,7 +203,7 @@ export class BookExploreRepository {
       throw error;
     }
 
-    return (data || []).map(book => {
+    return (data || []).map((book: any) => {
       const categories = (book.books_categories || [])
         .filter((bc: any) => bc.book_categories)
         .map((bc: any) => ({
@@ -249,7 +249,7 @@ export class BookExploreRepository {
       throw error;
     }
 
-    return (data || []).map(book => {
+    return (data || []).map((book: any) => {
       const categories = (book.books_categories || [])
         .filter((bc: any) => bc.book_categories)
         .map((bc: any) => ({
@@ -283,7 +283,7 @@ export class BookExploreRepository {
       throw error;
     }
 
-    return (data || []).map(cat => ({
+    return (data || []).map((cat: any) => ({
       id: cat.id,
       name: cat.name,
       slug: cat.slug,
@@ -307,7 +307,7 @@ export class BookExploreRepository {
       throw error;
     }
 
-    return (data || []).map(genre => ({
+    return (data || []).map((genre: any) => ({
       id: genre.id,
       name: genre.name,
       description: genre.description,
@@ -330,7 +330,7 @@ export class BookExploreRepository {
       throw error;
     }
 
-    return (data || []).map(level => ({
+    return (data || []).map((level: any) => ({
       id: level.id,
       name: level.name,
       minAge: level.min_age || 0,

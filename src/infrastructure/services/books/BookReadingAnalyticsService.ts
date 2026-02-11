@@ -140,6 +140,8 @@ export class BookReadingAnalyticsService {
 
       // Guardar sesión en Supabase (tabla: reading_sessions)
       const { error } = await supabase
+        .schema('books')
+        .schema('books')
         .from('reading_sessions')
         .insert({
           book_id: session.bookId,
@@ -241,6 +243,7 @@ export class BookReadingAnalyticsService {
 
       // Tabla: reading_progress (schema: books)
       const { error } = await supabase
+        .schema('books')
         .from('reading_progress')
         .upsert(
           {
@@ -291,6 +294,7 @@ export class BookReadingAnalyticsService {
       const supabase = createClient();
 
       const { data, error } = await supabase
+        .schema('books')
         .from('reading_progress')
         .select('*')
         .eq('user_id', userId)
@@ -334,6 +338,7 @@ export class BookReadingAnalyticsService {
       const supabase = createClient();
 
       const { data: userProgress } = await supabase
+        .schema('books')
         .from('reading_progress')
         .select('reading_time_seconds')
         .eq('user_id', userId)
@@ -343,6 +348,7 @@ export class BookReadingAnalyticsService {
       const userTime = userProgress?.reading_time_seconds || 0;
 
       const { data: allProgress } = await supabase
+        .schema('books')
         .from('reading_progress')
         .select('reading_time_seconds')
         .eq('book_id', bookId)
@@ -402,6 +408,7 @@ export class BookReadingAnalyticsService {
       const supabase = createClient();
 
       const { data: allSessions, count: totalReaders } = await supabase
+        .schema('books')
         .from('reading_sessions')
         .select('user_id', { count: 'exact', head: false })
         .eq('book_id', bookId);
@@ -414,18 +421,21 @@ export class BookReadingAnalyticsService {
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
       const { count: activeReaders } = await supabase
+        .schema('books')
         .from('reading_sessions')
         .select('user_id', { count: 'exact', head: true })
         .eq('book_id', bookId)
         .gte('started_at', sevenDaysAgo.toISOString());
 
       const { count: completedReaders } = await supabase
+        .schema('books')
         .from('reading_progress')
         .select('*', { count: 'exact', head: true })
         .eq('book_id', bookId)
         .eq('is_completed', true);
 
       const { data: progressData } = await supabase
+        .schema('books')
         .from('reading_progress')
         .select('completion_percentage')
         .eq('book_id', bookId);
@@ -438,6 +448,7 @@ export class BookReadingAnalyticsService {
       const mostViewedPage = 1;
 
       const { data: sessions } = await supabase
+        .schema('books')
         .from('reading_sessions')
         .select('duration_seconds')
         .eq('book_id', bookId)
@@ -450,11 +461,13 @@ export class BookReadingAnalyticsService {
         : 0;
 
       const { count: totalSessions } = await supabase
+        .schema('books')
         .from('reading_sessions')
         .select('*', { count: 'exact', head: true })
         .eq('book_id', bookId);
 
       const { count: shortSessions } = await supabase
+        .schema('books')
         .from('reading_sessions')
         .select('*', { count: 'exact', head: true })
         .eq('book_id', bookId)
@@ -465,6 +478,7 @@ export class BookReadingAnalyticsService {
         : 0;
 
       const { data: deviceData } = await supabase
+        .schema('books')
         .from('reading_sessions')
         .select('device_type')
         .eq('book_id', bookId);

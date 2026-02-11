@@ -10,7 +10,7 @@ const DEFAULT_LOCALE = 'es';
 type Locale = typeof LOCALES[number];
 
 const PUBLIC_ROUTES = ['/', '/auth/login', '/auth/register', '/auth/callback', '/error', '/books', '/explore', '/library'];
-const STATIC_ROUTES = ['/_next', '/api', '/favicon.ico', '/images', '/fonts'];
+const STATIC_ROUTES = ['/_next', '/api', '/favicon.ico', '/images', '/fonts', '/.well-known'];
 
 // ✅ Cache con TTL más corto
 let routesCache: Record<string, any> | null = null;
@@ -64,12 +64,11 @@ async function loadRoutes(forceReload = false): Promise<Record<string, any>> {
     routesCache = pathnames;
     cacheTimestamp = now;
     
-    console.log(`✅ [CACHE] ${Object.keys(pathnames).length} rutas cargadas (TTL: 30s)`);
+    // console.log(`✅ [CACHE] ${Object.keys(pathnames).length} rutas cargadas (TTL: 30s)`);
     
     return pathnames;
 
   } catch (error) {
-    console.error('❌ [CACHE] Error:', error);
     return {};
   }
 }
@@ -77,7 +76,7 @@ async function loadRoutes(forceReload = false): Promise<Record<string, any>> {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  console.log(`\n🔍 [MIDDLEWARE] ${pathname}`);
+  // console.log(`\n🔍 [MIDDLEWARE] ${pathname}`);
 
   // 1. Ignorar estáticos
   if (STATIC_ROUTES.some(r => pathname.startsWith(r))) {
@@ -100,7 +99,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  console.log(`📍 Traducida: "${translatedPath}", Locale: "${locale}"`);
+  // console.log(`📍 Traducida: "${translatedPath}", Locale: "${locale}"`);
 
   // 3. Encontrar ruta física
   const routes = await loadRoutes();
@@ -115,14 +114,14 @@ export async function middleware(request: NextRequest) {
     } else {
       if (translations[locale] === translatedPath) {
         physicalPathname = pathname;
-        console.log(`✅ Física: ${pathname}`);
+        // console.log(`✅ Física: ${pathname}`);
         break;
       }
     }
   }
 
   if (!physicalPathname) {
-    console.log(`⚠️ No se encontró traducción, usando: ${translatedPath}`);
+    // console.log(`⚠️ No se encontró traducción, usando: ${translatedPath}`);
     physicalPathname = translatedPath;
   }
 
@@ -132,13 +131,13 @@ export async function middleware(request: NextRequest) {
   );
 
   if (isPublicRoute) {
-    console.log(`✅ [PÚBLICO]`);
+    // console.log(`✅ [PÚBLICO]`);
     
     const rewriteUrl = request.nextUrl.clone();
     rewriteUrl.pathname = `/${locale}${physicalPathname}`;
     
     if (rewriteUrl.pathname !== pathname) {
-      console.log(`🔄 Rewrite: ${pathname} → ${rewriteUrl.pathname}`);
+      // console.log(`🔄 Rewrite: ${pathname} → ${rewriteUrl.pathname}`);
       return NextResponse.rewrite(rewriteUrl);
     }
     
@@ -172,16 +171,17 @@ export async function middleware(request: NextRequest) {
     user = data.user;
     
     if (!user) {
-      console.log(`❌ Sin autenticar`);
+      // console.log(`❌ Sin autenticar`);
       const url = request.nextUrl.clone();
       url.pathname = `/${locale}/auth/login`;
       url.searchParams.set('redirect', pathname);
       return NextResponse.redirect(url);
     }
     
-    console.log(`✅ Usuario: ${user.email}`);
+    // console.log(`✅ Usuario: ${user.email}`);
   } catch (error) {
-    console.error(`❌ Error auth:`, error);
+    // Silenciar AuthSessionMissingError (usuario no autenticado es esperado)
+    // console.error(`❌ Error auth:`, error);
     const url = request.nextUrl.clone();
     url.pathname = `/${locale}/auth/login`;
     return NextResponse.redirect(url);
@@ -189,7 +189,7 @@ export async function middleware(request: NextRequest) {
 
   // 7. ✅ VERIFICAR PERMISOS (MUY IMPORTANTE)
   try {
-    console.log(`🔐 Verificando: "${translatedPath}" (${locale})`);
+    // console.log(`🔐 Verificando: "${translatedPath}" (${locale})`);
 
     const { data: canAccess, error } = await supabase.rpc('can_access_route', {
       p_user_id: user.id,
@@ -197,11 +197,9 @@ export async function middleware(request: NextRequest) {
       p_language_code: locale,
     });
 
-    console.log(`📊 can_access_route = ${canAccess}`);
+    // console.log(`📊 can_access_route = ${canAccess}`);
 
     if (error) {
-      console.error(`❌ Error RPC:`, error);
-      
       // ✅ En caso de error, DENEGAR por seguridad
       const url = request.nextUrl.clone();
       url.pathname = `/${locale}/error`;
@@ -212,7 +210,7 @@ export async function middleware(request: NextRequest) {
 
     // ✅ Si no tiene acceso, DENEGAR
     if (!canAccess) {
-      console.log(`🚫 ACCESO DENEGADO`);
+      // console.log(`🚫 ACCESO DENEGADO`);
       const url = request.nextUrl.clone();
       url.pathname = `/${locale}/error`;
       url.searchParams.set('code', '403');
@@ -220,22 +218,20 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    console.log(`✅ ACCESO PERMITIDO`);
+    // console.log(`✅ ACCESO PERMITIDO`);
     
     // 8. Reescribir URL
     const rewriteUrl = request.nextUrl.clone();
     rewriteUrl.pathname = `/${locale}${physicalPathname}`;
     
     if (rewriteUrl.pathname !== pathname) {
-      console.log(`🔄 Rewrite: ${pathname} → ${rewriteUrl.pathname}\n`);
+      // console.log(`🔄 Rewrite: ${pathname} → ${rewriteUrl.pathname}\n`);
       return NextResponse.rewrite(rewriteUrl);
     }
     
     return response;
 
   } catch (err: any) {
-    console.error(`❌ Error inesperado:`, err);
-    
     // ✅ IMPORTANTE: En producción, DENEGAR por seguridad
     if (process.env.NODE_ENV === 'production') {
       const url = request.nextUrl.clone();
@@ -244,9 +240,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
     
-    // En desarrollo, permitir pero logear error
-    console.log(`⚠️ DEV: Permitiendo a pesar del error`);
-    
+    // En desarrollo, permitir
     const rewriteUrl = request.nextUrl.clone();
     rewriteUrl.pathname = `/${locale}${physicalPathname}`;
     

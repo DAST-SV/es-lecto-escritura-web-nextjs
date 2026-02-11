@@ -18,7 +18,7 @@ export class BookRatingRepository implements IBookRatingRepository2 {
   async findAll(): Promise<BookRatingEntity[]> {
     const { data, error } = await this.supabase.schema('books').from('book_ratings').select('*').order('created_at', { ascending: false });
     if (error) throw new Error(`Error fetching ratings: ${error.message}`);
-    return (data || []).map(row => BookRatingEntity.fromDatabase(row));
+    return (data || []).map((row: any) => BookRatingEntity.fromDatabase(row));
   }
 
   async findById(id: string): Promise<BookRatingEntity | null> {
@@ -30,13 +30,13 @@ export class BookRatingRepository implements IBookRatingRepository2 {
   async findByBookId(bookId: string): Promise<BookRatingEntity[]> {
     const { data, error } = await this.supabase.schema('books').from('book_ratings').select('*').eq('book_id', bookId).order('created_at', { ascending: false });
     if (error) throw new Error(`Error fetching ratings: ${error.message}`);
-    return (data || []).map(row => BookRatingEntity.fromDatabase(row));
+    return (data || []).map((row: any) => BookRatingEntity.fromDatabase(row));
   }
 
   async findByUserId(userId: string): Promise<BookRatingEntity[]> {
     const { data, error } = await this.supabase.schema('books').from('book_ratings').select('*').eq('user_id', userId).order('created_at', { ascending: false });
     if (error) throw new Error(`Error fetching ratings: ${error.message}`);
-    return (data || []).map(row => BookRatingEntity.fromDatabase(row));
+    return (data || []).map((row: any) => BookRatingEntity.fromDatabase(row));
   }
 
   async findByBookAndUser(bookId: string, userId: string): Promise<BookRatingEntity | null> {
@@ -51,9 +51,9 @@ export class BookRatingRepository implements IBookRatingRepository2 {
 
     const ratings = data || [];
     const total = ratings.length;
-    const sum = ratings.reduce((acc, r) => acc + r.rating, 0);
+    const sum = ratings.reduce((acc: number, r: any) => acc + r.rating, 0);
     const distribution: { [key: number]: number } = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    ratings.forEach(r => distribution[r.rating]++);
+    ratings.forEach((r: any) => distribution[r.rating]++);
 
     return {
       bookId,

@@ -30,7 +30,7 @@ export class ReadingListRepository implements IReadingListRepository {
       countMap.set(b.reading_list_id, (countMap.get(b.reading_list_id) || 0) + 1);
     });
 
-    return (data || []).map(row => ReadingListEntity.fromDatabase({ ...row, book_count: countMap.get(row.id) || 0 }));
+    return (data || []).map((row: any) => ReadingListEntity.fromDatabase({ ...row, book_count: countMap.get(row.id) || 0 }));
   }
 
   async findById(id: string): Promise<ReadingListEntity | null> {
@@ -44,13 +44,13 @@ export class ReadingListRepository implements IReadingListRepository {
   async findByUserId(userId: string): Promise<ReadingListEntity[]> {
     const { data, error } = await this.supabase.schema('books').from('reading_lists').select('*').eq('user_id', userId).is('deleted_at', null).order('created_at', { ascending: false });
     if (error) throw new Error(`Error fetching lists: ${error.message}`);
-    return (data || []).map(row => ReadingListEntity.fromDatabase(row));
+    return (data || []).map((row: any) => ReadingListEntity.fromDatabase(row));
   }
 
   async findPublic(): Promise<ReadingListEntity[]> {
     const { data, error } = await this.supabase.schema('books').from('reading_lists').select('*').eq('is_public', true).is('deleted_at', null).order('created_at', { ascending: false });
     if (error) throw new Error(`Error fetching lists: ${error.message}`);
-    return (data || []).map(row => ReadingListEntity.fromDatabase(row));
+    return (data || []).map((row: any) => ReadingListEntity.fromDatabase(row));
   }
 
   async create(dto: CreateReadingListDTO): Promise<ReadingListEntity> {

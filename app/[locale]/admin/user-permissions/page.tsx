@@ -28,7 +28,7 @@ export default function UserPermissionsPage() {
       if (user) setCurrentUserId(user.id);
 
       const { data: usersData } = await supabase.auth.admin.listUsers();
-      if (usersData?.users) setUsers(usersData.users.map(u => ({ id: u.id, email: u.email || u.id })));
+      if (usersData?.users) setUsers(usersData.users.map((u: any) => ({ id: u.id, email: u.email || u.id })));
 
       const { data: routesData } = await supabase.schema('app').from('routes').select('id, path');
       if (routesData) setRoutes(routesData);

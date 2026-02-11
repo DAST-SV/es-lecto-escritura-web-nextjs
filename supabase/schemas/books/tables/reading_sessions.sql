@@ -9,7 +9,7 @@ SET search_path TO books, app, public;
 CREATE TABLE IF NOT EXISTS books.reading_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   book_id UUID NOT NULL REFERENCES books.books(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE, -- Nullable para permitir lecturas anónimas
   start_page INTEGER NOT NULL,
   end_page INTEGER NOT NULL,
   pages_read INTEGER GENERATED ALWAYS AS (end_page - start_page + 1) STORED,

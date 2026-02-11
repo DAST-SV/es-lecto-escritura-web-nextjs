@@ -16,7 +16,7 @@ export class FavoriteRepository implements IFavoriteRepository {
   async findAll(): Promise<FavoriteEntity[]> {
     const { data, error } = await this.supabase.schema('books').from('favorites').select('*').order('created_at', { ascending: false });
     if (error) throw new Error(`Error fetching favorites: ${error.message}`);
-    return (data || []).map(row => FavoriteEntity.fromDatabase(row));
+    return (data || []).map((row: any) => FavoriteEntity.fromDatabase(row));
   }
 
   async findById(id: string): Promise<FavoriteEntity | null> {
@@ -28,13 +28,13 @@ export class FavoriteRepository implements IFavoriteRepository {
   async findByBookId(bookId: string): Promise<FavoriteEntity[]> {
     const { data, error } = await this.supabase.schema('books').from('favorites').select('*').eq('book_id', bookId).order('created_at', { ascending: false });
     if (error) throw new Error(`Error fetching favorites: ${error.message}`);
-    return (data || []).map(row => FavoriteEntity.fromDatabase(row));
+    return (data || []).map((row: any) => FavoriteEntity.fromDatabase(row));
   }
 
   async findByUserId(userId: string): Promise<FavoriteEntity[]> {
     const { data, error } = await this.supabase.schema('books').from('favorites').select('*').eq('user_id', userId).order('created_at', { ascending: false });
     if (error) throw new Error(`Error fetching favorites: ${error.message}`);
-    return (data || []).map(row => FavoriteEntity.fromDatabase(row));
+    return (data || []).map((row: any) => FavoriteEntity.fromDatabase(row));
   }
 
   async findByBookAndUser(bookId: string, userId: string): Promise<FavoriteEntity | null> {

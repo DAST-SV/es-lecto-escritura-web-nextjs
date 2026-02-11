@@ -24,7 +24,7 @@ export class SupabaseUserTypeRepository implements IUserTypeRepository {
     }
 
     console.log(`✅ ${data?.length || 0} tipos de usuario encontrados`);
-    return (data || []).map(row => UserType.fromDatabase(row));
+    return (data || []).map((row: any) => UserType.fromDatabase(row));
   }
 
   async findById(id: number): Promise<UserType | null> {

@@ -27,7 +27,7 @@ export default function RoleLanguageAccessPage() {
       if (user) setCurrentUserId(user.id);
 
       const { data: rolesData } = await supabase.schema('app').from('roles').select('name, display_name').eq('is_active', true);
-      if (rolesData) setRoles(rolesData.map((r) => ({ name: r.name, displayName: r.display_name })));
+      if (rolesData) setRoles(rolesData.map((r: any) => ({ name: r.name, displayName: r.display_name })));
     };
     init();
   }, []);

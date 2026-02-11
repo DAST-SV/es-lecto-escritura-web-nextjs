@@ -54,8 +54,8 @@ export default function RouteScannerPage() {
 
             // Encontrar huérfanas (en BD pero no en filesystem)
             const orphans = (dbRoutes || [])
-                .filter(route => !filesystemPaths.has(route.pathname))
-                .map(route => ({
+                .filter((route: any) => !filesystemPaths.has(route.pathname))
+                .map((route: any) => ({
                     id: route.id,
                     pathname: route.pathname,
                     display_name: route.display_name,
@@ -132,7 +132,7 @@ export default function RouteScannerPage() {
 
             // Combinar datos
             const combined = data.routes.map((route: any) => {
-                const existing = existingRoutes?.find(r => r.pathname === route.pathname);
+                const existing = existingRoutes?.find((r: any) => r.pathname === route.pathname);
                 return {
                     pathname: route.pathname,
                     displayName: route.displayName,

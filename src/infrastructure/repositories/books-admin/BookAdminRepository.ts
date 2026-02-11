@@ -35,7 +35,7 @@ export class BookAdminRepository implements IBookAdminRepository {
     if (!books || books.length === 0) return [];
 
     // Fetch all related data in parallel
-    const bookIds = books.map(b => b.id);
+    const bookIds = books.map((b: any) => b.id);
 
     const [translationsRes, authorsRes, genresRes, tagsRes, categoriesRes, levelsRes] = await Promise.all([
       this.supabase.schema('books').from('book_translations').select('*').in('book_id', bookIds),
@@ -74,13 +74,13 @@ export class BookAdminRepository implements IBookAdminRepository {
       : { data: [] };
 
     // Fetch category translations for names
-    const categoryIds = [...new Set(books.map(b => b.category_id))];
+    const categoryIds = [...new Set(books.map((b: any) => b.category_id))];
     const categoryTransRes = categoryIds.length > 0
       ? await this.supabase.schema('books').from('category_translations').select('*').in('category_id', categoryIds)
       : { data: [] };
 
     // Fetch level translations for names
-    const levelIds = [...new Set(books.filter(b => b.level_id).map(b => b.level_id))];
+    const levelIds = [...new Set(books.filter((b: any) => b.level_id).map((b: any) => b.level_id))];
     const levelTransRes = levelIds.length > 0
       ? await this.supabase.schema('books').from('level_translations').select('*').in('level_id', levelIds)
       : { data: [] };
@@ -127,7 +127,7 @@ export class BookAdminRepository implements IBookAdminRepository {
     const levelSlugMap = new Map<string, string>();
     (levelsRes.data || []).forEach((l: any) => levelSlugMap.set(l.id, l.slug));
 
-    return books.map(book => {
+    return books.map((book: any) => {
       const bookTranslations = (translationsRes.data || []).filter((t: any) => t.book_id === book.id);
       const bookAuthors = (authorsRes.data || [])
         .filter((a: any) => a.book_id === book.id)

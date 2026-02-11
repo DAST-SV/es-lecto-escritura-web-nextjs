@@ -363,8 +363,10 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
           const authorsList: BookAuthor[] = [];
           for (const ba of bookAuthors) {
             const author = (ba as any).authors;
+            console.log('🔍 Debug autor cargado:', { ba, author });
             if (author?.slug) {
               const authorUserId = author.slug; // slug = user_id
+              console.log('🔍 Author userId (slug):', authorUserId);
 
               // Usar la API server-side que accede a auth.users via admin client
               // Esto resuelve nombres de usuarios OAuth (Google) cuyo nombre
@@ -375,13 +377,19 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
 
               try {
                 const resp = await fetch(`/api/v1/users/by-id?id=${encodeURIComponent(authorUserId)}`);
+                console.log('🔍 API response status:', resp.status);
                 if (resp.ok) {
                   const userData = await resp.json();
+                  console.log('🔍 API userData:', userData);
                   resolvedName = userData.displayName || '';
                   resolvedEmail = userData.email || '';
                   resolvedAvatar = userData.avatarUrl || resolvedAvatar;
+                } else {
+                  const errorData = await resp.json();
+                  console.error('🔍 API error:', errorData);
                 }
               } catch (_err) {
+                console.error('🔍 Fetch error:', _err);
                 // ignore fetch error, fall through to profile query
               }
 
@@ -405,18 +413,22 @@ export function useBookFormMultilang({ bookId }: UseBookFormMultilangProps = {})
 
               // Último recurso: mostrar fragmento de ID
               if (!resolvedName) {
+                console.warn('⚠️ No se pudo resolver nombre para:', authorUserId);
                 resolvedName = authorUserId.slice(0, 8);
               }
 
-              authorsList.push({
+              const finalAuthor = {
                 userId: authorUserId,
                 email: resolvedEmail,
                 displayName: resolvedName,
                 avatarUrl: resolvedAvatar,
                 role: (ba.role as BookAuthor['role']) || 'author',
-              });
+              };
+              console.log('✅ Autor final agregado:', finalAuthor);
+              authorsList.push(finalAuthor);
             }
           }
+          console.log('📋 Lista completa de autores cargados:', authorsList);
           if (authorsList.length > 0) {
             setSelectedAuthors(authorsList);
           }

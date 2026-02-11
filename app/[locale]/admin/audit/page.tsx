@@ -103,19 +103,19 @@ export default function AuditPage() {
 
       if (books) {
         newReport.summary.totalBooks = books.length;
-        newReport.summary.activeBooks = books.filter(b => !b.deleted_at).length;
-        newReport.summary.deletedBooks = books.filter(b => b.deleted_at).length;
+        newReport.summary.activeBooks = books.filter((b: any) => !b.deleted_at).length;
+        newReport.summary.deletedBooks = books.filter((b: any) => b.deleted_at).length;
 
         // Libros sin PDF
         const booksWithoutPDF = books
-          .filter(b => !b.deleted_at && !b.pdf_url)
-          .map(b => ({ id: b.id, title: b.title || 'Sin título' }));
+          .filter((b: any) => !b.deleted_at && !b.pdf_url)
+          .map((b: any) => ({ id: b.id, title: b.title || 'Sin título' }));
         newReport.details.booksWithoutPDF = booksWithoutPDF;
 
         // Libros sin portada
         const booksWithoutCover = books
-          .filter(b => !b.deleted_at && !b.cover_url)
-          .map(b => ({ id: b.id, title: b.title || 'Sin título' }));
+          .filter((b: any) => !b.deleted_at && !b.cover_url)
+          .map((b: any) => ({ id: b.id, title: b.title || 'Sin título' }));
         newReport.details.booksWithoutCover = booksWithoutCover;
 
         // Soft deletes antiguos (>30 días)
@@ -123,11 +123,11 @@ export default function AuditPage() {
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
         const oldSoftDeletes = books
-          .filter(b => {
+          .filter((b: any) => {
             if (!b.deleted_at) return false;
             return new Date(b.deleted_at) < thirtyDaysAgo;
           })
-          .map(b => {
+          .map((b: any) => {
             const daysAgo = Math.floor(
               (Date.now() - new Date(b.deleted_at!).getTime()) / (1000 * 60 * 60 * 24)
             );
@@ -142,7 +142,7 @@ export default function AuditPage() {
 
         // 2. AUDITAR RELACIONES ROTAS
         const activeBookIds = new Set(
-          books.filter(b => !b.deleted_at).map(b => b.id)
+          books.filter((b: any) => !b.deleted_at).map((b: any) => b.id)
         );
 
         // Autores
@@ -154,7 +154,7 @@ export default function AuditPage() {
           .from('book_authors')
           .select('id');
 
-        const validAuthorIds = new Set(validAuthors?.map(a => a.id) || []);
+        const validAuthorIds = new Set(validAuthors?.map((a: any) => a.id) || []);
 
         if (authorRels) {
           for (const rel of authorRels) {
@@ -173,7 +173,7 @@ export default function AuditPage() {
           .from('book_characters')
           .select('id');
 
-        const validCharIds = new Set(validChars?.map(c => c.id) || []);
+        const validCharIds = new Set(validChars?.map((c: any) => c.id) || []);
 
         if (charRels) {
           for (const rel of charRels) {
@@ -235,7 +235,7 @@ export default function AuditPage() {
         .select('id')
         .is('deleted_at', null);
 
-      const activeBookIds = new Set((books || []).map(b => b.id));
+      const activeBookIds = new Set((books || []).map((b: any) => b.id));
 
       // 2. Limpiar relaciones rotas
       const tables = [
@@ -255,8 +255,8 @@ export default function AuditPage() {
         if (rels) {
           const toDelete = [...new Set(
             rels
-              .filter(r => !activeBookIds.has(r.book_id))
-              .map(r => r.book_id)
+              .filter((r: any) => !activeBookIds.has(r.book_id))
+              .map((r: any) => r.book_id)
           )];
 
           if (toDelete.length > 0) {
@@ -308,7 +308,7 @@ export default function AuditPage() {
         const { error } = await supabase
           .from('books')
           .delete()
-          .in('id', oldBooks.map(b => b.id));
+          .in('id', oldBooks.map((b: any) => b.id));
 
         if (!error) {
           results.oldBooks = oldBooks.length;

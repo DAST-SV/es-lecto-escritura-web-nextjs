@@ -122,7 +122,7 @@ export default function TrashPage() {
       }
 
       // Cargar traducciones para cada libro (incluyendo cover_url por idioma)
-      const bookIds = booksData.map(b => b.id);
+      const bookIds = booksData.map((b: any) => b.id);
       const { data: translationsData } = await supabase
         .schema('books')
         .from('book_translations')
@@ -132,7 +132,7 @@ export default function TrashPage() {
       // Mapear traducciones por book_id: preferir idioma actual, fallback a primaria
       const transMap = new Map<string, BookTranslation & { cover_url: string | null }>();
       const localeMatched = new Set<string>();
-      translationsData?.forEach(tr => {
+      translationsData?.forEach((tr: any) => {
         if (tr.language_code === locale) {
           transMap.set(tr.book_id, { title: tr.title, description: tr.description, cover_url: tr.cover_url });
           localeMatched.add(tr.book_id);
@@ -144,7 +144,7 @@ export default function TrashPage() {
       });
 
       // Combinar datos
-      const trashedBooks: TrashedBook[] = booksData.map(book => {
+      const trashedBooks: TrashedBook[] = booksData.map((book: any) => {
         const trans = transMap.get(book.id);
         return {
           id: book.id,

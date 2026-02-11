@@ -227,13 +227,19 @@ export function AuthorSelector({
               </p>
               <p className="text-[9px] text-gray-400 truncate">{author.email}</p>
             </div>
-            <select value={author.role}
-              onChange={(e) => updateAuthorRole(author.userId, e.target.value as BookAuthor['role'])}
-              className="text-[10px] px-1 py-0.5 border border-gray-200 rounded bg-white focus:border-amber-400 focus:outline-none text-gray-600 flex-shrink-0">
-              {AUTHOR_ROLE_KEYS.map(rk => (
-                <option key={rk} value={rk}>{t(`role_${rk}`)}</option>
-              ))}
-            </select>
+            {isCurrentUser(author.userId) ? (
+              <div className="text-[10px] px-1.5 py-0.5 bg-amber-50 border border-amber-200 rounded text-amber-700 font-bold flex-shrink-0">
+                {t('role_author')}
+              </div>
+            ) : (
+              <select value={author.role}
+                onChange={(e) => updateAuthorRole(author.userId, e.target.value as BookAuthor['role'])}
+                className="text-[10px] px-1 py-0.5 border border-gray-200 rounded bg-white focus:border-amber-400 focus:outline-none text-gray-600 flex-shrink-0">
+                {AUTHOR_ROLE_KEYS.map(rk => (
+                  <option key={rk} value={rk}>{t(`role_${rk}`)}</option>
+                ))}
+              </select>
+            )}
             {selectedAuthors.length > 1 && !isCurrentUser(author.userId) && (
               <button onClick={() => removeAuthor(author.userId)}
                 className="p-0.5 hover:bg-red-100 rounded transition-colors flex-shrink-0">

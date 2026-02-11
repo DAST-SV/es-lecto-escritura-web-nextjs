@@ -38,7 +38,7 @@ export default function UserRolesPage() {
       const supabase = createClient();
       const { data } = await supabase.auth.admin.listUsers();
       if (data?.users) {
-        setUsers(data.users.map(u => ({ id: u.id, email: u.email || u.id })));
+        setUsers(data.users.map((u: any) => ({ id: u.id, email: u.email || u.id })));
       }
     };
     loadUsers();

@@ -80,7 +80,7 @@ export class MyProgressRepository {
 
     if (progressError || !progressData?.length) return [];
 
-    const bookIds = progressData.map(p => p.book_id);
+    const bookIds = progressData.map((p: any) => p.book_id);
 
     // 2. Datos de libros
     const { data: booksData, error: booksError } = await supabase
@@ -100,12 +100,12 @@ export class MyProgressRepository {
       .in('book_id', bookIds);
 
     const ratingsMap = new Map((ratingsData || []).map((r: any) => [r.book_id, r.rating]));
-    const progressMap = new Map(progressData.map(p => [p.book_id, p]));
+    const progressMap = new Map(progressData.map((p: any) => [p.book_id, p]));
 
     return booksData
       .map((book: any) => {
-        const mapped = mapBookFromView(book, locale);
-        const progress = progressMap.get(book.id);
+        const mapped: any = mapBookFromView(book, locale);
+        const progress: any = progressMap.get(book.id);
         return {
           ...mapped,
           completedAt: progress?.completed_at || progress?.last_read_at || null,
@@ -113,7 +113,7 @@ export class MyProgressRepository {
           rating: ratingsMap.get(book.id) || null,
         } as CompletedBook;
       })
-      .sort((a, b) => {
+      .sort((a: any, b: any) => {
         const dateA = a.completedAt ? new Date(a.completedAt).getTime() : 0;
         const dateB = b.completedAt ? new Date(b.completedAt).getTime() : 0;
         return dateB - dateA;
@@ -140,7 +140,7 @@ export class MyProgressRepository {
 
     if (progressError || !progressData?.length) return [];
 
-    const bookIds = progressData.map(p => p.book_id);
+    const bookIds = progressData.map((p: any) => p.book_id);
 
     const { data: booksData, error: booksError } = await supabase
       .schema('books')
@@ -150,13 +150,13 @@ export class MyProgressRepository {
 
     if (booksError || !booksData?.length) return [];
 
-    const progressMap = new Map(progressData.map(p => [p.book_id, p]));
+    const progressMap = new Map(progressData.map((p: any) => [p.book_id, p]));
     const now = Date.now();
 
     return booksData
       .map((book: any) => {
-        const mapped = mapBookFromView(book, locale);
-        const progress = progressMap.get(book.id);
+        const mapped: any = mapBookFromView(book, locale);
+        const progress: any = progressMap.get(book.id);
         const lastRead = progress?.last_read_at ? new Date(progress.last_read_at).getTime() : 0;
         const daysSince = lastRead ? Math.floor((now - lastRead) / (1000 * 60 * 60 * 24)) : 999;
 
@@ -169,7 +169,7 @@ export class MyProgressRepository {
           daysSinceLastRead: daysSince,
         } as AbandonedBook;
       })
-      .sort((a, b) => a.daysSinceLastRead - b.daysSinceLastRead);
+      .sort((a: any, b: any) => a.daysSinceLastRead - b.daysSinceLastRead);
   }
 
   // ============================================
@@ -190,7 +190,7 @@ export class MyProgressRepository {
     if (sessionsError || !sessionsData?.length) return [];
 
     // Obtener info de los libros
-    const bookIds = [...new Set(sessionsData.map(s => s.book_id))];
+    const bookIds = [...new Set(sessionsData.map((s: any) => s.book_id))];
 
     const { data: booksData } = await supabase
       .schema('books')
@@ -206,7 +206,7 @@ export class MyProgressRepository {
     );
 
     return sessionsData.map((s: any) => {
-      const bookInfo = booksMap.get(s.book_id);
+      const bookInfo: any = booksMap.get(s.book_id);
       return {
         id: s.id,
         bookId: s.book_id,

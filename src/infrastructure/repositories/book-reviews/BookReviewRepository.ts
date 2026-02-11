@@ -19,7 +19,7 @@ export class BookReviewRepository implements IBookReviewRepository {
     if (!includeDeleted) query = query.is('deleted_at', null);
     const { data, error } = await query.order('created_at', { ascending: false });
     if (error) throw new Error(`Error fetching reviews: ${error.message}`);
-    return (data || []).map(row => BookReviewEntity.fromDatabase(row));
+    return (data || []).map((row: any) => BookReviewEntity.fromDatabase(row));
   }
 
   async findById(id: string): Promise<BookReviewEntity | null> {
@@ -31,13 +31,13 @@ export class BookReviewRepository implements IBookReviewRepository {
   async findByBookId(bookId: string): Promise<BookReviewEntity[]> {
     const { data, error } = await this.supabase.schema('books').from('book_reviews').select('*').eq('book_id', bookId).is('deleted_at', null).order('created_at', { ascending: false });
     if (error) throw new Error(`Error fetching reviews: ${error.message}`);
-    return (data || []).map(row => BookReviewEntity.fromDatabase(row));
+    return (data || []).map((row: any) => BookReviewEntity.fromDatabase(row));
   }
 
   async findByUserId(userId: string): Promise<BookReviewEntity[]> {
     const { data, error } = await this.supabase.schema('books').from('book_reviews').select('*').eq('user_id', userId).is('deleted_at', null).order('created_at', { ascending: false });
     if (error) throw new Error(`Error fetching reviews: ${error.message}`);
-    return (data || []).map(row => BookReviewEntity.fromDatabase(row));
+    return (data || []).map((row: any) => BookReviewEntity.fromDatabase(row));
   }
 
   async create(dto: CreateBookReviewDTO): Promise<BookReviewEntity> {

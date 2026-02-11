@@ -4,8 +4,16 @@ import { createBrowserClient } from '@supabase/ssr';
 import { createServerClient } from '@supabase/ssr';
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
-// ✅ Cliente para browser (componentes cliente)
+// ✅ Singleton global para cliente browser (evita múltiples instancias)
+// Usar globalThis para persistir entre hot reloads en desarrollo
+const globalForSupabase = globalThis as unknown as {
+  supabaseBrowserClient: ReturnType<typeof createBrowserClient> | undefined
+};
+
 export function createClient() {
+  // Retornar instancia existente si ya fue creada
+  if (globalForSupabase.supabaseBrowserClient) return globalForSupabase.supabaseBrowserClient;
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
 
@@ -17,7 +25,16 @@ export function createClient() {
     return createBrowserClient('https://dummy.supabase.co', 'dummy-key');
   }
 
-  return createBrowserClient(supabaseUrl, supabaseKey);
+  globalForSupabase.supabaseBrowserClient = createBrowserClient(supabaseUrl, supabaseKey, {
+    auth: {
+      detectSessionInUrl: true,
+      persistSession: true,
+      debug: false,
+      storageKey: 'sb-auth-token',
+    }
+  });
+
+  return globalForSupabase.supabaseBrowserClient;
 }
 
 // ✅ Cliente para servidor (Server Components/Actions)

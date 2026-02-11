@@ -17,7 +17,7 @@ export class ReadingSessionRepository implements IReadingSessionRepository {
   async findAll(): Promise<ReadingSessionEntity[]> {
     const { data, error } = await this.supabase.schema('books').from('reading_sessions').select('*').order('started_at', { ascending: false });
     if (error) throw new Error(`Error fetching sessions: ${error.message}`);
-    return (data || []).map(row => ReadingSessionEntity.fromDatabase(row));
+    return (data || []).map((row: any) => ReadingSessionEntity.fromDatabase(row));
   }
 
   async findById(id: string): Promise<ReadingSessionEntity | null> {
@@ -29,13 +29,13 @@ export class ReadingSessionRepository implements IReadingSessionRepository {
   async findByBookId(bookId: string): Promise<ReadingSessionEntity[]> {
     const { data, error } = await this.supabase.schema('books').from('reading_sessions').select('*').eq('book_id', bookId).order('started_at', { ascending: false });
     if (error) throw new Error(`Error fetching sessions: ${error.message}`);
-    return (data || []).map(row => ReadingSessionEntity.fromDatabase(row));
+    return (data || []).map((row: any) => ReadingSessionEntity.fromDatabase(row));
   }
 
   async findByUserId(userId: string): Promise<ReadingSessionEntity[]> {
     const { data, error } = await this.supabase.schema('books').from('reading_sessions').select('*').eq('user_id', userId).order('started_at', { ascending: false });
     if (error) throw new Error(`Error fetching sessions: ${error.message}`);
-    return (data || []).map(row => ReadingSessionEntity.fromDatabase(row));
+    return (data || []).map((row: any) => ReadingSessionEntity.fromDatabase(row));
   }
 
   async findActiveByUser(userId: string): Promise<ReadingSessionEntity | null> {

@@ -35,17 +35,17 @@ CREATE POLICY "reading_progress_owner_update" ON books.reading_progress
 -- ============================================
 ALTER TABLE books.reading_sessions ENABLE ROW LEVEL SECURITY;
 
--- Usuarios pueden ver sus propias sesiones
+-- Usuarios pueden ver sus propias sesiones (incluye sesiones anónimas)
 CREATE POLICY "reading_sessions_owner_read" ON books.reading_sessions
   FOR SELECT
   TO authenticated
-  USING (user_id = auth.uid());
+  USING (user_id = auth.uid() OR user_id IS NULL);
 
--- Usuarios pueden crear sus propias sesiones
-CREATE POLICY "reading_sessions_owner_insert" ON books.reading_sessions
+-- Cualquiera puede crear sesiones (autenticados y anónimos)
+CREATE POLICY "reading_sessions_insert" ON books.reading_sessions
   FOR INSERT
-  TO authenticated
-  WITH CHECK (user_id = auth.uid());
+  TO authenticated, anon
+  WITH CHECK (true);
 
 -- Usuarios pueden actualizar sus propias sesiones
 CREATE POLICY "reading_sessions_owner_update" ON books.reading_sessions
@@ -192,9 +192,10 @@ CREATE POLICY "reading_list_books_owner_delete" ON books.reading_list_books
 GRANT SELECT ON books.reading_lists TO anon;
 GRANT SELECT ON books.reading_list_books TO anon;
 
--- Permisos para usuarios autenticados
+-- Permisos para usuarios autenticados y anónimos
 GRANT SELECT, INSERT, UPDATE ON books.reading_progress TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON books.reading_sessions TO authenticated;
+GRANT INSERT ON books.reading_sessions TO anon; -- Permitir sesiones anónimas
 GRANT SELECT, INSERT, DELETE ON books.favorites TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON books.reading_lists TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON books.reading_list_books TO authenticated;

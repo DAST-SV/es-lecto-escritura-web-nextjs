@@ -87,7 +87,7 @@ export class HardDeleteBookUseCase {
 
       // PDFs de traducciones
       if (translations && translations.length > 0) {
-        translations.forEach(trans => {
+        translations.forEach((trans: any) => {
           if (trans.pdf_url) {
             const path = extractPath(trans.pdf_url);
             if (path) pdfFiles.push(path);

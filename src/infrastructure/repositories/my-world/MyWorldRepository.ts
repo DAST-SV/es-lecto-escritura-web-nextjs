@@ -78,7 +78,7 @@ export class MyWorldRepository {
     }
     if (!progressData?.length) return [];
 
-    const bookIds = progressData.map(p => p.book_id);
+    const bookIds = progressData.map((p: any) => p.book_id);
 
     // 2. Obtener detalles de libros
     const { data: booksData, error: booksError } = await supabase
@@ -94,12 +94,12 @@ export class MyWorldRepository {
     if (!booksData?.length) return [];
 
     // 3. Merge y mapear
-    const progressMap = new Map(progressData.map(p => [p.book_id, p]));
+    const progressMap = new Map(progressData.map((p: any) => [p.book_id, p]));
 
     return booksData
       .map((book: any) => {
-        const mapped = mapBookFromView(book, locale);
-        const progress = progressMap.get(book.id);
+        const mapped: any = mapBookFromView(book, locale);
+        const progress: any = progressMap.get(book.id);
         return {
           ...mapped,
           completionPercentage: Number(progress?.completion_percentage) || 0,
@@ -109,7 +109,7 @@ export class MyWorldRepository {
           readingTimeSeconds: progress?.reading_time_seconds || 0,
         } as MyWorldBook;
       })
-      .sort((a, b) => {
+      .sort((a: any, b: any) => {
         const dateA = a.lastReadAt ? new Date(a.lastReadAt).getTime() : 0;
         const dateB = b.lastReadAt ? new Date(b.lastReadAt).getTime() : 0;
         return dateB - dateA;
@@ -138,7 +138,7 @@ export class MyWorldRepository {
     }
     if (!progressData?.length) return [];
 
-    const bookIds = progressData.map(p => p.book_id);
+    const bookIds = progressData.map((p: any) => p.book_id);
 
     const { data: booksData, error: booksError } = await supabase
       .schema('books')
@@ -152,12 +152,12 @@ export class MyWorldRepository {
     }
     if (!booksData?.length) return [];
 
-    const progressMap = new Map(progressData.map(p => [p.book_id, p]));
+    const progressMap = new Map(progressData.map((p: any) => [p.book_id, p]));
 
     return booksData
       .map((book: any) => {
-        const mapped = mapBookFromView(book, locale);
-        const progress = progressMap.get(book.id);
+        const mapped: any = mapBookFromView(book, locale);
+        const progress: any = progressMap.get(book.id);
         return {
           ...mapped,
           completionPercentage: Number(progress?.completion_percentage) || 100,
@@ -167,7 +167,7 @@ export class MyWorldRepository {
           readingTimeSeconds: progress?.reading_time_seconds || 0,
         } as MyWorldBook;
       })
-      .sort((a, b) => {
+      .sort((a: any, b: any) => {
         const dateA = a.lastReadAt ? new Date(a.lastReadAt).getTime() : 0;
         const dateB = b.lastReadAt ? new Date(b.lastReadAt).getTime() : 0;
         return dateB - dateA;
@@ -195,7 +195,7 @@ export class MyWorldRepository {
     }
     if (!favData?.length) return [];
 
-    const bookIds = favData.map(f => f.book_id);
+    const bookIds = favData.map((f: any) => f.book_id);
 
     const { data: booksData, error: booksError } = await supabase
       .schema('books')
@@ -234,7 +234,7 @@ export class MyWorldRepository {
     if (!booksData?.length) return [];
 
     // 2. Obtener traducciones
-    const bookIds = booksData.map(b => b.id);
+    const bookIds = booksData.map((b: any) => b.id);
     const { data: translationsData } = await supabase
       .schema('books')
       .from('book_translations')

@@ -2,8 +2,13 @@ import { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
 const nextConfig: NextConfig = {
-  reactStrictMode: true,
-  
+  reactStrictMode: false,
+
+  // Deshabilitar todos los logs de Next.js
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+
   images: {
     // Agregar 90 a las qualities configuradas
     qualities: [75, 80, 70,  85, 90, 95],

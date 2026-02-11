@@ -19,10 +19,10 @@ export class BookPageRepository implements IBookPageRepository2 {
     const { data, error } = await this.supabase.schema('books').from('pages').select('*').order('book_id').order('page_number');
     if (error) throw new Error(`Error fetching pages: ${error.message}`);
 
-    const pageIds = (data || []).map(p => p.id);
+    const pageIds = (data || []).map((p: any) => p.id);
     const { data: translations } = await this.supabase.schema('books').from('page_translations').select('*').in('page_id', pageIds);
 
-    return (data || []).map(row => {
+    return (data || []).map((row: any) => {
       const pageTrans = (translations || []).filter((t: any) => t.page_id === row.id);
       return BookPageEntity.fromDatabase(row, pageTrans);
     });
@@ -40,10 +40,10 @@ export class BookPageRepository implements IBookPageRepository2 {
     const { data, error } = await this.supabase.schema('books').from('pages').select('*').eq('book_id', bookId).order('page_number');
     if (error) throw new Error(`Error fetching pages: ${error.message}`);
 
-    const pageIds = (data || []).map(p => p.id);
+    const pageIds = (data || []).map((p: any) => p.id);
     const { data: translations } = await this.supabase.schema('books').from('page_translations').select('*').in('page_id', pageIds);
 
-    return (data || []).map(row => {
+    return (data || []).map((row: any) => {
       const pageTrans = (translations || []).filter((t: any) => t.page_id === row.id);
       return BookPageEntity.fromDatabase(row, pageTrans);
     });

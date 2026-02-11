@@ -23,19 +23,8 @@ export default getRequestConfig(async ({ requestLocale }) => {
 });
 
 async function loadTranslations(languageCode: string) {
-  // ✅ En build time, usar JSON estático
-  if (process.env.NEXT_PHASE === 'phase-production-build') {
-    console.log(`📦 Build time: usando JSON estático para ${languageCode}`);
-    return await loadStaticJSON(languageCode);
-  }
-
-  // ✅ En runtime, intentar Supabase primero
-  try {
-    return await loadFromSupabase(languageCode);
-  } catch (error) {
-    console.warn(`⚠️ Supabase falló, usando JSON estático:`, error);
-    return await loadStaticJSON(languageCode);
-  }
+  // ✅ Usar siempre JSON estático (sin consultas a Supabase)
+  return await loadStaticJSON(languageCode);
 }
 
 async function loadFromSupabase(languageCode: string) {
@@ -45,12 +34,14 @@ async function loadFromSupabase(languageCode: string) {
   
   // Obtener todos los namespaces activos
   const { data: namespaces } = await supabase
+    .schema('app')
     .from('translation_namespaces')
     .select('slug')
     .eq('is_active', true);
 
   if (!namespaces || namespaces.length === 0) {
-    throw new Error('No namespaces encontrados');
+    // Silenciosamente usar JSON estático sin error
+    return null;
   }
 
   const messages: Record<string, any> = {};
@@ -58,6 +49,7 @@ async function loadFromSupabase(languageCode: string) {
   // Cargar traducciones de cada namespace
   for (const ns of namespaces) {
     const { data: translations } = await supabase
+      .schema('app')
       .from('translations')
       .select('translation_key, value')
       .eq('namespace_slug', ns.slug)
@@ -84,17 +76,14 @@ async function loadFromSupabase(languageCode: string) {
     }
   }
 
-  console.log(`✅ Traducciones desde Supabase para ${languageCode}:`, Object.keys(messages));
   return messages;
 }
 
 async function loadStaticJSON(languageCode: string) {
   try {
     const messages = (await import(`../../messages/${languageCode}.json`)).default;
-    console.log(`✅ Traducciones desde JSON para ${languageCode}`);
     return messages;
   } catch (error) {
-    console.error(`❌ Error cargando JSON para ${languageCode}:`, error);
     return {};
   }
 }
