@@ -25,14 +25,7 @@ export function createClient() {
     return createBrowserClient('https://dummy.supabase.co', 'dummy-key');
   }
 
-  globalForSupabase.supabaseBrowserClient = createBrowserClient(supabaseUrl, supabaseKey, {
-    auth: {
-      detectSessionInUrl: true,
-      persistSession: true,
-      debug: false,
-      storageKey: 'sb-auth-token',
-    }
-  });
+  globalForSupabase.supabaseBrowserClient = createBrowserClient(supabaseUrl, supabaseKey);
 
   return globalForSupabase.supabaseBrowserClient;
 }

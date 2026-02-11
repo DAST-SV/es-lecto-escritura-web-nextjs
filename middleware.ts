@@ -10,7 +10,7 @@ const DEFAULT_LOCALE = 'es';
 type Locale = typeof LOCALES[number];
 
 const PUBLIC_ROUTES = ['/', '/auth/login', '/auth/register', '/auth/callback', '/error', '/books', '/explore', '/library'];
-const STATIC_ROUTES = ['/_next', '/api', '/favicon.ico', '/images', '/fonts', '/.well-known'];
+const STATIC_ROUTES = ['/_next', '/api', '/favicon.ico', '/images', '/fonts', '/.well-known', '/auth/callback'];
 
 // ✅ Cache con TTL más corto
 let routesCache: Record<string, any> | null = null;
