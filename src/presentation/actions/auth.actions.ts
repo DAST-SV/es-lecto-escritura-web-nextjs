@@ -206,3 +206,57 @@ export async function resetPassword(prevState: AuthState, formData: FormData): P
 
   return { success: true };
 }
+
+export async function assignRole(role: string): Promise<AuthState> {
+  const supabase = await createServerSupabaseClient();
+
+  // Get current user
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    return { error: 'Usuario no autenticado' };
+  }
+
+  // Check if user already has a role
+  const { data: existingRole } = await supabase
+    .schema('app')
+    .from('user_roles')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+    .limit(1)
+    .single();
+
+  if (existingRole) {
+    return { success: true };
+  }
+
+  // Find the role_id
+  const { data: roleData, error: roleError } = await supabase
+    .schema('app')
+    .from('roles')
+    .select('id')
+    .eq('name', role)
+    .single();
+
+  if (roleError || !roleData) {
+    return { error: 'Rol no encontrado' };
+  }
+
+  // Assign the role
+  const { error: assignError } = await supabase
+    .schema('app')
+    .from('user_roles')
+    .insert({
+      user_id: user.id,
+      role_id: roleData.id,
+      is_active: true,
+      assigned_by: user.id,
+    });
+
+  if (assignError) {
+    return { error: 'Error al asignar el rol' };
+  }
+
+  revalidatePath('/', 'layout');
+  return { success: true };
+}

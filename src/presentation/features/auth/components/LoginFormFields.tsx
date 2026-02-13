@@ -83,7 +83,8 @@ export function LoginFormFields({
 
         <Link
           href={`/${locale}/auth/forgot-password`}
-          className="text-red-500 hover:text-red-700 hover:underline text-base transition-all duration-300 ease-in-out font-semibold"
+          className="text-red-500 hover:text-red-700 text-sm font-bold border border-yellow-300 rounded-lg px-3 py-1 hover:bg-yellow-50 transition-all duration-300 ease-in-out"
+          style={{ fontFamily: "'Nunito', 'Varela Round', 'Comfortaa', sans-serif" }}
         >
           {t('forgot_password')}
         </Link>

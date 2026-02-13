@@ -26,16 +26,18 @@ export default function ResetPasswordPage() {
     return (
       <UnifiedLayout
         mainClassName="flex items-center justify-center"
-        className="bg-gradient-to-br from-blue-50 via-white to-blue-50"
+        className="bg-gradient-to-b from-blue-400 via-blue-300 to-green-300"
         backgroundComponent={<LoginBackground />}
       >
-        <div className="relative z-20 w-full max-w-md mx-auto px-4">
-          <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 border border-gray-100">
-            <div className="h-7 bg-gray-200 rounded-lg w-56 mx-auto mb-3 animate-pulse" />
-            <div className="h-4 bg-gray-100 rounded w-48 mx-auto mb-6 animate-pulse" />
-            <div className="h-12 bg-gray-100 rounded-xl mb-3 animate-pulse" />
-            <div className="h-12 bg-gray-100 rounded-xl mb-4 animate-pulse" />
-            <div className="h-12 bg-blue-100 rounded-xl animate-pulse" />
+        <div className="relative z-20 w-full max-w-md mx-auto">
+          <div className="bg-white rounded-2xl shadow-2xl p-4 border-3 border-yellow-300">
+            <div className="text-center mb-4">
+              <div className="h-8 bg-gray-200 rounded w-3/4 mx-auto mb-4 animate-pulse"></div>
+              <div className="h-4 bg-gray-100 rounded w-2/3 mx-auto mb-6 animate-pulse"></div>
+              <div className="h-12 bg-gray-100 rounded animate-pulse mb-3"></div>
+              <div className="h-12 bg-gray-100 rounded animate-pulse mb-4"></div>
+              <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+            </div>
           </div>
         </div>
       </UnifiedLayout>
@@ -45,20 +47,29 @@ export default function ResetPasswordPage() {
   return (
     <UnifiedLayout
       mainClassName="flex items-center justify-center"
-      className="bg-gradient-to-br from-blue-50 via-white to-blue-50"
+      className="bg-gradient-to-b from-blue-400 via-blue-300 to-green-300"
       backgroundComponent={<LoginBackground />}
     >
-      <div className="relative z-20 w-full max-w-md mx-auto px-4">
-        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 border border-gray-100">
+      <div className="relative z-20 w-full max-w-md mx-auto">
+        <div className="bg-white rounded-2xl shadow-2xl p-4 border-3 border-yellow-300">
           {/* Header */}
-          <div className="text-center mb-6">
+          <div className="text-center mb-4">
             <h1
-              className="text-2xl font-bold text-gray-800 tracking-tight"
-              style={{ fontFamily: "'Nunito', sans-serif" }}
+              className="text-gray-700 text-xl mb-2"
+              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            >
+              ESLECTOESCRITURA
+            </h1>
+            <h2
+              className="text-blue-600 font-bold text-lg mb-1"
+              style={{ fontFamily: "'Nunito', 'Varela Round', 'Comfortaa', sans-serif" }}
             >
               {t('reset_password_title') || 'Nueva contraseña'}
-            </h1>
-            <p className="text-sm text-gray-400 mt-2">
+            </h2>
+            <p
+              className="text-gray-500 text-sm"
+              style={{ fontFamily: "'Nunito', 'Varela Round', 'Comfortaa', sans-serif" }}
+            >
               {t('reset_password_subtitle') || 'Ingresa tu nueva contraseña'}
             </p>
           </div>
@@ -71,18 +82,23 @@ export default function ResetPasswordPage() {
               className="text-center py-4"
             >
               <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-              <h2 className="text-lg font-semibold text-gray-800 mb-1">
+              <h2
+                className="text-lg font-bold text-green-600 mb-1"
+                style={{ fontFamily: "'Nunito', 'Varela Round', 'Comfortaa', sans-serif" }}
+              >
                 {t('reset_password_success_title') || 'Contraseña actualizada'}
               </h2>
               <p className="text-sm text-gray-500 mb-6">
                 {t('reset_password_success_message') || 'Ya puedes iniciar sesion con tu nueva contraseña'}
               </p>
-              <Link
-                href={`/${locale}/auth/login`}
-                className="inline-flex items-center justify-center gap-2 w-full h-12 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all"
-              >
-                {t('login_button') || 'Ingresar'}
-              </Link>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link
+                  href={`/${locale}/auth/login`}
+                  className="inline-flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-lg font-semibold hover:from-green-500 hover:to-blue-600 transition-all text-lg shadow-md"
+                >
+                  {t('login_button') || '¡ENTRAR A APRENDER! 📚'}
+                </Link>
+              </motion.div>
             </motion.div>
           ) : (
             <>
@@ -92,10 +108,10 @@ export default function ResetPasswordPage() {
               {/* Form */}
               <motion.form
                 action={formAction}
-                initial={{ opacity: 0, y: 12 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.4 }}
-                className="space-y-4"
+                transition={{ delay: 0.4, duration: 0.6 }}
+                className="space-y-5"
               >
                 <Input
                   name="password"
@@ -104,6 +120,7 @@ export default function ResetPasswordPage() {
                   placeholder={t('new_password_placeholder') || 'Nueva contraseña'}
                   icon={<Lock size={18} />}
                   showToggle={true}
+                  className="text-base transition-all duration-300 ease-in-out focus:ring-2 focus:ring-blue-400"
                 />
 
                 <Input
@@ -113,23 +130,29 @@ export default function ResetPasswordPage() {
                   placeholder={t('confirm_password_placeholder') || 'Confirmar contraseña'}
                   icon={<Lock size={18} />}
                   showToggle={true}
+                  className="text-base transition-all duration-300 ease-in-out focus:ring-2 focus:ring-blue-400"
                 />
 
-                <Button
-                  loading={isPending}
-                  loadingText={t('reset_password_loading') || 'Guardando...'}
-                  size="lg"
-                  className="w-full"
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  {t('reset_password_submit') || 'Restablecer contraseña'}
-                </Button>
+                  <Button
+                    loading={isPending}
+                    loadingText={t('reset_password_loading') || 'Guardando...'}
+                    className="w-full text-lg py-3 transition-all duration-300 ease-in-out"
+                  >
+                    {t('reset_password_submit') || 'Restablecer contraseña'}
+                  </Button>
+                </motion.div>
               </motion.form>
 
               {/* Back to login */}
               <div className="text-center mt-5">
                 <Link
                   href={`/${locale}/auth/login`}
-                  className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-bold transition-colors"
+                  style={{ fontFamily: "'Nunito', 'Varela Round', 'Comfortaa', sans-serif" }}
                 >
                   <ArrowLeft size={14} />
                   {t('back_to_login') || 'Volver al inicio de sesion'}

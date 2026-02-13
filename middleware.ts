@@ -9,7 +9,7 @@ const LOCALES = ['es', 'en', 'fr', 'it'] as const;
 const DEFAULT_LOCALE = 'es';
 type Locale = typeof LOCALES[number];
 
-const PUBLIC_ROUTES = ['/', '/auth/login', '/auth/register', '/auth/callback', '/auth/forgot-password', '/auth/reset-password', '/error', '/books', '/explore', '/library'];
+const PUBLIC_ROUTES = ['/', '/auth/login', '/auth/register', '/auth/callback', '/auth/forgot-password', '/auth/reset-password', '/auth/complete-profile', '/error', '/books', '/explore', '/library'];
 const STATIC_ROUTES = ['/_next', '/api', '/favicon.ico', '/images', '/fonts', '/.well-known', '/auth/callback', '/sw.js', '/manifest.webmanifest', '/icons', '/offline'];
 
 // ✅ Cache con TTL más corto
@@ -179,6 +179,26 @@ export async function middleware(request: NextRequest) {
     }
     
     // console.log(`✅ Usuario: ${user.email}`);
+
+    // 6.1 Check if user has a role assigned
+    const { data: userRole } = await supabase
+      .schema('app')
+      .from('user_roles')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .limit(1)
+      .single();
+
+    if (!userRole) {
+      // No role — redirect to complete profile (unless already there)
+      if (!translatedPath.startsWith('/auth/complete-profile')) {
+        const url = request.nextUrl.clone();
+        url.pathname = `/${locale}/auth/complete-profile`;
+        url.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(url);
+      }
+    }
   } catch (error) {
     // Silenciar AuthSessionMissingError (usuario no autenticado es esperado)
     // console.error(`❌ Error auth:`, error);

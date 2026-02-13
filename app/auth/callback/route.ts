@@ -1,6 +1,7 @@
 // ============================================
 // app/auth/callback/route.ts
 // OAuth callback handler for Supabase Auth
+// Checks if user has a role assigned, redirects to complete-profile if not
 // ============================================
 
 import { NextResponse } from 'next/server';
@@ -38,6 +39,28 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
+      // Check if user has a role assigned
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        const { data: userRole } = await supabase
+          .schema('app')
+          .from('user_roles')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .limit(1)
+          .single();
+
+        if (!userRole) {
+          // No role assigned — extract locale from the next param or default to 'es'
+          const localeMatch = next.match(/^\/([a-z]{2})\//);
+          const locale = localeMatch ? localeMatch[1] : 'es';
+          const redirectAfter = encodeURIComponent(next);
+          return NextResponse.redirect(`${origin}/${locale}/auth/complete-profile?redirect=${redirectAfter}`);
+        }
+      }
+
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

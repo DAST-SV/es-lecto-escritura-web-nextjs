@@ -248,4 +248,44 @@ SELECT insert_translation('auth', 'form.reset_password_success_message',
     'Mensaje de exito al restablecer contraseña'
 );
 
-SELECT 'TRANSLATIONS: Auth forms - 25 traducciones insertadas' AS status;
+-- ============================================
+-- COMPLETE PROFILE (post-OAuth)
+-- ============================================
+
+-- auth.form.complete_profile_title
+SELECT insert_translation('auth', 'form.complete_profile_title',
+    '¡Bienvenido! Completa tu perfil',
+    'Welcome! Complete your profile',
+    'Bienvenue! Completez votre profil',
+    'forms',
+    'Titulo de la pagina de completar perfil post-OAuth'
+);
+
+-- auth.form.complete_profile_subtitle
+SELECT insert_translation('auth', 'form.complete_profile_subtitle',
+    'Selecciona tu tipo de usuario para continuar',
+    'Select your user type to continue',
+    'Selectionnez votre type utilisateur pour continuer',
+    'forms',
+    'Subtitulo de la pagina de completar perfil'
+);
+
+-- auth.form.complete_profile_submit
+SELECT insert_translation('auth', 'form.complete_profile_submit',
+    '¡Empezar a aprender! 🚀',
+    'Start learning! 🚀',
+    'Commencer a apprendre! 🚀',
+    'actions',
+    'Boton para completar perfil y continuar'
+);
+
+-- auth.form.complete_profile_loading
+SELECT insert_translation('auth', 'form.complete_profile_loading',
+    'Guardando...',
+    'Saving...',
+    'Sauvegarde...',
+    'actions',
+    'Texto del boton mientras guarda el perfil'
+);
+
+SELECT 'TRANSLATIONS: Auth forms - 29 traducciones insertadas' AS status;
