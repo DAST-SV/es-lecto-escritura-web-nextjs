@@ -41,7 +41,7 @@ const NavButton: React.FC<{
 // Componente principal
 // ============================================================================
 const BrowserNavControls: React.FC<{ className?: string }> = ({ className }) => {
-  const { isEnabled, canGoBack, canGoForward, goBack, goForward, refresh, isRefreshing } =
+  const { isEnabled, canGoBack, canGoForward, goBack, goForward, refresh, isLoading } =
     useBrowserNav();
 
   return (
@@ -67,13 +67,23 @@ const BrowserNavControls: React.FC<{ className?: string }> = ({ className }) => 
             <ArrowRight size={17} strokeWidth={2.2} />
           </NavButton>
 
-          {/* Recargar con animacion de giro */}
-          <NavButton onClick={refresh} ariaLabel="Recargar pagina">
+          {/* Recargar — gira continuamente mientras la pagina carga */}
+          <NavButton onClick={refresh} disabled={isLoading} ariaLabel="Recargar pagina">
             <motion.div
-              animate={isRefreshing ? { rotate: 360 } : { rotate: 0 }}
-              transition={isRefreshing ? { duration: 0.5, ease: "easeInOut" } : { duration: 0 }}
+              animate={isLoading ? { rotate: 360 } : { rotate: 0 }}
+              transition={
+                isLoading
+                  ? { duration: 0.8, repeat: Infinity, ease: "linear" }
+                  : { duration: 0.3, ease: "easeOut" }
+              }
             >
-              <RotateCw size={15} strokeWidth={2.2} />
+              <RotateCw
+                size={15}
+                strokeWidth={2.2}
+                className={`transition-colors duration-200 ${
+                  isLoading ? "text-blue-500" : ""
+                }`}
+              />
             </motion.div>
           </NavButton>
         </motion.div>

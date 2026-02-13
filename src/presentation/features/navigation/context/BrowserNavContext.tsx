@@ -6,6 +6,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 
 const STORAGE_KEY = 'pwa-nav-controls-enabled';
 
@@ -26,8 +27,8 @@ interface BrowserNavContextValue {
   goForward: () => void;
   /** Recargar pagina */
   refresh: () => void;
-  /** Si el refresh esta en animacion */
-  isRefreshing: boolean;
+  /** Si la pagina esta cargando (refresh, navegacion, cambio de ruta) */
+  isLoading: boolean;
 }
 
 const BrowserNavContext = createContext<BrowserNavContextValue | null>(null);
@@ -40,12 +41,17 @@ export const BrowserNavProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [isEnabled, setIsEnabled] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   // Tracking de historial: posicion actual vs maxima alcanzada
   const navIndex = useRef(0);
   const maxIndex = useRef(0);
+
+  // Ref para el pathname anterior (detectar cambios de ruta Next.js)
+  const pathname = usePathname();
+  const prevPathname = useRef(pathname);
+  const loadingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // --- Inicializacion ---
   useEffect(() => {
@@ -100,21 +106,45 @@ export const BrowserNavProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (typeof window === 'undefined') return;
 
     const handlePopState = () => {
-      // Cuando el usuario navega atras/adelante, actualizamos el tracking
-      // No podemos saber exactamente la posicion, pero podemos inferir
-      // Si hubo popstate, es porque se fue atras o adelante
       const currentLength = window.history.length;
-
-      // Heuristica: siempre se puede ir atras si hay historial
       setCanGoBack(currentLength > 1);
-      // Forward: despues de ir atras, se puede ir adelante
-      // Simplificacion: habilitamos forward siempre y dejamos que el browser lo maneje
       setCanGoForward(true);
+
+      // Mostrar loading al navegar atras/adelante
+      setIsLoading(true);
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
+  // --- Detectar cuando la pagina termina de cargar (cambio de ruta Next.js) ---
+  useEffect(() => {
+    if (prevPathname.current !== pathname) {
+      // La ruta cambio — la pagina termino de navegar
+      prevPathname.current = pathname;
+      // Pequeño delay para que la pagina renderice antes de quitar el spinner
+      if (loadingTimeout.current) clearTimeout(loadingTimeout.current);
+      loadingTimeout.current = setTimeout(() => {
+        setIsLoading(false);
+      }, 150);
+    }
+
+    return () => {
+      if (loadingTimeout.current) clearTimeout(loadingTimeout.current);
+    };
+  }, [pathname]);
+
+  // --- Safety: si isLoading queda true por mas de 10s, forzar reset ---
+  useEffect(() => {
+    if (!isLoading) return;
+
+    const safetyTimeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 10000);
+
+    return () => clearTimeout(safetyTimeout);
+  }, [isLoading]);
 
   // --- Toggle ---
   const toggleEnabled = useCallback(() => {
@@ -128,25 +158,24 @@ export const BrowserNavProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // --- Acciones de navegacion ---
   const goBack = useCallback(() => {
     if (typeof window === 'undefined') return;
+    setIsLoading(true);
     window.history.back();
-    // Despues de ir atras, se puede ir adelante
-    setTimeout(() => {
-      setCanGoForward(true);
-    }, 100);
+    setTimeout(() => setCanGoForward(true), 100);
   }, []);
 
   const goForward = useCallback(() => {
     if (typeof window === 'undefined') return;
+    setIsLoading(true);
     window.history.forward();
   }, []);
 
   const refresh = useCallback(() => {
     if (typeof window === 'undefined') return;
-    setIsRefreshing(true);
-    // Delay para mostrar la animacion antes del reload
+    setIsLoading(true);
+    // Pequeño delay para que el usuario vea que el icono empezo a girar
     setTimeout(() => {
       window.location.reload();
-    }, 300);
+    }, 150);
   }, []);
 
   // No renderizar con estado incorrecto antes de montar
@@ -159,7 +188,7 @@ export const BrowserNavProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     goBack,
     goForward,
     refresh,
-    isRefreshing,
+    isLoading,
   };
 
   return (
