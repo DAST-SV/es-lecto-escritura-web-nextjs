@@ -1,54 +1,85 @@
 /**
  * PWA Service Worker Registration + Native App Enhancements
  * @file src/presentation/components/PWARegister.tsx
- * @description Registra el service worker, detecta standalone mode,
- * y aplica mejoras para experiencia nativa
+ * @description Registra el service worker, maneja install prompt,
+ * detecta standalone mode y aplica mejoras para experiencia nativa
  */
 
 'use client';
 
 import { useEffect } from 'react';
 
+// Variable global para almacenar el evento de instalación
+let deferredInstallPrompt: Event | null = null;
+
 export function PWARegister() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     // ============================================
-    // 1. REGISTRAR SERVICE WORKER
+    // 1. REGISTRAR SERVICE WORKER (inmediatamente, sin esperar load)
     // ============================================
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker
-          .register('/sw.js', { scope: '/' })
-          .then((registration) => {
-            console.log('[PWA] Service Worker registrado:', registration.scope);
+    const registerSW = async () => {
+      if (!('serviceWorker' in navigator)) return;
 
-            // Verificar actualizaciones cada hora
-            setInterval(() => {
-              registration.update();
-            }, 60 * 60 * 1000);
+      try {
+        const registration = await navigator.serviceWorker.register('/sw.js', {
+          scope: '/',
+        });
 
-            // Notificar al usuario cuando hay una actualización disponible
-            registration.addEventListener('updatefound', () => {
-              const newWorker = registration.installing;
-              if (!newWorker) return;
+        console.log('[PWA] Service Worker registrado:', registration.scope);
 
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
-                  // Nueva versión disponible — reload silencioso
-                  console.log('[PWA] Nueva versión disponible');
-                }
-              });
-            });
-          })
-          .catch((error) => {
-            console.error('[PWA] Error registrando Service Worker:', error);
+        // Verificar actualizaciones cada hora
+        setInterval(() => {
+          registration.update();
+        }, 60 * 60 * 1000);
+
+        // Detectar actualizaciones
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (!newWorker) return;
+
+          newWorker.addEventListener('statechange', () => {
+            if (
+              newWorker.state === 'activated' &&
+              navigator.serviceWorker.controller
+            ) {
+              console.log('[PWA] Nueva versión disponible');
+            }
           });
-      });
-    }
+        });
+      } catch (error) {
+        console.error('[PWA] Error registrando Service Worker:', error);
+      }
+    };
+
+    // Registrar inmediatamente — no depender de 'load' event
+    registerSW();
 
     // ============================================
-    // 2. DETECTAR STANDALONE MODE (PWA instalada)
+    // 2. CAPTURAR EVENTO beforeinstallprompt
+    // ============================================
+    const handleBeforeInstallPrompt = (e: Event) => {
+      // Prevenir que Chrome muestre el mini-infobar automático
+      e.preventDefault();
+      // Guardar el evento para usarlo después
+      deferredInstallPrompt = e;
+      console.log('[PWA] App es instalable — beforeinstallprompt capturado');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // Detectar cuando la app fue instalada
+    const handleAppInstalled = () => {
+      deferredInstallPrompt = null;
+      console.log('[PWA] App instalada exitosamente');
+      document.documentElement.classList.add('pwa-standalone');
+    };
+
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    // ============================================
+    // 3. DETECTAR STANDALONE MODE (PWA ya instalada)
     // ============================================
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
@@ -59,7 +90,7 @@ export function PWARegister() {
       console.log('[PWA] Ejecutando en modo standalone (app instalada)');
     }
 
-    // Escuchar cambios de display mode (por si se instala durante la sesión)
+    // Escuchar cambios de display mode
     const displayModeQuery = window.matchMedia('(display-mode: standalone)');
     const handleDisplayModeChange = (e: MediaQueryListEvent) => {
       if (e.matches) {
@@ -69,39 +100,75 @@ export function PWARegister() {
     displayModeQuery.addEventListener('change', handleDisplayModeChange);
 
     // ============================================
-    // 3. PREVENIR PULL-TO-REFRESH EN PWA
+    // 4. PREVENIR PULL-TO-REFRESH EN PWA
     // ============================================
+    let touchStartY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isStandalone) return;
+      const touchY = e.touches[0].clientY;
+      const scrollTop =
+        document.documentElement.scrollTop || document.body.scrollTop;
+
+      // Prevenir pull-to-refresh solo cuando está arriba del todo
+      if (scrollTop <= 0 && touchY > touchStartY) {
+        e.preventDefault();
+      }
+    };
+
     if (isStandalone) {
-      let touchStartY = 0;
-
-      const handleTouchStart = (e: TouchEvent) => {
-        touchStartY = e.touches[0].clientY;
-      };
-
-      const handleTouchMove = (e: TouchEvent) => {
-        const touchY = e.touches[0].clientY;
-        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-
-        // Prevenir pull-to-refresh solo cuando está arriba del todo
-        if (scrollTop <= 0 && touchY > touchStartY) {
-          e.preventDefault();
-        }
-      };
-
-      document.addEventListener('touchstart', handleTouchStart, { passive: true });
-      document.addEventListener('touchmove', handleTouchMove, { passive: false });
-
-      return () => {
-        document.removeEventListener('touchstart', handleTouchStart);
-        document.removeEventListener('touchmove', handleTouchMove);
-        displayModeQuery.removeEventListener('change', handleDisplayModeChange);
-      };
+      document.addEventListener('touchstart', handleTouchStart, {
+        passive: true,
+      });
+      document.addEventListener('touchmove', handleTouchMove, {
+        passive: false,
+      });
     }
 
+    // ============================================
+    // CLEANUP
+    // ============================================
     return () => {
+      window.removeEventListener(
+        'beforeinstallprompt',
+        handleBeforeInstallPrompt,
+      );
+      window.removeEventListener('appinstalled', handleAppInstalled);
       displayModeQuery.removeEventListener('change', handleDisplayModeChange);
+      if (isStandalone) {
+        document.removeEventListener('touchstart', handleTouchStart);
+        document.removeEventListener('touchmove', handleTouchMove);
+      }
     };
   }, []);
 
   return null;
+}
+
+/**
+ * Función utilitaria para disparar el install prompt desde cualquier componente
+ * Uso: import { triggerPWAInstall } from '@/src/presentation/components/PWARegister';
+ */
+export async function triggerPWAInstall(): Promise<boolean> {
+  if (!deferredInstallPrompt) {
+    console.log('[PWA] No hay prompt de instalación disponible');
+    return false;
+  }
+
+  try {
+    // Mostrar el prompt de instalación
+    (deferredInstallPrompt as any).prompt();
+    // Esperar la respuesta del usuario
+    const result = await (deferredInstallPrompt as any).userChoice;
+    console.log('[PWA] Usuario respondió:', result.outcome);
+    deferredInstallPrompt = null;
+    return result.outcome === 'accepted';
+  } catch (error) {
+    console.error('[PWA] Error mostrando install prompt:', error);
+    return false;
+  }
 }
