@@ -9,7 +9,9 @@ import BrandLogo from "../BrandLogo";
 import MobileMenu from "./MobileMenu";
 import DesktopNavigation from "./DesktopNavigation";
 import MobileToggleButton from "./MobileToggleButton";
-import { useAuthNavigation } from '../../hooks/useAuth'; // 👈 CAMBIO AQUÍ
+import { BrowserNavControls, NavControlsToggle } from "../BrowserNavControls";
+import { BrowserNavProvider } from "../../context/BrowserNavContext";
+import { useAuthNavigation } from '../../hooks/useAuth';
 import { useNavigation } from '../../hooks/useNavigation';
 import { NavBarProps } from '../../types/navigation.types';
 
@@ -43,37 +45,47 @@ const NavBar: React.FC<NavBarProps> = ({ brandName, userAvatar }) => {
   }));
 
   return (
-    <nav
-      className={`pwa-navbar fixed top-0 left-0 w-full px-6 py-3 z-50 transition-all duration-300 ${
-        isScrolled
-          ? "bg-white/60 backdrop-blur-lg shadow-md"
-          : "bg-white/50 backdrop-blur-lg"
-      }`}
-    >
-      <div className="flex items-center justify-between max-w-7xl mx-auto">
-        <BrandLogo brandName={defaultBrandName} />
+    <BrowserNavProvider>
+      <nav
+        className={`pwa-navbar fixed top-0 left-0 w-full px-4 sm:px-6 py-3 z-50 transition-all duration-300 ${
+          isScrolled
+            ? "bg-white/60 backdrop-blur-lg shadow-md"
+            : "bg-white/50 backdrop-blur-lg"
+        }`}
+      >
+        <div className="flex items-center justify-between max-w-7xl mx-auto">
+          {/* Seccion izquierda: Logo + Controles de navegacion + Toggle */}
+          <div className="flex items-center gap-1">
+            <BrandLogo brandName={defaultBrandName} />
+            <BrowserNavControls />
+            {/* Toggle solo visible en desktop */}
+            <div className="hidden md:block">
+              <NavControlsToggle />
+            </div>
+          </div>
 
-        <DesktopNavigation
+          <DesktopNavigation
+            navItems={navItems}
+            userAvatar={user?.user_metadata?.avatar_url || defaultUserAvatar}
+            onLogout={logout}
+            isAuthenticated={!!user}
+          />
+
+          <MobileToggleButton
+            isOpen={isMobileOpen}
+            onToggle={() => setIsMobileOpen((prev) => !prev)}
+          />
+        </div>
+
+        <MobileMenu
+          isOpen={isMobileOpen}
           navItems={navItems}
           userAvatar={user?.user_metadata?.avatar_url || defaultUserAvatar}
           onLogout={logout}
           isAuthenticated={!!user}
         />
-
-        <MobileToggleButton
-          isOpen={isMobileOpen}
-          onToggle={() => setIsMobileOpen((prev) => !prev)}
-        />
-      </div>
-
-      <MobileMenu
-        isOpen={isMobileOpen}
-        navItems={navItems}
-        userAvatar={user?.user_metadata?.avatar_url || defaultUserAvatar}
-        onLogout={logout}
-        isAuthenticated={!!user}
-      />
-    </nav>
+      </nav>
+    </BrowserNavProvider>
   );
 };
 

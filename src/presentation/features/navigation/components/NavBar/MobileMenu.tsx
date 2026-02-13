@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import NavigationItems from "../NavigationItems";
 import LanguageSelector from "../LanguageSelector";
 import UserMenu from "../UserMenu";
+import { NavControlsToggle } from "../BrowserNavControls";
 import { MobileMenuProps } from '../../types/navigation.types';
 
 const MobileMenu: React.FC<MobileMenuProps> = ({
@@ -40,6 +41,9 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                 <NavigationItems key={item.label} items={[item]} isMobile={true} />
               )
             )}
+
+            {/* Toggle de controles de navegacion (atras/adelante/recargar) */}
+            <NavControlsToggle isMobile />
 
             <div
               className={`flex items-center ${

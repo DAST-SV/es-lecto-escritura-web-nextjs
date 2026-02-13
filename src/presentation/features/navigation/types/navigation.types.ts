@@ -60,3 +60,11 @@ export interface LanguageWithFlag {
   code: string;
   country: string;
 }
+
+export interface BrowserNavControlsProps {
+  className?: string;
+}
+
+export interface NavControlsToggleProps {
+  isMobile?: boolean;
+}
