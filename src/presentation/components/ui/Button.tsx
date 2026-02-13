@@ -34,10 +34,11 @@ interface ButtonProps
     VariantProps<typeof buttonVariants> {
   asChild?: boolean
   loading?: boolean
+  loadingText?: string
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, loading = false, children, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, loading = false, loadingText, children, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
 
     return (
@@ -50,7 +51,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {loading ? (
           <span className="flex items-center gap-2">
             <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-            Cargando...
+            {loadingText || children}
           </span>
         ) : (
           children

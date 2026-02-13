@@ -96,4 +96,156 @@ SELECT insert_translation('auth', 'form.or_use_email',
     'Texto divisor entre OAuth y email'
 );
 
-SELECT 'TRANSLATIONS: Auth forms - 10 traducciones insertadas' AS status;
+-- auth.form.login_subtitle
+SELECT insert_translation('auth', 'form.login_subtitle',
+    'Inicia sesion para continuar',
+    'Sign in to continue',
+    'Connectez-vous pour continuer',
+    'forms',
+    'Subtitulo de la pagina de login'
+);
+
+-- auth.form.back_to_login
+SELECT insert_translation('auth', 'form.back_to_login',
+    'Volver al inicio de sesion',
+    'Back to sign in',
+    'Retour a la connexion',
+    'forms',
+    'Link para volver al login'
+);
+
+-- ============================================
+-- FORGOT PASSWORD
+-- ============================================
+
+-- auth.form.forgot_password_title
+SELECT insert_translation('auth', 'form.forgot_password_title',
+    '¿Olvidaste tu contraseña?',
+    'Forgot your password?',
+    'Mot de passe oublie?',
+    'forms',
+    'Titulo de la pagina de recuperar contraseña'
+);
+
+-- auth.form.forgot_password_subtitle
+SELECT insert_translation('auth', 'form.forgot_password_subtitle',
+    'Ingresa tu correo y te enviaremos un enlace para recuperarla',
+    'Enter your email and we will send you a recovery link',
+    'Entrez votre email et nous vous enverrons un lien de recuperation',
+    'forms',
+    'Subtitulo de la pagina de recuperar contraseña'
+);
+
+-- auth.form.forgot_password_submit
+SELECT insert_translation('auth', 'form.forgot_password_submit',
+    'Enviar enlace de recuperacion',
+    'Send recovery link',
+    'Envoyer le lien de recuperation',
+    'actions',
+    'Boton para enviar enlace de recuperacion'
+);
+
+-- auth.form.forgot_password_loading
+SELECT insert_translation('auth', 'form.forgot_password_loading',
+    'Enviando...',
+    'Sending...',
+    'Envoi...',
+    'actions',
+    'Texto del boton mientras envia el enlace'
+);
+
+-- auth.form.forgot_password_success_title
+SELECT insert_translation('auth', 'form.forgot_password_success_title',
+    'Revisa tu correo',
+    'Check your email',
+    'Verifiez votre email',
+    'forms',
+    'Titulo de exito al enviar enlace'
+);
+
+-- auth.form.forgot_password_success_message
+SELECT insert_translation('auth', 'form.forgot_password_success_message',
+    'Te enviamos un enlace para restablecer tu contraseña',
+    'We sent you a link to reset your password',
+    'Nous vous avons envoye un lien pour reinitialiser votre mot de passe',
+    'forms',
+    'Mensaje de exito al enviar enlace'
+);
+
+-- ============================================
+-- RESET PASSWORD
+-- ============================================
+
+-- auth.form.reset_password_title
+SELECT insert_translation('auth', 'form.reset_password_title',
+    'Nueva contraseña',
+    'New password',
+    'Nouveau mot de passe',
+    'forms',
+    'Titulo de la pagina de nueva contraseña'
+);
+
+-- auth.form.reset_password_subtitle
+SELECT insert_translation('auth', 'form.reset_password_subtitle',
+    'Ingresa tu nueva contraseña',
+    'Enter your new password',
+    'Entrez votre nouveau mot de passe',
+    'forms',
+    'Subtitulo de la pagina de nueva contraseña'
+);
+
+-- auth.form.new_password_placeholder
+SELECT insert_translation('auth', 'form.new_password_placeholder',
+    'Nueva contraseña',
+    'New password',
+    'Nouveau mot de passe',
+    'forms',
+    'Placeholder para nueva contraseña'
+);
+
+-- auth.form.confirm_password_placeholder
+SELECT insert_translation('auth', 'form.confirm_password_placeholder',
+    'Confirmar contraseña',
+    'Confirm password',
+    'Confirmer le mot de passe',
+    'forms',
+    'Placeholder para confirmar contraseña'
+);
+
+-- auth.form.reset_password_submit
+SELECT insert_translation('auth', 'form.reset_password_submit',
+    'Restablecer contraseña',
+    'Reset password',
+    'Reinitialiser le mot de passe',
+    'actions',
+    'Boton para restablecer contraseña'
+);
+
+-- auth.form.reset_password_loading
+SELECT insert_translation('auth', 'form.reset_password_loading',
+    'Guardando...',
+    'Saving...',
+    'Sauvegarde...',
+    'actions',
+    'Texto del boton mientras guarda la contraseña'
+);
+
+-- auth.form.reset_password_success_title
+SELECT insert_translation('auth', 'form.reset_password_success_title',
+    'Contraseña actualizada',
+    'Password updated',
+    'Mot de passe mis a jour',
+    'forms',
+    'Titulo de exito al restablecer contraseña'
+);
+
+-- auth.form.reset_password_success_message
+SELECT insert_translation('auth', 'form.reset_password_success_message',
+    'Ya puedes iniciar sesion con tu nueva contraseña',
+    'You can now sign in with your new password',
+    'Vous pouvez maintenant vous connecter avec votre nouveau mot de passe',
+    'forms',
+    'Mensaje de exito al restablecer contraseña'
+);
+
+SELECT 'TRANSLATIONS: Auth forms - 25 traducciones insertadas' AS status;

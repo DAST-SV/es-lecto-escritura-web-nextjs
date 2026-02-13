@@ -114,4 +114,18 @@ export class SupabaseAuthRepository implements IAuthRepository {
     const user = await this.getCurrentUser();
     return user !== null;
   }
+
+  async resetPasswordForEmail(email: string, redirectTo: string): Promise<{ error: import('@supabase/supabase-js').AuthError | null }> {
+    const { error } = await this.supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    return { error };
+  }
+
+  async updatePassword(newPassword: string): Promise<AuthResult> {
+    const { data, error } = await this.supabase.auth.updateUser({ password: newPassword });
+    return {
+      user: data.user,
+      session: null,
+      error,
+    };
+  }
 }

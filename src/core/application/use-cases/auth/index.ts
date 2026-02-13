@@ -7,3 +7,5 @@ export { Signup } from './Signup';
 export { LoginWithProvider } from './LoginWithProvider';
 export { Logout } from './Logout';
 export { CheckAuthentication } from './CheckAuthentication';
+export { ResetPasswordForEmail } from './ResetPasswordForEmail';
+export { UpdatePassword } from './UpdatePassword';

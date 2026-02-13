@@ -61,7 +61,8 @@
       "Bash(git diff:*)",
       "Bash(tasklist:*)",
       "Bash(npx --yes sharp-cli:*)",
-      "Bash(npx sharp-cli:*)"
+      "Bash(npx sharp-cli:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }

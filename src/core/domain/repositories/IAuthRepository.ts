@@ -33,4 +33,6 @@ export interface IAuthRepository {
   logout(): Promise<void>;
   onAuthStateChange(callback: (user: User | null) => void): () => void;
   isAuthenticated(): Promise<boolean>;
+  resetPasswordForEmail(email: string, redirectTo: string): Promise<{ error: AuthError | null }>;
+  updatePassword(newPassword: string): Promise<AuthResult>;
 }

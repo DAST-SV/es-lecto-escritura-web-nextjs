@@ -9,6 +9,8 @@ import { motion } from 'framer-motion';
 import { Lock, Mail } from 'lucide-react';
 import { Input, Button } from '@/src/presentation/components/ui';
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
+import { useLocale } from 'next-intl';
+import Link from 'next/link';
 
 interface LoginFormFieldsProps {
   isPending: boolean;
@@ -22,6 +24,7 @@ export function LoginFormFields({
   formAction
 }: LoginFormFieldsProps) {
   const { t, loading } = useSupabaseTranslations('auth.form');
+  const locale = useLocale();
 
   if (loading) {
     return (
@@ -78,14 +81,12 @@ export function LoginFormFields({
           </span>
         </label>
 
-        <Button
-          type='button'
-          variant="text"
-          size="sm"
-          className="text-base transition-all duration-300 ease-in-out hover:text-blue-600"
+        <Link
+          href={`/${locale}/auth/forgot-password`}
+          className="text-red-500 hover:text-red-700 hover:underline text-base transition-all duration-300 ease-in-out font-semibold"
         >
-          {t('forgot_password')} 🤔
-        </Button>
+          {t('forgot_password')}
+        </Link>
       </div>
 
       <motion.div
@@ -94,6 +95,7 @@ export function LoginFormFields({
       >
         <Button
           loading={isPending}
+          loadingText={t('login_button_loading') || 'Ingresando...'}
           className="w-full text-lg py-3 mt-5 transition-all duration-300 ease-in-out"
         >
           {t('login_button')}

@@ -22,7 +22,7 @@ interface SocialLoginSectionProps {
 }
 
 export function SocialLoginSection({
-  providers = ["google", "apple", "azure", "facebook", "twitter", "spotify"]
+  providers = ["google", "apple", "azure", "facebook"]
 }: SocialLoginSectionProps) {
   const { form, providers: providerLabels, loading } = useAuthTranslations();
 
