@@ -5,6 +5,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { isRedirectError } from 'next/dist/client/components/redirect-error';
 import { getLocale } from "next-intl/server";
 import { headers, cookies } from 'next/headers';
 import { createServerSupabaseClient } from '@/src/infrastructure/config/supabase.config';
@@ -143,6 +144,7 @@ export async function loginWithProvider(provider: OAuthProvider) {
     const authUrlResponse = await loginWithProviderUseCase.execute(provider, redirectTo);
     redirect(authUrlResponse.url);
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const translatedError = await TranslationService.translateAuthError(errorMessage);
     throw new Error(translatedError);
