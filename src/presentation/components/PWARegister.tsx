@@ -100,34 +100,9 @@ export function PWARegister() {
     displayModeQuery.addEventListener('change', handleDisplayModeChange);
 
     // ============================================
-    // 4. PREVENIR PULL-TO-REFRESH EN PWA
+    // 4. PULL-TO-REFRESH: manejado por PullToRefresh component
+    // (ya no bloqueamos el gesto — lo interceptamos con UI custom)
     // ============================================
-    let touchStartY = 0;
-
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartY = e.touches[0].clientY;
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isStandalone) return;
-      const touchY = e.touches[0].clientY;
-      const scrollTop =
-        document.documentElement.scrollTop || document.body.scrollTop;
-
-      // Prevenir pull-to-refresh solo cuando está arriba del todo
-      if (scrollTop <= 0 && touchY > touchStartY) {
-        e.preventDefault();
-      }
-    };
-
-    if (isStandalone) {
-      document.addEventListener('touchstart', handleTouchStart, {
-        passive: true,
-      });
-      document.addEventListener('touchmove', handleTouchMove, {
-        passive: false,
-      });
-    }
 
     // ============================================
     // CLEANUP
@@ -139,10 +114,6 @@ export function PWARegister() {
       );
       window.removeEventListener('appinstalled', handleAppInstalled);
       displayModeQuery.removeEventListener('change', handleDisplayModeChange);
-      if (isStandalone) {
-        document.removeEventListener('touchstart', handleTouchStart);
-        document.removeEventListener('touchmove', handleTouchMove);
-      }
     };
   }, []);
 

@@ -15,6 +15,7 @@ import Loading from './loading';
 import { routing } from '@/src/infrastructure/config/routing.config';
 import { QueryProvider } from '@/src/presentation/providers/query-provider';
 import { PWARegister } from '@/src/presentation/components/PWARegister';
+import { PullToRefresh } from '@/src/presentation/components/PullToRefresh';
 
 interface LayoutProps {
   children: ReactNode;
@@ -132,8 +133,9 @@ export default async function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body>
-        {/* PWA: Service Worker Registration */}
+        {/* PWA: Service Worker Registration + Pull-to-Refresh mobile */}
         <PWARegister />
+        <PullToRefresh />
         {/* ✅ CORREGIDO: Pasar locale y messages */}
         <NextIntlClientProvider locale={validLocale} messages={messages}>
           {/* ✅ TanStack Query para manejo de estado del servidor */}

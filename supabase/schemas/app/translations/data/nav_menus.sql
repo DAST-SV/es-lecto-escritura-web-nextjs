@@ -52,4 +52,18 @@ SELECT insert_translation('nav', 'myProgress.text', 'Mi Progreso', 'My Progress'
 SELECT insert_translation('nav', 'myProgress.href', '/mi-progreso', '/my-progress', '/mon-progres');
 SELECT insert_translation('nav', 'myProgress.title', 'Sigue tu progreso de lectura', 'Track your reading progress', 'Suivez votre progres de lecture');
 
+-- ============================================
+-- BROWSER NAVIGATION CONTROLS (PWA)
+-- Usado por BrowserNavControls y NavControlsToggle
+-- ============================================
+
+-- Botones de navegacion
+SELECT insert_translation('nav', 'browser_nav.back', 'Volver', 'Go back', 'Retour');
+SELECT insert_translation('nav', 'browser_nav.forward', 'Adelante', 'Go forward', 'Avancer');
+SELECT insert_translation('nav', 'browser_nav.refresh', 'Recargar', 'Refresh', 'Actualiser');
+
+-- Toggle de controles
+SELECT insert_translation('nav', 'browser_nav.show', 'Mostrar navegacion', 'Show navigation', 'Afficher navigation');
+SELECT insert_translation('nav', 'browser_nav.hide', 'Ocultar navegacion', 'Hide navigation', 'Masquer navigation');
+
 SELECT 'TRANSLATIONS: Nav menus - traducciones insertadas' AS status;

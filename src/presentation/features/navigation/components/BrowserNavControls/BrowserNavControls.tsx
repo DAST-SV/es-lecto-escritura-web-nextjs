@@ -9,6 +9,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, RotateCw } from "lucide-react";
 import { useBrowserNav } from "../../context/BrowserNavContext";
+import { useSupabaseTranslations } from '../../../translations/hooks/useSupabaseTranslations';
 
 // ============================================================================
 // Sub-componente: Boton individual de navegacion
@@ -43,6 +44,7 @@ const NavButton: React.FC<{
 const BrowserNavControls: React.FC<{ className?: string }> = ({ className }) => {
   const { isEnabled, canGoBack, canGoForward, goBack, goForward, refresh, isLoading } =
     useBrowserNav();
+  const { t } = useSupabaseTranslations('nav');
 
   return (
     <AnimatePresence>
@@ -58,17 +60,29 @@ const BrowserNavControls: React.FC<{ className?: string }> = ({ className }) => 
           <div className="w-px h-5 bg-gray-300/50 mr-1" />
 
           {/* Atras */}
-          <NavButton onClick={goBack} disabled={!canGoBack} ariaLabel="Volver atras">
+          <NavButton
+            onClick={goBack}
+            disabled={!canGoBack}
+            ariaLabel={t('browser_nav.back') || 'Volver'}
+          >
             <ArrowLeft size={17} strokeWidth={2.2} />
           </NavButton>
 
           {/* Adelante */}
-          <NavButton onClick={goForward} disabled={!canGoForward} ariaLabel="Ir adelante">
+          <NavButton
+            onClick={goForward}
+            disabled={!canGoForward}
+            ariaLabel={t('browser_nav.forward') || 'Adelante'}
+          >
             <ArrowRight size={17} strokeWidth={2.2} />
           </NavButton>
 
           {/* Recargar — gira continuamente mientras la pagina carga */}
-          <NavButton onClick={refresh} disabled={isLoading} ariaLabel="Recargar pagina">
+          <NavButton
+            onClick={refresh}
+            disabled={isLoading}
+            ariaLabel={t('browser_nav.refresh') || 'Recargar'}
+          >
             <motion.div
               animate={isLoading ? { rotate: 360 } : { rotate: 0 }}
               transition={

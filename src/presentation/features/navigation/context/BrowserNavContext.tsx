@@ -69,7 +69,8 @@ export const BrowserNavProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (stored !== null) {
       setIsEnabled(stored === 'true');
     } else {
-      // Default: activado solo en standalone + desktop (>= 768px)
+      // Default: activado SOLO en PWA standalone + desktop (>= 768px)
+      // En browser normal (incluso desktop) siempre desactivado por defecto
       const isDesktop = window.innerWidth >= 768;
       const defaultEnabled = standalone && isDesktop;
       setIsEnabled(defaultEnabled);
