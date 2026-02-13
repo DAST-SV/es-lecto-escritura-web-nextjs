@@ -10,7 +10,7 @@ const DEFAULT_LOCALE = 'es';
 type Locale = typeof LOCALES[number];
 
 const PUBLIC_ROUTES = ['/', '/auth/login', '/auth/register', '/auth/callback', '/error', '/books', '/explore', '/library'];
-const STATIC_ROUTES = ['/_next', '/api', '/favicon.ico', '/images', '/fonts', '/.well-known', '/auth/callback'];
+const STATIC_ROUTES = ['/_next', '/api', '/favicon.ico', '/images', '/fonts', '/.well-known', '/auth/callback', '/sw.js', '/manifest.webmanifest', '/icons', '/offline'];
 
 // ✅ Cache con TTL más corto
 let routesCache: Record<string, any> | null = null;
@@ -253,5 +253,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  matcher: '/((?!_next/static|_next/image|favicon.ico|sw\\.js|manifest\\.webmanifest|icons/.*|offline|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
 };
