@@ -35,9 +35,8 @@ html, body {
 }
 
 /* === SAFE AREAS (notch, home indicator) === */
-body {
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-}
+/* Solo aplicar safe-area padding en modo standalone (PWA instalada) */
+/* En browser normal no hay safe areas que compensar */
 
 /* === TOUCH FEEDBACK NATIVO === */
 
@@ -136,9 +135,17 @@ html {
 
 /* === STANDALONE PWA ADJUSTMENTS === */
 @media (display-mode: standalone) {
-  /* Navbar con safe area top */
+  /* Body: safe areas solo en PWA standalone */
+  body {
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    /* NO padding-top en body — lo maneja el navbar con su propio padding */
+  }
+
+  /* Navbar: compensar safe area top (notch en móvil) */
   .pwa-navbar {
-    padding-top: env(safe-area-inset-top);
+    padding-top: calc(env(safe-area-inset-top) + 0.75rem);
   }
 
   /* Bottom content con safe area */

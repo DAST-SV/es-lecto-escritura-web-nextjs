@@ -18,9 +18,8 @@ export function createClient() {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
 
   // Durante build time, las variables pueden no estar disponibles
+  // Esto es normal y esperado — retornar cliente dummy silenciosamente
   if (!supabaseUrl || !supabaseKey) {
-    console.warn('[WARNING] Supabase environment variables not available for browser client (build time?)');
-    // Durante build, retornar cliente dummy
     // @ts-ignore
     return createBrowserClient('https://dummy.supabase.co', 'dummy-key');
   }
@@ -69,10 +68,9 @@ export function getSupabaseAdmin() {
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || '';
 
     // Durante build time, las variables pueden no estar disponibles
-    // En ese caso, creamos un cliente dummy que no se usará
+    // Esto es normal y esperado — retornar cliente dummy silenciosamente
     if (!supabaseUrl || !supabaseKey) {
-      console.warn('[WARNING] Supabase environment variables not available (build time?)');
-      // @ts-ignore - Durante build time, retornar cliente dummy
+      // @ts-ignore
       return createSupabaseClient('https://dummy.supabase.co', 'dummy-key');
     }
 
