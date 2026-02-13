@@ -92,11 +92,6 @@ export const HomeBackground: React.FC = () => {
         4
       </div>
 
-      {/* Emojis educativos - Sutiles */}
-      <div className="absolute top-1/4 left-1/4 text-5xl opacity-10 hidden xl:block">📚</div>
-      <div className="absolute top-1/3 right-1/3 text-4xl opacity-10 hidden xl:block">✏️</div>
-      <div className="absolute bottom-1/3 left-1/3 text-4xl opacity-10 hidden xl:block">🎨</div>
-      <div className="absolute bottom-1/4 right-1/4 text-5xl opacity-10 hidden xl:block">⭐</div>
     </>
   );
 };

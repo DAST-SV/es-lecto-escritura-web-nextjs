@@ -7,7 +7,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { BookOpen, Zap, Award, Users, DollarSign, LucideIcon, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { BookOpen, Zap, Award, Users, DollarSign, LucideIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import type { FeatureTab, FeatureTabId, Stat } from '../../types';
 import { NextImage } from '@/src/presentation/components/ui/NextImage';
@@ -77,19 +77,19 @@ const FeaturesSectionSkeleton: React.FC = () => (
 
       {/* Content skeleton */}
       <div className="flex-1 mb-6">
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-yellow-300 p-6 lg:p-10">
+        <div className="bg-white/90 rounded-3xl shadow-2xl overflow-hidden border-4 border-white/40 p-6 lg:p-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div className="space-y-4 animate-pulse">
-              <div className="h-8 bg-slate-200 rounded-full w-40" />
-              <div className="h-10 bg-slate-200 rounded-lg w-full" />
-              <div className="h-10 bg-slate-200 rounded-lg w-4/5" />
+              <div className="h-8 bg-white/50 rounded-full w-40" />
+              <div className="h-10 bg-white/50 rounded-lg w-full" />
+              <div className="h-10 bg-white/50 rounded-lg w-4/5" />
               <div className="space-y-2">
-                <div className="h-5 bg-slate-200 rounded w-full" />
-                <div className="h-5 bg-slate-200 rounded w-11/12" />
+                <div className="h-5 bg-white/50 rounded w-full" />
+                <div className="h-5 bg-white/50 rounded w-11/12" />
               </div>
-              <div className="h-12 bg-slate-200 rounded-full w-44" />
+              <div className="h-12 bg-yellow-300/50 rounded-full w-44" />
             </div>
-            <div className="relative h-64 bg-slate-200 rounded-2xl animate-pulse" />
+            <div className="relative h-64 bg-white/50 rounded-2xl animate-pulse" />
           </div>
         </div>
       </div>
@@ -97,11 +97,11 @@ const FeaturesSectionSkeleton: React.FC = () => (
       {/* Stats skeleton */}
       <div className="grid grid-cols-3 gap-4">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="bg-white/90 rounded-2xl p-4 text-center border-3 border-yellow-300 shadow-xl">
+          <div key={i} className="bg-white/90 rounded-2xl p-4 text-center border-2 border-white/40 shadow-xl">
             <div className="animate-pulse space-y-2">
-              <div className="w-14 h-14 bg-slate-200 rounded-full mx-auto" />
-              <div className="h-8 bg-slate-200 rounded w-16 mx-auto" />
-              <div className="h-4 bg-slate-200 rounded w-24 mx-auto" />
+              <div className="w-14 h-14 bg-white/50 rounded-full mx-auto" />
+              <div className="h-8 bg-white/50 rounded w-16 mx-auto" />
+              <div className="h-4 bg-white/50 rounded w-24 mx-auto" />
             </div>
           </div>
         ))}
@@ -214,7 +214,6 @@ export const FeaturesSection: React.FC = () => {
               >
                 <IconComponent className="w-4 h-4" />
                 <span>{tab.label}</span>
-                {isActive && <Sparkles className="w-3.5 h-3.5 animate-pulse" />}
               </button>
             );
           })}
@@ -267,7 +266,7 @@ export const FeaturesSection: React.FC = () => {
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-100 rounded-full border-2 border-yellow-300 shadow-xl">
                   {(() => {
                     const IconComponent = iconMap[activeTab] || BookOpen;
-                    return <IconComponent className="w-4 h-4 text-blue-600 animate-pulse" />;
+                    return <IconComponent className="w-4 h-4 text-blue-600" />;
                   })()}
                   <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
                     {activeTabData?.label}
@@ -295,10 +294,9 @@ export const FeaturesSection: React.FC = () => {
                   {activeTabData?.content}
                 </p>
                 
-                <button className="group relative px-7 py-3.5 bg-yellow-300 text-blue-700 font-black text-base rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-110 border-2 border-white overflow-hidden" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
-                  <span className="relative z-10 flex items-center gap-2">
+                <button className="group relative px-7 py-3.5 bg-yellow-300 text-blue-700 font-black text-base rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-105 border-2 border-white overflow-hidden" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
+                  <span className="relative z-10">
                     {t('button')}
-                    <Sparkles className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
                   </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </button>
@@ -306,7 +304,7 @@ export const FeaturesSection: React.FC = () => {
 
               {/* Image */}
               <div className="relative">
-                <div className="absolute -inset-5 bg-gradient-to-r from-yellow-300 via-orange-300 to-yellow-300 rounded-full blur-3xl opacity-60 animate-pulse" />
+                <div className="absolute -inset-5 bg-gradient-to-r from-yellow-300 via-orange-300 to-yellow-300 rounded-full blur-3xl opacity-20" />
                 <div className="relative bg-white rounded-3xl p-3 shadow-2xl border-4 border-yellow-300">
                   {Object.entries(imageMap).map(([tabId, imageSrc]) => {
                     const isActive = activeTab === tabId;

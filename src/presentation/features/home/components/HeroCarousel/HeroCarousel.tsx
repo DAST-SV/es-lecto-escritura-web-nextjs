@@ -10,7 +10,7 @@ import React, { useCallback, useEffect, useState, useRef, useMemo, memo } from '
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Sparkles, BookOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 
 import type { HeroSlide } from '../../types';
 import { NextImage } from '@/src/presentation/components/ui/NextImage';
@@ -70,37 +70,26 @@ const CarouselSkeleton: React.FC = memo(() => {
       <div className="hidden xl:flex w-full max-w-5xl items-center justify-between gap-8 mx-auto">
         {/* Left Content */}
         <div className="w-[50%] space-y-4 animate-pulse">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-200 rounded-full w-52 h-8"></div>
-          
-          {/* Title */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/30 rounded-full w-52 h-8"></div>
           <div className="space-y-3">
-            <div className="h-10 bg-slate-200 rounded-lg w-full"></div>
-            <div className="h-10 bg-slate-200 rounded-lg w-4/5"></div>
+            <div className="h-10 bg-white/30 rounded-lg w-full"></div>
+            <div className="h-10 bg-white/30 rounded-lg w-4/5"></div>
             <div className="flex items-center gap-3 mt-2">
-              <div className="h-1.5 w-16 bg-slate-200 rounded-full" />
-              <div className="h-1.5 w-10 bg-slate-200 rounded-full" />
-              <div className="h-1.5 w-6 bg-slate-200 rounded-full" />
+              <div className="h-1.5 w-16 bg-yellow-300/50 rounded-full" />
+              <div className="h-1.5 w-10 bg-green-300/50 rounded-full" />
+              <div className="h-1.5 w-6 bg-blue-300/50 rounded-full" />
             </div>
           </div>
-          
-          {/* Description */}
           <div className="space-y-2 pt-2">
-            <div className="h-5 bg-slate-200 rounded w-full"></div>
-            <div className="h-5 bg-slate-200 rounded w-11/12"></div>
-            <div className="h-5 bg-slate-200 rounded w-9/12"></div>
+            <div className="h-5 bg-white/30 rounded w-full"></div>
+            <div className="h-5 bg-white/30 rounded w-11/12"></div>
+            <div className="h-5 bg-white/30 rounded w-9/12"></div>
           </div>
-          
-          {/* Button */}
-          <div className="h-12 bg-slate-200 rounded-full w-48 mt-4"></div>
+          <div className="h-12 bg-white/40 rounded-full w-48 mt-4"></div>
         </div>
-
-        {/* Right Image */}
         <div className="w-[50%] flex justify-end items-end">
-          <div className="relative">
-            <div className="relative bg-slate-200 rounded-3xl p-3 w-[350px] h-[350px] animate-pulse">
-              <div className="rounded-2xl bg-slate-300 w-full h-full"></div>
-            </div>
+          <div className="relative bg-white/30 rounded-3xl p-3 w-[350px] h-[350px] animate-pulse">
+            <div className="rounded-2xl bg-white/20 w-full h-full"></div>
           </div>
         </div>
       </div>
@@ -108,26 +97,26 @@ const CarouselSkeleton: React.FC = memo(() => {
       {/* LAPTOP Skeleton (1024-1279px) */}
       <div className="hidden lg:flex xl:hidden w-full max-w-4xl items-center justify-between gap-8 mx-auto">
         <div className="w-[50%] space-y-3 animate-pulse">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-200 rounded-full w-52 h-8"></div>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/30 rounded-full w-52 h-8"></div>
           <div className="space-y-3">
-            <div className="h-9 bg-slate-200 rounded-lg w-full"></div>
-            <div className="h-9 bg-slate-200 rounded-lg w-4/5"></div>
+            <div className="h-9 bg-white/30 rounded-lg w-full"></div>
+            <div className="h-9 bg-white/30 rounded-lg w-4/5"></div>
             <div className="flex items-center gap-2 mt-2">
-              <div className="h-1.5 w-14 bg-slate-200 rounded-full" />
-              <div className="h-1.5 w-8 bg-slate-200 rounded-full" />
-              <div className="h-1.5 w-5 bg-slate-200 rounded-full" />
+              <div className="h-1.5 w-14 bg-yellow-300/50 rounded-full" />
+              <div className="h-1.5 w-8 bg-green-300/50 rounded-full" />
+              <div className="h-1.5 w-5 bg-blue-300/50 rounded-full" />
             </div>
           </div>
           <div className="space-y-2 pt-2">
-            <div className="h-4 bg-slate-200 rounded w-full"></div>
-            <div className="h-4 bg-slate-200 rounded w-11/12"></div>
-            <div className="h-4 bg-slate-200 rounded w-9/12"></div>
+            <div className="h-4 bg-white/30 rounded w-full"></div>
+            <div className="h-4 bg-white/30 rounded w-11/12"></div>
+            <div className="h-4 bg-white/30 rounded w-9/12"></div>
           </div>
-          <div className="h-11 bg-slate-200 rounded-full w-44 mt-4"></div>
+          <div className="h-11 bg-white/40 rounded-full w-44 mt-4"></div>
         </div>
         <div className="w-[50%] flex justify-end items-end">
-          <div className="relative bg-slate-200 rounded-3xl p-3 w-[300px] h-[300px] animate-pulse">
-            <div className="rounded-2xl bg-slate-300 w-full h-full"></div>
+          <div className="relative bg-white/30 rounded-3xl p-3 w-[300px] h-[300px] animate-pulse">
+            <div className="rounded-2xl bg-white/20 w-full h-full"></div>
           </div>
         </div>
       </div>
@@ -135,57 +124,57 @@ const CarouselSkeleton: React.FC = memo(() => {
       {/* TABLET Skeleton (768-1023px) */}
       <div className="hidden md:flex lg:hidden w-full max-w-3xl flex-col items-center text-center space-y-4 mx-auto px-6">
         <div className="space-y-3 animate-pulse w-full">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-200 rounded-full w-52 h-8 mx-auto"></div>
-          <div className="h-9 bg-slate-200 rounded-lg w-3/4 mx-auto"></div>
-          <div className="h-9 bg-slate-200 rounded-lg w-2/3 mx-auto"></div>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/30 rounded-full w-52 h-8 mx-auto"></div>
+          <div className="h-9 bg-white/30 rounded-lg w-3/4 mx-auto"></div>
+          <div className="h-9 bg-white/30 rounded-lg w-2/3 mx-auto"></div>
           <div className="flex items-center gap-2 justify-center mt-2">
-            <div className="h-1.5 w-12 bg-slate-200 rounded-full" />
-            <div className="h-1.5 w-8 bg-slate-200 rounded-full" />
-            <div className="h-1.5 w-5 bg-slate-200 rounded-full" />
+            <div className="h-1.5 w-12 bg-yellow-300/50 rounded-full" />
+            <div className="h-1.5 w-8 bg-green-300/50 rounded-full" />
+            <div className="h-1.5 w-5 bg-blue-300/50 rounded-full" />
           </div>
         </div>
-        <div className="relative bg-slate-200 rounded-3xl p-3 w-[320px] h-[320px] animate-pulse">
-          <div className="rounded-2xl bg-slate-300 w-full h-full"></div>
+        <div className="relative bg-white/30 rounded-3xl p-3 w-[320px] h-[320px] animate-pulse">
+          <div className="rounded-2xl bg-white/20 w-full h-full"></div>
         </div>
         <div className="space-y-2 animate-pulse w-full">
-          <div className="h-4 bg-slate-200 rounded w-2/3 mx-auto"></div>
-          <div className="h-4 bg-slate-200 rounded w-1/2 mx-auto"></div>
+          <div className="h-4 bg-white/30 rounded w-2/3 mx-auto"></div>
+          <div className="h-4 bg-white/30 rounded w-1/2 mx-auto"></div>
         </div>
-        <div className="h-11 bg-slate-200 rounded-full w-44 mx-auto animate-pulse"></div>
+        <div className="h-11 bg-white/40 rounded-full w-44 mx-auto animate-pulse"></div>
       </div>
 
       {/* MOBILE Skeleton (640-767px) */}
       <div className="hidden sm:flex md:hidden w-full max-w-md flex-col items-center text-center space-y-4 mx-auto px-4">
         <div className="space-y-2 animate-pulse w-full">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-200 rounded-full w-48 h-7 mx-auto"></div>
-          <div className="h-8 bg-slate-200 rounded-lg w-3/4 mx-auto"></div>
-          <div className="h-8 bg-slate-200 rounded-lg w-2/3 mx-auto"></div>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/30 rounded-full w-48 h-7 mx-auto"></div>
+          <div className="h-8 bg-white/30 rounded-lg w-3/4 mx-auto"></div>
+          <div className="h-8 bg-white/30 rounded-lg w-2/3 mx-auto"></div>
         </div>
-        <div className="relative bg-slate-200 rounded-2xl p-3 w-[260px] h-[260px] animate-pulse">
-          <div className="rounded-xl bg-slate-300 w-full h-full"></div>
+        <div className="relative bg-white/30 rounded-2xl p-3 w-[260px] h-[260px] animate-pulse">
+          <div className="rounded-xl bg-white/20 w-full h-full"></div>
         </div>
         <div className="space-y-2 animate-pulse w-full">
-          <div className="h-3 bg-slate-200 rounded w-2/3 mx-auto"></div>
-          <div className="h-3 bg-slate-200 rounded w-1/2 mx-auto"></div>
+          <div className="h-3 bg-white/30 rounded w-2/3 mx-auto"></div>
+          <div className="h-3 bg-white/30 rounded w-1/2 mx-auto"></div>
         </div>
-        <div className="h-10 bg-slate-200 rounded-full w-full animate-pulse"></div>
+        <div className="h-10 bg-white/40 rounded-full w-full animate-pulse"></div>
       </div>
 
       {/* MOBILE SMALL Skeleton (<640px) */}
       <div className="flex sm:hidden w-full max-w-[300px] flex-col items-center text-center space-y-3 mx-auto px-4">
         <div className="space-y-2 animate-pulse w-full">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-200 rounded-full w-32 h-6 mx-auto"></div>
-          <div className="h-7 bg-slate-200 rounded-lg w-full"></div>
-          <div className="h-7 bg-slate-200 rounded-lg w-4/5 mx-auto"></div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/30 rounded-full w-32 h-6 mx-auto"></div>
+          <div className="h-7 bg-white/30 rounded-lg w-full"></div>
+          <div className="h-7 bg-white/30 rounded-lg w-4/5 mx-auto"></div>
         </div>
-        <div className="relative bg-slate-200 rounded-2xl p-2 w-[220px] h-[220px] animate-pulse">
-          <div className="rounded-xl bg-slate-300 w-full h-full"></div>
+        <div className="relative bg-white/30 rounded-2xl p-2 w-[220px] h-[220px] animate-pulse">
+          <div className="rounded-xl bg-white/20 w-full h-full"></div>
         </div>
         <div className="space-y-1 animate-pulse w-full">
-          <div className="h-3 bg-slate-200 rounded w-3/4 mx-auto"></div>
-          <div className="h-3 bg-slate-200 rounded w-2/3 mx-auto"></div>
+          <div className="h-3 bg-white/30 rounded w-3/4 mx-auto"></div>
+          <div className="h-3 bg-white/30 rounded w-2/3 mx-auto"></div>
         </div>
-        <div className="h-9 bg-slate-200 rounded-xl w-full animate-pulse"></div>
+        <div className="h-9 bg-white/40 rounded-xl w-full animate-pulse"></div>
       </div>
     </div>
   );
@@ -216,7 +205,7 @@ const SlideContent = memo<{
       <div className="hidden xl:flex w-full max-w-5xl items-center justify-between gap-8 mx-auto">
         <div className="w-[50%] space-y-4 slide-content">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-yellow-300">
-            <BookOpen className="w-4 h-4 text-blue-600 animate-pulse" />
+            <BookOpen className="w-4 h-4 text-blue-600" />
             <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
               {badgeText}
             </span>
@@ -251,9 +240,8 @@ const SlideContent = memo<{
             type="button"
             tabIndex={isActive ? 0 : -1}
           >
-            <span className="relative z-10 flex items-center gap-2">
+            <span className="relative z-10">
               {slide.button}
-              <Sparkles className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
             </span>
             <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </button>
@@ -261,7 +249,7 @@ const SlideContent = memo<{
 
         <div className="w-[50%] flex justify-end items-end slide-image">
           <div className="relative z-20">
-            <div className="absolute -inset-6 bg-gradient-to-r from-yellow-300 via-orange-300 to-yellow-300 rounded-full blur-3xl opacity-60 animate-pulse" />
+            <div className="absolute -inset-6 bg-gradient-to-r from-yellow-300 via-orange-300 to-yellow-300 rounded-full blur-3xl opacity-30" />
             <div className="relative bg-white rounded-3xl p-3 shadow-2xl border-4 border-yellow-300 transform hover:rotate-2 transition-transform duration-500">
               <NextImage
                 src={imageSrc}
@@ -283,7 +271,7 @@ const SlideContent = memo<{
       <div className="hidden lg:flex xl:hidden w-full max-w-4xl items-center justify-between gap-8 mx-auto">
         <div className="w-[50%] space-y-3 slide-content">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-yellow-300">
-            <BookOpen className="w-4 h-4 text-blue-600 animate-pulse" />
+            <BookOpen className="w-4 h-4 text-blue-600" />
             <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
               {badgeText}
             </span>
@@ -318,9 +306,8 @@ const SlideContent = memo<{
             type="button"
             tabIndex={isActive ? 0 : -1}
           >
-            <span className="relative z-10 flex items-center gap-2">
+            <span className="relative z-10">
               {slide.button}
-              <Sparkles className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
             </span>
             <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </button>
@@ -328,7 +315,7 @@ const SlideContent = memo<{
 
         <div className="w-[50%] flex justify-end items-end slide-image">
           <div className="relative">
-            <div className="absolute -inset-5 bg-gradient-to-r from-yellow-300 via-orange-300 to-yellow-300 rounded-full blur-3xl opacity-60 animate-pulse" />
+            <div className="absolute -inset-5 bg-gradient-to-r from-yellow-300 via-orange-300 to-yellow-300 rounded-full blur-3xl opacity-30" />
             <div className="relative bg-white rounded-3xl p-3 shadow-2xl border-4 border-yellow-300 transform hover:rotate-2 transition-transform duration-500">
               <NextImage
                 src={imageSrc}
@@ -353,7 +340,7 @@ const SlideContent = memo<{
       <div className="hidden md:flex lg:hidden w-full max-w-3xl flex-col items-center text-center space-y-4 mx-auto px-6">
         <div className="space-y-3 slide-content">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-yellow-300">
-            <BookOpen className="w-4 h-4 text-blue-600 animate-pulse" />
+            <BookOpen className="w-4 h-4 text-blue-600" />
             <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
               {badgeText}
             </span>
@@ -378,7 +365,7 @@ const SlideContent = memo<{
 
         <div className="slide-image">
           <div className="relative inline-block">
-            <div className="absolute -inset-4 bg-gradient-to-r from-yellow-300 via-orange-300 to-yellow-300 rounded-full blur-2xl opacity-60 animate-pulse" />
+            <div className="absolute -inset-4 bg-gradient-to-r from-yellow-300 via-orange-300 to-yellow-300 rounded-full blur-2xl opacity-30" />
             <div className="relative bg-white rounded-3xl p-3 shadow-2xl border-4 border-yellow-300">
               <NextImage
                 src={imageSrc}
@@ -406,9 +393,8 @@ const SlideContent = memo<{
           type="button"
           tabIndex={isActive ? 0 : -1}
         >
-          <span className="relative z-10 flex items-center gap-2">
+          <span className="relative z-10">
             {slide.button}
-            <Sparkles className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
           </span>
           <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </button>
@@ -437,7 +423,7 @@ const SlideContent = memo<{
 
         <div className="slide-image">
           <div className="relative inline-block">
-            <div className="absolute -inset-3 bg-gradient-to-r from-yellow-300 via-orange-300 to-yellow-300 rounded-full blur-xl opacity-60 animate-pulse" />
+            <div className="absolute -inset-3 bg-gradient-to-r from-yellow-300 via-orange-300 to-yellow-300 rounded-full blur-xl opacity-30" />
             <div className="relative bg-white rounded-2xl p-3 shadow-2xl border-2 border-yellow-300">
               <NextImage
                 src={imageSrc}
@@ -465,9 +451,8 @@ const SlideContent = memo<{
           type="button"
           tabIndex={isActive ? 0 : -1}
         >
-          <span className="relative z-10 flex items-center gap-2 justify-center">
+          <span className="relative z-10">
             {slide.button}
-            <Sparkles className="w-4 h-4" />
           </span>
           <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </button>
@@ -525,7 +510,6 @@ const SlideContent = memo<{
           tabIndex={isActive ? 0 : -1}
         >
           {slide.button}
-          <Sparkles className="w-3.5 h-3.5" />
         </button>
       </div>
     </>
@@ -663,20 +647,20 @@ export const HeroCarousel: React.FC = () => {
         {/* Navigation buttons disabled during loading */}
         <button
           disabled
-          className="absolute top-1/2 -translate-y-1/2 left-4 md:left-6 z-40 p-3 md:p-4 rounded-full bg-slate-200 shadow-lg border-2 border-slate-300 cursor-not-allowed opacity-50"
+          className="absolute top-1/2 -translate-y-1/2 left-4 md:left-6 z-40 p-3 md:p-4 rounded-full bg-white/30 shadow-lg border-2 border-white/30 cursor-not-allowed opacity-50"
           aria-label="Slide anterior"
           type="button"
         >
-          <ChevronLeft className="w-6 h-6 md:w-7 md:h-7 text-slate-400" strokeWidth={4} />
+          <ChevronLeft className="w-6 h-6 md:w-7 md:h-7 text-white" strokeWidth={4} />
         </button>
 
         <button
           disabled
-          className="absolute top-1/2 -translate-y-1/2 right-4 md:right-6 z-40 p-3 md:p-4 rounded-full bg-slate-200 shadow-lg border-2 border-slate-300 cursor-not-allowed opacity-50"
+          className="absolute top-1/2 -translate-y-1/2 right-4 md:right-6 z-40 p-3 md:p-4 rounded-full bg-white/30 shadow-lg border-2 border-white/30 cursor-not-allowed opacity-50"
           aria-label="Slide siguiente"
           type="button"
         >
-          <ChevronRight className="w-6 h-6 md:w-7 md:h-7 text-slate-400" strokeWidth={4} />
+          <ChevronRight className="w-6 h-6 md:w-7 md:h-7 text-white" strokeWidth={4} />
         </button>
 
         {/* Skeleton indicators */}
@@ -688,7 +672,7 @@ export const HeroCarousel: React.FC = () => {
             {[...Array(9)].map((_, i) => (
               <div
                 key={i}
-                className="w-3 h-3 rounded-full bg-slate-200 animate-pulse"
+                className="w-3 h-3 rounded-full bg-white/40 animate-pulse"
               />
             ))}
           </div>

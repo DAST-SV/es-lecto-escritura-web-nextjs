@@ -19,6 +19,14 @@ ON CONFLICT (slug) DO UPDATE
 SET name = EXCLUDED.name, description = EXCLUDED.description;
 
 -- ============================================================================
+-- HERO SECTION - GLOBAL BADGES
+-- ============================================================================
+
+SELECT insert_translation('hero', 'badge_explore', 'Explorar Contenido', 'Explore Content', 'Explorer le contenu', 'ui', 'Hero badge explore');
+SELECT insert_translation('hero', 'badge_explore_short', 'Explorar', 'Explore', 'Explorer', 'ui', 'Hero badge explore short (mobile)');
+SELECT insert_translation('hero', 'badge_new', 'NUEVO', 'NEW', 'NOUVEAU', 'ui', 'Hero badge new');
+
+-- ============================================================================
 -- HERO SECTION - SLIDES
 -- Slides for the hero carousel
 -- ============================================================================
@@ -87,17 +95,25 @@ SELECT insert_translation('features', 'title', 'Lo que nos hace diferentes', 'Wh
 SELECT insert_translation('features', 'subtitle', 'Por qué EslectoEscritura es diferente a otras plataformas', 'Why EslectoEscritura is different from other platforms', 'Pourquoi EslectoEscritura est différent des autres plateformes', 'ui', 'Features section subtitle');
 SELECT insert_translation('features', 'button', 'Saber más', 'Learn More', 'En savoir plus', 'ui', 'Features section button');
 
+-- Navigation (mobile)
+SELECT insert_translation('features', 'navigation.previous', 'Anterior', 'Previous', 'Précédent', 'ui', 'Features navigation previous');
+SELECT insert_translation('features', 'navigation.next', 'Siguiente', 'Next', 'Suivant', 'ui', 'Features navigation next');
+SELECT insert_translation('features', 'navigation.of', 'de', 'of', 'sur', 'ui', 'Features navigation of');
+
 -- Tab 0: Personalized
+SELECT insert_translation('features', 'tabs.0.id', 'our_difference', 'our_difference', 'our_difference', 'ui', 'Features tab 0 id');
 SELECT insert_translation('features', 'tabs.0.label', 'Personalizado', 'Personalized', 'Personnalisé', 'ui', 'Features tab 0 label');
 SELECT insert_translation('features', 'tabs.0.title', 'Atención Personalizada', 'Personalized Attention', 'Attention Personnalisée', 'ui', 'Features tab 0 title');
 SELECT insert_translation('features', 'tabs.0.content', 'Entendemos que cada estudiante es único. Nuestra plataforma se adapta al ritmo y estilo de aprendizaje de cada persona, ofreciendo contenido y ejercicios personalizados que maximizan el progreso individual.', 'We understand that each student is unique. Our platform adapts to each person''s learning pace and style, offering personalized content and exercises that maximize individual progress.', 'Nous comprenons que chaque étudiant est unique. Notre plateforme s''adapte au rythme et au style d''apprentissage de chaque personne, offrant un contenu et des exercices personnalisés qui maximisent les progrès individuels.', 'ui', 'Features tab 0 content');
 
 -- Tab 1: Simplified
+SELECT insert_translation('features', 'tabs.1.id', 'for_students', 'for_students', 'for_students', 'ui', 'Features tab 1 id');
 SELECT insert_translation('features', 'tabs.1.label', 'Simplificado', 'Simplified', 'Simplifié', 'ui', 'Features tab 1 label');
 SELECT insert_translation('features', 'tabs.1.title', 'Proceso Simplificado', 'Simplified Process', 'Processus Simplifié', 'ui', 'Features tab 1 title');
 SELECT insert_translation('features', 'tabs.1.content', 'Nuestro proceso de aprendizaje es simple y efectivo. Con una interfaz intuitiva y lecciones estructuradas, los estudiantes pueden concentrarse en lo que realmente importa: aprender a leer y escribir con confianza.', 'Our learning process is simple and effective. With an intuitive interface and structured lessons, students can focus on what really matters: learning to read and write with confidence.', 'Notre processus d''apprentissage est simple et efficace. Avec une interface intuitive et des leçons structurées, les étudiants peuvent se concentrer sur ce qui compte vraiment : apprendre à lire et écrire avec confiance.', 'ui', 'Features tab 1 content');
 
 -- Tab 2: Flexibility
+SELECT insert_translation('features', 'tabs.2.id', 'for_parents', 'for_parents', 'for_parents', 'ui', 'Features tab 2 id');
 SELECT insert_translation('features', 'tabs.2.label', 'Flexibilidad', 'Flexibility', 'Flexibilité', 'ui', 'Features tab 2 label');
 SELECT insert_translation('features', 'tabs.2.title', 'Flexibilidad y Transparencia', 'Flexibility & Transparency', 'Flexibilité et Transparence', 'ui', 'Features tab 2 title');
 SELECT insert_translation('features', 'tabs.2.content', 'Ofrecemos horarios flexibles y comunicación clara. Los estudiantes y padres pueden seguir el progreso en tiempo real, con acceso completo a todas las herramientas y recursos desde cualquier dispositivo.', 'We offer flexible schedules and clear communication. Students and parents can track progress in real-time, with full access to all tools and resources from any device.', 'Nous offrons des horaires flexibles et une communication claire. Les étudiants et les parents peuvent suivre les progrès en temps réel, avec un accès complet à tous les outils et ressources depuis n''importe quel appareil.', 'ui', 'Features tab 2 content');
@@ -122,6 +138,10 @@ SELECT insert_translation('features', 'stats.2.label', 'Instituciones Asociadas'
 SELECT insert_translation('cta', 'title', '¿Listo para empezar a aprender?', 'Ready to Start Learning?', 'Prêt à commencer à apprendre?', 'ui', 'CTA section title');
 SELECT insert_translation('cta', 'description', 'Únete a miles de estudiantes que están mejorando sus habilidades de lectura y escritura cada día. Nuestra plataforma te guiará paso a paso hacia el éxito.', 'Join thousands of students who are improving their reading and writing skills every day. Our platform will guide you step by step towards success.', 'Rejoignez des milliers d''étudiants qui améliorent leurs compétences en lecture et en écriture chaque jour. Notre plateforme vous guidera pas à pas vers le succès.', 'ui', 'CTA section description');
 SELECT insert_translation('cta', 'button', 'Comenzar Ahora', 'Get Started Now', 'Commencer Maintenant', 'ui', 'CTA section button');
+SELECT insert_translation('cta', 'trust_badge', '+1000 niños aprendiendo', '+1000 children learning', '+1000 enfants apprenant', 'ui', 'CTA trust badge');
+SELECT insert_translation('cta', 'feature_1', 'Sin publicidad', 'No ads', 'Sans publicité', 'ui', 'CTA feature 1');
+SELECT insert_translation('cta', 'feature_2', 'Contenido seguro', 'Safe content', 'Contenu sûr', 'ui', 'CTA feature 2');
+SELECT insert_translation('cta', 'feature_3', 'Gratis para siempre', 'Free forever', 'Gratuit pour toujours', 'ui', 'CTA feature 3');
 
 -- ============================================================================
 -- VERIFICATION

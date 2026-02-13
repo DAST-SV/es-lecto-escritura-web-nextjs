@@ -128,4 +128,5 @@ admin/setup/complete_admin_access.sql
 ```
 storage/00_init.sql
 storage/buckets/public_images.sql
+storage/feature_tabs_images.sql
 ```

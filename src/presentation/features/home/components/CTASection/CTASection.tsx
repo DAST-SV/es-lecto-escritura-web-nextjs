@@ -7,7 +7,6 @@
 'use client';
 
 import React from 'react';
-import { Sparkles } from 'lucide-react';
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 
 // ============================================
@@ -78,9 +77,8 @@ export const CTASection: React.FC = () => {
     >
       <div className="container mx-auto max-w-4xl relative z-10 px-4 py-16 flex flex-col items-center justify-center text-center">
         
-        {/* Badge superior - estilo HeroCarousel */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-yellow-300 mb-6 animate-bounce">
-          <Sparkles className="w-4 h-4 text-blue-600 animate-pulse" />
+        {/* Badge superior */}
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-yellow-300 mb-6">
           <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
             {t('badge')}
           </span>
@@ -112,23 +110,17 @@ export const CTASection: React.FC = () => {
           {t('description')}
         </p>
 
-        {/* CTA Button - estilo HeroCarousel */}
+        {/* CTA Button */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-          <button className="group relative px-8 lg:px-10 py-4 lg:py-5 bg-yellow-300 text-blue-700 font-black text-base lg:text-lg rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-110 border-2 border-white overflow-hidden" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
-            <span className="relative z-10 flex items-center gap-2">
+          <button className="group relative px-8 lg:px-10 py-4 lg:py-5 bg-yellow-300 text-blue-700 font-black text-base lg:text-lg rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-105 border-2 border-white overflow-hidden" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
+            <span className="relative z-10">
               {t('button')}
-              <Sparkles className="w-5 h-5 lg:w-6 lg:h-6 group-hover:rotate-180 transition-transform duration-500" />
             </span>
             <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </button>
 
           {/* Badge de confianza */}
           <div className="flex items-center gap-2 text-white text-sm font-black bg-white/10 backdrop-blur-sm px-4 py-2.5 rounded-full border-2 border-white/30 shadow-xl" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
-            <div className="flex -space-x-2">
-              <div className="w-8 h-8 rounded-full bg-white/20 border-2 border-white flex items-center justify-center text-base shadow-lg backdrop-blur-sm">👦</div>
-              <div className="w-8 h-8 rounded-full bg-white/20 border-2 border-white flex items-center justify-center text-base shadow-lg backdrop-blur-sm">👧</div>
-              <div className="w-8 h-8 rounded-full bg-white/20 border-2 border-white flex items-center justify-center text-base shadow-lg backdrop-blur-sm">🧒</div>
-            </div>
             <span className="drop-shadow-lg">{t('trust_badge')}</span>
           </div>
         </div>
@@ -157,11 +149,6 @@ export const CTASection: React.FC = () => {
           })}
         </div>
 
-        {/* Elementos decorativos flotantes - sutiles */}
-        <div className="absolute top-20 left-20 text-3xl opacity-60 animate-bounce hidden lg:block" style={{ animationDelay: '0s', animationDuration: '3s' }}>⭐</div>
-        <div className="absolute top-32 right-24 text-2xl opacity-50 animate-bounce hidden lg:block" style={{ animationDelay: '0.5s', animationDuration: '3.5s' }}>✨</div>
-        <div className="absolute bottom-24 left-32 text-2xl opacity-50 animate-bounce hidden lg:block" style={{ animationDelay: '1s', animationDuration: '4s' }}>🌟</div>
-        <div className="absolute bottom-32 right-20 text-3xl opacity-60 animate-bounce hidden lg:block" style={{ animationDelay: '1.5s', animationDuration: '3.2s' }}>💫</div>
       </div>
     </section>
   );
