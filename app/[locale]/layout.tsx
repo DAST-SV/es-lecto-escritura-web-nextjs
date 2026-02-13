@@ -2,6 +2,7 @@
 // app/[locale]/layout.tsx
 // ✅ CORREGIDO: NextIntlClientProvider con locale y messages
 // ✅ TanStack Query Provider integrado
+// ✅ PWA: manifest, service worker, meta tags
 // ============================================
 
 import { NextIntlClientProvider } from 'next-intl';
@@ -13,6 +14,7 @@ import "../globals.css";
 import Loading from './loading';
 import { routing } from '@/src/infrastructure/config/routing.config';
 import { QueryProvider } from '@/src/presentation/providers/query-provider';
+import { PWARegister } from '@/src/presentation/components/PWARegister';
 
 interface LayoutProps {
   children: ReactNode;
@@ -29,7 +31,10 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover', // para notch de iPhone
-  themeColor: '#60b8f5', // color de la barra de estado móvil (azul de la app)
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#3b82f6' },
+    { media: '(prefers-color-scheme: dark)', color: '#1e40af' },
+  ],
 };
 
 // ============================================
@@ -70,7 +75,23 @@ export async function generateMetadata({
 
   return {
     title: titles[locale] || titles.es,
-    description: descriptions[locale] || descriptions.es
+    description: descriptions[locale] || descriptions.es,
+    manifest: '/manifest.webmanifest',
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'black-translucent',
+      title: 'Eslecto',
+    },
+    icons: {
+      icon: [
+        { url: '/icons/icon-48x48.png', sizes: '48x48', type: 'image/png' },
+        { url: '/icons/icon-96x96.png', sizes: '96x96', type: 'image/png' },
+        { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      ],
+      apple: [
+        { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+      ],
+    },
   };
 }
 
@@ -105,15 +126,14 @@ export default async function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Itim&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Nunito:wght@400;700&family=Oswald:wght@400;700&family=Ubuntu:wght@400;700&family=Merriweather:wght@400;700&family=Playfair+Display:wght@400;700&family=Source+Sans+Pro:wght@400;700&family=PT+Sans:wght@400;700&family=Indie+Flower&family=Cabin:wght@400;700&family=Fira+Sans:wght@400;700&family=Comfortaa:wght@400;700&family=Varela+Round&family=Work+Sans:wght@400;700&display=swap"
           rel="stylesheet"
         />
-        {/* PWA: Deshabilitado temporalmente */}
-        {/* iOS Safari: pantalla completa al agregar a pantalla de inicio */}
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Eslecto" />
+        {/* PWA: Apple touch icon */}
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
         {/* Android: pantalla completa */}
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body>
+        {/* PWA: Service Worker Registration */}
+        <PWARegister />
         {/* ✅ CORREGIDO: Pasar locale y messages */}
         <NextIntlClientProvider locale={validLocale} messages={messages}>
           {/* ✅ TanStack Query para manejo de estado del servidor */}

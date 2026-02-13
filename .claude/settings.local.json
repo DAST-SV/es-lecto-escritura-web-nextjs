@@ -59,7 +59,9 @@
       "Bash(python3:*)",
       "Bash(del \"C:\\\\Users\\\\hboni\\\\Downloads\\\\es-lecto-escritura-web-nextjs\\\\supabase\\\\evidence\\\\fix_schema_grants_and_translations.sql\")",
       "Bash(git diff:*)",
-      "Bash(tasklist:*)"
+      "Bash(tasklist:*)",
+      "Bash(npx --yes sharp-cli:*)",
+      "Bash(npx sharp-cli:*)"
     ]
   }
 }
