@@ -102,7 +102,7 @@ export const CTASection: React.FC = () => {
 
         {/* CTA Button */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-          <button className="group relative px-8 lg:px-10 py-4 lg:py-5 bg-yellow-300 text-blue-700 font-black text-base lg:text-lg rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-105 border-2 border-white overflow-hidden" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
+          <button className="btn-native group relative px-8 lg:px-10 py-4 lg:py-5 bg-yellow-300 text-blue-700 font-black text-base lg:text-lg rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-105 active:scale-95 border-2 border-white overflow-hidden" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
             <span className="relative z-10">
               {t('button')}
             </span>
@@ -128,7 +128,7 @@ export const CTASection: React.FC = () => {
             return (
               <div 
                 key={index}
-                className={`group flex items-center justify-center gap-2 px-4 py-3 bg-white/90 backdrop-blur-md rounded-xl border-2 border-${colorClass}-300 shadow-xl hover:shadow-2xl hover:scale-105 hover:-translate-y-1 transition-all duration-300`}
+                className={`card-native group flex items-center justify-center gap-2 px-4 py-3 bg-white/90 backdrop-blur-md rounded-xl border-2 border-${colorClass}-300 shadow-xl hover:shadow-2xl hover:scale-105 hover:-translate-y-1 active:scale-95 transition-all duration-300`}
               >
                 <span className="text-xl font-bold text-green-500 group-hover:scale-125 transition-transform duration-300">{feature.icon}</span>
                 <span className="text-sm lg:text-base font-black text-blue-700" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>

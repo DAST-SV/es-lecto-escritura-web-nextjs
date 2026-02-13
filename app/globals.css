@@ -2,3 +2,184 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+
+/* ============================================
+ * PWA NATIVE APP FEEL — Global Styles
+ * Hace que la web se sienta como app nativa
+ * ============================================ */
+
+/* === PREVENIR COMPORTAMIENTOS WEB === */
+
+/* No seleccionar texto (como app nativa) */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Body: prevenir overscroll bounce (iOS Safari / PWA) */
+html, body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* En PWA standalone: sin selección de texto excepto en inputs */
+@media (display-mode: standalone) {
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  input, textarea, [contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
+
+/* === SAFE AREAS (notch, home indicator) === */
+body {
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* === TOUCH FEEDBACK NATIVO === */
+
+/* Botones y links: feedback táctil instantáneo */
+button, a, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Active state: simula press nativo (scale down rápido) */
+button:active,
+a:active,
+[role="button"]:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease-out;
+}
+
+/* === APP-LIKE BUTTONS === */
+
+/* Clase utilitaria: botón con feedback táctil nativo */
+.btn-native {
+  position: relative;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.15s ease;
+  will-change: transform;
+}
+
+.btn-native:active {
+  transform: scale(0.95) !important;
+  opacity: 0.9;
+}
+
+/* Ripple effect para botones (iOS-like) */
+.btn-native::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), rgba(255,255,255,0.3) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.btn-native:active::after {
+  opacity: 1;
+}
+
+/* === CARD CON TOUCH FEEDBACK === */
+.card-native {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.card-native:active {
+  transform: scale(0.98);
+}
+
+/* === SCROLLING NATIVO === */
+
+/* Scrollbar invisible (como app nativa) */
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  scrollbar-width: none;
+}
+
+/* Smooth scroll nativo */
+html {
+  scroll-behavior: smooth;
+}
+
+/* === TRANSICIONES NATIVAS === */
+
+/* Page transitions suaves */
+.page-transition {
+  animation: pageSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes pageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === STANDALONE PWA ADJUSTMENTS === */
+@media (display-mode: standalone) {
+  /* Navbar con safe area top */
+  .pwa-navbar {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  /* Bottom content con safe area */
+  .pwa-bottom-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* No bounce en el body principal */
+  main {
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* === FOCUS STATES (accesibilidad + nativo) === */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* === PREVENT CALLOUT EN IMÁGENES (iOS) === */
+img {
+  -webkit-touch-callout: none;
+}
+
+/* === SMOOTH MOMENTUM SCROLLING === */
+.scroll-native {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+}
+
+/* === HAPTIC-LIKE ANIMATIONS === */
+@keyframes hapticBounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+.haptic-bounce {
+  animation: hapticBounce 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}

@@ -205,7 +205,7 @@ export const FeaturesSection: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id as FeatureTabId)}
-                className={`group relative flex items-center gap-1.5 px-4 py-2 rounded-full font-black text-xs transition-all duration-300 border-2 ${
+                className={`btn-native group relative flex items-center gap-1.5 px-4 py-2 rounded-full font-black text-xs transition-all duration-300 border-2 active:scale-95 ${
                   isActive
                     ? 'bg-yellow-300 text-blue-700 border-white scale-105 shadow-lg'
                     : 'bg-white/90 text-blue-600 border-yellow-300 hover:bg-yellow-50 hover:scale-105'
@@ -223,7 +223,7 @@ export const FeaturesSection: React.FC = () => {
         <div className="md:hidden flex items-center justify-between gap-2 mb-3">
           <button
             onClick={() => handleMobileNavigation('prev')}
-            className="p-2 rounded-full bg-white/80 shadow-lg transition-all duration-300 border-2 border-yellow-300"
+            className="btn-native p-2 rounded-full bg-white/80 shadow-lg transition-all duration-200 border-2 border-yellow-300 active:scale-90"
             aria-label={t('navigation.previous')}
           >
             <ChevronLeft className="w-4 h-4 text-blue-700" strokeWidth={3} />
@@ -249,7 +249,7 @@ export const FeaturesSection: React.FC = () => {
 
           <button
             onClick={() => handleMobileNavigation('next')}
-            className="p-2 rounded-full bg-white/80 shadow-lg transition-all duration-300 border-2 border-yellow-300"
+            className="btn-native p-2 rounded-full bg-white/80 shadow-lg transition-all duration-200 border-2 border-yellow-300 active:scale-90"
             aria-label={t('navigation.next')}
           >
             <ChevronRight className="w-4 h-4 text-blue-700" strokeWidth={3} />
@@ -258,7 +258,7 @@ export const FeaturesSection: React.FC = () => {
 
         {/* Content Card */}
         <div className="flex-1 mb-3 min-h-0">
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-yellow-300 h-full flex">
+          <div className="card-native bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-yellow-300 h-full flex">
             <div className="flex flex-col sm:flex-row gap-4 p-4 lg:p-5 items-center w-full">
 
               {/* Text Content */}
@@ -287,7 +287,7 @@ export const FeaturesSection: React.FC = () => {
                   {activeTabData?.content}
                 </p>
 
-                <button className="group relative px-5 py-2 bg-yellow-300 text-blue-700 font-black text-xs rounded-full shadow-lg hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-105 border-2 border-white overflow-hidden" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
+                <button className="btn-native group relative px-5 py-2 bg-yellow-300 text-blue-700 font-black text-xs rounded-full shadow-lg hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-105 active:scale-95 border-2 border-white overflow-hidden" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
                   <span className="relative z-10">
                     {t('button')}
                   </span>
@@ -335,7 +335,7 @@ export const FeaturesSection: React.FC = () => {
             return (
               <div
                 key={index}
-                className={`group text-center p-2 lg:p-3 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg transition-all duration-300 border-2 border-${colorClass}-300`}
+                className={`card-native group text-center p-2 lg:p-3 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg transition-all duration-300 border-2 border-${colorClass}-300 active:scale-95`}
               >
                 <div className={`w-10 h-10 lg:w-12 lg:h-12 bg-${colorClass}-100 rounded-full flex items-center justify-center mx-auto mb-1 border-2 border-${colorClass}-300`}>
                   <IconComponent className={`w-5 h-5 lg:w-6 lg:h-6 text-${colorClass}-500`} strokeWidth={2.5} />

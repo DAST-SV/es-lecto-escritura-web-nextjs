@@ -235,7 +235,7 @@ const SlideContent = memo<{
 
           <button
             onClick={() => onNavigate(route)}
-            className="group relative px-8 py-3.5 bg-yellow-300 text-blue-700 font-black text-base rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-110 border-2 border-white overflow-hidden"
+            className="btn-native group relative px-8 py-3.5 bg-yellow-300 text-blue-700 font-black text-base rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-110 active:scale-95 border-2 border-white overflow-hidden"
             style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
             type="button"
             tabIndex={isActive ? 0 : -1}
@@ -301,7 +301,7 @@ const SlideContent = memo<{
 
           <button
             onClick={() => onNavigate(route)}
-            className="group relative px-7 py-3 bg-yellow-300 text-blue-700 font-black text-base rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-110 border-2 border-white overflow-hidden"
+            className="btn-native group relative px-7 py-3 bg-yellow-300 text-blue-700 font-black text-base rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-110 active:scale-95 border-2 border-white overflow-hidden"
             style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
             type="button"
             tabIndex={isActive ? 0 : -1}
@@ -388,7 +388,7 @@ const SlideContent = memo<{
 
         <button
           onClick={() => onNavigate(route)}
-          className="group relative px-7 py-3 bg-yellow-300 text-blue-700 font-black text-base rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-105 border-2 border-white overflow-hidden"
+          className="btn-native group relative px-7 py-3 bg-yellow-300 text-blue-700 font-black text-base rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-105 active:scale-95 border-2 border-white overflow-hidden"
           style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
           type="button"
           tabIndex={isActive ? 0 : -1}
@@ -446,7 +446,7 @@ const SlideContent = memo<{
 
         <button
           onClick={() => onNavigate(route)}
-          className="group relative w-full px-6 py-3 bg-yellow-300 text-blue-700 font-black text-sm rounded-full shadow-xl hover:shadow-yellow-400/50 transition-all duration-300 border-2 border-white overflow-hidden"
+          className="btn-native group relative w-full px-6 py-3 bg-yellow-300 text-blue-700 font-black text-sm rounded-full shadow-xl hover:shadow-yellow-400/50 transition-all duration-300 active:scale-95 border-2 border-white overflow-hidden"
           style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
           type="button"
           tabIndex={isActive ? 0 : -1}
@@ -504,7 +504,7 @@ const SlideContent = memo<{
 
         <button
           onClick={() => onNavigate(route)}
-          className="w-full px-5 py-2.5 bg-yellow-300 text-blue-700 font-black text-sm rounded-xl shadow-lg border-2 border-white flex items-center gap-1.5 justify-center"
+          className="btn-native w-full px-5 py-2.5 bg-yellow-300 text-blue-700 font-black text-sm rounded-xl shadow-lg border-2 border-white flex items-center gap-1.5 justify-center active:scale-95"
           style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
           type="button"
           tabIndex={isActive ? 0 : -1}
@@ -763,10 +763,10 @@ export const HeroCarousel: React.FC = () => {
       </nav>
 
       {/* Barra inferior móvil: flecha izq + indicadores + flecha der */}
-      <div className="md:hidden absolute bottom-3 left-0 right-0 z-40 flex items-center justify-between px-3 gap-2">
+      <div className="md:hidden absolute bottom-3 left-0 right-0 z-40 flex items-center justify-between px-3 gap-2 pwa-bottom-safe">
         <button
           onClick={scrollPrev}
-          className="flex-shrink-0 p-2 rounded-full bg-white/30 backdrop-blur-sm active:scale-95 transition-all duration-200"
+          className="btn-native flex-shrink-0 p-2 rounded-full bg-white/30 backdrop-blur-sm active:scale-90 transition-all duration-150"
           aria-label="Slide anterior"
           type="button"
         >
@@ -796,7 +796,7 @@ export const HeroCarousel: React.FC = () => {
 
         <button
           onClick={scrollNext}
-          className="flex-shrink-0 p-2 rounded-full bg-white/30 backdrop-blur-sm active:scale-95 transition-all duration-200"
+          className="btn-native flex-shrink-0 p-2 rounded-full bg-white/30 backdrop-blur-sm active:scale-90 transition-all duration-150"
           aria-label="Slide siguiente"
           type="button"
         >

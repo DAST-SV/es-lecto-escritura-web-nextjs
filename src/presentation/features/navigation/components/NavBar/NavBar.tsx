@@ -44,7 +44,7 @@ const NavBar: React.FC<NavBarProps> = ({ brandName, userAvatar }) => {
 
   return (
     <nav
-      className={`fixed top-0 left-0 w-full px-6 py-3 z-50 transition-all duration-300 ${
+      className={`pwa-navbar fixed top-0 left-0 w-full px-6 py-3 z-50 transition-all duration-300 ${
         isScrolled
           ? "bg-white/60 backdrop-blur-lg shadow-md"
           : "bg-white/50 backdrop-blur-lg"

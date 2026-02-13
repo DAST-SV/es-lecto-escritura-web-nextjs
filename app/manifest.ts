@@ -22,6 +22,7 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ['education', 'kids'],
     lang: 'es',
     dir: 'ltr',
+    prefer_related_applications: false,
     icons: [
       {
         src: '/icons/icon-48x48.png',
@@ -78,6 +79,5 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: 'maskable',
       },
     ],
-    screenshots: [],
   };
 }
