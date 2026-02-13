@@ -144,7 +144,7 @@ const CarouselSkeleton: React.FC = memo(() => {
       </div>
 
       {/* MOBILE Skeleton (640-767px) */}
-      <div className="hidden sm:flex md:hidden w-full max-w-md flex-col items-center text-center space-y-4 mx-auto px-4">
+      <div className="hidden sm:flex md:hidden w-full max-w-lg flex-col items-center text-center space-y-4 mx-auto px-2">
         <div className="space-y-2 animate-pulse w-full">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/30 rounded-full w-48 h-7 mx-auto"></div>
           <div className="h-8 bg-white/30 rounded-lg w-3/4 mx-auto"></div>
@@ -161,13 +161,13 @@ const CarouselSkeleton: React.FC = memo(() => {
       </div>
 
       {/* MOBILE SMALL Skeleton (<640px) */}
-      <div className="flex sm:hidden w-full max-w-[300px] flex-col items-center text-center space-y-3 mx-auto px-4">
+      <div className="flex sm:hidden w-full flex-col items-center text-center space-y-2 mx-auto px-3">
         <div className="space-y-2 animate-pulse w-full">
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/30 rounded-full w-32 h-6 mx-auto"></div>
-          <div className="h-7 bg-white/30 rounded-lg w-full"></div>
-          <div className="h-7 bg-white/30 rounded-lg w-4/5 mx-auto"></div>
+          <div className="h-6 bg-white/30 rounded-lg w-full"></div>
+          <div className="h-6 bg-white/30 rounded-lg w-4/5 mx-auto"></div>
         </div>
-        <div className="relative bg-white/30 rounded-2xl p-2 w-[220px] h-[220px] animate-pulse">
+        <div className="relative bg-white/30 rounded-2xl p-2 w-full aspect-[16/10] animate-pulse">
           <div className="rounded-xl bg-white/20 w-full h-full"></div>
         </div>
         <div className="space-y-1 animate-pulse w-full">
@@ -401,7 +401,7 @@ const SlideContent = memo<{
       </div>
 
       {/* MOBILE (640-767px) */}
-      <div className="hidden sm:flex md:hidden w-full max-w-md flex-col items-center text-center space-y-4 mx-auto px-4">
+      <div className="hidden sm:flex md:hidden w-full max-w-lg flex-col items-center text-center space-y-4 mx-auto px-2">
         <div className="space-y-2 slide-content">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-full shadow-xl border-2 border-yellow-300">
             <BookOpen className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
@@ -459,8 +459,8 @@ const SlideContent = memo<{
       </div>
 
       {/* MOBILE SMALL (<640px) */}
-      <div className="flex sm:hidden w-full max-w-[300px] flex-col items-center text-center space-y-3 mx-auto px-4">
-        <div className="space-y-2 slide-content">
+      <div className="flex sm:hidden w-full flex-col items-center text-center space-y-2 mx-auto px-3">
+        <div className="space-y-1.5 slide-content">
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-full shadow-lg border-2 border-yellow-300">
             <BookOpen className="w-3 h-3 text-blue-600 animate-pulse" />
             <span className="text-[10px] font-black text-blue-700 tracking-wide" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
@@ -469,7 +469,7 @@ const SlideContent = memo<{
           </div>
 
           <h1
-            className="text-xl font-black text-white leading-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.5)]"
+            className="text-lg font-black text-white leading-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.5)]"
             style={{
               fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif",
               textShadow: '2px 2px 0px rgba(0,0,0,0.3)'
@@ -479,18 +479,18 @@ const SlideContent = memo<{
           </h1>
         </div>
 
-        <div className="slide-image">
+        <div className="slide-image w-full">
           <div className="relative bg-white rounded-2xl p-2 shadow-xl border-2 border-yellow-300">
             <NextImage
               src={imageSrc}
               alt={slide.title}
-              width={220}
-              height={220}
-              className="rounded-xl object-cover h-[200px] w-[220px]"
+              width={400}
+              height={250}
+              className="rounded-xl object-cover w-full aspect-[16/10]"
               priority={isPriority}
               quality={70}
               loading={isPriority ? "eager" : "lazy"}
-              sizes="(max-width: 639px) 220px, 0px"
+              sizes="(max-width: 639px) 92vw, 0px"
             />
             <div className="absolute -top-2 -right-2 bg-green-400 text-white font-black text-[10px] px-2 py-1 rounded-full shadow-lg border-2 border-white transform rotate-12 animate-bounce">
               {newBadge.split(' ')[0]}
@@ -634,8 +634,8 @@ export const HeroCarousel: React.FC = () => {
   if (loading || slides.length === 0) {
     return (
       <div
-        className="relative overflow-hidden"
-        style={{ height: 'calc(100vh - 60px)' }}
+        className="relative overflow-hidden -mt-[60px]"
+        style={{ height: '100vh' }}
         role="region"
         aria-label="Carrusel de contenido educativo"
         aria-busy="true"
@@ -644,39 +644,35 @@ export const HeroCarousel: React.FC = () => {
           <CarouselSkeleton />
         </div>
 
-        {/* Navigation buttons disabled during loading */}
-        <button
-          disabled
-          className="absolute top-1/2 -translate-y-1/2 left-4 md:left-6 z-40 p-3 md:p-4 rounded-full bg-white/30 shadow-lg border-2 border-white/30 cursor-not-allowed opacity-50"
-          aria-label="Slide anterior"
-          type="button"
-        >
-          <ChevronLeft className="w-6 h-6 md:w-7 md:h-7 text-white" strokeWidth={4} />
+        {/* Skeleton nav — desktop/tablet */}
+        <button disabled className="hidden md:flex absolute top-1/2 -translate-y-1/2 left-6 z-40 p-4 rounded-full bg-white/30 border-2 border-white/30 cursor-not-allowed opacity-50 items-center justify-center" type="button">
+          <ChevronLeft className="w-7 h-7 text-white" strokeWidth={4} />
         </button>
-
-        <button
-          disabled
-          className="absolute top-1/2 -translate-y-1/2 right-4 md:right-6 z-40 p-3 md:p-4 rounded-full bg-white/30 shadow-lg border-2 border-white/30 cursor-not-allowed opacity-50"
-          aria-label="Slide siguiente"
-          type="button"
-        >
-          <ChevronRight className="w-6 h-6 md:w-7 md:h-7 text-white" strokeWidth={4} />
+        <button disabled className="hidden md:flex absolute top-1/2 -translate-y-1/2 right-6 z-40 p-4 rounded-full bg-white/30 border-2 border-white/30 cursor-not-allowed opacity-50 items-center justify-center" type="button">
+          <ChevronRight className="w-7 h-7 text-white" strokeWidth={4} />
         </button>
-
-        {/* Skeleton indicators */}
-        <nav
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-white px-6 py-3"
-          aria-label="Navegación del carrusel"
-        >
+        <nav className="hidden md:flex absolute bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-white px-6 py-3">
           <div className="flex items-center justify-center gap-2">
             {[...Array(9)].map((_, i) => (
-              <div
-                key={i}
-                className="w-3 h-3 rounded-full bg-white/40 animate-pulse"
-              />
+              <div key={i} className="w-3 h-3 rounded-full bg-white/40 animate-pulse" />
             ))}
           </div>
         </nav>
+
+        {/* Skeleton nav — móvil */}
+        <div className="md:hidden absolute bottom-4 left-0 right-0 z-40 flex items-center justify-between px-4 gap-2">
+          <div className="flex-shrink-0 p-2.5 rounded-full bg-white/30 border-2 border-white/30 opacity-50">
+            <ChevronLeft className="w-5 h-5 text-white" strokeWidth={4} />
+          </div>
+          <div className="flex items-center justify-center gap-1.5 bg-white/40 rounded-full px-3 py-2 flex-1">
+            {[...Array(9)].map((_, i) => (
+              <div key={i} className="w-2.5 h-2.5 rounded-full bg-white/40 animate-pulse flex-shrink-0" />
+            ))}
+          </div>
+          <div className="flex-shrink-0 p-2.5 rounded-full bg-white/30 border-2 border-white/30 opacity-50">
+            <ChevronRight className="w-5 h-5 text-white" strokeWidth={4} />
+          </div>
+        </div>
       </div>
     );
   }
@@ -684,8 +680,8 @@ export const HeroCarousel: React.FC = () => {
   return (
     <div
       ref={carouselRef}
-      className="relative overflow-hidden"
-      style={{ height: 'calc(100vh - 60px)' }}
+      className="relative overflow-hidden -mt-[60px]"
+      style={{ height: '100vh' }}
       role="region"
       aria-label="Carrusel de contenido educativo"
       aria-live="polite"
@@ -700,7 +696,7 @@ export const HeroCarousel: React.FC = () => {
               aria-roledescription="slide"
               aria-label={`${i + 1} de ${slides.length}`}
             >
-              <div className="w-full h-full flex items-center justify-center px-4 sm:px-6 md:px-12 lg:px-20 xl:px-32">
+              <div className="w-full h-full flex items-center justify-center px-1 sm:px-3 md:px-12 lg:px-20 xl:px-32 pb-16 md:pb-0">
                 <SlideContent
                   slide={slide}
                   imageSrc={SLIDE_IMAGES[i]}
@@ -718,28 +714,28 @@ export const HeroCarousel: React.FC = () => {
         </div>
       </div>
 
-      {/* Botones de Navegación */}
+      {/* Botones de Navegación — desktop/tablet */}
       <button
         onClick={scrollPrev}
-        className="absolute top-1/2 -translate-y-1/2 left-4 md:left-6 z-40 p-3 md:p-4 rounded-full bg-white shadow-2xl hover:scale-125 transition-all duration-300 border-2 border-yellow-300 hover:bg-yellow-50 group"
+        className="hidden md:flex absolute top-1/2 -translate-y-1/2 left-4 z-40 p-3 rounded-full bg-white/40 backdrop-blur-sm hover:bg-white/70 hover:scale-110 transition-all duration-300 group items-center justify-center"
         aria-label="Slide anterior"
         type="button"
       >
-        <ChevronLeft className="w-6 h-6 md:w-7 md:h-7 text-blue-700 group-hover:text-blue-900" strokeWidth={4} />
+        <ChevronLeft className="w-6 h-6 text-white group-hover:text-blue-700" strokeWidth={3} />
       </button>
 
       <button
         onClick={scrollNext}
-        className="absolute top-1/2 -translate-y-1/2 right-4 md:right-6 z-40 p-3 md:p-4 rounded-full bg-white shadow-2xl hover:scale-125 transition-all duration-300 border-2 border-yellow-300 hover:bg-yellow-50 group"
+        className="hidden md:flex absolute top-1/2 -translate-y-1/2 right-4 z-40 p-3 rounded-full bg-white/40 backdrop-blur-sm hover:bg-white/70 hover:scale-110 transition-all duration-300 group items-center justify-center"
         aria-label="Slide siguiente"
         type="button"
       >
-        <ChevronRight className="w-6 h-6 md:w-7 md:h-7 text-blue-700 group-hover:text-blue-900" strokeWidth={4} />
+        <ChevronRight className="w-6 h-6 text-white group-hover:text-blue-700" strokeWidth={3} />
       </button>
 
-      {/* Indicadores con colores decorativos */}
+      {/* Indicadores — desktop/tablet */}
       <nav
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-white px-6 py-3"
+        className="hidden md:flex absolute bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white/30 backdrop-blur-sm rounded-full px-4 py-2"
         aria-label="Navegación del carrusel"
       >
         <div className="flex items-center justify-center gap-2">
@@ -748,7 +744,6 @@ export const HeroCarousel: React.FC = () => {
             const borderColors = ['border-yellow-600', 'border-green-600', 'border-blue-600', 'border-orange-600', 'border-pink-600', 'border-purple-600', 'border-cyan-600', 'border-lime-600', 'border-rose-600'];
             const colorClass = colors[i % colors.length];
             const borderClass = borderColors[i % borderColors.length];
-            
             return (
               <button
                 key={i}
@@ -766,6 +761,48 @@ export const HeroCarousel: React.FC = () => {
           })}
         </div>
       </nav>
+
+      {/* Barra inferior móvil: flecha izq + indicadores + flecha der */}
+      <div className="md:hidden absolute bottom-3 left-0 right-0 z-40 flex items-center justify-between px-3 gap-2">
+        <button
+          onClick={scrollPrev}
+          className="flex-shrink-0 p-2 rounded-full bg-white/30 backdrop-blur-sm active:scale-95 transition-all duration-200"
+          aria-label="Slide anterior"
+          type="button"
+        >
+          <ChevronLeft className="w-4 h-4 text-white" strokeWidth={3} />
+        </button>
+
+        <div className="flex items-center justify-center gap-1.5 bg-white/20 backdrop-blur-sm rounded-full px-3 py-2 flex-1 overflow-x-auto">
+          {slides.map((_, i: number) => {
+            const colors = ['bg-yellow-400', 'bg-green-400', 'bg-blue-400', 'bg-orange-400', 'bg-pink-400', 'bg-purple-400', 'bg-cyan-400', 'bg-lime-400', 'bg-rose-400'];
+            const colorClass = colors[i % colors.length];
+            return (
+              <button
+                key={i}
+                onClick={() => scrollTo(i)}
+                className={`rounded-full transition-all duration-300 flex-shrink-0 ${
+                  selected === i
+                    ? `w-6 h-2.5 ${colorClass} shadow-md`
+                    : `w-2.5 h-2.5 ${colorClass} opacity-40`
+                }`}
+                aria-label={`Ir al slide ${i + 1}`}
+                aria-current={selected === i ? 'true' : 'false'}
+                type="button"
+              />
+            );
+          })}
+        </div>
+
+        <button
+          onClick={scrollNext}
+          className="flex-shrink-0 p-2 rounded-full bg-white/30 backdrop-blur-sm active:scale-95 transition-all duration-200"
+          aria-label="Slide siguiente"
+          type="button"
+        >
+          <ChevronRight className="w-4 h-4 text-white" strokeWidth={3} />
+        </button>
+      </div>
 
       <style jsx global>{`
         .embla {

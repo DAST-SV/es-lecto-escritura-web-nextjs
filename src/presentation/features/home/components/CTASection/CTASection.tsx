@@ -14,15 +14,12 @@ import { useSupabaseTranslations } from '@/src/presentation/features/translation
 // ============================================
 
 const CTASectionSkeleton: React.FC = () => (
-  <section 
-    className="relative"
-    style={{ minHeight: 'calc(100vh - 60px)' }}
+  <section
+    className="relative flex items-center justify-center"
+    style={{ height: 'calc(100vh - 60px)' }}
   >
-    <div className="container mx-auto max-w-4xl relative z-10 px-4 py-16 flex flex-col items-center justify-center text-center">
+    <div className="container mx-auto max-w-4xl relative z-10 px-4 flex flex-col items-center justify-center text-center">
       <div className="animate-pulse space-y-6 w-full">
-        {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/30 rounded-full w-52 h-10 mx-auto" />
-
         {/* Título */}
         <div className="space-y-3 mx-auto max-w-2xl">
           <div className="h-12 bg-white/30 rounded-2xl w-full" />
@@ -71,19 +68,12 @@ export const CTASection: React.FC = () => {
   }
 
   return (
-    <section 
-      className="relative"
-      style={{ minHeight: 'calc(100vh - 60px)' }}
+    <section
+      className="relative flex items-center justify-center"
+      style={{ height: 'calc(100vh - 60px)' }}
     >
-      <div className="container mx-auto max-w-4xl relative z-10 px-4 py-16 flex flex-col items-center justify-center text-center">
+      <div className="container mx-auto max-w-4xl relative z-10 px-4 flex flex-col items-center justify-center text-center">
         
-        {/* Badge superior */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/95 backdrop-blur-md rounded-full shadow-2xl border-2 border-yellow-300 mb-6">
-          <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
-            {t('badge')}
-          </span>
-        </div>
-
         {/* Título MÁS COMPACTO - estilo HeroCarousel */}
         <h2 
           className="text-2xl sm:text-3xl lg:text-4xl font-black text-white leading-tight mb-4 drop-shadow-[0_8px_32px_rgba(0,0,0,0.5)]"

@@ -39,11 +39,11 @@ const imageMap: Record<FeatureTabId, string> = {
 // ============================================
 
 const FeaturesSectionSkeleton: React.FC = () => (
-  <section 
-    className="relative"
-    style={{ minHeight: 'calc(100vh - 60px)' }}
+  <section
+    className="relative flex flex-col justify-center"
+    style={{ height: 'calc(100vh - 60px)' }}
   >
-    <div className="container mx-auto max-w-6xl relative z-10 px-4 py-8 flex flex-col">
+    <div className="container mx-auto max-w-6xl relative z-10 px-4 py-4 flex flex-col h-full">
       {/* Título */}
       <div className="text-center mb-6">
         <div className="h-12 bg-white/30 rounded-2xl w-96 max-w-full mx-auto mb-3 animate-pulse" />
@@ -171,16 +171,16 @@ export const FeaturesSection: React.FC = () => {
   }
 
   return (
-    <section 
-      className="relative"
-      style={{ minHeight: 'calc(100vh - 60px)' }}
+    <section
+      className="relative flex flex-col justify-center"
+      style={{ height: 'calc(100vh - 60px)' }}
     >
-      <div className="container mx-auto max-w-6xl relative z-10 px-4 py-8 flex flex-col">
-        
-        {/* Título - estilo HeroCarousel */}
-        <div className="text-center mb-6">
-          <h2 
-            className="text-3xl md:text-4xl lg:text-5xl font-black text-white leading-tight mb-3 drop-shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+      <div className="container mx-auto max-w-6xl relative z-10 px-4 py-4 flex flex-col h-full">
+
+        {/* Título */}
+        <div className="text-center mb-3">
+          <h2
+            className="text-2xl md:text-3xl lg:text-4xl font-black text-white leading-tight mb-2 drop-shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
             style={{
               fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif",
               textShadow: '3px 3px 0px rgba(0,0,0,0.3), 6px 6px 0px rgba(0,0,0,0.1)'
@@ -189,112 +189,105 @@ export const FeaturesSection: React.FC = () => {
             {t('title')}
           </h2>
           <div className="flex items-center justify-center gap-3">
-            <div className="h-1.5 w-14 bg-yellow-300 rounded-full shadow-lg" />
-            <div className="h-1.5 w-8 bg-green-300 rounded-full shadow-lg" />
-            <div className="h-1.5 w-5 bg-blue-300 rounded-full shadow-lg" />
+            <div className="h-1 w-12 bg-yellow-300 rounded-full" />
+            <div className="h-1 w-7 bg-green-300 rounded-full" />
+            <div className="h-1 w-4 bg-blue-300 rounded-full" />
           </div>
         </div>
 
-        {/* Desktop Tabs - estilo HeroCarousel */}
-        <div className="hidden md:flex justify-center gap-3 mb-6 flex-wrap">
+        {/* Desktop Tabs */}
+        <div className="hidden md:flex justify-center gap-2 mb-3 flex-wrap">
           {tabs.map((tab: FeatureTab) => {
             const IconComponent = iconMap[tab.id as FeatureTabId] || BookOpen;
             const isActive = activeTab === tab.id;
-            
+
             return (
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id as FeatureTabId)}
-                className={`group relative flex items-center gap-2 px-5 py-2.5 rounded-full font-black text-sm transition-all duration-300 border-2 shadow-2xl ${
+                className={`group relative flex items-center gap-1.5 px-4 py-2 rounded-full font-black text-xs transition-all duration-300 border-2 ${
                   isActive
-                    ? 'bg-yellow-300 text-blue-700 border-white scale-110'
-                    : 'bg-white/95 text-blue-600 border-yellow-300 hover:bg-yellow-50 hover:scale-105'
+                    ? 'bg-yellow-300 text-blue-700 border-white scale-105 shadow-lg'
+                    : 'bg-white/90 text-blue-600 border-yellow-300 hover:bg-yellow-50 hover:scale-105'
                 }`}
                 style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
               >
-                <IconComponent className="w-4 h-4" />
+                <IconComponent className="w-3.5 h-3.5" />
                 <span>{tab.label}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Mobile Navigation - estilo HeroCarousel */}
-        <div className="md:hidden flex items-center justify-between gap-3 mb-6">
+        {/* Mobile Navigation */}
+        <div className="md:hidden flex items-center justify-between gap-2 mb-3">
           <button
             onClick={() => handleMobileNavigation('prev')}
-            className="p-3 rounded-full bg-white shadow-2xl hover:scale-125 transition-all duration-300 border-2 border-yellow-300"
+            className="p-2 rounded-full bg-white/80 shadow-lg transition-all duration-300 border-2 border-yellow-300"
             aria-label={t('navigation.previous')}
           >
-            <ChevronLeft className="w-5 h-5 text-blue-700" strokeWidth={4} />
+            <ChevronLeft className="w-4 h-4 text-blue-700" strokeWidth={3} />
           </button>
-          
-          <div className="flex-1 text-center space-y-2">
-            <span className="text-xs text-white font-black drop-shadow-lg" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
+
+          <div className="flex-1 text-center space-y-1">
+            <span className="text-[10px] text-white font-black drop-shadow-lg" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
               {tabs.findIndex(tab => tab.id === activeTab) + 1} {t('navigation.of')} {tabs.length}
             </span>
-            <div className="flex justify-center gap-1.5">
+            <div className="flex justify-center gap-1">
               {tabs.map((_, index) => (
                 <div
                   key={index}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                  className={`h-1 rounded-full transition-all duration-300 ${
                     tabs.findIndex(tab => tab.id === activeTab) === index
-                      ? 'w-7 bg-yellow-300 shadow-lg'
-                      : 'w-1.5 bg-white/50'
+                      ? 'w-5 bg-yellow-300'
+                      : 'w-1 bg-white/50'
                   }`}
                 />
               ))}
             </div>
           </div>
-          
+
           <button
             onClick={() => handleMobileNavigation('next')}
-            className="p-3 rounded-full bg-white shadow-2xl hover:scale-125 transition-all duration-300 border-2 border-yellow-300"
+            className="p-2 rounded-full bg-white/80 shadow-lg transition-all duration-300 border-2 border-yellow-300"
             aria-label={t('navigation.next')}
           >
-            <ChevronRight className="w-5 h-5 text-blue-700" strokeWidth={4} />
+            <ChevronRight className="w-4 h-4 text-blue-700" strokeWidth={3} />
           </button>
         </div>
 
-        {/* Content - estilo HeroCarousel */}
-        <div className="flex-1 mb-6">
-          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-yellow-300">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 p-6 lg:p-10 items-center">
-              
+        {/* Content Card */}
+        <div className="flex-1 mb-3 min-h-0">
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-yellow-300 h-full flex">
+            <div className="flex flex-col sm:flex-row gap-4 p-4 lg:p-5 items-center w-full">
+
               {/* Text Content */}
-              <div className="space-y-4">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-100 rounded-full border-2 border-yellow-300 shadow-xl">
+              <div className="flex-1 space-y-2 min-w-0">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-100 rounded-full border border-yellow-300">
                   {(() => {
                     const IconComponent = iconMap[activeTab] || BookOpen;
-                    return <IconComponent className="w-4 h-4 text-blue-600" />;
+                    return <IconComponent className="w-3.5 h-3.5 text-blue-600" />;
                   })()}
-                  <span className="text-sm font-black text-blue-700 tracking-wide" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
+                  <span className="text-xs font-black text-blue-700" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
                     {activeTabData?.label}
                   </span>
                 </div>
 
-                <div className="space-y-2">
-                  <h3 
-                    className="text-2xl sm:text-3xl lg:text-4xl font-black text-blue-700 leading-tight"
-                    style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
-                  >
-                    {activeTabData?.title}
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-12 bg-yellow-300 rounded-full" />
-                    <div className="h-1.5 w-7 bg-green-300 rounded-full" />
-                    <div className="h-1.5 w-4 bg-blue-300 rounded-full" />
-                  </div>
-                </div>
-                
-                <p 
-                  className="text-base lg:text-lg text-slate-700 leading-relaxed font-bold"
+                <h3
+                  className="text-lg sm:text-xl lg:text-2xl font-black text-blue-700 leading-tight"
+                  style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
+                >
+                  {activeTabData?.title}
+                </h3>
+
+                <p
+                  className="text-xs lg:text-sm text-slate-700 leading-relaxed font-bold line-clamp-4"
                   style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
                 >
                   {activeTabData?.content}
                 </p>
-                
-                <button className="group relative px-7 py-3.5 bg-yellow-300 text-blue-700 font-black text-base rounded-full shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-105 border-2 border-white overflow-hidden" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
+
+                <button className="group relative px-5 py-2 bg-yellow-300 text-blue-700 font-black text-xs rounded-full shadow-lg hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-105 border-2 border-white overflow-hidden" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
                   <span className="relative z-10">
                     {t('button')}
                   </span>
@@ -302,26 +295,25 @@ export const FeaturesSection: React.FC = () => {
                 </button>
               </div>
 
-              {/* Image */}
-              <div className="relative">
-                <div className="absolute -inset-5 bg-gradient-to-r from-yellow-300 via-orange-300 to-yellow-300 rounded-full blur-3xl opacity-20" />
-                <div className="relative bg-white rounded-3xl p-3 shadow-2xl border-4 border-yellow-300">
+              {/* Image — debajo en mobile, al lado en sm+ */}
+              <div className="flex items-center flex-shrink-0 w-full sm:w-auto">
+                <div className="relative bg-white rounded-xl p-1.5 shadow-md border-2 border-yellow-300 w-full sm:w-auto">
                   {Object.entries(imageMap).map(([tabId, imageSrc]) => {
-                    const isActive = activeTab === tabId;
+                    const isTabActive = activeTab === tabId;
                     return (
                       <div
                         key={tabId}
-                        className={`transition-opacity duration-500 ${isActive ? 'opacity-100' : 'opacity-0 absolute inset-0 pointer-events-none'}`}
+                        className={`transition-opacity duration-500 ${isTabActive ? 'opacity-100' : 'opacity-0 absolute inset-0 pointer-events-none'}`}
                       >
                         <NextImage
                           src={imageSrc}
                           alt={tabs.find(tab => tab.id === tabId)?.title || 'Feature'}
-                          width={500}
-                          height={400}
-                          className="rounded-2xl object-cover w-full h-64 lg:h-80"
+                          width={320}
+                          height={220}
+                          className="rounded-lg object-cover w-full h-[120px] sm:w-[200px] sm:h-[140px] lg:w-[280px] lg:h-[200px]"
                           priority={tabId === 'our_difference' || tabId === 'for_students'}
                           quality={85}
-                          sizes="(max-width: 640px) 90vw, 45vw"
+                          sizes="(max-width: 639px) 90vw, (min-width: 640px) 280px"
                         />
                       </div>
                     );
@@ -332,8 +324,8 @@ export const FeaturesSection: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats - estilo HeroCarousel */}
-        <div className="grid grid-cols-3 gap-4">
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-2 lg:gap-3">
           {stats.map((stat: Stat, index: number) => {
             const icons: LucideIcon[] = [BookOpen, Zap, Award];
             const IconComponent = icons[index];
@@ -341,17 +333,17 @@ export const FeaturesSection: React.FC = () => {
             const colorClass = colors[index];
 
             return (
-              <div 
-                key={index} 
-                className={`group text-center p-4 bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-3 border-${colorClass}-300`}
+              <div
+                key={index}
+                className={`group text-center p-2 lg:p-3 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg transition-all duration-300 border-2 border-${colorClass}-300`}
               >
-                <div className={`w-14 h-14 bg-${colorClass}-100 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-300 border-2 border-${colorClass}-300`}>
-                  <IconComponent className={`w-7 h-7 text-${colorClass}-500`} strokeWidth={2.5} />
+                <div className={`w-10 h-10 lg:w-12 lg:h-12 bg-${colorClass}-100 rounded-full flex items-center justify-center mx-auto mb-1 border-2 border-${colorClass}-300`}>
+                  <IconComponent className={`w-5 h-5 lg:w-6 lg:h-6 text-${colorClass}-500`} strokeWidth={2.5} />
                 </div>
-                <h4 className="text-2xl lg:text-3xl font-black text-blue-700 mb-1" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
+                <h4 className="text-lg lg:text-2xl font-black text-blue-700" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
                   {stat.number}
                 </h4>
-                <p className="text-xs lg:text-sm text-slate-600 font-bold" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
+                <p className="text-[10px] lg:text-xs text-slate-600 font-bold" style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}>
                   {stat.label}
                 </p>
               </div>
