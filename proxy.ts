@@ -73,7 +73,7 @@ async function loadRoutes(forceReload = false): Promise<Record<string, any>> {
   }
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // console.log(`\n🔍 [MIDDLEWARE] ${pathname}`);
