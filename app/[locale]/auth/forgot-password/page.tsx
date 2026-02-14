@@ -13,12 +13,10 @@ import { ErrorMessage, LoginBackground } from '@/src/presentation/features/auth/
 import { UnifiedLayout } from '@/src/presentation/features/navigation';
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 import { Input, Button } from '@/src/presentation/components/ui';
-import { useLocale } from 'next-intl';
-import Link from 'next/link';
+import { LocaleLink } from '@/src/presentation/components/LocaleLink';
 
 export default function ForgotPasswordPage() {
   const { t, loading } = useSupabaseTranslations('auth.form');
-  const locale = useLocale();
   const initialState: AuthState = {};
   const [state, formAction, isPending] = useActionState(forgotPassword, initialState);
 
@@ -90,14 +88,15 @@ export default function ForgotPasswordPage() {
               <p className="text-sm text-gray-500 mb-6">
                 {t('forgot_password_success_message') || 'Te enviamos un enlace para restablecer tu contraseña'}
               </p>
-              <Link
-                href={`/${locale}/auth/login`}
+              <LocaleLink
+                routeKey="/auth/login"
                 className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-bold text-sm transition-colors border border-yellow-300 rounded-lg px-4 py-2 hover:bg-yellow-50"
-                style={{ fontFamily: "'Nunito', 'Varela Round', 'Comfortaa', sans-serif" }}
               >
                 <ArrowLeft size={16} />
-                {t('back_to_login') || 'Volver al inicio de sesion'}
-              </Link>
+                <span style={{ fontFamily: "'Nunito', 'Varela Round', 'Comfortaa', sans-serif" }}>
+                  {t('back_to_login') || 'Volver al inicio de sesion'}
+                </span>
+              </LocaleLink>
             </motion.div>
           ) : (
             <>
@@ -137,14 +136,15 @@ export default function ForgotPasswordPage() {
 
               {/* Back to login */}
               <div className="text-center mt-5">
-                <Link
-                  href={`/${locale}/auth/login`}
+                <LocaleLink
+                  routeKey="/auth/login"
                   className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-bold transition-colors"
-                  style={{ fontFamily: "'Nunito', 'Varela Round', 'Comfortaa', sans-serif" }}
                 >
                   <ArrowLeft size={14} />
-                  {t('back_to_login') || 'Volver al inicio de sesion'}
-                </Link>
+                  <span style={{ fontFamily: "'Nunito', 'Varela Round', 'Comfortaa', sans-serif" }}>
+                    {t('back_to_login') || 'Volver al inicio de sesion'}
+                  </span>
+                </LocaleLink>
               </div>
             </>
           )}

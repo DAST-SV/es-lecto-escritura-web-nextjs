@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   const nextParam = searchParams.get('next');
 
   // Extraer locale del param next, o del referer, o usar default
-  let locale = DEFAULT_LOCALE;
+  let locale: string = DEFAULT_LOCALE;
   if (nextParam) {
     locale = getLocaleFromPathname(nextParam);
   } else {
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     const acceptLang = request.headers.get('accept-language') || '';
     const preferred = acceptLang.split(',')[0]?.split('-')[0]?.toLowerCase();
     if (preferred && (SUPPORTED_LOCALES as readonly string[]).includes(preferred)) {
-      locale = preferred as typeof DEFAULT_LOCALE;
+      locale = preferred;
     }
   }
 

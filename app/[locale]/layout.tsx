@@ -12,7 +12,7 @@ import { Metadata, Viewport } from 'next';
 import { ReactNode, Suspense } from 'react';
 import "../globals.css";
 import Loading from './loading';
-import { routing } from '@/src/infrastructure/config/routing.config';
+import { routing, type Locale } from '@/src/infrastructure/config/routing.config';
 import { QueryProvider } from '@/src/presentation/providers/query-provider';
 import { PWARegister } from '@/src/presentation/components/PWARegister';
 import { PullToRefresh } from '@/src/presentation/components/PullToRefresh';
@@ -110,8 +110,7 @@ export default async function RootLayout({
     notFound();
   }
 
-  // ✅ Tipo correcto con los 3 idiomas
-  const validLocale = locale as 'en' | 'es' | 'fr';
+  const validLocale = locale as Locale;
 
   // Establecer locale para la solicitud
   setRequestLocale(validLocale);

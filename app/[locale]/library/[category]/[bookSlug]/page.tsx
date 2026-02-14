@@ -9,6 +9,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
+import { localizedHref } from '@/src/infrastructure/utils/server-localized-href';
 import {
   ArrowLeft,
   Clock,
@@ -62,6 +63,9 @@ async function BookDetailContent({ bookSlug, category, locale }: {
 
   const colors = difficultyColors[book.difficulty];
 
+  const readHref = await localizedHref('/library', locale, `read/${bookSlug}`);
+  const categoryHref = await localizedHref('/library', locale, category);
+
   return (
     <div className="grid lg:grid-cols-3 gap-8 lg:gap-12">
       {/* Left column - Cover */}
@@ -102,7 +106,7 @@ async function BookDetailContent({ bookSlug, category, locale }: {
 
           {/* Read button */}
           <div className="mt-6">
-            <Link href={`/${locale}/library/read/${bookSlug}`} className="block">
+            <Link href={readHref} className="block">
               <Button
                 variant="primary"
                 size="lg"
@@ -120,7 +124,7 @@ async function BookDetailContent({ bookSlug, category, locale }: {
       <div className="lg:col-span-2">
         {/* Category */}
         <Link
-          href={`/${locale}/library/${category}`}
+          href={categoryHref}
           className="inline-block text-sm font-medium text-primary hover:underline mb-3"
         >
           {book.categoryName}
@@ -221,16 +225,17 @@ function BookDetailSkeleton() {
 }
 
 export default async function BookDetailPage({ params }: PageProps) {
-  const { category, bookSlug, locale: paramLocale } = await params;
+  const { category, bookSlug } = await params;
   const locale = await getLocale();
   const t = await getTranslations('booksCatalog');
+  const backHref = await localizedHref('/library', locale, category);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <Link
-          href={`/${paramLocale}/library/${category}`}
+          href={backHref}
           className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />

@@ -6,8 +6,8 @@
 
 import { useActionState, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
 import { signup } from '@/src/presentation/actions/auth.actions';
+import { LocaleLink } from '@/src/presentation/components/LocaleLink';
 import type { AuthState } from '@/src/core/domain/types/Auth.types';
 import {
   ErrorMessage,
@@ -117,12 +117,12 @@ export default function RegisterPage() {
                 <div className="mt-6 text-center">
                   <p className="text-sm text-gray-600">
                     {t('already_have_account')}{' '}
-                    <Link
-                      href="/auth/login"
+                    <LocaleLink
+                      routeKey="/auth/login"
                       className="text-blue-600 font-semibold hover:text-blue-700 hover:underline"
                     >
                       {t('login_link')}
-                    </Link>
+                    </LocaleLink>
                   </p>
                 </div>
               </motion.div>
@@ -166,23 +166,23 @@ export default function RegisterPage() {
                 <div className="mt-6 space-y-3">
                   <p className="text-xs text-gray-500 text-center">
                     {t('terms_acceptance')}{' '}
-                    <Link href="/terms" className="text-blue-600 hover:underline">
+                    <LocaleLink routeKey="/terms" className="text-blue-600 hover:underline">
                       {t('terms_link')}
-                    </Link>{' '}
+                    </LocaleLink>{' '}
                     {t('and')}{' '}
-                    <Link href="/privacy" className="text-blue-600 hover:underline">
+                    <LocaleLink routeKey="/privacy" className="text-blue-600 hover:underline">
                       {t('privacy_link')}
-                    </Link>
+                    </LocaleLink>
                   </p>
 
                   <p className="text-sm text-gray-600 text-center">
                     {t('already_have_account')}{' '}
-                    <Link
-                      href="/auth/login"
+                    <LocaleLink
+                      routeKey="/auth/login"
                       className="text-blue-600 font-semibold hover:text-blue-700 hover:underline"
                     >
                       {t('login_link')}
-                    </Link>
+                    </LocaleLink>
                   </p>
                 </div>
               </motion.div>

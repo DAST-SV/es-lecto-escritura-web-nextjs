@@ -70,7 +70,8 @@
       "Bash(del \"D:\\\\GitHub\\\\DAST-SV\\\\es-lecto-escritura-web-nextjs\\\\app\\\\offline\\\\layout.tsx\")",
       "Bash(del \"D:\\\\GitHub\\\\DAST-SV\\\\es-lecto-escritura-web-nextjs\\\\app\\\\offline\\\\page.tsx\")",
       "Bash(Remove-Item -Path \"D:\\\\GitHub\\\\DAST-SV\\\\es-lecto-escritura-web-nextjs\\\\app\\\\offline\" -Recurse -Force)",
-      "Bash(dir \"D:\\\\GitHub\\\\DAST-SV\\\\es-lecto-escritura-web-nextjs\\\\src\\\\app\" /B /S)"
+      "Bash(dir \"D:\\\\GitHub\\\\DAST-SV\\\\es-lecto-escritura-web-nextjs\\\\src\\\\app\" /B /S)",
+      "Bash(pnpm build:*)"
     ]
   }
 }

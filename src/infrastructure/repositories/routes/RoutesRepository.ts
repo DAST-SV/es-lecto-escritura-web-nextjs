@@ -44,10 +44,10 @@ export class RoutesRepository {
    * Obtiene todas las rutas para todos los idiomas
    */
   async getAllRoutes(): Promise<Record<string, any>> {
-    const languages = ['es', 'en', 'fr'];
+    const { locales } = await import('@/src/infrastructure/config/generated-locales');
     const allPathnames: Record<string, any> = {};
 
-    for (const lang of languages) {
+    for (const lang of locales) {
       const routes = await this.getRoutesForLanguage(lang);
       
       // Merge routes

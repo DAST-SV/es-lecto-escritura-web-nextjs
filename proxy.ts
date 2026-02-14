@@ -1,38 +1,59 @@
 // ============================================
-// middleware.ts - CON INVALIDACIÓN DE CACHE
+// proxy.ts — Middleware con locales dinámicos desde app.languages
 // ============================================
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { publicPathnames } from '@/src/infrastructure/config/routing.config';
-
-const LOCALES = ['es', 'en', 'fr', 'it'] as const;
-const DEFAULT_LOCALE = 'es';
-type Locale = typeof LOCALES[number];
+import { locales as STATIC_LOCALES, defaultLocale as STATIC_DEFAULT } from '@/src/infrastructure/config/generated-locales';
 
 const PUBLIC_ROUTES = [
   '/', '/auth/login', '/auth/register', '/auth/callback',
   '/auth/forgot-password', '/auth/reset-password', '/auth/complete-profile', '/error',
 ];
 
-// Mapa derivado de routing.config: ruta traducida → ruta física
-// Cubre el caso en que Supabase no responde (rutas públicas siempre accesibles)
-const TRANSLATED_TO_PHYSICAL: Record<string, string> = {};
-for (const [physical, translations] of Object.entries(publicPathnames)) {
-  if (typeof translations === 'object') {
-    for (const translated of Object.values(translations)) {
-      if (translated !== physical) {
-        TRANSLATED_TO_PHYSICAL[translated as string] = physical;
-      }
-    }
-  }
-}
 const STATIC_ROUTES = ['/_next', '/api', '/favicon.ico', '/images', '/fonts', '/.well-known', '/auth/callback', '/sw.js', '/manifest.webmanifest', '/icons', '/offline.html'];
 
-// ✅ Cache con TTL más corto
+// ============================================
+// Cache de locales dinámicos desde app.languages
+// ============================================
+let localesCache: string[] | null = null;
+let defaultLocaleCache: string | null = null;
+let localesCacheTimestamp = 0;
+const LOCALES_CACHE_TTL = 60 * 1000; // 1 minuto
+
+async function loadLocales(): Promise<{ locales: string[], defaultLocale: string }> {
+  const now = Date.now();
+  if (localesCache && (now - localesCacheTimestamp) < LOCALES_CACHE_TTL) {
+    return { locales: localesCache, defaultLocale: defaultLocaleCache! };
+  }
+  try {
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+    );
+    const { data, error } = await supabase
+      .schema('app')
+      .from('languages')
+      .select('code, is_default')
+      .eq('is_active', true)
+      .order('order_index');
+    if (error) throw error;
+    localesCache = (data || []).map((l: any) => l.code);
+    defaultLocaleCache = data?.find((l: any) => l.is_default)?.code || STATIC_DEFAULT;
+    localesCacheTimestamp = now;
+    return { locales: localesCache, defaultLocale: defaultLocaleCache };
+  } catch {
+    return { locales: [...STATIC_LOCALES], defaultLocale: STATIC_DEFAULT };
+  }
+}
+
+// ============================================
+// Cache de rutas traducidas
+// ============================================
 let routesCache: Record<string, any> | null = null;
 let cacheTimestamp = 0;
-const CACHE_TTL = 30 * 1000; // ✅ 30 segundos (antes era 5 minutos)
+const CACHE_TTL = 30 * 1000;
 
 async function loadRoutes(forceReload = false): Promise<Record<string, any>> {
   const now = Date.now();
@@ -93,26 +114,27 @@ async function loadRoutes(forceReload = false): Promise<Record<string, any>> {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // console.log(`\n🔍 [MIDDLEWARE] ${pathname}`);
-
   // 1. Ignorar estáticos
   if (STATIC_ROUTES.some(r => pathname.startsWith(r))) {
     return NextResponse.next();
   }
 
-  // 2. Extraer locale y traducción
-  let locale: Locale = DEFAULT_LOCALE;
+  // 2. Cargar locales dinámicamente desde app.languages
+  const { locales: activeLocales, defaultLocale: activeDefault } = await loadLocales();
+
+  // 3. Extraer locale y traducción
+  let locale = activeDefault;
   let translatedPath = pathname;
 
   const parts = pathname.split('/').filter(Boolean);
   const maybeLocale = parts[0];
-  
-  if (LOCALES.includes(maybeLocale as Locale)) {
-    locale = maybeLocale as Locale;
+
+  if (activeLocales.includes(maybeLocale)) {
+    locale = maybeLocale;
     translatedPath = '/' + parts.slice(1).join('/') || '/';
   } else {
     const url = request.nextUrl.clone();
-    url.pathname = `/${DEFAULT_LOCALE}${pathname}`;
+    url.pathname = `/${activeDefault}${pathname}`;
     return NextResponse.redirect(url);
   }
 
@@ -152,9 +174,9 @@ export async function proxy(request: NextRequest) {
   }
 
   if (!physicalPathname) {
-    // Fallback: mapa hardcodeado de rutas públicas traducidas (cuando Supabase no responde)
-    physicalPathname = TRANSLATED_TO_PHYSICAL[translatedPath] ?? translatedPath;
-    canonicalTranslatedPath = physicalPathname;
+    // Fallback: usar la ruta tal cual (cuando Supabase no responde)
+    physicalPathname = translatedPath;
+    canonicalTranslatedPath = translatedPath;
   }
 
   // Si el usuario llegó por una ruta no canónica (física o de otro idioma), redirigir

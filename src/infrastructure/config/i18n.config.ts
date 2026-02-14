@@ -1,15 +1,18 @@
 // src/infrastructure/config/i18n.config.ts
+import { locales, defaultLocale, type Locale } from './generated-locales';
+
+export { locales, defaultLocale, type Locale };
+
 export const i18nConfig = {
-  locales: ['en', 'es', 'fr'] as const, // ✅ Agregar 'fr'
-  defaultLocale: 'es',
+  locales,
+  defaultLocale,
   get lngs() {
     return this.locales.join('|');
   },
 } as const;
 
-export type LocalesType = typeof i18nConfig.locales;
-export type Locale = LocalesType[number];
+export type LocalesType = typeof locales;
 
 export function isLocale(value: string): value is Locale {
-  return (i18nConfig.locales as readonly string[]).includes(value);
+  return (locales as readonly string[]).includes(value);
 }

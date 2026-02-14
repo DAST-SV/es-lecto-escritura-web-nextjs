@@ -1,11 +1,11 @@
 // src/presentation/features/books-catalog/components/BookCard.tsx
 'use client';
 
-import Link from 'next/link';
 import Image from 'next/image';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { Clock, BookOpen, Star, Crown } from 'lucide-react';
 import type { BookListItem } from '@/src/core/domain/entities/BookWithTranslations';
+import { LocaleLink } from '@/src/presentation/components/LocaleLink';
 
 interface BookCardProps {
   book: BookListItem;
@@ -21,17 +21,17 @@ const difficultyColors = {
 };
 
 export function BookCard({ book, categorySlug }: BookCardProps) {
-  const locale = useLocale();
   const t = useTranslations('booksCatalog');
 
   // Construir la URL del libro según si tiene categoría o no
-  const bookUrl = categorySlug
-    ? `/${locale}/library/${categorySlug}/${book.slug}`
-    : `/${locale}/library/book/${book.slug}`;
+  const dynamicPath = categorySlug
+    ? `${categorySlug}/${book.slug}`
+    : `book/${book.slug}`;
 
   return (
-    <Link
-      href={bookUrl}
+    <LocaleLink
+      routeKey="/library"
+      dynamicPath={dynamicPath}
       className="group relative flex flex-col bg-white rounded-2xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border border-gray-100"
     >
       {/* Badges */}
@@ -119,6 +119,6 @@ export function BookCard({ book, categorySlug }: BookCardProps) {
           )}
         </div>
       </div>
-    </Link>
+    </LocaleLink>
   );
 }

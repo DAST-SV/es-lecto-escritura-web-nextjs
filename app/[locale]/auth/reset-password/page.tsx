@@ -13,12 +13,10 @@ import { ErrorMessage, LoginBackground } from '@/src/presentation/features/auth/
 import { UnifiedLayout } from '@/src/presentation/features/navigation';
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
 import { Input, Button } from '@/src/presentation/components/ui';
-import { useLocale } from 'next-intl';
-import Link from 'next/link';
+import { LocaleLink } from '@/src/presentation/components/LocaleLink';
 
 export default function ResetPasswordPage() {
   const { t, loading } = useSupabaseTranslations('auth.form');
-  const locale = useLocale();
   const initialState: AuthState = {};
   const [state, formAction, isPending] = useActionState(resetPassword, initialState);
 
@@ -92,12 +90,12 @@ export default function ResetPasswordPage() {
                 {t('reset_password_success_message') || 'Ya puedes iniciar sesion con tu nueva contraseña'}
               </p>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Link
-                  href={`/${locale}/auth/login`}
+                <LocaleLink
+                  routeKey="/auth/login"
                   className="inline-flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-lg font-semibold hover:from-green-500 hover:to-blue-600 transition-all text-lg shadow-md"
                 >
                   {t('login_button') || '¡ENTRAR A APRENDER! 📚'}
-                </Link>
+                </LocaleLink>
               </motion.div>
             </motion.div>
           ) : (
@@ -149,14 +147,15 @@ export default function ResetPasswordPage() {
 
               {/* Back to login */}
               <div className="text-center mt-5">
-                <Link
-                  href={`/${locale}/auth/login`}
+                <LocaleLink
+                  routeKey="/auth/login"
                   className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-bold transition-colors"
-                  style={{ fontFamily: "'Nunito', 'Varela Round', 'Comfortaa', sans-serif" }}
                 >
                   <ArrowLeft size={14} />
-                  {t('back_to_login') || 'Volver al inicio de sesion'}
-                </Link>
+                  <span style={{ fontFamily: "'Nunito', 'Varela Round', 'Comfortaa', sans-serif" }}>
+                    {t('back_to_login') || 'Volver al inicio de sesion'}
+                  </span>
+                </LocaleLink>
               </div>
             </>
           )}

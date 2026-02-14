@@ -9,8 +9,7 @@ import { motion } from 'framer-motion';
 import { Lock, Mail } from 'lucide-react';
 import { Input, Button } from '@/src/presentation/components/ui';
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
-import { useLocale } from 'next-intl';
-import Link from 'next/link';
+import { LocaleLink } from '@/src/presentation/components/LocaleLink';
 
 interface LoginFormFieldsProps {
   isPending: boolean;
@@ -24,7 +23,6 @@ export function LoginFormFields({
   formAction
 }: LoginFormFieldsProps) {
   const { t, loading } = useSupabaseTranslations('auth.form');
-  const locale = useLocale();
 
   if (loading) {
     return (
@@ -81,13 +79,14 @@ export function LoginFormFields({
           </span>
         </label>
 
-        <Link
-          href={`/${locale}/auth/forgot-password`}
+        <LocaleLink
+          routeKey="/auth/forgot-password"
           className="text-red-500 hover:text-red-700 text-sm font-bold border border-yellow-300 rounded-lg px-3 py-1 hover:bg-yellow-50 transition-all duration-300 ease-in-out"
-          style={{ fontFamily: "'Nunito', 'Varela Round', 'Comfortaa', sans-serif" }}
         >
-          {t('forgot_password')}
-        </Link>
+          <span style={{ fontFamily: "'Nunito', 'Varela Round', 'Comfortaa', sans-serif" }}>
+            {t('forgot_password')}
+          </span>
+        </LocaleLink>
       </div>
 
       <motion.div

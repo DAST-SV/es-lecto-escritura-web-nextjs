@@ -1,8 +1,8 @@
 // src/presentation/features/books-catalog/components/CategoryCard.tsx
 'use client';
 
-import Link from 'next/link';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
+import { LocaleLink } from '@/src/presentation/components/LocaleLink';
 import {
   BookOpen,
   Feather,
@@ -36,13 +36,13 @@ interface CategoryCardProps {
 }
 
 export function CategoryCard({ category }: CategoryCardProps) {
-  const locale = useLocale();
   const t = useTranslations('booksCatalog');
   const IconComponent = iconMap[category.icon || ''] || Folder;
 
   return (
-    <Link
-      href={`/${locale}/library/${category.slug}`}
+    <LocaleLink
+      routeKey="/library"
+      dynamicPath={category.slug}
       className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border border-gray-100"
     >
       {/* Gradient background */}
@@ -101,6 +101,6 @@ export function CategoryCard({ category }: CategoryCardProps) {
           />
         </svg>
       </div>
-    </Link>
+    </LocaleLink>
   );
 }

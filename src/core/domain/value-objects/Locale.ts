@@ -1,11 +1,13 @@
 // ============================================
 // src/core/domain/value-objects/Locale.ts
-// ✅ CORREGIDO: Soporte para FR
+// Locales soportados importados de generated-locales (fuente: app.languages)
 // ============================================
 
+import { locales } from '@/src/infrastructure/config/generated-locales';
+
 export class Locale {
-  private static readonly SUPPORTED_LOCALES = ['es', 'en', 'fr'] as const; // ✅ Agregado 'fr'
-  
+  private static readonly SUPPORTED_LOCALES = locales;
+
   constructor(public readonly code: string) {
     if (!Locale.isSupported(code)) {
       throw new Error(`Unsupported locale: ${code}`);
@@ -13,7 +15,7 @@ export class Locale {
   }
 
   static isSupported(code: string): boolean {
-    return Locale.SUPPORTED_LOCALES.includes(code as any);
+    return (Locale.SUPPORTED_LOCALES as readonly string[]).includes(code);
   }
 
   static fromString(code: string): Locale {

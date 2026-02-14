@@ -1,19 +1,20 @@
 // ============================================
 // src/presentation/hooks/useCurrentLocale.ts
 // Helper centralizado para obtener el locale actual desde la URL
-// Funciona en browser (client components) y server (via pathname del request)
+// Locales importados de generated-locales (fuente: app.languages)
 // ============================================
 
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { locales, defaultLocale, type Locale } from '@/src/infrastructure/config/generated-locales';
 
-export const SUPPORTED_LOCALES = ['es', 'en', 'fr', 'it'] as const;
-export type SupportedLocale = typeof SUPPORTED_LOCALES[number];
-export const DEFAULT_LOCALE: SupportedLocale = 'es';
+export const SUPPORTED_LOCALES = locales;
+export type SupportedLocale = Locale;
+export const DEFAULT_LOCALE = defaultLocale;
 
 /**
- * Extrae el locale del pathname (ej. '/en/biblioteca' → 'en')
+ * Extrae el locale del pathname (ej. '/en/biblioteca' -> 'en')
  * No depende de cookies ni contexto next-intl
  */
 export function getLocaleFromPathname(pathname: string): SupportedLocale {
@@ -26,7 +27,6 @@ export function getLocaleFromPathname(pathname: string): SupportedLocale {
 /**
  * Hook para client components — lee el locale de la URL actual
  * Usar en lugar de useLocale() cuando next-intl puede no estar disponible
- * o cuando necesitas el locale real de la URL (no de la cookie)
  */
 export function useCurrentLocale(): SupportedLocale {
   const pathname = usePathname();

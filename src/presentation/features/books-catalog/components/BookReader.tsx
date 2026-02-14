@@ -3,8 +3,7 @@
 
 import { useState, useCallback } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
-import { useLocale } from 'next-intl';
+import { LocaleLink } from '@/src/presentation/components/LocaleLink';
 import {
   ChevronLeft,
   ChevronRight,
@@ -31,7 +30,6 @@ interface BookReaderProps {
 }
 
 export function BookReader({ book, pages, initialPage = 0 }: BookReaderProps) {
-  const locale = useLocale();
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -89,12 +87,12 @@ export function BookReader({ book, pages, initialPage = 0 }: BookReaderProps) {
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 bg-gray-800/80 backdrop-blur-sm">
         <div className="flex items-center gap-4">
-          <Link
-            href={`/${locale}/library`}
+          <LocaleLink
+            routeKey="/library"
             className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
           >
             <X className="w-5 h-5 text-gray-300" />
-          </Link>
+          </LocaleLink>
           <div>
             <h1 className="text-white font-medium truncate max-w-xs sm:max-w-md">
               {book.title}

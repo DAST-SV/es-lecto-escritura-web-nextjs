@@ -14,7 +14,6 @@ import {
   BookOpen,
   Users,
   FileSearch,
-  Settings,
   LogOut,
   Menu,
   X,
@@ -26,7 +25,6 @@ import {
   Building2,
   Shield,
   UserCircle,
-  Package,
   Tag,
   FolderTree,
   Library,
@@ -76,7 +74,7 @@ export default function AdminLayout({
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        router.push(`/${locale}/login`);
+        router.push(`/${locale}/auth/login`);
         return;
       }
 
@@ -84,13 +82,13 @@ export default function AdminLayout({
       setIsLoading(false);
     } catch (error) {
       console.error('Error verificando autenticación:', error);
-      router.push(`/${locale}/login`);
+      router.push(`/${locale}/auth/login`);
     }
   };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    router.push(`/${locale}/login`);
+    router.push(`/${locale}/auth/login`);
   };
 
   const toggleMenu = (menuName: string) => {
@@ -101,188 +99,64 @@ export default function AdminLayout({
     );
   };
 
-  // ✅ NUEVO: Menú completo con todas las secciones
+  // Helper para rutas admin (no tienen traducción, solo necesitan locale)
+  const ap = (sub: string = '') => `/${locale}/admin${sub}`;
+
   const menuItems: MenuItem[] = [
+    { name: 'Dashboard', href: ap(), icon: <LayoutDashboard size={20} /> },
+    { name: 'Organizaciones', href: ap('/organizations'), icon: <Building2 size={20} /> },
     {
-      name: 'Dashboard',
-      href: `/${locale}/admin`,
-      icon: <LayoutDashboard size={20} />,
-    },
-    {
-      name: 'Organizaciones',
-      href: `/${locale}/admin/organizations`,
-      icon: <Building2 size={20} />,
-    },
-    {
-      name: 'Usuarios',
-      href: '#',
-      icon: <Users size={20} />,
+      name: 'Usuarios', href: '#', icon: <Users size={20} />,
       children: [
-        {
-          name: 'Perfiles de Usuario',
-          href: `/${locale}/admin/user-profiles`,
-          icon: <UserCircle size={18} />,
-        },
-        {
-          name: 'Relaciones de Usuario',
-          href: `/${locale}/admin/user-relationships`,
-          icon: <Users size={18} />,
-        },
-        {
-          name: 'Roles de Usuario',
-          href: `/${locale}/admin/user-roles`,
-          icon: <Shield size={18} />,
-        },
+        { name: 'Perfiles de Usuario', href: ap('/user-profiles'), icon: <UserCircle size={18} /> },
+        { name: 'Relaciones de Usuario', href: ap('/user-relationships'), icon: <Users size={18} /> },
+        { name: 'Roles de Usuario', href: ap('/user-roles'), icon: <Shield size={18} /> },
       ],
     },
     {
-      name: 'Roles y Permisos',
-      href: '#',
-      icon: <Shield size={20} />,
+      name: 'Roles y Permisos', href: '#', icon: <Shield size={20} />,
       children: [
-        {
-          name: 'Roles',
-          href: `/${locale}/admin/roles`,
-          icon: <Shield size={18} />,
-        },
-        {
-          name: 'Permisos de Rutas',
-          href: `/${locale}/admin/route-permissions`,
-          icon: <RouteIcon size={18} />,
-        },
-        {
-          name: 'Permisos de Usuario',
-          href: `/${locale}/admin/user-permissions`,
-          icon: <Key size={18} />,
-        },
-        {
-          name: 'Acceso por Rol e Idioma',
-          href: `/${locale}/admin/role-language-access`,
-          icon: <Globe size={18} />,
-        },
+        { name: 'Roles', href: ap('/roles'), icon: <Shield size={18} /> },
+        { name: 'Permisos de Rutas', href: ap('/route-permissions'), icon: <RouteIcon size={18} /> },
+        { name: 'Permisos de Usuario', href: ap('/user-permissions'), icon: <Key size={18} /> },
+        { name: 'Acceso por Rol e Idioma', href: ap('/role-language-access'), icon: <Globe size={18} /> },
+      ],
+    },
+    { name: 'Idiomas', href: ap('/languages'), icon: <Globe size={20} /> },
+    {
+      name: 'Gestión de Libros', href: '#', icon: <Library size={20} />,
+      children: [
+        { name: 'Categorías', href: ap('/book-categories'), icon: <FolderTree size={18} /> },
+        { name: 'Niveles', href: ap('/book-levels'), icon: <Layers size={18} /> },
+        { name: 'Géneros', href: ap('/book-genres'), icon: <Sparkles size={18} /> },
+        { name: 'Etiquetas', href: ap('/book-tags'), icon: <Tags size={18} /> },
+        { name: 'Autores', href: ap('/book-authors'), icon: <UserPen size={18} /> },
+        { name: 'Libros', href: ap('/books-management'), icon: <BookOpen size={18} /> },
+        { name: 'Páginas de Libros', href: ap('/book-pages'), icon: <FileText size={18} /> },
       ],
     },
     {
-      name: 'Idiomas',
-      href: `/${locale}/admin/languages`,
-      icon: <Globe size={20} />,
-    },
-    {
-      name: 'Gestión de Libros',
-      href: '#',
-      icon: <Library size={20} />,
+      name: 'Interacción Usuarios', href: '#', icon: <TrendingUp size={20} />,
       children: [
-        {
-          name: 'Categorías',
-          href: `/${locale}/admin/book-categories`,
-          icon: <FolderTree size={18} />,
-        },
-        {
-          name: 'Niveles',
-          href: `/${locale}/admin/book-levels`,
-          icon: <Layers size={18} />,
-        },
-        {
-          name: 'Géneros',
-          href: `/${locale}/admin/book-genres`,
-          icon: <Sparkles size={18} />,
-        },
-        {
-          name: 'Etiquetas',
-          href: `/${locale}/admin/book-tags`,
-          icon: <Tags size={18} />,
-        },
-        {
-          name: 'Autores',
-          href: `/${locale}/admin/book-authors`,
-          icon: <UserPen size={18} />,
-        },
-        {
-          name: 'Libros',
-          href: `/${locale}/admin/books-management`,
-          icon: <BookOpen size={18} />,
-        },
-        {
-          name: 'Páginas de Libros',
-          href: `/${locale}/admin/book-pages`,
-          icon: <FileText size={18} />,
-        },
+        { name: 'Reseñas', href: ap('/book-reviews'), icon: <MessageSquare size={18} /> },
+        { name: 'Calificaciones', href: ap('/book-ratings'), icon: <Star size={18} /> },
+        { name: 'Progreso de Lectura', href: ap('/reading-progress'), icon: <TrendingUp size={18} /> },
+        { name: 'Sesiones de Lectura', href: ap('/reading-sessions'), icon: <Clock size={18} /> },
+        { name: 'Favoritos', href: ap('/favorites'), icon: <Heart size={18} /> },
+        { name: 'Listas de Lectura', href: ap('/reading-lists'), icon: <List size={18} /> },
       ],
     },
     {
-      name: 'Interacción Usuarios',
-      href: '#',
-      icon: <TrendingUp size={20} />,
+      name: 'Sistema de Traducciones', href: '#', icon: <Languages size={20} />,
       children: [
-        {
-          name: 'Reseñas',
-          href: `/${locale}/admin/book-reviews`,
-          icon: <MessageSquare size={18} />,
-        },
-        {
-          name: 'Calificaciones',
-          href: `/${locale}/admin/book-ratings`,
-          icon: <Star size={18} />,
-        },
-        {
-          name: 'Progreso de Lectura',
-          href: `/${locale}/admin/reading-progress`,
-          icon: <TrendingUp size={18} />,
-        },
-        {
-          name: 'Sesiones de Lectura',
-          href: `/${locale}/admin/reading-sessions`,
-          icon: <Clock size={18} />,
-        },
-        {
-          name: 'Favoritos',
-          href: `/${locale}/admin/favorites`,
-          icon: <Heart size={18} />,
-        },
-        {
-          name: 'Listas de Lectura',
-          href: `/${locale}/admin/reading-lists`,
-          icon: <List size={18} />,
-        },
+        { name: 'Namespaces', href: ap('/translation-namespaces'), icon: <FolderTree size={18} /> },
+        { name: 'Categorías', href: ap('/translation-categories'), icon: <Tag size={18} /> },
+        { name: 'Claves de Traducción', href: ap('/translation-keys'), icon: <Key size={18} /> },
+        { name: 'Traducciones', href: ap('/translations'), icon: <Languages size={18} /> },
       ],
     },
-    {
-      name: 'Sistema de Traducciones',
-      href: '#',
-      icon: <Languages size={20} />,
-      children: [
-        {
-          name: 'Namespaces',
-          href: `/${locale}/admin/translation-namespaces`,
-          icon: <FolderTree size={18} />,
-        },
-        {
-          name: 'Categorías',
-          href: `/${locale}/admin/translation-categories`,
-          icon: <Tag size={18} />,
-        },
-        {
-          name: 'Claves de Traducción',
-          href: `/${locale}/admin/translation-keys`,
-          icon: <Key size={18} />,
-        },
-        {
-          name: 'Traducciones',
-          href: `/${locale}/admin/translations`,
-          icon: <Languages size={18} />,
-        },
-      ],
-    },
-    {
-      name: 'Miembros de Organización',
-      href: `/${locale}/admin/organization-members`,
-      icon: <Users size={20} />,
-    },
-    {
-      name: 'Auditoría',
-      href: `/${locale}/admin/audit`,
-      icon: <FileSearch size={20} />,
-    },
+    { name: 'Miembros de Organización', href: ap('/organization-members'), icon: <Users size={20} /> },
+    { name: 'Auditoría', href: ap('/audit'), icon: <FileSearch size={20} /> },
   ];
 
   if (isLoading) {
