@@ -7,10 +7,12 @@
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useCurrentLocale } from '@/src/presentation/hooks';
 
 export default function ErrorPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const locale = useCurrentLocale();
   const [countdown, setCountdown] = useState(5);
 
   const code = searchParams.get('code') || '500';
@@ -28,7 +30,7 @@ export default function ErrorPage() {
   // ✅ FIX: Redirect en un useEffect separado
   useEffect(() => {
     if (countdown <= 0) {
-      router.push('/es');
+      router.push(`/${locale}`);
     }
   }, [countdown, router]);
 
@@ -89,7 +91,7 @@ export default function ErrorPage() {
           {/* Actions */}
           <div className="space-y-3">
             <button
-              onClick={() => router.push('/es')}
+              onClick={() => router.push(`/${locale}`)}
               className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
             >
               🏠 Ir al Inicio Ahora
@@ -108,7 +110,7 @@ export default function ErrorPage() {
           <p className="text-sm text-gray-600">
             ¿Necesitas ayuda?{' '}
             <a
-              href="/es/admin"
+              href={`/${locale}/admin`}
               className="text-indigo-600 hover:text-indigo-800 font-medium"
             >
               Contactar soporte

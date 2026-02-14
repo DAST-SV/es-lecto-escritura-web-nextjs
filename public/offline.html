@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#3b82f6" />
+  <title>ESLectoEscritura</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      height: 100%;
+      /* Soportar notch/safe-area en iOS */
+      padding: env(safe-area-inset-top) env(safe-area-inset-right)
+               env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    body {
+      min-height: 100%;
+      min-height: 100dvh; /* dynamic viewport height — móvil sin barra del browser */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+      font-family: Nunito, 'Varela Round', Comfortaa, sans-serif;
+      overflow: hidden;
+    }
+
+    .card {
+      text-align: center;
+      padding: clamp(1.5rem, 5vw, 3rem) clamp(1rem, 4vw, 2rem);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(1rem, 3vw, 2rem);
+      width: 100%;
+      max-width: 360px;
+    }
+
+    /* ── Ilustración ── */
+    .illustration {
+      position: relative;
+      width: clamp(110px, 30vw, 160px);
+      height: clamp(110px, 30vw, 160px);
+    }
+
+    .book-wrap {
+      position: absolute;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%       { transform: translateX(-50%) translateY(-10px); }
+    }
+
+    .book-wrap svg {
+      width: clamp(90px, 25vw, 130px);
+      height: clamp(90px, 25vw, 130px);
+    }
+
+    .book-shadow {
+      position: absolute;
+      bottom: -6px; left: 50%;
+      transform: translateX(-50%);
+      width: 70%; height: 10px;
+      background: rgba(30, 64, 175, 0.3);
+      border-radius: 50%;
+      animation: shadow-pulse 3s ease-in-out infinite;
+    }
+    @keyframes shadow-pulse {
+      0%, 100% { transform: translateX(-50%) scaleX(1);   opacity: 0.4; }
+      50%       { transform: translateX(-50%) scaleX(0.7); opacity: 0.2; }
+    }
+
+    .wifi-badge {
+      position: absolute;
+      top: 0; right: 0;
+      background: #fbbf24;
+      border-radius: 50%;
+      width: clamp(32px, 9vw, 44px);
+      height: clamp(32px, 9vw, 44px);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      border: 3px solid white;
+      animation: badge-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes badge-pop {
+      from { transform: scale(0); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    .wifi-badge svg {
+      width: clamp(16px, 4.5vw, 24px);
+      height: clamp(16px, 4.5vw, 24px);
+    }
+
+    /* ── Barras de señal ── */
+    .signal-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 20px;
+    }
+    .bar { width: 5px; border-radius: 2px; background: white; opacity: 0.25; }
+    .bar:nth-child(1) { height: 6px; }
+    .bar:nth-child(2) { height: 10px; }
+    .bar:nth-child(3) { height: 14px; }
+    .bar:nth-child(4) { height: 19px; }
+
+    /* ── Indicador de intentos ── */
+    .attempts {
+      display: flex; gap: 6px; align-items: center; height: 16px;
+      visibility: hidden;
+    }
+    .attempts.visible { visibility: visible; }
+    .attempt-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255,255,255,0.35);
+      border: 2px solid rgba(255,255,255,0.6);
+      transition: background 0.3s;
+    }
+    .attempt-dot.used { background: white; }
+    .attempt-dot.failed { background: #fca5a5; border-color: #fca5a5; }
+
+    /* ── Botón reintentar ── */
+    .retry-btn {
+      width: clamp(60px, 16vw, 76px);
+      height: clamp(60px, 16vw, 76px);
+      border-radius: 50%;
+      border: 3px solid rgba(255,255,255,0.8);
+      background: #fbbf24;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2), 0 0 0 0 rgba(251,191,36,0.5);
+      transition: transform 0.2s, box-shadow 0.2s;
+      outline: none;
+      animation: pulse-ring 2.5s ease-out infinite;
+      -webkit-tap-highlight-color: transparent;
+    }
+    @keyframes pulse-ring {
+      0%   { box-shadow: 0 8px 24px rgba(0,0,0,0.2), 0 0 0 0   rgba(251,191,36,0.5); }
+      70%  { box-shadow: 0 8px 24px rgba(0,0,0,0.2), 0 0 0 18px rgba(251,191,36,0); }
+      100% { box-shadow: 0 8px 24px rgba(0,0,0,0.2), 0 0 0 0   rgba(251,191,36,0); }
+    }
+    .retry-btn:hover  { transform: scale(1.08); }
+    .retry-btn:active { transform: scale(0.94); }
+    .retry-btn.loading { opacity: 0.65; cursor: not-allowed; animation: none; }
+    .retry-btn svg {
+      width: clamp(26px, 7vw, 34px);
+      height: clamp(26px, 7vw, 34px);
+      fill: #1e40af;
+    }
+    .spin { animation: spin 0.9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Dots de espera ── */
+    .dots-row {
+      display: flex; gap: 8px; align-items: center; height: 20px;
+      visibility: hidden;
+    }
+    .dots-row.visible { visibility: visible; }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%; background: white; opacity: 0;
+      animation: dot-blink 1.2s ease-in-out infinite;
+    }
+    .dot:nth-child(1) { animation-delay: 0s; }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dot-blink {
+      0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+      40%           { opacity: 1;   transform: scale(1.2); }
+    }
+
+    /* ── Branding ── */
+    .brand {
+      font-size: clamp(0.6rem, 2vw, 0.75rem);
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      color: white;
+      opacity: 0.4;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+
+    <div class="illustration">
+      <div class="book-shadow"></div>
+      <div class="book-wrap">
+        <svg viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="6" y="22" width="52" height="76" rx="5" fill="white" fill-opacity="0.2" stroke="white" stroke-width="2"/>
+          <line x1="16" y1="40" x2="50" y2="40" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <line x1="16" y1="50" x2="50" y2="50" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <line x1="16" y1="60" x2="50" y2="60" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <line x1="16" y1="70" x2="40" y2="70" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <line x1="16" y1="80" x2="46" y2="80" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+          <rect x="59" y="22" width="12" height="76" rx="3" fill="white" fill-opacity="0.45"/>
+          <rect x="72" y="22" width="52" height="76" rx="5" fill="white" fill-opacity="0.2" stroke="white" stroke-width="2"/>
+          <line x1="82" y1="40" x2="116" y2="40" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <line x1="82" y1="50" x2="116" y2="50" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <line x1="82" y1="60" x2="116" y2="60" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <line x1="82" y1="70" x2="102" y2="70" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <line x1="82" y1="80" x2="110" y2="80" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+        </svg>
+      </div>
+      <div class="wifi-badge" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M5 12.55a11 11 0 0 1 14.08 0" stroke="#1e40af" stroke-width="2" stroke-linecap="round"/>
+          <path d="M1.42 9a16 16 0 0 1 21.16 0" stroke="#1e40af" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0" stroke="#1e40af" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="12" cy="20" r="1.5" fill="#1e40af"/>
+          <line x1="2" y1="2" x2="22" y2="22" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Barras de señal apagadas -->
+    <div class="signal-bars" aria-hidden="true">
+      <div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div><div class="bar"></div>
+    </div>
+
+    <!-- Indicador de intentos (max 3) -->
+    <div class="attempts" id="attempts-row" aria-label="Retry attempts">
+      <div class="attempt-dot" id="dot-0"></div>
+      <div class="attempt-dot" id="dot-1"></div>
+      <div class="attempt-dot" id="dot-2"></div>
+    </div>
+
+    <!-- Dots de espera durante fetch -->
+    <div class="dots-row" id="dots-row">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+
+    <!-- Botón reintentar -->
+    <button class="retry-btn" id="retry-btn" aria-label="Retry connection" onclick="handleRetry()">
+      <svg id="retry-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+      </svg>
+    </button>
+
+    <div class="brand">ESLectoEscritura</div>
+
+  </div>
+
+  <script>
+    var MAX_ATTEMPTS = 3;
+    var attempts = 0;
+    var retrying = false;
+
+    function handleRetry() {
+      if (retrying) return;
+      retrying = true;
+
+      var btn  = document.getElementById('retry-btn');
+      var icon = document.getElementById('retry-icon');
+      var dots = document.getElementById('dots-row');
+      var attRow = document.getElementById('attempts-row');
+
+      // Mostrar indicador de intentos
+      attRow.classList.add('visible');
+      // Marcar el intento actual como "en curso"
+      var currentDot = document.getElementById('dot-' + attempts);
+      if (currentDot) currentDot.classList.add('used');
+
+      btn.classList.add('loading');
+      btn.disabled = true;
+      icon.classList.add('spin');
+      dots.classList.add('visible');
+
+      fetch('/favicon.ico?_=' + Date.now(), {
+        cache: 'no-store',
+        mode: 'no-cors',
+        signal: AbortSignal.timeout ? AbortSignal.timeout(5000) : undefined
+      })
+      .then(function(res) {
+        if (res.type === 'opaque' || res.ok) {
+          // ✅ Hay red — navegar al inicio
+          window.location.replace('/');
+          return;
+        }
+        onFail();
+      })
+      .catch(function() { onFail(); });
+    }
+
+    function onFail() {
+      // Marcar intento fallido
+      var failDot = document.getElementById('dot-' + attempts);
+      if (failDot) { failDot.classList.remove('used'); failDot.classList.add('failed'); }
+
+      attempts++;
+
+      if (attempts >= MAX_ATTEMPTS) {
+        // Agotados los intentos — ir a home (ruta segura)
+        window.location.replace('/');
+        return;
+      }
+
+      reset();
+    }
+
+    function reset() {
+      retrying = false;
+      var btn  = document.getElementById('retry-btn');
+      var icon = document.getElementById('retry-icon');
+      var dots = document.getElementById('dots-row');
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      icon.classList.remove('spin');
+      dots.classList.remove('visible');
+    }
+  </script>
+</body>
+</html>

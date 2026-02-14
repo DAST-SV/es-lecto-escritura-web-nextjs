@@ -4,13 +4,30 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { publicPathnames } from '@/src/infrastructure/config/routing.config';
 
 const LOCALES = ['es', 'en', 'fr', 'it'] as const;
 const DEFAULT_LOCALE = 'es';
 type Locale = typeof LOCALES[number];
 
-const PUBLIC_ROUTES = ['/', '/auth/login', '/auth/register', '/auth/callback', '/auth/forgot-password', '/auth/reset-password', '/auth/complete-profile', '/error', '/books', '/explore', '/library'];
-const STATIC_ROUTES = ['/_next', '/api', '/favicon.ico', '/images', '/fonts', '/.well-known', '/auth/callback', '/sw.js', '/manifest.webmanifest', '/icons', '/offline'];
+const PUBLIC_ROUTES = [
+  '/', '/auth/login', '/auth/register', '/auth/callback',
+  '/auth/forgot-password', '/auth/reset-password', '/auth/complete-profile', '/error',
+];
+
+// Mapa derivado de routing.config: ruta traducida → ruta física
+// Cubre el caso en que Supabase no responde (rutas públicas siempre accesibles)
+const TRANSLATED_TO_PHYSICAL: Record<string, string> = {};
+for (const [physical, translations] of Object.entries(publicPathnames)) {
+  if (typeof translations === 'object') {
+    for (const translated of Object.values(translations)) {
+      if (translated !== physical) {
+        TRANSLATED_TO_PHYSICAL[translated as string] = physical;
+      }
+    }
+  }
+}
+const STATIC_ROUTES = ['/_next', '/api', '/favicon.ico', '/images', '/fonts', '/.well-known', '/auth/callback', '/sw.js', '/manifest.webmanifest', '/icons', '/offline.html'];
 
 // ✅ Cache con TTL más corto
 let routesCache: Record<string, any> | null = null;
@@ -101,28 +118,51 @@ export async function proxy(request: NextRequest) {
 
   // console.log(`📍 Traducida: "${translatedPath}", Locale: "${locale}"`);
 
-  // 3. Encontrar ruta física
+  // 3. Encontrar ruta física y traducción canónica del locale actual
   const routes = await loadRoutes();
   let physicalPathname: string | null = null;
+  let canonicalTranslatedPath: string | null = null; // Ruta traducida correcta para este locale
 
-  for (const [pathname, translations] of Object.entries(routes)) {
+  for (const [routePhysical, translations] of Object.entries(routes)) {
     if (typeof translations === 'string') {
-      if (translations === translatedPath) {
-        physicalPathname = pathname;
+      // Ruta sin traducciones: la ruta física es igual en todos los idiomas
+      if (translations === translatedPath || routePhysical === translatedPath) {
+        physicalPathname = routePhysical;
+        canonicalTranslatedPath = routePhysical; // No hay traducción, usar la física
         break;
       }
     } else {
-      if (translations[locale] === translatedPath) {
-        physicalPathname = pathname;
-        // console.log(`✅ Física: ${pathname}`);
+      const localeTranslation = translations[locale] as string | undefined;
+      // Caso 1: el usuario accedió por la ruta traducida correcta del locale
+      if (localeTranslation && localeTranslation === translatedPath) {
+        physicalPathname = routePhysical;
+        canonicalTranslatedPath = localeTranslation;
+        break;
+      }
+      // Caso 2: el usuario accedió por la ruta física directamente (ej. /es/library)
+      // o por la traducción de otro idioma → redirigir a la traducción correcta
+      const isPhysicalPath = routePhysical === translatedPath;
+      const isOtherLocaleTranslation = Object.values(translations).includes(translatedPath);
+      if (isPhysicalPath || isOtherLocaleTranslation) {
+        physicalPathname = routePhysical;
+        canonicalTranslatedPath = localeTranslation ?? routePhysical;
         break;
       }
     }
   }
 
   if (!physicalPathname) {
-    // console.log(`⚠️ No se encontró traducción, usando: ${translatedPath}`);
-    physicalPathname = translatedPath;
+    // Fallback: mapa hardcodeado de rutas públicas traducidas (cuando Supabase no responde)
+    physicalPathname = TRANSLATED_TO_PHYSICAL[translatedPath] ?? translatedPath;
+    canonicalTranslatedPath = physicalPathname;
+  }
+
+  // Si el usuario llegó por una ruta no canónica (física o de otro idioma), redirigir
+  if (canonicalTranslatedPath && canonicalTranslatedPath !== translatedPath) {
+    const canonicalUrl = request.nextUrl.clone();
+    canonicalUrl.pathname = `/${locale}${canonicalTranslatedPath}`;
+    canonicalUrl.search = ''; // Limpiar params para evitar bucles
+    return NextResponse.redirect(canonicalUrl);
   }
 
   // 4. Verificar si es pública
@@ -172,9 +212,23 @@ export async function proxy(request: NextRequest) {
     
     if (!user) {
       // console.log(`❌ Sin autenticar`);
+      const currentAttempts = parseInt(request.nextUrl.searchParams.get('attempts') || '0', 10);
+      const nextAttempts = currentAttempts + 1;
+      if (nextAttempts > 3) {
+        const homeUrl = request.nextUrl.clone();
+        homeUrl.pathname = `/${locale}`;
+        homeUrl.search = '';
+        return NextResponse.redirect(homeUrl);
+      }
       const url = request.nextUrl.clone();
       url.pathname = `/${locale}/auth/login`;
-      url.searchParams.set('redirect', pathname);
+      // Guardar la ruta traducida canónica para el redirect post-login
+      const canonical = canonicalTranslatedPath || translatedPath;
+      const isAuthOrHome = PUBLIC_ROUTES.some(r => canonical === r || canonical.startsWith(r + '/'));
+      if (!isAuthOrHome) {
+        url.searchParams.set('redirect', `/${locale}${canonical}`);
+      }
+      url.searchParams.set('attempts', String(nextAttempts));
       return NextResponse.redirect(url);
     }
     
@@ -202,8 +256,22 @@ export async function proxy(request: NextRequest) {
   } catch (error) {
     // Silenciar AuthSessionMissingError (usuario no autenticado es esperado)
     // console.error(`❌ Error auth:`, error);
+    const currentAttempts = parseInt(request.nextUrl.searchParams.get('attempts') || '0', 10);
+    const nextAttempts = currentAttempts + 1;
+    if (nextAttempts > 3) {
+      const homeUrl = request.nextUrl.clone();
+      homeUrl.pathname = `/${locale}`;
+      homeUrl.search = '';
+      return NextResponse.redirect(homeUrl);
+    }
     const url = request.nextUrl.clone();
     url.pathname = `/${locale}/auth/login`;
+    const canonical = canonicalTranslatedPath || translatedPath;
+    const isAuthOrHome = PUBLIC_ROUTES.some(r => canonical === r || canonical.startsWith(r + '/'));
+    if (!isAuthOrHome) {
+      url.searchParams.set('redirect', `/${locale}${canonical}`);
+    }
+    url.searchParams.set('attempts', String(nextAttempts));
     return NextResponse.redirect(url);
   }
 

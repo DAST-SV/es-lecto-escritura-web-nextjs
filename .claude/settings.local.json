@@ -66,7 +66,11 @@
       "Bash(dir /s /b \"C:\\\\Users\\\\hboni\\\\Downloads\\\\es-lecto-escritura-web-nextjs\\\\supabase\\\\schemas\\\\app\\\\auth\")",
       "Bash(dir /s \"C:\\\\Users\\\\hboni\\\\Downloads\\\\es-lecto-escritura-web-nextjs\\\\supabase\\\\schemas\")",
       "Bash(copy:*)",
-      "Bash(del \"C:\\\\Users\\\\hboni\\\\Downloads\\\\es-lecto-escritura-web-nextjs\\\\middleware.ts\")"
+      "Bash(del \"C:\\\\Users\\\\hboni\\\\Downloads\\\\es-lecto-escritura-web-nextjs\\\\middleware.ts\")",
+      "Bash(del \"D:\\\\GitHub\\\\DAST-SV\\\\es-lecto-escritura-web-nextjs\\\\app\\\\offline\\\\layout.tsx\")",
+      "Bash(del \"D:\\\\GitHub\\\\DAST-SV\\\\es-lecto-escritura-web-nextjs\\\\app\\\\offline\\\\page.tsx\")",
+      "Bash(Remove-Item -Path \"D:\\\\GitHub\\\\DAST-SV\\\\es-lecto-escritura-web-nextjs\\\\app\\\\offline\" -Recurse -Force)",
+      "Bash(dir \"D:\\\\GitHub\\\\DAST-SV\\\\es-lecto-escritura-web-nextjs\\\\src\\\\app\" /B /S)"
     ]
   }
 }

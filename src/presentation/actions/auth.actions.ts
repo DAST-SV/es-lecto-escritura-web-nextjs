@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { isRedirectError } from 'next/dist/client/components/redirect-error';
 import { getLocale } from "next-intl/server";
-import { headers, cookies } from 'next/headers';
+import { headers } from 'next/headers';
 import { createServerSupabaseClient } from '@/src/infrastructure/config/supabase.config';
 import { SupabaseAuthRepository } from '@/src/infrastructure/repositories';
 import { Login, Signup, LoginWithProvider, ResetPasswordForEmail, UpdatePassword } from '@/src/core/application/use-cases/auth';
@@ -15,11 +15,10 @@ import type { AuthState, OAuthProvider } from '@/src/core/domain/types/Auth.type
 import { TranslationService } from '@/src/infrastructure/services/i18n';
 
 export async function login(prevState: AuthState, formData: FormData): Promise<AuthState> {
+  const rememberMe = formData.get('rememberMe') === 'on';
   const supabase = await createServerSupabaseClient();
   const authRepository = new SupabaseAuthRepository(supabase);
   const loginUseCase = new Login(authRepository);
-
-  const rememberMe = formData.get('rememberMe') === 'on';
 
   const result = await loginUseCase.execute({
     email: formData.get('email') as string,
@@ -32,24 +31,16 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
     return { error: translatedError };
   }
 
-  // Remember me: control session cookie persistence
-  if (!rememberMe) {
-    // Session cookie (expires when browser closes)
-    const cookieStore = await cookies();
-    const allCookies = cookieStore.getAll();
-    for (const cookie of allCookies) {
-      if (cookie.name.includes('auth-token') || cookie.name.includes('sb-')) {
-        cookieStore.set(cookie.name, cookie.value, {
-          path: '/',
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          // No maxAge = session cookie (dies when browser closes)
-        });
-      }
-    }
-  }
-  // If rememberMe is true, Supabase default cookie behavior persists (7 days)
+  // Guardar preferencia de "recordar sesión" como cookie simple
+  // El browser client la leerá para decidir si persistir o no la sesión
+  const cookieStore = await (await import('next/headers')).cookies();
+  cookieStore.set('sb_remember', rememberMe ? '1' : '0', {
+    httpOnly: false, // Necesita ser legible desde JS
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: rememberMe ? 60 * 60 * 24 * 30 : undefined, // 30 días o sesión de browser
+  });
 
   revalidatePath('/', 'layout');
 
@@ -57,10 +48,41 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
   const referer = headersList.get('referer') || '';
   const url = new URL(referer || 'http://localhost');
   const redirectParam = url.searchParams.get('redirect');
-  const locale = await getLocale();
-  const redirectTo = redirectParam || `/${locale}/library`;
 
-  redirect(redirectTo);
+  // Extraer locale directamente de la URL del referer (ej. /en/auth/login → 'en')
+  // getLocale() puede retornar el locale de la cookie NEXT_LOCALE que no refleja la URL actual
+  const LOCALES = ['es', 'en', 'fr', 'it'];
+  const urlSegments = url.pathname.split('/').filter(Boolean);
+  const localeFromUrl = urlSegments[0] && LOCALES.includes(urlSegments[0]) ? urlSegments[0] : null;
+  const locale = localeFromUrl ?? await getLocale();
+
+  // Si hay redirect guardado por el middleware, usarlo (ya es la ruta traducida canónica)
+  // Si no, resolver la ruta de library en el idioma correcto desde la misma tabla que el navbar
+  let fallbackRoute = `/${locale}`;
+  if (!redirectParam) {
+    const { data: keyData } = await supabase
+      .schema('app')
+      .from('translation_keys')
+      .select('id')
+      .eq('namespace_slug', 'nav')
+      .eq('key_name', 'library.href')
+      .single();
+
+    if (keyData) {
+      const { data } = await supabase
+        .schema('app')
+        .from('translations')
+        .select('value')
+        .eq('translation_key_id', keyData.id)
+        .eq('language_code', locale)
+        .single();
+      if (data?.value) {
+        fallbackRoute = `/${locale}${data.value}`;
+      }
+    }
+  }
+
+  redirect(redirectParam || fallbackRoute);
 }
 
 export async function signup(prevState: AuthState, formData: FormData): Promise<AuthState> {
@@ -131,14 +153,21 @@ export async function loginWithProvider(provider: OAuthProvider) {
   const authRepository = new SupabaseAuthRepository(supabase);
   const loginWithProviderUseCase = new LoginWithProvider(authRepository);
 
-  const locale = await getLocale();
   const headersList = await headers();
   const referer = headersList.get('referer') || '';
   const host = headersList.get('host') || 'localhost:3000';
   const proto = host.startsWith('localhost') ? 'http' : 'https';
   const baseUrl = referer ? new URL(referer).origin : `${proto}://${host}`;
-  const redirectParam = referer ? new URL(referer).searchParams.get('redirect') : null;
-  const finalDestination = redirectParam || `/${locale}/library`;
+  const refererUrl = referer ? new URL(referer) : null;
+  const redirectParam = refererUrl ? refererUrl.searchParams.get('redirect') : null;
+
+  // Extraer locale de la URL del referer
+  const LOCALES = ['es', 'en', 'fr', 'it'];
+  const urlSegments = refererUrl?.pathname.split('/').filter(Boolean) ?? [];
+  const localeFromUrl = urlSegments[0] && LOCALES.includes(urlSegments[0]) ? urlSegments[0] : null;
+  const locale = localeFromUrl ?? await getLocale();
+
+  const finalDestination = redirectParam || `/${locale}`;
   const redirectTo = `${baseUrl}/auth/callback?next=${encodeURIComponent(finalDestination)}`;
   console.log('[OAuth] redirectTo:', redirectTo);
 

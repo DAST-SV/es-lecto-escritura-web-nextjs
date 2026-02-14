@@ -4,29 +4,46 @@ import { createBrowserClient } from '@supabase/ssr';
 import { createServerClient } from '@supabase/ssr';
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
-// ✅ Singleton global para cliente browser (evita múltiples instancias)
-// Usar globalThis para persistir entre hot reloads en desarrollo
-const globalForSupabase = globalThis as unknown as {
-  supabaseBrowserClient: ReturnType<typeof createBrowserClient> | undefined
-};
+// Singleton en window.__sb para sobrevivir hot-reloads del módulo en dev
+// window es único por pestaña → una sola instancia de GoTrueClient
+const WINDOW_KEY = '__sb_browser_client__';
 
 export function createClient() {
-  // Retornar instancia existente si ya fue creada
-  if (globalForSupabase.supabaseBrowserClient) return globalForSupabase.supabaseBrowserClient;
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
-
-  // Durante build time, las variables pueden no estar disponibles
-  // Esto es normal y esperado — retornar cliente dummy silenciosamente
-  if (!supabaseUrl || !supabaseKey) {
-    // @ts-ignore
-    return createBrowserClient('https://dummy.supabase.co', 'dummy-key');
+  // Esta función SOLO debe llamarse desde el browser (client components)
+  // Para servidor usar createServerSupabaseClient()
+  if (typeof window === 'undefined') {
+    throw new Error('[Supabase] createClient() llamado en servidor — usa createServerSupabaseClient()');
   }
 
-  globalForSupabase.supabaseBrowserClient = createBrowserClient(supabaseUrl, supabaseKey);
+  const w = window as any;
+  if (!w[WINDOW_KEY]) {
+    w[WINDOW_KEY] = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+    );
 
-  return globalForSupabase.supabaseBrowserClient;
+    // Verificar "recordar sesión":
+    // Si sb_remember=0 y es una nueva ventana del browser (sessionStorage vacío),
+    // cerrar sesión automáticamente para simular sesión de solo-browser.
+    const remember = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('sb_remember='))
+      ?.split('=')[1];
+
+    if (remember === '0') {
+      const sessionKey = '__sb_session_alive__';
+      if (!sessionStorage.getItem(sessionKey)) {
+        // Nueva ventana/tab del browser — cerrar sesión
+        sessionStorage.setItem(sessionKey, '1');
+        w[WINDOW_KEY].auth.signOut();
+      } else {
+        // Misma sesión de browser activa — mantener
+        sessionStorage.setItem(sessionKey, '1');
+      }
+    }
+  }
+
+  return w[WINDOW_KEY] as ReturnType<typeof createBrowserClient>;
 }
 
 // ✅ Cliente para servidor (Server Components/Actions)

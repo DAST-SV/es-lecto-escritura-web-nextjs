@@ -7,11 +7,27 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { getLocaleFromPathname, DEFAULT_LOCALE, SUPPORTED_LOCALES } from '@/src/presentation/hooks/useCurrentLocale';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/es/library';
+  const nextParam = searchParams.get('next');
+
+  // Extraer locale del param next, o del referer, o usar default
+  let locale = DEFAULT_LOCALE;
+  if (nextParam) {
+    locale = getLocaleFromPathname(nextParam);
+  } else {
+    // Intentar desde Accept-Language header como último recurso
+    const acceptLang = request.headers.get('accept-language') || '';
+    const preferred = acceptLang.split(',')[0]?.split('-')[0]?.toLowerCase();
+    if (preferred && (SUPPORTED_LOCALES as readonly string[]).includes(preferred)) {
+      locale = preferred as typeof DEFAULT_LOCALE;
+    }
+  }
+
+  const next = nextParam ?? `/${locale}`;
 
   if (code) {
     const cookieStore = await cookies();
@@ -65,6 +81,6 @@ export async function GET(request: Request) {
     }
   }
 
-  // If no code or error, redirect to login
-  return NextResponse.redirect(`${origin}/es/auth/login?error=auth_callback_failed`);
+  // If no code or error, redirect to login preserving locale
+  return NextResponse.redirect(`${origin}/${locale}/auth/login?error=auth_callback_failed`);
 }

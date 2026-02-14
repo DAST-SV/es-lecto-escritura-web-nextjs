@@ -22,9 +22,10 @@ const NavBar: React.FC<NavBarProps> = ({ brandName }) => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const { user, loading: authLoading, logout } = useAuthNavigation();
-  const { navigationItems, loading: navLoading } = useNavigation(!!user);
+  const { navigationItems } = useNavigation(!!user);
 
-  const loading = authLoading || navLoading;
+  // Solo esperar auth — las traducciones del nav se renderizan cuando lleguen
+  const loading = authLoading;
 
   useEffect(() => {
     if (typeof window === "undefined") return;

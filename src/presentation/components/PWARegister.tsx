@@ -108,10 +108,7 @@ export function PWARegister() {
     // CLEANUP
     // ============================================
     return () => {
-      window.removeEventListener(
-        'beforeinstallprompt',
-        handleBeforeInstallPrompt,
-      );
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
       displayModeQuery.removeEventListener('change', handleDisplayModeChange);
     };

@@ -4,13 +4,12 @@
  * @description Maneja cache, offline fallback y estrategias de caching
  */
 
-const CACHE_NAME = 'eslecto-v1';
-const OFFLINE_URL = '/offline';
+const CACHE_NAME = 'eslecto-v5';
+const OFFLINE_URL = '/offline.html';
 
-// Recursos estáticos que se cachean al instalar
+// Recursos esenciales a pre-cachear
 const PRECACHE_ASSETS = [
-  '/',
-  '/offline',
+  '/offline.html',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
 ];
@@ -21,7 +20,6 @@ const PRECACHE_ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Pre-cachear recursos esenciales (sin fallar si alguno falla)
       return Promise.allSettled(
         PRECACHE_ASSETS.map((url) =>
           cache.add(url).catch((err) => {
@@ -31,7 +29,6 @@ self.addEventListener('install', (event) => {
       );
     })
   );
-  // Activar inmediatamente sin esperar
   self.skipWaiting();
 });
 
@@ -48,9 +45,23 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
-  // Tomar control de todos los clientes inmediatamente
   self.clients.claim();
 });
+
+// ============================================
+// Respuesta offline HTML
+// ============================================
+async function getOfflineResponse() {
+  // 1. Intentar la página offline cacheada
+  const offlinePage = await caches.match(OFFLINE_URL);
+  if (offlinePage) return offlinePage;
+
+  // 2. Fallback inline mínimo
+  return new Response(
+    '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{margin:0;box-sizing:border-box}html,body{height:100%}body{min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#60a5fa,#3b82f6);font-family:sans-serif;color:#fff;text-align:center;padding:2rem}.icon{font-size:5rem;margin-bottom:1.5rem}.btn{margin-top:1.5rem;padding:14px 32px;font-size:1rem;font-weight:800;background:#fbbf24;color:#1e40af;border:3px solid #fff;border-radius:50px;cursor:pointer}</style></head><body><div><div class="icon">📚</div><button class="btn" onclick="location.reload()">&#x1F504;</button></div></body></html>',
+    { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+  );
+}
 
 // ============================================
 // FETCH — estrategias de caching
@@ -69,40 +80,11 @@ self.addEventListener('fetch', (event) => {
   if (url.hostname.includes('supabase')) return;
 
   // Ignorar requests de hot-reload en desarrollo
-  if (url.pathname.includes('_next/webpack-hmr') ||
-      url.pathname.includes('__nextjs') ||
-      url.pathname.includes('_next/static/development')) return;
-
-  // Estrategia: Network First para páginas HTML
-  if (request.headers.get('Accept')?.includes('text/html')) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          // Guardar en cache si es exitoso
-          if (response.ok) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone);
-            });
-          }
-          return response;
-        })
-        .catch(async () => {
-          // Si falla la red, intentar cache
-          const cached = await caches.match(request);
-          if (cached) return cached;
-          // Si no hay cache, mostrar offline page
-          const offlinePage = await caches.match(OFFLINE_URL);
-          if (offlinePage) return offlinePage;
-          // Fallback absoluto
-          return new Response(
-            '<!DOCTYPE html><html><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;background:#60a5fa;color:white"><div style="text-align:center"><h1>Sin conexión</h1><p>Revisa tu conexión a internet</p></div></body></html>',
-            { headers: { 'Content-Type': 'text/html' } }
-          );
-        })
-    );
-    return;
-  }
+  if (
+    url.pathname.includes('_next/webpack-hmr') ||
+    url.pathname.includes('__nextjs') ||
+    url.pathname.includes('_next/static/development')
+  ) return;
 
   // Estrategia: Cache First para assets estáticos (JS, CSS, fonts, images)
   if (
@@ -116,14 +98,35 @@ self.addEventListener('fetch', (event) => {
         if (cached) return cached;
         return fetch(request).then((response) => {
           if (response.ok) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone);
-            });
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           }
           return response;
         });
       })
+    );
+    return;
+  }
+
+  // Estrategia: Network First para páginas HTML
+  if (request.headers.get('Accept')?.includes('text/html')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(async () => {
+          // 1. Intentar la URL exacta en cache
+          const cached = await caches.match(request);
+          if (cached) return cached;
+
+          // 2. Servir offline page
+          return getOfflineResponse();
+        })
     );
     return;
   }
@@ -133,10 +136,8 @@ self.addEventListener('fetch', (event) => {
     fetch(request)
       .then((response) => {
         if (response.ok) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseClone);
-          });
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
         return response;
       })
