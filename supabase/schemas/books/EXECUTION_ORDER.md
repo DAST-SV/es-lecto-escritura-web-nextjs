@@ -13,7 +13,7 @@ enums/difficulty_level.sql
 enums/book_status.sql
 ```
 
-## 3. Tablas Base
+## 3. Tablas Base (sin FK entre sí)
 ```
 tables/categories.sql
 tables/levels.sql
@@ -23,7 +23,7 @@ tables/values.sql
 tables/authors.sql
 ```
 
-## 4. Tablas con Traducciones
+## 4. Tablas de Traducciones de Catálogos
 ```
 tables/category_translations.sql
 tables/level_translations.sql
@@ -33,13 +33,13 @@ tables/value_translations.sql
 tables/author_translations.sql
 ```
 
-## 5. Tabla Principal
+## 5. Tabla Principal de Libros
 ```
 tables/books.sql
 tables/book_translations.sql
 ```
 
-## 6. Tablas de Relacion
+## 6. Tablas de Relacion (libros con catálogos)
 ```
 tables/book_authors.sql
 tables/book_genres.sql
@@ -48,7 +48,7 @@ tables/book_values.sql
 tables/book_characters.sql
 ```
 
-## 7. Paginas
+## 7. Páginas
 ```
 tables/pages.sql
 tables/page_translations.sql
@@ -85,7 +85,7 @@ views/v_categories_with_translations.sql
 views/v_books_with_translations.sql
 ```
 
-## 12. RLS y Politicas
+## 12. RLS
 ```
 rls/categories_policies.sql
 rls/levels_policies.sql
@@ -100,7 +100,7 @@ rls/reading_policies.sql
 rls/characters_policies.sql
 ```
 
-## 13. Storage Buckets
+## 13. Storage (buckets y políticas)
 ```
 storage/book_covers.sql
 storage/book_pdfs.sql

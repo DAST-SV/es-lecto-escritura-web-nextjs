@@ -63,7 +63,8 @@
       "Bash(npx --yes sharp-cli:*)",
       "Bash(npx sharp-cli:*)",
       "Bash(git checkout:*)",
-      "Bash(dir /s /b \"C:\\\\Users\\\\hboni\\\\Downloads\\\\es-lecto-escritura-web-nextjs\\\\supabase\\\\schemas\\\\app\\\\auth\")"
+      "Bash(dir /s /b \"C:\\\\Users\\\\hboni\\\\Downloads\\\\es-lecto-escritura-web-nextjs\\\\supabase\\\\schemas\\\\app\\\\auth\")",
+      "Bash(dir /s \"C:\\\\Users\\\\hboni\\\\Downloads\\\\es-lecto-escritura-web-nextjs\\\\supabase\\\\schemas\")"
     ]
   }
 }
