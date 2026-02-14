@@ -10,7 +10,7 @@ SECURITY DEFINER
 SET search_path = app, public
 AS $$
 DECLARE
-  v_full_name TEXT;
+  v_full_name TEXT; 
   v_oauth_provider app.oauth_provider;
 BEGIN
   BEGIN

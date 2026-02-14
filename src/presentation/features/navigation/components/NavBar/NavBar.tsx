@@ -1,6 +1,5 @@
 // ============================================
 // src/presentation/features/navigation/components/NavBar/NavBar.tsx
-// ACTUALIZADO para usar el nuevo hook
 // ============================================
 "use client";
 
@@ -16,11 +15,8 @@ import { useNavigation } from '../../hooks/useNavigation';
 import { NavBarProps } from '../../types/navigation.types';
 import { NavBarDesktopSkeleton, NavBarMobileSkeleton } from './NavBarSkeleton';
 
-const NavBar: React.FC<NavBarProps> = ({ brandName, userAvatar }) => {
+const NavBar: React.FC<NavBarProps> = ({ brandName }) => {
   const defaultBrandName = brandName || "Eslectoescritura";
-  const defaultUserAvatar =
-    userAvatar ||
-    "https://www.pngall.com/wp-content/uploads/5/User-Profile-PNG-Image.png";
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -32,13 +28,9 @@ const NavBar: React.FC<NavBarProps> = ({ brandName, userAvatar }) => {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const navItems = navigationItems.map(item => ({
@@ -46,6 +38,9 @@ const NavBar: React.FC<NavBarProps> = ({ brandName, userAvatar }) => {
     href: item.href,
     title: item.title,
   }));
+
+  const userAvatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
+  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email;
 
   return (
     <BrowserNavProvider>
@@ -57,11 +52,9 @@ const NavBar: React.FC<NavBarProps> = ({ brandName, userAvatar }) => {
         }`}
       >
         <div className="flex items-center justify-between max-w-7xl mx-auto">
-          {/* Seccion izquierda: Logo + Controles de navegacion + Toggle */}
           <div className="flex items-center gap-1">
             <BrandLogo brandName={defaultBrandName} />
             <BrowserNavControls />
-            {/* Toggle solo visible en desktop */}
             <div className="hidden md:block">
               <NavControlsToggle />
             </div>
@@ -72,7 +65,8 @@ const NavBar: React.FC<NavBarProps> = ({ brandName, userAvatar }) => {
           ) : (
             <DesktopNavigation
               navItems={navItems}
-              userAvatar={user?.user_metadata?.avatar_url || defaultUserAvatar}
+              userAvatar={userAvatarUrl}
+              displayName={displayName}
               onLogout={logout}
               isAuthenticated={!!user}
             />
@@ -92,7 +86,8 @@ const NavBar: React.FC<NavBarProps> = ({ brandName, userAvatar }) => {
           <MobileMenu
             isOpen={isMobileOpen}
             navItems={navItems}
-            userAvatar={user?.user_metadata?.avatar_url || defaultUserAvatar}
+            userAvatar={userAvatarUrl}
+            displayName={displayName}
             onLogout={logout}
             isAuthenticated={!!user}
           />

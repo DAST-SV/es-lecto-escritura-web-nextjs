@@ -12,6 +12,7 @@ import { DesktopNavigationProps } from '../../types/navigation.types';
 const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
   navItems,
   userAvatar,
+  displayName,
   isAuthenticated,
   onLogout,
 }) => {
@@ -35,7 +36,13 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
       )}
 
       <LanguageSelector />
-      {isAuthenticated && userAvatar && <UserMenu userAvatar={userAvatar} />}
+      {isAuthenticated && (
+        <UserMenu
+          userAvatar={userAvatar}
+          displayName={displayName}
+          onLogout={onLogout}
+        />
+      )}
     </div>
   );
 };

@@ -15,6 +15,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   isOpen,
   navItems,
   userAvatar,
+  displayName,
   isAuthenticated,
   onLogout,
 }) => {
@@ -51,8 +52,13 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               } mt-2`}
             >
               <LanguageSelector />
-              {isAuthenticated && userAvatar && (
-                <UserMenu userAvatar={userAvatar} isMobile={true} />
+              {isAuthenticated && (
+                <UserMenu
+                  userAvatar={userAvatar}
+                  displayName={displayName}
+                  onLogout={onLogout}
+                  isMobile={true}
+                />
               )}
             </div>
           </div>

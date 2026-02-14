@@ -1,35 +1,26 @@
 // ============================================
 // src/presentation/features/navigation/components/UserMenu/UserMenu.tsx
-// ACTUALIZADO para usar tipos de Supabase
 // ============================================
 "use client";
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, LogOut } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useAuthNavigation } from '../../hooks/useAuth'; // 👈 CAMBIO AQUÍ
 import { UserMenuProps } from '../../types/navigation.types';
 
-const UserMenu: React.FC<UserMenuProps> = ({ 
-  userAvatar = "https://csspicker.dev/api/image/?q=professional+avatar&image_type=photo",
-  isMobile = false 
+const UserMenu: React.FC<UserMenuProps> = ({
+  userAvatar,
+  isMobile = false,
+  displayName,
+  onLogout,
 }) => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const { user, loading, logout } = useAuthNavigation(); // 👈 CAMBIO AQUÍ
-  const router = useRouter();
-
-  if (loading || !user) {
-    return null;
-  }
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      await logout();
-      router.push('/auth/login');
-      router.refresh();
+      await onLogout();
     } catch (error) {
       console.error('Error inesperado al cerrar sesión:', error);
     } finally {
@@ -38,17 +29,13 @@ const UserMenu: React.FC<UserMenuProps> = ({
     }
   };
 
-  const avatarClasses = isMobile 
+  const avatarClasses = isMobile
     ? "w-9 h-9 rounded-full object-cover shadow-sm"
     : "w-8 h-8 rounded-full object-cover";
 
   const buttonClasses = isMobile
     ? "p-1 rounded-full"
     : "cursor-pointer w-9 h-9 rounded-full bg-white bg-opacity-95 shadow-sm flex items-center justify-center transition-transform duration-200 hover:scale-110";
-
-  // 👇 USA PROPIEDADES NATIVAS DE SUPABASE
-  const displayAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || userAvatar;
-  const displayName = user.user_metadata?.full_name || user.user_metadata?.name || user.email;
 
   return (
     <div className="relative">
@@ -59,11 +46,18 @@ const UserMenu: React.FC<UserMenuProps> = ({
         whileTap={{ scale: 0.95 }}
         aria-label="User menu"
       >
-        <img
-          src={displayAvatar}
-          alt="User avatar"
-          className={`cursor-pointer ${avatarClasses}`}
-        />
+        {userAvatar ? (
+          <img
+            src={userAvatar}
+            alt="User avatar"
+            className={`cursor-pointer ${avatarClasses}`}
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          <div className={`cursor-pointer ${avatarClasses} bg-indigo-500 flex items-center justify-center text-white font-semibold text-sm`}>
+            {displayName?.[0]?.toUpperCase() ?? '?'}
+          </div>
+        )}
       </motion.button>
 
       <AnimatePresence>
@@ -83,13 +77,12 @@ const UserMenu: React.FC<UserMenuProps> = ({
             >
               <div className="px-4 py-2 border-b border-gray-200">
                 <p className="text-sm font-semibold text-gray-700">{displayName}</p>
-                <p className="text-xs text-gray-500">{user.email}</p>
               </div>
               <button className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors">
                 <Settings size={16} className="mr-2" />
                 Configuración
               </button>
-              <button 
+              <button
                 onClick={handleLogout}
                 disabled={isLoggingOut}
                 className={`flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors ${

@@ -10,6 +10,7 @@ export interface NavItem {
 export interface DesktopNavigationProps {
   navItems: NavItem[];
   userAvatar?: string;
+  displayName?: string;
   isAuthenticated: boolean;
   onLogout: () => void;
 }
@@ -23,6 +24,7 @@ export interface MobileMenuProps {
   isOpen: boolean;
   navItems: NavItem[];
   userAvatar?: string;
+  displayName?: string;
   isAuthenticated: boolean;
   onLogout: () => void;
 }
@@ -50,6 +52,8 @@ export interface UnifiedLayoutProps {
 export interface UserMenuProps {
   userAvatar?: string;
   isMobile?: boolean;
+  displayName?: string;
+  onLogout: () => void;
 }
 
 export interface BrandLogoProps {
