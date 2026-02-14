@@ -134,11 +134,13 @@ export async function loginWithProvider(provider: OAuthProvider) {
   const locale = await getLocale();
   const headersList = await headers();
   const referer = headersList.get('referer') || '';
-  const url = new URL(referer || 'http://localhost');
-  const redirectParam = url.searchParams.get('redirect');
-  const baseUrl = url.origin;
+  const host = headersList.get('host') || 'localhost:3000';
+  const proto = host.startsWith('localhost') ? 'http' : 'https';
+  const baseUrl = referer ? new URL(referer).origin : `${proto}://${host}`;
+  const redirectParam = referer ? new URL(referer).searchParams.get('redirect') : null;
   const finalDestination = redirectParam || `/${locale}/library`;
   const redirectTo = `${baseUrl}/auth/callback?next=${encodeURIComponent(finalDestination)}`;
+  console.log('[OAuth] redirectTo:', redirectTo);
 
   try {
     const authUrlResponse = await loginWithProviderUseCase.execute(provider, redirectTo);

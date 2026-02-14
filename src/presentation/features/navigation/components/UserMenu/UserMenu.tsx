@@ -47,8 +47,8 @@ const UserMenu: React.FC<UserMenuProps> = ({
     : "cursor-pointer w-9 h-9 rounded-full bg-white bg-opacity-95 shadow-sm flex items-center justify-center transition-transform duration-200 hover:scale-110";
 
   // 👇 USA PROPIEDADES NATIVAS DE SUPABASE
-  const displayAvatar = user.user_metadata?.avatar_url || userAvatar;
-  const displayName = user.user_metadata?.full_name || user.email;
+  const displayAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || userAvatar;
+  const displayName = user.user_metadata?.full_name || user.user_metadata?.name || user.email;
 
   return (
     <div className="relative">

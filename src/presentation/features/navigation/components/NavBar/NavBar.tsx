@@ -14,6 +14,7 @@ import { BrowserNavProvider } from "../../context/BrowserNavContext";
 import { useAuthNavigation } from '../../hooks/useAuth';
 import { useNavigation } from '../../hooks/useNavigation';
 import { NavBarProps } from '../../types/navigation.types';
+import { NavBarDesktopSkeleton, NavBarMobileSkeleton } from './NavBarSkeleton';
 
 const NavBar: React.FC<NavBarProps> = ({ brandName, userAvatar }) => {
   const defaultBrandName = brandName || "Eslectoescritura";
@@ -24,8 +25,10 @@ const NavBar: React.FC<NavBarProps> = ({ brandName, userAvatar }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  const { user, logout } = useAuthNavigation(); // 👈 CAMBIO AQUÍ
-  const { navigationItems } = useNavigation(!!user);
+  const { user, loading: authLoading, logout } = useAuthNavigation();
+  const { navigationItems, loading: navLoading } = useNavigation(!!user);
+
+  const loading = authLoading || navLoading;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -64,26 +67,36 @@ const NavBar: React.FC<NavBarProps> = ({ brandName, userAvatar }) => {
             </div>
           </div>
 
-          <DesktopNavigation
+          {loading ? (
+            <NavBarDesktopSkeleton />
+          ) : (
+            <DesktopNavigation
+              navItems={navItems}
+              userAvatar={user?.user_metadata?.avatar_url || defaultUserAvatar}
+              onLogout={logout}
+              isAuthenticated={!!user}
+            />
+          )}
+
+          {loading ? (
+            <NavBarMobileSkeleton />
+          ) : (
+            <MobileToggleButton
+              isOpen={isMobileOpen}
+              onToggle={() => setIsMobileOpen((prev) => !prev)}
+            />
+          )}
+        </div>
+
+        {!loading && (
+          <MobileMenu
+            isOpen={isMobileOpen}
             navItems={navItems}
             userAvatar={user?.user_metadata?.avatar_url || defaultUserAvatar}
             onLogout={logout}
             isAuthenticated={!!user}
           />
-
-          <MobileToggleButton
-            isOpen={isMobileOpen}
-            onToggle={() => setIsMobileOpen((prev) => !prev)}
-          />
-        </div>
-
-        <MobileMenu
-          isOpen={isMobileOpen}
-          navItems={navItems}
-          userAvatar={user?.user_metadata?.avatar_url || defaultUserAvatar}
-          onLogout={logout}
-          isAuthenticated={!!user}
-        />
+        )}
       </nav>
     </BrowserNavProvider>
   );
