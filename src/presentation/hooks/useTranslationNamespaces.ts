@@ -7,8 +7,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { TranslationNamespace } from '@/src/core/domain/entities/TranslationNamespace';
 import { TranslationNamespaceRepository } from '@/src/infrastructure/repositories/translation-namespaces/TranslationNamespaceRepository';
 
-const namespaceRepository = new TranslationNamespaceRepository();
-
 export function useTranslationNamespaces(includeInactive = false) {
   const [namespaces, setNamespaces] = useState<TranslationNamespace[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,6 +16,8 @@ export function useTranslationNamespaces(includeInactive = false) {
     try {
       setLoading(true);
       setError(null);
+      // Lazy instantiate repository only when needed (client-side)
+      const namespaceRepository = new TranslationNamespaceRepository();
       const data = await namespaceRepository.findAll(includeInactive);
       setNamespaces(data);
     } catch (err: any) {

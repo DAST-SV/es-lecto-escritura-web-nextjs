@@ -8,8 +8,6 @@ import { Language } from '@/src/core/domain/entities/Language';
 import { LanguageRepository } from '@/src/infrastructure/repositories/languages/LanguageRepository';
 import { logDetailedError, getUserFriendlyError } from '@/src/infrastructure/utils/error-formatter';
 
-const languageRepository = new LanguageRepository();
-
 export function useLanguages(includeInactive = false) {
   const [languages, setLanguages] = useState<Language[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,6 +17,8 @@ export function useLanguages(includeInactive = false) {
     try {
       setLoading(true);
       setError(null);
+      // Lazy instantiate repository only when needed (client-side)
+      const languageRepository = new LanguageRepository();
       const data = await languageRepository.findAll(includeInactive);
       setLanguages(data);
     } catch (err: unknown) {
