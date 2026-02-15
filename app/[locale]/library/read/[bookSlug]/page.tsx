@@ -7,6 +7,7 @@
 import { notFound } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { getBookDetailQuery, getBookPagesQuery } from '@/src/core/application/use-cases/books-catalog';
+import { localizedHref } from '@/src/infrastructure/utils/server-localized-href';
 import { BookReader } from '@/src/presentation/features/books-catalog/components/BookReader';
 
 interface PageProps {
@@ -49,6 +50,7 @@ export default async function ReadBookPage({ params }: PageProps) {
 
   // Si no hay páginas, mostrar mensaje
   if (pages.length === 0) {
+    const libraryHref = await localizedHref('/library', locale);
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -56,7 +58,7 @@ export default async function ReadBookPage({ params }: PageProps) {
             {t('reader.noPagesAvailable')}
           </p>
           <a
-            href={`/${locale}/library`}
+            href={libraryHref}
             className="text-primary hover:underline"
           >
             {t('navigation.backToLibrary')}
