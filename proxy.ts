@@ -111,6 +111,24 @@ async function loadRoutes(forceReload = false): Promise<Record<string, any>> {
   }
 }
 
+/**
+ * Traduce una ruta física al locale especificado
+ * Usa el cache de rutas cargado
+ */
+function getTranslatedPath(physicalPath: string, targetLocale: string, routes: Record<string, any>): string {
+  const translations = routes[physicalPath];
+
+  if (!translations) {
+    return physicalPath; // No existe en BD, usar física
+  }
+
+  if (typeof translations === 'string') {
+    return translations; // Sin traducciones
+  }
+
+  return translations[targetLocale] || physicalPath; // Traducción del locale o fallback
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -243,7 +261,9 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(homeUrl);
       }
       const url = request.nextUrl.clone();
-      url.pathname = `/${locale}/auth/login`;
+      // ✅ Usar ruta traducida para /auth/login
+      const loginPath = getTranslatedPath('/auth/login', locale, routes);
+      url.pathname = `/${locale}${loginPath}`;
       // Guardar la ruta traducida canónica para el redirect post-login
       const canonical = canonicalTranslatedPath || translatedPath;
       const isAuthOrHome = PUBLIC_ROUTES.some(r => canonical === r || canonical.startsWith(r + '/'));
@@ -287,7 +307,9 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(homeUrl);
     }
     const url = request.nextUrl.clone();
-    url.pathname = `/${locale}/auth/login`;
+    // ✅ Usar ruta traducida para /auth/login
+    const loginPath = getTranslatedPath('/auth/login', locale, routes);
+    url.pathname = `/${locale}${loginPath}`;
     const canonical = canonicalTranslatedPath || translatedPath;
     const isAuthOrHome = PUBLIC_ROUTES.some(r => canonical === r || canonical.startsWith(r + '/'));
     if (!isAuthOrHome) {

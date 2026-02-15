@@ -96,6 +96,7 @@ admin/rls/admin_policies.sql
 ```
 translations/schema/03_initial_data.sql
 routes/data.sql
+routes/data_auth.sql
 routes/data_explorar.sql
 permissions/data.sql
 role_language_access/data.sql

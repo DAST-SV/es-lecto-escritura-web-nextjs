@@ -71,7 +71,14 @@
       "Bash(del \"D:\\\\GitHub\\\\DAST-SV\\\\es-lecto-escritura-web-nextjs\\\\app\\\\offline\\\\page.tsx\")",
       "Bash(Remove-Item -Path \"D:\\\\GitHub\\\\DAST-SV\\\\es-lecto-escritura-web-nextjs\\\\app\\\\offline\" -Recurse -Force)",
       "Bash(dir \"D:\\\\GitHub\\\\DAST-SV\\\\es-lecto-escritura-web-nextjs\\\\src\\\\app\" /B /S)",
-      "Bash(pnpm build:*)"
+      "Bash(pnpm build:*)",
+      "Bash(node scripts/generate-locales.mjs:*)",
+      "Bash(if [ -f .env.local ])",
+      "Bash(then echo \"✅ .env.local exists\")",
+      "Bash(else echo \"❌ .env.local not found\")",
+      "Bash(fi)",
+      "Bash(export NEXT_PUBLIC_SUPABASE_URL=\"https://hxxtkzshnnrwxvvgtgsh.supabase.co\")",
+      "Bash(export NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:*)"
     ]
   }
 }

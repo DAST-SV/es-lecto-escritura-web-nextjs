@@ -5,12 +5,19 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { writeFileSync } from 'fs';
+import { config } from 'dotenv';
+import { writeFileSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT_PATH = resolve(__dirname, '../src/infrastructure/config/generated-locales.ts');
+
+// Cargar .env.local si existe
+const envPath = resolve(__dirname, '../.env.local');
+if (existsSync(envPath)) {
+  config({ path: envPath });
+}
 
 const FALLBACK_LOCALES = ['es', 'en'];
 const FALLBACK_DEFAULT = 'es';
