@@ -1,18 +1,18 @@
 // ============================================
 // app/[locale]/auth/complete-profile/page.tsx
 // Complete Profile Page - Assign role after OAuth signup
+// ✅ Redesigned: Modern style matching homepage
 // ============================================
 "use client";
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   LoginBackground,
   RoleSelector,
 } from '@/src/presentation/features/auth/components';
 import { UnifiedLayout } from '@/src/presentation/features/navigation';
 import { useSupabaseTranslations } from '@/src/presentation/features/translations/hooks/useSupabaseTranslations';
-import { Button } from '@/src/presentation/components/ui';
 import { assignRole } from '@/src/presentation/actions/auth.actions';
 import { useLocale } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -57,14 +57,18 @@ export default function CompleteProfilePage() {
         backgroundComponent={<LoginBackground />}
       >
         <div className="relative z-20 w-full max-w-2xl mx-auto px-4">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 border-3 border-yellow-300">
-            <div className="h-8 bg-gray-200 rounded w-2/3 mx-auto mb-4 animate-pulse"></div>
-            <div className="h-6 bg-gray-100 rounded w-1/2 mx-auto mb-8 animate-pulse"></div>
-            <div className="space-y-4">
+          <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-8 border-2 border-yellow-300">
+            <div className="flex justify-center mb-6">
+              <div className="w-20 h-20 bg-yellow-100 rounded-full animate-pulse" />
+            </div>
+            <div className="h-8 bg-yellow-100 rounded-full w-2/3 mx-auto mb-3 animate-pulse" />
+            <div className="h-5 bg-blue-50 rounded-full w-1/2 mx-auto mb-8 animate-pulse" />
+            <div className="space-y-3">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-20 bg-gray-100 rounded animate-pulse"></div>
+                <div key={i} className="h-20 bg-blue-50 rounded-2xl animate-pulse" />
               ))}
             </div>
+            <div className="mt-6 h-14 bg-yellow-100 rounded-full animate-pulse" />
           </div>
         </div>
       </UnifiedLayout>
@@ -79,38 +83,55 @@ export default function CompleteProfilePage() {
     >
       <div className="relative z-20 w-full max-w-2xl mx-auto px-4">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-2xl p-6 border-3 border-yellow-300"
+          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-6 sm:p-8 border-2 border-yellow-300"
         >
-          {/* Header */}
-          <div className="text-center mb-6">
+          {/* Header con icono */}
+          <motion.div
+            className="text-center mb-6"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <div className="flex justify-center mb-4">
+              <motion.div
+                className="w-20 h-20 bg-gradient-to-br from-yellow-300 to-yellow-400 rounded-full flex items-center justify-center border-3 border-white shadow-lg"
+                animate={{ rotate: [0, -5, 5, -5, 0] }}
+                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+              >
+                <span className="text-4xl">👋</span>
+              </motion.div>
+            </div>
             <h1
-              className="text-gray-700 text-xl mb-2"
-              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              className="text-blue-700 font-black text-2xl sm:text-3xl mb-2"
+              style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
             >
-              ESLECTOESCRITURA
+              {t('complete_profile_title') || '¡Bienvenido!'}
             </h1>
-            <h2
-              className="text-blue-600 font-bold text-xl mb-1"
-              style={{ fontFamily: "'Nunito', 'Varela Round', 'Comfortaa', sans-serif" }}
-            >
-              {t('complete_profile_title') || '¡Bienvenido! Completa tu perfil'}
-            </h2>
             <p
-              className="text-gray-500 text-sm"
-              style={{ fontFamily: "'Nunito', 'Varela Round', 'Comfortaa', sans-serif" }}
+              className="text-blue-500 font-bold text-sm sm:text-base"
+              style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
             >
               {t('complete_profile_subtitle') || 'Selecciona tu tipo de usuario para continuar'}
             </p>
-          </div>
+          </motion.div>
 
           {/* Error */}
-          {error && (
-            <div className="mb-4 p-2 bg-red-100 border border-red-300 rounded text-red-700 text-sm">
-              {error}
-            </div>
-          )}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-4 p-3 bg-red-50 border-2 border-red-200 rounded-2xl text-red-600 text-sm font-bold text-center"
+                style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
+              >
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Role Selector */}
           <RoleSelector
@@ -119,20 +140,35 @@ export default function CompleteProfilePage() {
           />
 
           {/* Submit Button */}
-          <motion.div
-            className="mt-6"
-            whileHover={{ scale: selectedRole ? 1.05 : 1 }}
-            whileTap={{ scale: selectedRole ? 0.95 : 1 }}
-          >
-            <Button
+          <motion.div className="mt-6">
+            <motion.button
               onClick={handleSubmit}
-              loading={isPending}
-              loadingText={t('complete_profile_loading') || 'Guardando...'}
-              disabled={!selectedRole}
-              className="w-full text-lg py-3 transition-all duration-300 ease-in-out"
+              disabled={!selectedRole || isPending}
+              className={`
+                w-full py-4 rounded-full text-lg font-black border-2 border-white
+                shadow-2xl transition-all duration-300
+                ${selectedRole && !isPending
+                  ? 'bg-yellow-300 text-blue-700 hover:shadow-yellow-400/50 hover:scale-[1.02] active:scale-95 cursor-pointer'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }
+              `}
+              style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
+              whileHover={selectedRole && !isPending ? { scale: 1.02 } : {}}
+              whileTap={selectedRole && !isPending ? { scale: 0.95 } : {}}
             >
-              {t('complete_profile_submit') || '¡Empezar a aprender! 🚀'}
-            </Button>
+              {isPending ? (
+                <span className="flex items-center justify-center gap-2">
+                  <motion.span
+                    className="inline-block w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                  />
+                  {t('complete_profile_loading') || 'Guardando...'}
+                </span>
+              ) : (
+                t('complete_profile_submit') || '¡Empezar a aprender! 🚀'
+              )}
+            </motion.button>
           </motion.div>
         </motion.div>
       </div>

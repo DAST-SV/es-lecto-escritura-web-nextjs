@@ -1,5 +1,6 @@
 // ============================================
 // src/presentation/actions/auth.actions.ts
+// ✅ FIX: Admin client para assignRole, locales dinámicos
 // ============================================
 'use server'
 
@@ -8,11 +9,24 @@ import { redirect } from 'next/navigation';
 import { isRedirectError } from 'next/dist/client/components/redirect-error';
 import { getLocale } from "next-intl/server";
 import { headers } from 'next/headers';
-import { createServerSupabaseClient } from '@/src/infrastructure/config/supabase.config';
+import { createServerSupabaseClient, getSupabaseAdmin } from '@/src/infrastructure/config/supabase.config';
 import { SupabaseAuthRepository } from '@/src/infrastructure/repositories';
 import { Login, Signup, LoginWithProvider, ResetPasswordForEmail, UpdatePassword } from '@/src/core/application/use-cases/auth';
 import type { AuthState, OAuthProvider } from '@/src/core/domain/types/Auth.types';
 import { TranslationService } from '@/src/infrastructure/services/i18n';
+import { locales as SUPPORTED_LOCALES } from '@/src/infrastructure/config/generated-locales';
+
+/**
+ * Extrae el locale de una URL del referer
+ */
+function extractLocaleFromUrl(url: URL): string | null {
+  const segments = url.pathname.split('/').filter(Boolean);
+  const maybeLocale = segments[0];
+  if (maybeLocale && (SUPPORTED_LOCALES as readonly string[]).includes(maybeLocale)) {
+    return maybeLocale;
+  }
+  return null;
+}
 
 export async function login(prevState: AuthState, formData: FormData): Promise<AuthState> {
   const rememberMe = formData.get('rememberMe') === 'on';
@@ -32,14 +46,13 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
   }
 
   // Guardar preferencia de "recordar sesión" como cookie simple
-  // El browser client la leerá para decidir si persistir o no la sesión
   const cookieStore = await (await import('next/headers')).cookies();
   cookieStore.set('sb_remember', rememberMe ? '1' : '0', {
-    httpOnly: false, // Necesita ser legible desde JS
+    httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    maxAge: rememberMe ? 60 * 60 * 24 * 30 : undefined, // 30 días o sesión de browser
+    maxAge: rememberMe ? 60 * 60 * 24 * 30 : undefined,
   });
 
   revalidatePath('/', 'layout');
@@ -49,15 +62,9 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
   const url = new URL(referer || 'http://localhost');
   const redirectParam = url.searchParams.get('redirect');
 
-  // Extraer locale directamente de la URL del referer (ej. /en/auth/login → 'en')
-  // getLocale() puede retornar el locale de la cookie NEXT_LOCALE que no refleja la URL actual
-  const LOCALES = ['es', 'en', 'fr', 'it'];
-  const urlSegments = url.pathname.split('/').filter(Boolean);
-  const localeFromUrl = urlSegments[0] && LOCALES.includes(urlSegments[0]) ? urlSegments[0] : null;
-  const locale = localeFromUrl ?? await getLocale();
+  const locale = extractLocaleFromUrl(url) ?? await getLocale();
 
-  // Si hay redirect guardado por el middleware, usarlo (ya es la ruta traducida canónica)
-  // Si no, resolver la ruta de library en el idioma correcto desde la misma tabla que el navbar
+  // Resolver fallback route desde traducciones
   let fallbackRoute = `/${locale}`;
   if (!redirectParam) {
     const { data: keyData } = await supabase
@@ -95,7 +102,6 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
   const password = formData.get('password') as string;
   const role = formData.get('role') as string;
 
-  // Validate required fields
   if (!name || !email || !password || !role) {
     return { error: 'Todos los campos son obligatorios' };
   }
@@ -116,10 +122,11 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
     };
   }
 
-  // After successful signup, assign the role to the user
+  // ✅ Usar admin client para asignar rol (bypasa RLS)
   if (result.user) {
     try {
-      const { data: roleData } = await supabase
+      const admin = getSupabaseAdmin();
+      const { data: roleData } = await admin
         .schema('app')
         .from('roles')
         .select('id')
@@ -127,7 +134,7 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
         .single();
 
       if (roleData) {
-        await supabase
+        await admin
           .schema('app')
           .from('user_roles')
           .insert({
@@ -161,15 +168,10 @@ export async function loginWithProvider(provider: OAuthProvider) {
   const refererUrl = referer ? new URL(referer) : null;
   const redirectParam = refererUrl ? refererUrl.searchParams.get('redirect') : null;
 
-  // Extraer locale de la URL del referer
-  const LOCALES = ['es', 'en', 'fr', 'it'];
-  const urlSegments = refererUrl?.pathname.split('/').filter(Boolean) ?? [];
-  const localeFromUrl = urlSegments[0] && LOCALES.includes(urlSegments[0]) ? urlSegments[0] : null;
-  const locale = localeFromUrl ?? await getLocale();
+  const locale = (refererUrl ? extractLocaleFromUrl(refererUrl) : null) ?? await getLocale();
 
   const finalDestination = redirectParam || `/${locale}`;
   const redirectTo = `${baseUrl}/auth/callback?next=${encodeURIComponent(finalDestination)}`;
-  console.log('[OAuth] redirectTo:', redirectTo);
 
   try {
     const authUrlResponse = await loginWithProviderUseCase.execute(provider, redirectTo);
@@ -243,14 +245,17 @@ export async function resetPassword(prevState: AuthState, formData: FormData): P
 export async function assignRole(role: string): Promise<AuthState> {
   const supabase = await createServerSupabaseClient();
 
-  // Get current user
+  // Verificar usuario autenticado
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) {
     return { error: 'Usuario no autenticado' };
   }
 
-  // Check if user already has a role
-  const { data: existingRole } = await supabase
+  // ✅ Usar admin client para operaciones en user_roles (bypasa RLS)
+  const admin = getSupabaseAdmin();
+
+  // Verificar si ya tiene rol
+  const { data: existingRole } = await admin
     .schema('app')
     .from('user_roles')
     .select('id')
@@ -263,8 +268,8 @@ export async function assignRole(role: string): Promise<AuthState> {
     return { success: true };
   }
 
-  // Find the role_id
-  const { data: roleData, error: roleError } = await supabase
+  // Buscar role_id
+  const { data: roleData, error: roleError } = await admin
     .schema('app')
     .from('roles')
     .select('id')
@@ -275,8 +280,8 @@ export async function assignRole(role: string): Promise<AuthState> {
     return { error: 'Rol no encontrado' };
   }
 
-  // Assign the role
-  const { error: assignError } = await supabase
+  // Asignar rol
+  const { error: assignError } = await admin
     .schema('app')
     .from('user_roles')
     .insert({
@@ -287,6 +292,7 @@ export async function assignRole(role: string): Promise<AuthState> {
     });
 
   if (assignError) {
+    console.error('Error assigning role:', assignError);
     return { error: 'Error al asignar el rol' };
   }
 

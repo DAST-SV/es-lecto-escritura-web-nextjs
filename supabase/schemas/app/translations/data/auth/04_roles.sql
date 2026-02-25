@@ -1,30 +1,41 @@
 -- supabase/schemas/app/translations/data/auth/04_roles.sql
 -- ============================================================================
 -- TRANSLATIONS DATA: AUTH - ROLES
--- DESCRIPCIÓN: Traducciones de nombres y descripciones de roles
+-- DESCRIPCION: Traducciones de nombres, descripciones e iconos de roles
 -- ============================================================================
 
 SET search_path TO app, public;
 
--- auth.roles.student.name
+-- ============================================
+-- STUDENT
+-- ============================================
 SELECT insert_translation('auth', 'roles.student.name',
     'Estudiante',
     'Student',
-    'Étudiant',
+    'Etudiant',
     'ui-components',
     'Nombre del rol estudiante'
 );
 
--- auth.roles.student.description
 SELECT insert_translation('auth', 'roles.student.description',
     'Quiero aprender a leer y escribir',
     'I want to learn reading and writing',
-    'Je veux apprendre à lire et écrire',
+    'Je veux apprendre a lire et ecrire',
     'ui-components',
-    'Descripción del rol estudiante'
+    'Descripcion del rol estudiante'
 );
 
--- auth.roles.teacher.name
+SELECT insert_translation('auth', 'roles.student.icon',
+    '🎓',
+    '🎓',
+    '🎓',
+    'ui-components',
+    'Icono del rol estudiante'
+);
+
+-- ============================================
+-- TEACHER
+-- ============================================
 SELECT insert_translation('auth', 'roles.teacher.name',
     'Maestro/a',
     'Teacher',
@@ -33,16 +44,25 @@ SELECT insert_translation('auth', 'roles.teacher.name',
     'Nombre del rol maestro'
 );
 
--- auth.roles.teacher.description
 SELECT insert_translation('auth', 'roles.teacher.description',
-    'Quiero enseñar a mis estudiantes',
+    'Quiero ensenar a mis estudiantes',
     'I want to teach my students',
-    'Je veux enseigner à mes élèves',
+    'Je veux enseigner a mes eleves',
     'ui-components',
-    'Descripción del rol maestro'
+    'Descripcion del rol maestro'
 );
 
--- auth.roles.parent.name
+SELECT insert_translation('auth', 'roles.teacher.icon',
+    '📚',
+    '📚',
+    '📚',
+    'ui-components',
+    'Icono del rol maestro'
+);
+
+-- ============================================
+-- PARENT
+-- ============================================
 SELECT insert_translation('auth', 'roles.parent.name',
     'Padre/Madre',
     'Parent',
@@ -51,34 +71,52 @@ SELECT insert_translation('auth', 'roles.parent.name',
     'Nombre del rol padre'
 );
 
--- auth.roles.parent.description
 SELECT insert_translation('auth', 'roles.parent.description',
     'Quiero ayudar a mis hijos',
     'I want to help my children',
     'Je veux aider mes enfants',
     'ui-components',
-    'Descripción del rol padre'
+    'Descripcion del rol padre'
 );
 
--- auth.roles.school.name
+SELECT insert_translation('auth', 'roles.parent.icon',
+    '👨‍👩‍👧',
+    '👨‍👩‍👧',
+    '👨‍👩‍👧',
+    'ui-components',
+    'Icono del rol padre'
+);
+
+-- ============================================
+-- SCHOOL
+-- ============================================
 SELECT insert_translation('auth', 'roles.school.name',
     'Escuela',
     'School',
-    'École',
+    'Ecole',
     'ui-components',
     'Nombre del rol escuela'
 );
 
--- auth.roles.school.description
 SELECT insert_translation('auth', 'roles.school.description',
-    'Quiero gestionar mi institución',
+    'Quiero gestionar mi institucion',
     'I want to manage my institution',
-    'Je veux gérer mon institution',
+    'Je veux gerer mon institution',
     'ui-components',
-    'Descripción del rol escuela'
+    'Descripcion del rol escuela'
 );
 
--- auth.roles.individual.name
+SELECT insert_translation('auth', 'roles.school.icon',
+    '🏫',
+    '🏫',
+    '🏫',
+    'ui-components',
+    'Icono del rol escuela'
+);
+
+-- ============================================
+-- INDIVIDUAL
+-- ============================================
 SELECT insert_translation('auth', 'roles.individual.name',
     'Usuario Individual',
     'Individual User',
@@ -87,13 +125,20 @@ SELECT insert_translation('auth', 'roles.individual.name',
     'Nombre del rol individual'
 );
 
--- auth.roles.individual.description
 SELECT insert_translation('auth', 'roles.individual.description',
     'Quiero aprender por mi cuenta',
     'I want to learn on my own',
-    'Je veux apprendre par moi-même',
+    'Je veux apprendre par moi-meme',
     'ui-components',
-    'Descripción del rol individual'
+    'Descripcion del rol individual'
 );
 
-SELECT 'TRANSLATIONS: Auth roles - 10 traducciones insertadas' AS status;
+SELECT insert_translation('auth', 'roles.individual.icon',
+    '🧑‍💻',
+    '🧑‍💻',
+    '🧑‍💻',
+    'ui-components',
+    'Icono del rol individual'
+);
+
+SELECT 'TRANSLATIONS: Auth roles - 15 traducciones insertadas (name, description, icon)' AS status;

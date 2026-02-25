@@ -8,11 +8,21 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 // window es único por pestaña → una sola instancia de GoTrueClient
 const WINDOW_KEY = '__sb_browser_client__';
 
+// Cliente SSR dummy para prerendering — las queries devuelven vacío
+// Se reemplaza por el cliente real al hidratar en el browser
+let _ssrClient: ReturnType<typeof createBrowserClient> | null = null;
+
 export function createClient() {
-  // Esta función SOLO debe llamarse desde el browser (client components)
-  // Para servidor usar createServerSupabaseClient()
+  // Durante SSR/prerendering: retornar cliente sin cookies
+  // No crashea el build; el estado real se resuelve al hidratar en browser
   if (typeof window === 'undefined') {
-    throw new Error('[Supabase] createClient() llamado en servidor — usa createServerSupabaseClient()');
+    if (!_ssrClient) {
+      _ssrClient = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+      );
+    }
+    return _ssrClient;
   }
 
   const w = window as any;
@@ -47,12 +57,10 @@ export function createClient() {
 }
 
 // ✅ Cliente para servidor (Server Components/Actions)
-// IMPORTANTE: Esta función debe estar en un archivo separado o solo usarse en servidor
 export async function createServerSupabaseClient() {
-  // ❌ NO importar cookies aquí, hacerlo donde se use
   const { cookies } = await import('next/headers');
   const cookieStore = await cookies();
-  
+
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
@@ -85,7 +93,6 @@ export function getSupabaseAdmin() {
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || '';
 
     // Durante build time, las variables pueden no estar disponibles
-    // Esto es normal y esperado — retornar cliente dummy silenciosamente
     if (!supabaseUrl || !supabaseKey) {
       // @ts-ignore
       return createSupabaseClient('https://dummy.supabase.co', 'dummy-key');

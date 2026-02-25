@@ -58,35 +58,37 @@ export default function AdminLayout({
   const router = useRouter();
   const pathname = usePathname();
   const locale = useLocale();
-  const supabase = createClient();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string>('');
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['translations']); // Expandir traducciones por defecto
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(['translations']);
 
   useEffect(() => {
-    checkAuth();
-  }, []);
+    const supabase = createClient();
 
-  const checkAuth = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
+    async function checkAuth() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+          router.push(`/${locale}/auth/login`);
+          return;
+        }
+
+        setUserEmail(user.email || '');
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error verificando autenticación:', error);
         router.push(`/${locale}/auth/login`);
-        return;
       }
-
-      setUserEmail(user.email || '');
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error verificando autenticación:', error);
-      router.push(`/${locale}/auth/login`);
     }
-  };
+
+    checkAuth();
+  }, [locale, router]);
 
   const handleSignOut = async () => {
+    const supabase = createClient();
     await supabase.auth.signOut();
     router.push(`/${locale}/auth/login`);
   };

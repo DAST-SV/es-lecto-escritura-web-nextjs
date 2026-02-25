@@ -1,5 +1,6 @@
 // ============================================
 // proxy.ts — Middleware con locales dinámicos desde app.languages
+// ✅ FIX: Cookie propagation en TODAS las rutas (público y privado)
 // ============================================
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -9,6 +10,7 @@ import { locales as STATIC_LOCALES, defaultLocale as STATIC_DEFAULT } from '@/sr
 const PUBLIC_ROUTES = [
   '/', '/auth/login', '/auth/register', '/auth/callback',
   '/auth/forgot-password', '/auth/reset-password', '/auth/complete-profile', '/error',
+  '/explore',
 ];
 
 const STATIC_ROUTES = ['/_next', '/api', '/favicon.ico', '/images', '/fonts', '/.well-known', '/auth/callback', '/sw.js', '/manifest.webmanifest', '/icons', '/offline.html'];
@@ -57,7 +59,7 @@ const CACHE_TTL = 30 * 1000;
 
 async function loadRoutes(forceReload = false): Promise<Record<string, any>> {
   const now = Date.now();
-  
+
   if (!forceReload && routesCache && (now - cacheTimestamp) < CACHE_TTL) {
     return routesCache;
   }
@@ -101,9 +103,7 @@ async function loadRoutes(forceReload = false): Promise<Record<string, any>> {
 
     routesCache = pathnames;
     cacheTimestamp = now;
-    
-    // console.log(`✅ [CACHE] ${Object.keys(pathnames).length} rutas cargadas (TTL: 30s)`);
-    
+
     return pathnames;
 
   } catch (error) {
@@ -113,20 +113,44 @@ async function loadRoutes(forceReload = false): Promise<Record<string, any>> {
 
 /**
  * Traduce una ruta física al locale especificado
- * Usa el cache de rutas cargado
  */
 function getTranslatedPath(physicalPath: string, targetLocale: string, routes: Record<string, any>): string {
   const translations = routes[physicalPath];
+  if (!translations) return physicalPath;
+  if (typeof translations === 'string') return translations;
+  return translations[targetLocale] || physicalPath;
+}
 
-  if (!translations) {
-    return physicalPath; // No existe en BD, usar física
-  }
+/**
+ * Copia las cookies de un response a otro (para rewrites/redirects)
+ * CRÍTICO: Sin esto, el token refresh de Supabase se pierde
+ */
+function copyResponseCookies(from: NextResponse, to: NextResponse): void {
+  from.cookies.getAll().forEach(cookie => {
+    to.cookies.set(cookie.name, cookie.value);
+  });
+}
 
-  if (typeof translations === 'string') {
-    return translations; // Sin traducciones
-  }
-
-  return translations[targetLocale] || physicalPath; // Traducción del locale o fallback
+/**
+ * Crea el Supabase server client para el middleware.
+ * Llama a getUser() para refrescar el token y setear cookies actualizadas.
+ */
+function createMiddlewareSupabaseClient(request: NextRequest, response: NextResponse) {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll() { return request.cookies.getAll(); },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value);
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
 }
 
 export async function proxy(request: NextRequest) {
@@ -156,31 +180,25 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // console.log(`📍 Traducida: "${translatedPath}", Locale: "${locale}"`);
-
-  // 3. Encontrar ruta física y traducción canónica del locale actual
+  // 4. Encontrar ruta física y traducción canónica del locale actual
   const routes = await loadRoutes();
   let physicalPathname: string | null = null;
-  let canonicalTranslatedPath: string | null = null; // Ruta traducida correcta para este locale
+  let canonicalTranslatedPath: string | null = null;
 
   for (const [routePhysical, translations] of Object.entries(routes)) {
     if (typeof translations === 'string') {
-      // Ruta sin traducciones: la ruta física es igual en todos los idiomas
       if (translations === translatedPath || routePhysical === translatedPath) {
         physicalPathname = routePhysical;
-        canonicalTranslatedPath = routePhysical; // No hay traducción, usar la física
+        canonicalTranslatedPath = routePhysical;
         break;
       }
     } else {
       const localeTranslation = translations[locale] as string | undefined;
-      // Caso 1: el usuario accedió por la ruta traducida correcta del locale
       if (localeTranslation && localeTranslation === translatedPath) {
         physicalPathname = routePhysical;
         canonicalTranslatedPath = localeTranslation;
         break;
       }
-      // Caso 2: el usuario accedió por la ruta física directamente (ej. /es/library)
-      // o por la traducción de otro idioma → redirigir a la traducción correcta
       const isPhysicalPath = routePhysical === translatedPath;
       const isOtherLocaleTranslation = Object.values(translations).includes(translatedPath);
       if (isPhysicalPath || isOtherLocaleTranslation) {
@@ -192,66 +210,53 @@ export async function proxy(request: NextRequest) {
   }
 
   if (!physicalPathname) {
-    // Fallback: usar la ruta tal cual (cuando Supabase no responde)
     physicalPathname = translatedPath;
     canonicalTranslatedPath = translatedPath;
   }
 
-  // Si el usuario llegó por una ruta no canónica (física o de otro idioma), redirigir
+  // Si el usuario llegó por una ruta no canónica, redirigir
   if (canonicalTranslatedPath && canonicalTranslatedPath !== translatedPath) {
     const canonicalUrl = request.nextUrl.clone();
     canonicalUrl.pathname = `/${locale}${canonicalTranslatedPath}`;
-    canonicalUrl.search = ''; // Limpiar params para evitar bucles
+    canonicalUrl.search = '';
     return NextResponse.redirect(canonicalUrl);
   }
 
-  // 4. Verificar si es pública
-  const isPublicRoute = PUBLIC_ROUTES.some(route => 
-    physicalPathname === route || physicalPathname.startsWith(route + '/')
+  // ============================================
+  // 5. CREAR SUPABASE CLIENT Y REFRESCAR SESIÓN
+  // ✅ CRÍTICO: Se hace para TODAS las rutas (públicas y privadas)
+  // para que el browser siempre reciba cookies de sesión actualizadas
+  // ============================================
+  const response = NextResponse.next();
+  const supabase = createMiddlewareSupabaseClient(request, response);
+
+  // Llamar getUser() para refrescar el token JWT (crítico para sesión)
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+  // 6. Verificar si es pública
+  const isPublicRoute = PUBLIC_ROUTES.some(route =>
+    physicalPathname === route || physicalPathname!.startsWith(route + '/')
   );
 
   if (isPublicRoute) {
-    // console.log(`✅ [PÚBLICO]`);
-    
     const rewriteUrl = request.nextUrl.clone();
     rewriteUrl.pathname = `/${locale}${physicalPathname}`;
-    
+
     if (rewriteUrl.pathname !== pathname) {
-      // console.log(`🔄 Rewrite: ${pathname} → ${rewriteUrl.pathname}`);
-      return NextResponse.rewrite(rewriteUrl);
+      const rewriteResponse = NextResponse.rewrite(rewriteUrl);
+      // ✅ COPIAR cookies de sesión al rewrite response
+      copyResponseCookies(response, rewriteResponse);
+      return rewriteResponse;
     }
-    
-    return NextResponse.next();
+
+    return response;
   }
 
-  // 5. Crear cliente Supabase
-  const response = NextResponse.next();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    {
-      cookies: {
-        getAll() { return request.cookies.getAll(); },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value);
-            response.cookies.set(name, value, options);
-          });
-        },
-      },
-    }
-  );
-
-  // 6. Obtener usuario
-  let user;
+  // ============================================
+  // 7. RUTAS PRIVADAS — verificar autenticación
+  // ============================================
   try {
-    const { data, error } = await supabase.auth.getUser();
-    
-    if (error) throw error;
-    user = data.user;
-    
-    if (!user) {
-      // console.log(`❌ Sin autenticar`);
+    if (userError || !user) {
       const currentAttempts = parseInt(request.nextUrl.searchParams.get('attempts') || '0', 10);
       const nextAttempts = currentAttempts + 1;
       if (nextAttempts > 3) {
@@ -261,10 +266,8 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(homeUrl);
       }
       const url = request.nextUrl.clone();
-      // ✅ Usar ruta traducida para /auth/login
       const loginPath = getTranslatedPath('/auth/login', locale, routes);
       url.pathname = `/${locale}${loginPath}`;
-      // Guardar la ruta traducida canónica para el redirect post-login
       const canonical = canonicalTranslatedPath || translatedPath;
       const isAuthOrHome = PUBLIC_ROUTES.some(r => canonical === r || canonical.startsWith(r + '/'));
       if (!isAuthOrHome) {
@@ -273,10 +276,9 @@ export async function proxy(request: NextRequest) {
       url.searchParams.set('attempts', String(nextAttempts));
       return NextResponse.redirect(url);
     }
-    
-    // console.log(`✅ Usuario: ${user.email}`);
 
-    // 6.1 Check if user has a role assigned
+    // 7.1 Check if user has a role assigned
+    // ✅ maybeSingle() — single() throwea si 0 rows (causa 500 para OAuth users nuevos)
     const { data: userRole } = await supabase
       .schema('app')
       .from('user_roles')
@@ -284,20 +286,18 @@ export async function proxy(request: NextRequest) {
       .eq('user_id', user.id)
       .eq('is_active', true)
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (!userRole) {
-      // No role — redirect to complete profile (unless already there)
       if (!translatedPath.startsWith('/auth/complete-profile')) {
         const url = request.nextUrl.clone();
-        url.pathname = `/${locale}/auth/complete-profile`;
+        const completeProfilePath = getTranslatedPath('/auth/complete-profile', locale, routes);
+        url.pathname = `/${locale}${completeProfilePath}`;
         url.searchParams.set('redirect', pathname);
         return NextResponse.redirect(url);
       }
     }
   } catch (error) {
-    // Silenciar AuthSessionMissingError (usuario no autenticado es esperado)
-    // console.error(`❌ Error auth:`, error);
     const currentAttempts = parseInt(request.nextUrl.searchParams.get('attempts') || '0', 10);
     const nextAttempts = currentAttempts + 1;
     if (nextAttempts > 3) {
@@ -307,7 +307,6 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(homeUrl);
     }
     const url = request.nextUrl.clone();
-    // ✅ Usar ruta traducida para /auth/login
     const loginPath = getTranslatedPath('/auth/login', locale, routes);
     url.pathname = `/${locale}${loginPath}`;
     const canonical = canonicalTranslatedPath || translatedPath;
@@ -319,20 +318,17 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // 7. ✅ VERIFICAR PERMISOS (MUY IMPORTANTE)
+  // ============================================
+  // 8. VERIFICAR PERMISOS
+  // ============================================
   try {
-    // console.log(`🔐 Verificando: "${translatedPath}" (${locale})`);
-
     const { data: canAccess, error } = await supabase.rpc('can_access_route', {
-      p_user_id: user.id,
+      p_user_id: user!.id,
       p_translated_path: translatedPath,
       p_language_code: locale,
     });
 
-    // console.log(`📊 can_access_route = ${canAccess}`);
-
     if (error) {
-      // ✅ En caso de error, DENEGAR por seguridad
       const url = request.nextUrl.clone();
       url.pathname = `/${locale}/error`;
       url.searchParams.set('code', '500');
@@ -340,9 +336,7 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // ✅ Si no tiene acceso, DENEGAR
     if (!canAccess) {
-      // console.log(`🚫 ACCESO DENEGADO`);
       const url = request.nextUrl.clone();
       url.pathname = `/${locale}/error`;
       url.searchParams.set('code', '403');
@@ -350,36 +344,37 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // console.log(`✅ ACCESO PERMITIDO`);
-    
-    // 8. Reescribir URL
+    // 9. Reescribir URL — CON cookies de sesión
     const rewriteUrl = request.nextUrl.clone();
     rewriteUrl.pathname = `/${locale}${physicalPathname}`;
-    
+
     if (rewriteUrl.pathname !== pathname) {
-      // console.log(`🔄 Rewrite: ${pathname} → ${rewriteUrl.pathname}\n`);
-      return NextResponse.rewrite(rewriteUrl);
+      const rewriteResponse = NextResponse.rewrite(rewriteUrl);
+      // ✅ COPIAR cookies de sesión al rewrite response
+      copyResponseCookies(response, rewriteResponse);
+      return rewriteResponse;
     }
-    
+
     return response;
 
   } catch (err: any) {
-    // ✅ IMPORTANTE: En producción, DENEGAR por seguridad
     if (process.env.NODE_ENV === 'production') {
       const url = request.nextUrl.clone();
       url.pathname = `/${locale}/error`;
       url.searchParams.set('code', '500');
       return NextResponse.redirect(url);
     }
-    
-    // En desarrollo, permitir
+
+    // En desarrollo, permitir con cookies
     const rewriteUrl = request.nextUrl.clone();
     rewriteUrl.pathname = `/${locale}${physicalPathname}`;
-    
+
     if (rewriteUrl.pathname !== pathname) {
-      return NextResponse.rewrite(rewriteUrl);
+      const rewriteResponse = NextResponse.rewrite(rewriteUrl);
+      copyResponseCookies(response, rewriteResponse);
+      return rewriteResponse;
     }
-    
+
     return response;
   }
 }

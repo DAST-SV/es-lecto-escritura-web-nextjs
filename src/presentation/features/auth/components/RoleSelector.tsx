@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { useAuthTranslations } from '../hooks/useAuthTranslations';
 
@@ -11,6 +11,14 @@ interface RoleSelectorProps {
   onSelectRole: (role: RoleType) => void;
 }
 
+const ROLE_COLORS: Record<RoleType, { bg: string; border: string; text: string; accent: string }> = {
+  student:    { bg: 'bg-blue-50',   border: 'border-blue-300',  text: 'text-blue-700',   accent: 'bg-blue-500' },
+  teacher:    { bg: 'bg-green-50',  border: 'border-green-300', text: 'text-green-700',  accent: 'bg-green-500' },
+  parent:     { bg: 'bg-purple-50', border: 'border-purple-300',text: 'text-purple-700', accent: 'bg-purple-500' },
+  school:     { bg: 'bg-orange-50', border: 'border-orange-300',text: 'text-orange-700', accent: 'bg-orange-500' },
+  individual: { bg: 'bg-cyan-50',   border: 'border-cyan-300',  text: 'text-cyan-700',   accent: 'bg-cyan-500' },
+};
+
 export function RoleSelector({ selectedRole, onSelectRole }: RoleSelectorProps) {
   const { roles, register, loading } = useAuthTranslations();
 
@@ -18,75 +26,103 @@ export function RoleSelector({ selectedRole, onSelectRole }: RoleSelectorProps) 
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="text-center mb-6">
-          <div className="h-6 bg-gray-200 rounded w-48 mx-auto mb-2 animate-pulse" />
-          <div className="h-4 bg-gray-200 rounded w-64 mx-auto animate-pulse" />
-        </div>
+      <div className="space-y-3">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="h-20 bg-blue-50 rounded-2xl animate-pulse" />
+        ))}
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <div className="text-center mb-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-2">
+      <div className="text-center mb-4">
+        <h3
+          className="text-lg font-black text-blue-700 mb-1"
+          style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
+        >
           {register.roleLabel}
         </h3>
-        <p className="text-sm text-gray-600">
+        <p
+          className="text-sm font-bold text-blue-400"
+          style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
+        >
           {register.roleDescription}
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-3">
-        {rolesList.map((role) => {
+        {rolesList.map((role, index) => {
           const isSelected = selectedRole === role;
           const roleData = roles[role];
+          const colors = ROLE_COLORS[role];
 
           return (
             <motion.button
               key={role}
               type="button"
               onClick={() => onSelectRole(role)}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.08, duration: 0.3 }}
               className={`
-                relative p-4 rounded-xl border-2 text-left transition-all
-                ${
-                  isSelected
-                    ? 'border-blue-500 bg-blue-50 shadow-lg'
-                    : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-md'
+                relative p-4 rounded-2xl border-2 text-left transition-all duration-200
+                ${isSelected
+                  ? `${colors.bg} ${colors.border} shadow-lg scale-[1.02]`
+                  : 'bg-white border-gray-200 hover:border-yellow-300 hover:shadow-md hover:scale-[1.01]'
                 }
               `}
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: isSelected ? 1.02 : 1.01 }}
               whileTap={{ scale: 0.98 }}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-4">
                 {/* Icon */}
-                <div className="text-3xl flex-shrink-0">
+                <motion.div
+                  className={`
+                    w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0
+                    ${isSelected
+                      ? `${colors.bg} border-2 ${colors.border}`
+                      : 'bg-gray-50 border-2 border-gray-200'
+                    }
+                  `}
+                  animate={isSelected ? { rotate: [0, -5, 5, 0] } : {}}
+                  transition={{ duration: 0.4 }}
+                >
                   {roleData.icon}
-                </div>
+                </motion.div>
 
                 {/* Content */}
-                <div className="flex-1">
-                  <h4 className={`font-bold mb-1 ${isSelected ? 'text-blue-700' : 'text-gray-800'}`}>
+                <div className="flex-1 min-w-0">
+                  <h4
+                    className={`font-black text-base mb-0.5 ${isSelected ? colors.text : 'text-gray-700'}`}
+                    style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
+                  >
                     {roleData.name}
                   </h4>
-                  <p className={`text-sm ${isSelected ? 'text-blue-600' : 'text-gray-600'}`}>
+                  <p
+                    className={`text-xs font-bold leading-tight ${isSelected ? colors.text + '/70' : 'text-gray-400'}`}
+                    style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
+                  >
                     {roleData.description}
                   </p>
                 </div>
 
                 {/* Check Icon */}
-                {isSelected && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="flex-shrink-0"
-                  >
-                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                      <Check className="w-4 h-4 text-white" />
-                    </div>
-                  </motion.div>
-                )}
+                <AnimatePresence>
+                  {isSelected && (
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={{ type: 'spring', stiffness: 300 }}
+                      className="flex-shrink-0"
+                    >
+                      <div className={`w-8 h-8 ${colors.accent} rounded-full flex items-center justify-center shadow-md`}>
+                        <Check className="w-5 h-5 text-white" strokeWidth={3} />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.button>
           );
