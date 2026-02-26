@@ -22,6 +22,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- Acceso al schema
 GRANT USAGE ON SCHEMA app TO anon;
 GRANT USAGE ON SCHEMA app TO authenticated;
+GRANT USAGE ON SCHEMA app TO service_role;
 
 -- Permisos para authenticated
 GRANT SELECT ON ALL TABLES IN SCHEMA app TO authenticated;

@@ -6,11 +6,12 @@
 
 'use client';
 
-import { ReactNode, useMemo, forwardRef } from 'react';
+import { ReactNode, useMemo, forwardRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
 import { useRouteTranslations } from '@/src/presentation/hooks/useRouteTranslations';
 import { resolveLocalizedHref } from '@/src/infrastructure/utils/resolve-localized-href';
+import { useNavigationLoading } from '@/src/presentation/providers/navigation-provider';
 
 interface LocaleLinkProps {
   /** Ruta física / clave de ruta (ej. "/library") */
@@ -68,15 +69,22 @@ export const LocaleLink = forwardRef<HTMLAnchorElement, LocaleLinkProps>(
     const currentLocale = useLocale();
     const locale = localeProp || currentLocale;
     const { data: translationsMap } = useRouteTranslations();
+    const { startLoading } = useNavigationLoading();
 
     const href = useMemo(() => {
       if (!translationsMap) {
-        // Fallback: usar ruta física hasta que las traducciones carguen
         const suffix = dynamicPath ? `/${dynamicPath.replace(/^\//, '')}` : '';
         return `/${locale}${routeKey}${suffix}`;
       }
       return resolveLocalizedHref(routeKey, locale, translationsMap, dynamicPath);
     }, [routeKey, locale, translationsMap, dynamicPath]);
+
+    const handleClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
+      // No mostrar loader si se abre en nueva pestaña o sin cambio de ruta
+      if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+      if (typeof window !== 'undefined' && href === window.location.pathname) return;
+      startLoading();
+    }, [href, startLoading]);
 
     return (
       <Link
@@ -87,6 +95,7 @@ export const LocaleLink = forwardRef<HTMLAnchorElement, LocaleLinkProps>(
         prefetch={prefetch}
         replace={replace}
         scroll={scroll}
+        onClick={handleClick}
       >
         {children}
       </Link>

@@ -19,6 +19,21 @@ const ROLE_COLORS: Record<RoleType, { bg: string; border: string; text: string; 
   individual: { bg: 'bg-cyan-50',   border: 'border-cyan-300',  text: 'text-cyan-700',   accent: 'bg-cyan-500' },
 };
 
+// Fallback hardcodeado — la UI SIEMPRE funciona aunque las traducciones de DB fallen
+const ROLE_DEFAULTS: Record<RoleType, { icon: string; name: string; description: string }> = {
+  student:    { icon: '🎓', name: 'Estudiante',        description: 'Quiero aprender a leer y escribir' },
+  teacher:    { icon: '📚', name: 'Maestro/a',          description: 'Quiero enseñar a mis estudiantes' },
+  parent:     { icon: '👨‍👩‍👧', name: 'Padre/Madre',       description: 'Quiero ayudar a mis hijos' },
+  school:     { icon: '🏫', name: 'Escuela',            description: 'Quiero gestionar mi institución' },
+  individual: { icon: '🧑‍💻', name: 'Usuario Individual', description: 'Quiero aprender por mi cuenta' },
+};
+
+/** Devuelve el valor de la traducción si existe, o el fallback si es una key cruda [xxx] */
+function resolve(translated: string | undefined, fallback: string): string {
+  if (!translated || translated.startsWith('[')) return fallback;
+  return translated;
+}
+
 export function RoleSelector({ selectedRole, onSelectRole }: RoleSelectorProps) {
   const { roles, register, loading } = useAuthTranslations();
 
@@ -41,20 +56,26 @@ export function RoleSelector({ selectedRole, onSelectRole }: RoleSelectorProps) 
           className="text-lg font-black text-blue-700 mb-1"
           style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
         >
-          {register.roleLabel}
+          {resolve(register.roleLabel, '¿Quién eres?')}
         </h3>
         <p
           className="text-sm font-bold text-blue-400"
           style={{ fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif" }}
         >
-          {register.roleDescription}
+          {resolve(register.roleDescription, 'Selecciona tu perfil para personalizar tu experiencia')}
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-3">
         {rolesList.map((role, index) => {
           const isSelected = selectedRole === role;
-          const roleData = roles[role];
+          const d = ROLE_DEFAULTS[role];
+          const tr = roles[role];
+          const roleData = {
+            icon: resolve(tr?.icon, d.icon),
+            name: resolve(tr?.name, d.name),
+            description: resolve(tr?.description, d.description),
+          };
           const colors = ROLE_COLORS[role];
 
           return (

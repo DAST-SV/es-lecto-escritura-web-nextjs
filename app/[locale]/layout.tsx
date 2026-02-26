@@ -14,6 +14,7 @@ import "../globals.css";
 import Loading from './loading';
 import { routing, type Locale } from '@/src/infrastructure/config/routing.config';
 import { QueryProvider } from '@/src/presentation/providers/query-provider';
+import { NavigationProvider } from '@/src/presentation/providers/navigation-provider';
 import { PWARegister } from '@/src/presentation/components/PWARegister';
 import { PullToRefresh } from '@/src/presentation/components/PullToRefresh';
 
@@ -132,169 +133,110 @@ export default async function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body>
-        {/* ✅ PWA Splash: libro abriéndose — SOLO en cold start (no reload/navegación) */}
-        <div id="pwa-splash" style={{
-          position: 'fixed', inset: 0, zIndex: 99999,
-          display: 'none',
-          alignItems: 'center', justifyContent: 'center',
-          background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 40%, #6ee7b7 100%)',
-          transition: 'opacity 0.6s ease-out',
-          fontFamily: "Nunito, 'Varela Round', Comfortaa, sans-serif",
-        }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
-            {/* Libro 3D abriéndose */}
-            <div className="splash-book" style={{ perspective: '600px', width: 120, height: 140 }}>
-              <div style={{ position: 'relative', width: '100%', height: '100%', transformStyle: 'preserve-3d' }}>
-                {/* Sombra del libro */}
-                <div style={{
-                  position: 'absolute', bottom: -8, left: '10%', width: '80%', height: 12,
-                  background: 'rgba(0,0,0,0.15)', borderRadius: '50%',
-                  animation: 'book-shadow 2s ease-in-out infinite',
-                }} />
-                {/* Contratapa (fondo) */}
-                <div style={{
-                  position: 'absolute', inset: 0, background: '#1e40af', borderRadius: 6,
-                  boxShadow: '2px 2px 8px rgba(0,0,0,0.3)',
-                }} />
-                {/* Páginas interiores */}
-                <div style={{
-                  position: 'absolute', top: 4, left: 4, right: 4, bottom: 4,
-                  background: '#fefce8', borderRadius: '2px 4px 4px 2px',
-                }}>
-                  {/* Líneas de texto animadas */}
-                  <div style={{ padding: '16px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div style={{ height: 4, background: '#c4b5fd', borderRadius: 2, width: '90%', animation: 'text-appear 2s ease-in-out infinite' }} />
-                    <div style={{ height: 4, background: '#93c5fd', borderRadius: 2, width: '70%', animation: 'text-appear 2s ease-in-out 0.2s infinite' }} />
-                    <div style={{ height: 4, background: '#86efac', borderRadius: 2, width: '85%', animation: 'text-appear 2s ease-in-out 0.4s infinite' }} />
-                    <div style={{ height: 4, background: '#fcd34d', borderRadius: 2, width: '60%', animation: 'text-appear 2s ease-in-out 0.6s infinite' }} />
-                    <div style={{ height: 4, background: '#fca5a5', borderRadius: 2, width: '75%', animation: 'text-appear 2s ease-in-out 0.8s infinite' }} />
-                  </div>
-                </div>
-                {/* Portada — se abre */}
-                <div style={{
-                  position: 'absolute', inset: 0,
-                  background: 'linear-gradient(135deg, #2563eb, #3b82f6)',
-                  borderRadius: 6, transformOrigin: 'left center',
-                  animation: 'book-open 2.5s ease-in-out infinite',
-                  boxShadow: '4px 0 12px rgba(0,0,0,0.2)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  backfaceVisibility: 'hidden',
-                }}>
-                  <span style={{ color: 'white', fontWeight: 900, fontSize: '2.5rem', textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>E</span>
-                  {/* Decoración de la portada */}
-                  <div style={{
-                    position: 'absolute', bottom: 12, left: 12, right: 12,
-                    height: 3, background: '#fde047', borderRadius: 2,
-                  }} />
-                  <div style={{
-                    position: 'absolute', top: 12, left: 12, right: 12,
-                    height: 3, background: '#fde047', borderRadius: 2,
-                  }} />
-                </div>
-                {/* Letras que salen volando del libro */}
-                <div style={{ position: 'absolute', top: '30%', left: '60%' }}>
-                  <span style={{ position: 'absolute', fontSize: 16, fontWeight: 900, color: '#fbbf24', animation: 'letter-fly-1 2.5s ease-out infinite', opacity: 0 }}>A</span>
-                  <span style={{ position: 'absolute', fontSize: 14, fontWeight: 900, color: '#34d399', animation: 'letter-fly-2 2.5s ease-out 0.3s infinite', opacity: 0 }}>B</span>
-                  <span style={{ position: 'absolute', fontSize: 18, fontWeight: 900, color: '#f472b6', animation: 'letter-fly-3 2.5s ease-out 0.5s infinite', opacity: 0 }}>C</span>
-                </div>
-              </div>
-            </div>
-            {/* Texto de marca */}
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ color: 'white', fontWeight: 900, fontSize: '1.1rem', letterSpacing: '0.05em', textShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>
-                ESLectoEscritura
-              </div>
-              {/* Dots de carga */}
-              <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 8 }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'white', animation: 'splash-dot 1.2s ease-in-out infinite' }} />
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'white', animation: 'splash-dot 1.2s ease-in-out 0.2s infinite' }} />
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'white', animation: 'splash-dot 1.2s ease-in-out 0.4s infinite' }} />
-              </div>
-            </div>
-          </div>
-          <style dangerouslySetInnerHTML={{ __html: `
-            @keyframes book-open {
-              0%, 15% { transform: rotateY(0deg); }
-              40%, 70% { transform: rotateY(-160deg); }
-              85%, 100% { transform: rotateY(0deg); }
-            }
-            @keyframes book-shadow {
-              0%, 15%, 85%, 100% { transform: scaleX(1); opacity: 0.15; }
-              40%, 70% { transform: scaleX(1.3); opacity: 0.08; }
-            }
-            @keyframes text-appear {
-              0%, 15% { opacity: 0; transform: scaleX(0); }
-              40%, 70% { opacity: 1; transform: scaleX(1); }
-              85%, 100% { opacity: 0; transform: scaleX(0); }
-            }
-            @keyframes letter-fly-1 {
-              0%, 30% { opacity: 0; transform: translate(0,0) scale(0.5); }
-              50% { opacity: 1; transform: translate(-20px,-40px) scale(1) rotate(-15deg); }
-              80%, 100% { opacity: 0; transform: translate(-40px,-70px) scale(0.3) rotate(-30deg); }
-            }
-            @keyframes letter-fly-2 {
-              0%, 35% { opacity: 0; transform: translate(0,0) scale(0.5); }
-              55% { opacity: 1; transform: translate(15px,-50px) scale(1) rotate(10deg); }
-              85%, 100% { opacity: 0; transform: translate(30px,-80px) scale(0.3) rotate(20deg); }
-            }
-            @keyframes letter-fly-3 {
-              0%, 38% { opacity: 0; transform: translate(0,0) scale(0.5); }
-              58% { opacity: 1; transform: translate(-5px,-45px) scale(1.1) rotate(-8deg); }
-              88%, 100% { opacity: 0; transform: translate(-10px,-75px) scale(0.3) rotate(-16deg); }
-            }
-            @keyframes splash-dot {
-              0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
-              40% { opacity: 1; transform: scale(1.4); }
-            }
-          `}} />
-        </div>
-        {/* Script: mostrar splash SOLO en cold start de PWA (no reload ni navegación) */}
+        {/* ── Overlays DOM puro: splash cold-start + nav loading ── */}
         <script dangerouslySetInnerHTML={{ __html: `
           (function(){
-            var KEY = '__eslecto_splash_shown__';
-            var splash = document.getElementById('pwa-splash');
-            if (!splash) return;
+            /* ═══ ESTILOS COMPARTIDOS (inyectados una sola vez) ═══ */
+            var st=document.createElement('style');
+            st.textContent=
+              '@keyframes nl-cover{0%,12%{transform:rotateY(0)}42%,62%{transform:rotateY(-155deg)}88%,100%{transform:rotateY(0)}}'+
+              '@keyframes nl-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}'+
+              '@keyframes nl-sh{0%,100%{opacity:.35}50%{opacity:1}}'+
+              '@keyframes sp-open{0%{transform:rotateY(0)}100%{transform:rotateY(-160deg)}}'+
+              '@keyframes sp-glow{0%,100%{box-shadow:0 0 20px rgba(59,130,246,0.3)}50%{box-shadow:0 0 40px rgba(59,130,246,0.6)}}'+
+              '@keyframes sp-letter{0%{opacity:0;transform:translateY(20px) scale(0.5)}60%{opacity:1;transform:translateY(-5px) scale(1.1)}100%{opacity:1;transform:translateY(0) scale(1)}}'+
+              '@keyframes sp-fadeout{0%{opacity:1}100%{opacity:0}}';
+            document.head.appendChild(st);
 
-            // Solo mostrar si es la primera carga de esta sesión del browser/PWA
-            // sessionStorage se limpia al cerrar la app/pestaña
-            if (sessionStorage.getItem(KEY)) {
-              splash.remove();
-              return;
+            /* ─── helper: crea el libro animado (reutilizado en ambos overlays) ─── */
+            function bookHTML(size,coverAnim,floatAnim){
+              var w=size,h=Math.round(size*1.22);
+              return '<div style="perspective:400px;width:'+w+'px;height:'+h+'px;margin:0 auto 16px;">'+
+                '<div style="width:100%;height:100%;position:relative;transform-style:preserve-3d;animation:'+floatAnim+';">'+
+                  '<div style="position:absolute;left:-5px;top:0;width:5px;height:100%;background:linear-gradient(to right,#1e40af,#2563eb);border-radius:3px 0 0 3px;z-index:3;"></div>'+
+                  '<div style="position:absolute;inset:0;background:#1e3a8a;border-radius:0 4px 4px 0;box-shadow:2px 2px 10px rgba(0,0,0,0.15);"></div>'+
+                  '<div style="position:absolute;top:2px;left:2px;right:2px;bottom:2px;background:#f8fafc;border-radius:0 3px 3px 0;">'+
+                    '<div style="padding:8px 6px;display:flex;flex-direction:column;gap:4px;">'+
+                      '<div style="height:3px;background:#bfdbfe;border-radius:1px;width:88%;animation:nl-sh 1.8s ease infinite;"></div>'+
+                      '<div style="height:3px;background:#93c5fd;border-radius:1px;width:62%;animation:nl-sh 1.8s ease .15s infinite;"></div>'+
+                      '<div style="height:3px;background:#bfdbfe;border-radius:1px;width:78%;animation:nl-sh 1.8s ease .3s infinite;"></div>'+
+                      '<div style="height:3px;background:#93c5fd;border-radius:1px;width:50%;animation:nl-sh 1.8s ease .45s infinite;"></div>'+
+                      '<div style="height:3px;background:#bfdbfe;border-radius:1px;width:70%;animation:nl-sh 1.8s ease .6s infinite;"></div>'+
+                    '</div>'+
+                  '</div>'+
+                  '<div style="position:absolute;inset:0;background:linear-gradient(145deg,#2563eb,#1d4ed8);border-radius:0 4px 4px 0;transform-origin:left center;animation:'+coverAnim+';box-shadow:4px 0 10px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;backface-visibility:hidden;z-index:2;">'+
+                    '<span style="color:#fff;font-weight:900;font-size:'+Math.round(size*0.38)+'px;text-shadow:0 1px 4px rgba(0,0,0,0.3);">E</span>'+
+                    '<div style="position:absolute;top:6px;left:6px;right:6px;height:2px;background:#fde047;border-radius:1px;opacity:.85;"></div>'+
+                    '<div style="position:absolute;bottom:6px;left:6px;right:6px;height:2px;background:#fde047;border-radius:1px;opacity:.85;"></div>'+
+                  '</div>'+
+                '</div>'+
+              '</div>';
             }
 
-            // Marcar que ya se mostró para esta sesión
-            sessionStorage.setItem(KEY, '1');
-            splash.style.display = 'flex';
-
-            var done = false;
-            function hide() {
-              if (done) return;
-              done = true;
-              splash.style.opacity = '0';
-              setTimeout(function(){ splash.remove(); }, 600);
+            /* ═══ 1. PWA COLD-START SPLASH ═══ */
+            var KEY='__eslecto_splash_shown__';
+            if(!sessionStorage.getItem(KEY)){
+              sessionStorage.setItem(KEY,'1');
+              var sp=document.createElement('div');
+              sp.id='pwa-splash';
+              sp.style.cssText='position:fixed;inset:0;z-index:100000;background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 50%,#bfdbfe 100%);display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:Nunito,\\'Varela Round\\',Comfortaa,sans-serif;';
+              sp.innerHTML=
+                '<div style="animation:sp-glow 2s ease-in-out infinite;">'+
+                  bookHTML(80,'sp-open 1.8s ease-out forwards','nl-float 2.5s ease-in-out infinite')+
+                '</div>'+
+                '<div style="margin-top:8px;display:flex;gap:6px;">'+
+                  'eslecto'.split('').map(function(c,i){
+                    return '<span style="display:inline-block;font-weight:900;font-size:2rem;color:#1e3a8a;animation:sp-letter 0.5s ease '+((i*0.12)+0.6)+'s both;">'+c+'</span>';
+                  }).join('')+
+                '</div>'+
+                '<p style="margin:12px 0 0;font-weight:700;color:#3b82f6;font-size:.85rem;letter-spacing:.04em;opacity:0;animation:sp-letter 0.5s ease 1.6s both;">Aprende a leer y escribir</p>';
+              document.body.appendChild(sp);
+              setTimeout(function(){
+                sp.style.animation='sp-fadeout 0.5s ease forwards';
+                setTimeout(function(){sp.remove();},550);
+              },2800);
             }
 
-            // Ocultar cuando React termine de renderizar
-            if (document.readyState === 'complete') {
-              setTimeout(hide, 1800);
-            } else {
-              window.addEventListener('load', function(){ setTimeout(hide, 1200); });
-            }
-            // Máximo 5s
-            setTimeout(hide, 5000);
+            /* ═══ 2. NAV LOADING OVERLAY (para transiciones SPA) ═══ */
+            var o=document.createElement('div');
+            o.id='nav-loading';
+            o.style.cssText='display:none;position:fixed;inset:0;z-index:99999;background:rgba(255,255,255,0.92);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);';
+            o.innerHTML=
+              '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;font-family:Nunito,\\'Varela Round\\',Comfortaa,sans-serif;">'+
+                bookHTML(56,'nl-cover 2.8s ease-in-out infinite','nl-float 2.5s ease-in-out infinite')+
+                '<p style="margin:0;font-weight:700;color:#1e3a8a;font-size:.9rem;letter-spacing:.03em;">Cargando\\u2026</p>'+
+              '</div>';
+
+            document.body.appendChild(o);
+
+            var timer=null;
+            window.__navLoaderShow=function(){
+              o.style.display='block';
+              document.body.style.overflow='hidden';
+              clearTimeout(timer);
+              timer=setTimeout(function(){window.__navLoaderHide();},10000);
+            };
+            window.__navLoaderHide=function(){
+              o.style.display='none';
+              document.body.style.overflow='';
+              clearTimeout(timer);
+            };
+
+            window.addEventListener('beforeunload',function(){o.style.display='block';});
+            window.addEventListener('pageshow',function(){o.style.display='none';document.body.style.overflow='';});
           })();
         `}} />
 
         {/* PWA: Service Worker Registration + Pull-to-Refresh mobile */}
         <PWARegister />
         <PullToRefresh />
-        {/* ✅ CORREGIDO: Pasar locale y messages */}
         <NextIntlClientProvider locale={validLocale} messages={messages}>
-          {/* ✅ TanStack Query para manejo de estado del servidor */}
           <QueryProvider>
-            <Suspense fallback={<Loading />}>
-              {children}
-            </Suspense>
+            <NavigationProvider>
+              <Suspense fallback={<Loading />}>
+                {children}
+              </Suspense>
+            </NavigationProvider>
           </QueryProvider>
         </NextIntlClientProvider>
       </body>

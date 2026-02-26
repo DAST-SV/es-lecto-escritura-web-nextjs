@@ -262,22 +262,35 @@ export async function assignRole(role: string): Promise<AuthState> {
     .eq('user_id', user.id)
     .eq('is_active', true)
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (existingRole) {
     return { success: true };
   }
 
-  // Buscar role_id
-  const { data: roleData, error: roleError } = await admin
+  // Primero: listar TODOS los roles disponibles para diagnóstico
+  const { data: allRoles, error: listError } = await admin
     .schema('app')
     .from('roles')
-    .select('id')
-    .eq('name', role)
-    .single();
+    .select('id, name');
 
-  if (roleError || !roleData) {
-    return { error: 'Rol no encontrado' };
+  if (listError) {
+    console.error('[assignRole] Cannot query roles table:', listError.message, listError.code, listError.hint);
+    return { error: `Error accediendo tabla de roles: ${listError.message}` };
+  }
+
+  if (!allRoles || allRoles.length === 0) {
+    console.error('[assignRole] roles table is EMPTY');
+    return { error: 'La tabla de roles está vacía. Ejecuta los seeds de la base de datos.' };
+  }
+
+  // Buscar role_id
+  const roleData = allRoles.find((r: any) => r.name === role);
+
+  if (!roleData) {
+    const available = allRoles.map((r: any) => r.name).join(', ');
+    console.error(`[assignRole] Role "${role}" not found. Available: ${available}`);
+    return { error: `Rol "${role}" no encontrado. Disponibles: ${available}` };
   }
 
   // Asignar rol
@@ -292,8 +305,8 @@ export async function assignRole(role: string): Promise<AuthState> {
     });
 
   if (assignError) {
-    console.error('Error assigning role:', assignError);
-    return { error: 'Error al asignar el rol' };
+    console.error('[assignRole] Insert failed:', assignError.message, assignError.code, assignError.details);
+    return { error: `Error al asignar rol: ${assignError.message}` };
   }
 
   revalidatePath('/', 'layout');
