@@ -12,6 +12,7 @@ import { BrowserNavControls, NavControlsToggle } from "../BrowserNavControls";
 import { BrowserNavProvider } from "../../context/BrowserNavContext";
 import { useAuthNavigation } from '../../hooks/useAuth';
 import { useNavigation } from '../../hooks/useNavigation';
+import { useAdminRole } from '../../hooks/useAdminRole';
 import { NavBarProps } from '../../types/navigation.types';
 import { NavBarDesktopSkeleton, NavBarMobileSkeleton } from './NavBarSkeleton';
 
@@ -23,6 +24,7 @@ const NavBar: React.FC<NavBarProps> = ({ brandName }) => {
 
   const { user, loading: authLoading, logout } = useAuthNavigation();
   const { navigationItems } = useNavigation(!!user);
+  const { isAdmin } = useAdminRole(user);
 
   // Solo esperar auth — las traducciones del nav se renderizan cuando lleguen
   const loading = authLoading;
@@ -70,6 +72,7 @@ const NavBar: React.FC<NavBarProps> = ({ brandName }) => {
               displayName={displayName}
               onLogout={logout}
               isAuthenticated={!!user}
+              isAdmin={isAdmin}
             />
           )}
 
@@ -91,6 +94,7 @@ const NavBar: React.FC<NavBarProps> = ({ brandName }) => {
             displayName={displayName}
             onLogout={logout}
             isAuthenticated={!!user}
+            isAdmin={isAdmin}
           />
         )}
       </nav>

@@ -42,26 +42,55 @@ BEGIN
   RAISE NOTICE '================================================';
 END $$;
 
--- Registrar rutas de admin
+-- Registrar rutas de admin (todas las 34 rutas del dashboard)
 INSERT INTO app.routes (pathname, display_name, description, show_in_menu, menu_order, is_public) VALUES
-  ('/admin', 'Admin Dashboard', 'Panel de administración', true, 100, false),
-  ('/admin/organizations', 'Organizaciones', 'Gestión de organizaciones', true, 101, false),
-  ('/admin/languages', 'Idiomas', 'Gestión de idiomas', true, 103, false),
-  ('/admin/roles', 'Roles', 'Gestión de roles', true, 110, false),
-  ('/admin/role-permissions', 'Permisos de Rol', 'Permisos por rol', true, 111, false),
-  ('/admin/user-roles', 'Roles de Usuario', 'Asignación de roles', true, 112, false),
-  ('/admin/user-permissions', 'Permisos de Usuario', 'Permisos específicos', true, 113, false),
-  ('/admin/role-language-access', 'Acceso por Idioma', 'Control por rol e idioma', true, 114, false),
-  ('/admin/routes', 'Rutas', 'Gestión de rutas', true, 120, false),
-  ('/admin/route-scanner', 'Escáner de Rutas', 'Escanear rutas', true, 123, false),
-  ('/admin/route-translations', 'Traducciones de Rutas', 'Traducciones', true, 124, false),
-  ('/admin/translations', 'Traducciones', 'Gestión de traducciones', true, 133, false),
-  ('/admin/users', 'Usuarios', 'Gestión de usuarios', true, 140, false)
+  -- Dashboard principal
+  ('/admin',                       'Admin Dashboard',          'Panel de administración',           true, 100, false),
+  -- Acceso y permisos
+  ('/admin/routes',                'Rutas',                    'Gestión de rutas',                  true, 120, false),
+  ('/admin/route-scanner',         'Escáner de Rutas',         'Escanear rutas del proyecto',       true, 121, false),
+  ('/admin/route-translations',    'Rutas Traducidas',         'Traducciones de URLs',              true, 122, false),
+  ('/admin/route-permissions',     'Permisos de Rutas',        'Permisos por ruta',                 true, 123, false),
+  ('/admin/roles',                 'Roles',                    'Gestión de roles',                  true, 110, false),
+  ('/admin/role-permissions',      'Permisos de Rol',          'Permisos por rol',                  true, 111, false),
+  ('/admin/user-roles',            'Roles de Usuario',         'Asignación de roles a usuarios',    true, 112, false),
+  ('/admin/user-permissions',      'Permisos de Usuario',      'Permisos individuales',             true, 113, false),
+  -- Usuarios
+  ('/admin/users',                 'Usuarios',                 'Gestión de usuarios',               true, 140, false),
+  ('/admin/user-profiles',         'Perfiles de Usuario',      'Gestión de perfiles',               true, 141, false),
+  ('/admin/user-relationships',    'Relaciones',               'Relaciones entre usuarios',         true, 142, false),
+  ('/admin/role-language-access',  'Acceso por Idioma',        'Control por rol e idioma',          true, 114, false),
+  -- Organizaciones
+  ('/admin/organizations',         'Organizaciones',           'Gestión de organizaciones',         true, 101, false),
+  ('/admin/organization-members',  'Miembros Org.',            'Miembros de organización',          true, 115, false),
+  -- Libros y contenido
+  ('/admin/books-management',      'Libros',                   'Administración de libros',          true, 200, false),
+  ('/admin/book-categories',       'Categorías de Libros',     'Categorías de libros',              true, 201, false),
+  ('/admin/book-levels',           'Niveles de Lectura',       'Niveles de dificultad',             true, 202, false),
+  ('/admin/book-genres',           'Géneros Literarios',       'Géneros de libros',                 true, 203, false),
+  ('/admin/book-tags',             'Etiquetas',                'Etiquetas de libros',               true, 204, false),
+  ('/admin/book-authors',          'Autores',                  'Gestión de autores',                true, 205, false),
+  ('/admin/book-pages',            'Páginas de Libros',        'Gestión de páginas',                true, 206, false),
+  -- Interacción
+  ('/admin/book-reviews',          'Reseñas',                  'Reseñas de libros',                 true, 210, false),
+  ('/admin/book-ratings',          'Calificaciones',           'Calificaciones de libros',          true, 211, false),
+  ('/admin/reading-progress',      'Progreso de Lectura',      'Progreso de lectura',               true, 212, false),
+  ('/admin/reading-sessions',      'Sesiones de Lectura',      'Sesiones de lectura',               true, 213, false),
+  ('/admin/favorites',             'Favoritos',                'Gestión de favoritos',              true, 214, false),
+  ('/admin/reading-lists',         'Listas de Lectura',        'Listas de lectura',                 true, 215, false),
+  -- Traducciones
+  ('/admin/translation-namespaces','Namespaces',               'Namespaces de traducción',          true, 130, false),
+  ('/admin/translation-categories','Categorías Traducción',    'Categorías de traducción',          true, 131, false),
+  ('/admin/translation-keys',      'Claves de Traducción',     'Claves de traducción',              true, 132, false),
+  ('/admin/translations',          'Traducciones',             'Gestión de traducciones UI',        true, 133, false),
+  -- Sistema
+  ('/admin/languages',             'Idiomas',                  'Gestión de idiomas',                true, 103, false),
+  ('/admin/audit',                 'Auditoría',                'Registro de auditoría del sistema', true, 150, false)
 ON CONFLICT (pathname)
 DO UPDATE SET
   display_name = EXCLUDED.display_name,
-  description = EXCLUDED.description,
-  updated_at = NOW();
+  description  = EXCLUDED.description,
+  updated_at   = NOW();
 
 -- Dar permisos a super_admin
 INSERT INTO app.route_permissions (role_name, route_id, language_code, is_active)

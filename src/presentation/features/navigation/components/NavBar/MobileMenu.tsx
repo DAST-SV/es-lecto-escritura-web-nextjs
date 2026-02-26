@@ -4,7 +4,10 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
+import { useLocale } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
+import { LayoutDashboard } from "lucide-react";
 import NavigationItems from "../NavigationItems";
 import LanguageSelector from "../LanguageSelector";
 import UserMenu from "../UserMenu";
@@ -17,8 +20,10 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   userAvatar,
   displayName,
   isAuthenticated,
+  isAdmin,
   onLogout,
 }) => {
+  const locale = useLocale();
   return (
     <AnimatePresence>
       {isOpen && (
@@ -41,6 +46,17 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               ) : (
                 <NavigationItems key={item.label} items={[item]} isMobile={true} />
               )
+            )}
+
+            {/* Botón Admin — solo super_admin y school */}
+            {isAuthenticated && isAdmin && (
+              <Link
+                href={`/${locale}/admin`}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-xl shadow-md"
+              >
+                <LayoutDashboard size={16} />
+                <span>Panel de Administración</span>
+              </Link>
             )}
 
             {/* Toggle de controles de navegacion (atras/adelante/recargar) */}

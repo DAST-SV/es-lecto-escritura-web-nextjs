@@ -12,6 +12,7 @@ export interface DesktopNavigationProps {
   userAvatar?: string;
   displayName?: string;
   isAuthenticated: boolean;
+  isAdmin?: boolean;
   onLogout: () => void;
 }
 
@@ -26,6 +27,7 @@ export interface MobileMenuProps {
   userAvatar?: string;
   displayName?: string;
   isAuthenticated: boolean;
+  isAdmin?: boolean;
   onLogout: () => void;
 }
 
